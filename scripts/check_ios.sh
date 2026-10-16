@@ -3,7 +3,7 @@
 set -euo pipefail
 repo_root=$(cd "$(dirname "$0")/.." && pwd)
 if [ ! -d "$repo_root/ios" ]; then
-  echo 'BLOCKED: original ios/ source directory is missing.'
+  echo 'BLOCKED: greenfield ios/ source directory is missing.'
   exit 2
 fi
 cd "$repo_root/ios"
@@ -13,7 +13,7 @@ for tool in xcodegen xcodebuild xcrun python3; do
     exit 2
   fi
 done
-test -f project.yml || { echo 'BLOCKED: missing original ios/project.yml'; exit 2; }
+test -f project.yml || { echo 'BLOCKED: missing greenfield ios/project.yml'; exit 2; }
 xcodebuild -version
 xcodegen generate
 xcodebuild -list -project Lantern.xcodeproj
@@ -31,7 +31,7 @@ if choices:
 PY
 )
 if [ -z "$destination" ]; then
-  echo 'BLOCKED: no available iPhone simulator. Install a runtime compatible with the imported project.'
+  echo 'BLOCKED: no available iPhone simulator. Install a runtime compatible with the project.'
   exit 2
 fi
 printf 'Selected installed simulator: %s\n' "$destination"

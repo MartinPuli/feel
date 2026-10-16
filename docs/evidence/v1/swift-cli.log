@@ -1,0 +1,5 @@
+warning: 'feelcore': <unknown>:0: warning: legacy driver is now deprecated; consider avoiding specifying '-disallow-use-new-driver'
+[0/1] Planning build
+Building for debugging...
+[0/3] Write swift-version--3122D268934F2D49.txt
+Build complete! (0.10s)

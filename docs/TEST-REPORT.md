@@ -1,54 +1,55 @@
-# Executed test report — October 16, 2026
+# Executed V1 tests
 
-**Scope: new preparation tooling and specification model only. V2 production validation remains BLOCKED. Physical hardware is NOT VERIFIED.**
+October 16, 2026; Linux, Swift 6.1.3, OpenSCAD 2021.01, PlatformIO 6.1.18.
+The final sequential run has **14 PASS and one BLOCKED** check. No physical device
+was operated. Each log is under `docs/evidence/v1/`.
 
-The lead engineer reran the final suites after an independent reviewer reproduced defects, inspected fixes and reran the affected checks. Exact UTC execution timestamps, commands, exit codes and log paths are recorded in [`evidence/executed-commands.json`](evidence/executed-commands.json). The blocker-aware runner's per-check timestamps and prerequisites are in [`evidence/checks.json`](evidence/checks.json).
+| Command / suite | Observed result |
+|---|---|
+| `python3 scripts/check_sources.py` | Required new source present; presence only |
+| `python3 -m unittest discover -s scripts/tests -v` | 7 PASS, including process-group timeout and dependency-only source rejection |
+| `python3 -m unittest discover -s validation/tests -v` | 51 PASS; historical independent specification model |
+| `sh firmware/test/run_host_tests.sh` | 38 C++ cases +17 CLI commands +6 configuration +6 compile-fixture upload guards PASS |
+| `sh ios/scripts/test_portable.sh` | 38 XCTest tests, zero failures; production Swift logic |
+| `swift build -j 2 --package-path ios/Shared/FeelCore` | PASS, production CLI built |
+| `python3 validation/production/run.py` | 1,518 assertions; 558 firmware states; PASS |
+| `pio run -j 2 --project-dir firmware` | ESP32 +ESP32-S3 builds PASS |
+| `sh firmware/test/build_output_paths.sh` | Both enabled-output compile fixtures PASS; upload prohibited |
+| `sh cad/build.sh` | 24/24 actual OpenSCAD exports PASS |
+| `python3 cad/tools/check_stl.py stl/*/*.stl` | 24 closed/oriented, single-body, finite, on-bed meshes PASS |
+| `python3 cad/tools/cam_sim.py` | 78/78 geometric checks PASS using actual cam polygon vertices |
+| `python3 -m unittest discover -s cad/test -v` | 13 PASS, including collision/print gate and concurrent writer rejection |
+| `python3 scripts/fetch_model.py` | Pinned genuine model: 62,200,325 bytes; SHA-256 PASS |
+| `bash scripts/check_ios.sh` | BLOCKED: no Xcode, XcodeGen or iOS simulator on Linux |
 
-| Check | Observed result | Evidence |
-|---|---|---|
-| Reference model unit suite | **PASS — 51 tests** | [`model-tests.log`](evidence/model-tests.log) |
-| Source-preflight and command-runner regressions | **PASS — 6 tests** | [`preparation-tests.log`](evidence/preparation-tests.log) |
-| Deterministic replay | **PASS — 18 scenarios, 77 asserted steps** | [`scenarios-summary.json`](evidence/scenarios-summary.json); full trace embedded in [`offline replay`](../demo/feel-simulation.html) |
-| Python compilation | **PASS** | `python3 -m compileall -q validation scripts`; exit 0 |
-| iOS helper shell syntax | **PASS**, syntax only | `bash -n scripts/check_ios.sh`; exit 0 |
-| Generated replay JavaScript syntax | **PASS**, syntax only | `node --check .artifacts/replay-ui.js`; exit 0 |
-| Source-presence preflight | **BLOCKED**, expected exit 2 | [`source-presence.log`](evidence/source-presence.log) |
-| Full V2 check runner | **BLOCKED**, expected exit 2 | [`all-checks.log`](evidence/all-checks.log) |
-| iOS direct invocation without sources | **BLOCKED**, expected exit 2 | [`ios-missing-source.log`](evidence/ios-missing-source.log) |
-| Browser rendering / interaction | **BLOCKED / NOT RUN** | Playwright package is present, but no Chromium or other browser executable was available. No screenshot or browser QA is claimed. |
-| Original CAD, firmware, iOS, detector and cross-layer contract | **BLOCKED** | Original sources/models/tests absent. See `RELEASE-STATUS.md`. |
-| Servo/board/printed mechanism, BLE/LiDAR/UWB, tactile/user tests | **NOT RUN / NOT VERIFIED** | No physical device access supplied. |
+Protocol tests cover all 65,536 sequence pairs and 10,000 seeded corruption steps.
+Production cross-layer replay uses seed 20261016, five valid and eight invalid
+hand-authored vectors, 160 randomized valid packets, bearing/range boundaries,
+tracking/depth freshness, sequence wrap/reordering, disconnect, exact 500 ms
+watchdog and uint32 rollover. It asserts commanded angles and tap timing. It also
+illustrates undetectable legal-byte corruption and a synthetic stalled motor;
+there is no physical position/jam feedback. The motor estimate of 300°/s is an
+explicit simulation assumption, not a measurement.
 
-## Reproduce the checks
+The full STL manifest was independently checked against all 24 generated file
+hashes. Cam contact includes polygon edge interiors and the conical follower,
+A/H/G profiles, real firmware tap angles 21/37/138/154 and sampled transitions.
+It omits friction, elastic force, tolerances, torque and tactile perception.
 
-Python standard library only; tested with Python 3.12.14 on Linux. The model's documented minimum is Python 3.9; other Python versions have not been executed in this session.
+Additional executed checks: production replay and actual-STL viewers passed
+headless Chromium rendering/controls and mobile width checks; screenshots were
+visually inspected. Portable firmware also passed ASan/UBSan with leak detection
+disabled because this environment restricts LeakSanitizer. These are supplementary
+to the final runner, not extra invented unit-test counts.
 
-```bash
-python3 -m unittest discover -s validation/tests -v
-python3 -m unittest discover -s scripts/tests -v
-python3 validation/run_scenarios.py --output .artifacts/simulation
-python3 -m compileall -q validation scripts
-bash -n scripts/check_ios.sh
-python3 scripts/check_sources.py
-python3 scripts/run_v2_checks.py --output .artifacts/v2-checks
-```
+The first integrated attempt had a missing PATH entry for PlatformIO and collided
+with a simultaneous CAD export. The final run used the correct tool path and a
+newly tested CAD output lock, and completed sequentially. Linux Swift requires
+`SWIFT_USE_OLD_DRIVER=1`, private libncurses and direct XCTest because the host can
+restrict subprocess monitoring; final build and all assertions completed. Raw
+logs preserve their own timestamps and source-parent/dirty-state metadata.
 
-The last two commands must remain nonzero/BLOCKED while the sources are missing. A passing reference-model job does not override that status. The runner does not flash boards or sign applications. `scripts/check_ios.sh` is a preparation helper whose actual builds remain unexecuted; align its scheme/tool versions with the imported project.
-
-## Coverage and constraints
-
-- Golden packet vectors: **5 valid and 8 invalid**, hand-authored. Exact nine-byte shape, every sequence value, every highlight value, invalid band values in each position, no mutation of invalid state, and logical one-pin-per-column selection.
-- Watchdog: start-up neutral, accepted-receipt age, 499/500 ms boundary, rejected packets not refreshing the timer, disconnect/reconnect, packet loss, and sequence rollover. Sequence acceptance policies remain provisional, not confirmed firmware behavior.
-- Synthetic upstream faults: tracking loss, stale/missing/invalid depth, boundary distances, stale target response, disappearing or conflicting targets, and empty-column highlights. Pose is metadata; no ARKit transform or real detector output is being tested.
-- Nominal actuator requests: gap → band → assumed hold, neutral requests, and the handoff's 21-degree tap-angle hints. Timings are unmeasured model parameters. No continuous motion, force, pin return, real tapping cadence or intermediate lobe activation is simulated.
-- Packet integrity limitations: valid-looking corruption and modulo sequence ambiguity are demonstrated. A passing limitation test means the model reproduces the limit, not that corruption is prevented.
-- Fixture hygiene: empty suites/events/expectations, nested empty expectations, duplicate IDs and backward time are rejected. A regression injects incorrect neutral/999-degree output and requires scenario assertions to fail.
-- Tooling: absent files never execute a command or claim readiness; command errors preserve output and exit code; timed-out Linux/macOS build process groups are terminated, including a real spawned-child regression.
-
-Seed: **20261016**. The deterministic fixture hash and replay hash are committed in the scenario summary. Unit tests check seeded loss decisions and repeated output equality. The simulation clock uses Python integers; actual firmware clock-width/rollover behavior still needs production tests. These checks do not replace the earlier handoff's reported 28/33 firmware tests or 53 iOS tests; those originals remain missing.
-
-## CI interpretation
-
-`.github/workflows/validation.yml` separates the reference model from original-source presence. Missing original sources intentionally make the source job fail; downstream production jobs cannot be mistaken for passing tests. Mac/Xcode and board-build provisioning must be reconciled with the restored project. Actual hosted-run status is recorded separately at handoff; local execution alone is not a claim that GitHub Actions ran.
-
-Hosted execution was subsequently verified at commit `7c3c755e288a39096d2f18fbf4d0e585a175bd18`: [GitHub Actions run 38965192589](https://github.com/MartinPuli/hackharvard/actions/runs/38965192589). **Specification model only: PASS**, including both test suites and replay. **Original V2 sources required: FAIL as expected**, at the source-presence step. Firmware/CAD and iOS jobs were **SKIPPED** because their required sources are missing. The overall red run is an honest blocker, not a claim of a model regression. Structured job evidence is in [`github-actions.json`](evidence/github-actions.json).
+Apple source syntax and independent API review are not Xcode typechecking.
+No CoreML inference, simulator UI suite, signed app, BLE radio, LiDAR, UWB,
+physical PWM, servo/print, electrical or human tactile test passed here: all remain
+unperformed. See `HARDWARE-BRINGUP.md` for the physical gates.

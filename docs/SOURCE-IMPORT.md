@@ -1,3 +1,5 @@
+> HISTORICAL PREPARATION DOCUMENT. Original source recovery is no longer required. The user authorized the greenfield V1 recreation; see BUILD-HANDOFF.md.
+
 # Restore the real V2 project before engineering sign-off
 
 The target repository was empty at the start of this session. The attached handoff says **55 changed/new paths were uncommitted** on October 15. The original folder is essential. A ZIP of `git archive HEAD` alone would omit those changes.

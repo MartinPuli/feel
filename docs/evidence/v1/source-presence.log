@@ -1,0 +1,54 @@
+{
+  "status": "PRESENT_REVIEW_REQUIRED",
+  "meaning": "File presence only; does not prove V1 builds, tests, compatibility, or readiness.",
+  "missing": [],
+  "source_groups": {
+    "cad source": [
+      "cad/lib.scad",
+      "cad/pack.scad",
+      "cad/params.scad",
+      "cad/puck.scad",
+      "cad/test_column.scad",
+      "cad/tools/fit_probe.scad",
+      "cad/tools/profile.scad",
+      "cad/viewer.scad"
+    ],
+    "firmware source": [
+      "firmware/host/simulator.cpp",
+      "firmware/src/commands.cpp",
+      "firmware/src/controller.cpp",
+      "firmware/src/main.cpp",
+      "firmware/test/controller_tests.cpp"
+    ],
+    "firmware tests": [
+      "firmware/test/controller_tests.cpp",
+      "firmware/test/test_board_config.py",
+      "firmware/test/test_cli.py",
+      "firmware/test/test_compile_only_guard.py"
+    ],
+    "Lantern app": [
+      "ios/Lantern/LanternApp.swift",
+      "ios/Lantern/Models/LanternModel.swift",
+      "ios/Lantern/Services/ARPerception.swift",
+      "ios/Lantern/Services/BluetoothPuck.swift",
+      "ios/Lantern/Services/ObjectDetector.swift",
+      "ios/Lantern/Views/LanternView.swift"
+    ],
+    "Beacon app": [
+      "ios/Beacon/BeaconApp.swift"
+    ],
+    "shared iOS code": [
+      "ios/Shared/Apple/NearbyPeerService.swift",
+      "ios/Shared/FeelCore/Package.swift",
+      "ios/Shared/FeelCore/Sources/FeelCore/Perception.swift",
+      "ios/Shared/FeelCore/Sources/FeelCore/Protocol.swift",
+      "ios/Shared/FeelCore/Sources/FeelReplay/main.swift",
+      "ios/Shared/FeelCore/Tests/FeelCoreTests/FeelCoreTests.swift"
+    ],
+    "iOS tests": [
+      "ios/LanternTests/LanternTests.swift",
+      "ios/LanternUITests/LanternUITests.swift",
+      "ios/Shared/FeelCore/Tests/FeelCoreTests/FeelCoreTests.swift"
+    ]
+  }
+}

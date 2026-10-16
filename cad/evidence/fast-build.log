@@ -1,0 +1,6 @@
+CAD GEOMETRY EXPORT ONLY — hardware fit, return, strength and tactile behavior NOT VERIFIED
+PASS selected nominal envelope checks (not a full collision check)
+PASS test/shaft_A: 6724 triangles, one body, on bed (3.15s)
+PASS test/pins_tip21: 9892 triangles, one body, on bed (7.08s)
+PASS test/hole_coupon: 3364 triangles, one body, on bed (1.9s)
+PASS test/coupling_C1: 1140 triangles, one body, on bed (0.46s)

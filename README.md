@@ -1,47 +1,78 @@
-# FEEL — HackHarvard 2026
+# FEEL
 
-**V2: BLOCKED — original application, firmware, CAD, and tests have not been supplied. Physical hardware: NOT VERIFIED. V3: NOT STARTED.**
+A prototype that translates indoor depth and target direction into a **7-column ×
+4-pin tactile puck**, using a LiDAR iPhone, BLE, an ESP32 and seven servos.
 
-FEEL is the team's proposed iPhone-to-tactile-puck perception prototype: seven servo-driven columns, four selectable pins per column, and nine-byte Bluetooth commands. One pin per column can be selected; this is not a 28-actuator display.
+**Greenfield recreation from HANDOFF-v7.md.** No original iOS, firmware or CAD
+source was available. Historical “as built” statements in that document are not
+verification of this repository. The earlier preparation work is preserved on
+`feel/v2-preparation`; it uses the old version numbering.
 
-On October 16, the connected GitHub API reported this repository empty (no commits or branches). The three supplied documents describe substantial prior work on another machine. Those claims are retained as handoff history, not reproduced test results. The preparation work is on [`feel/v2-preparation`](https://github.com/MartinPuli/hackharvard/tree/feel/v2-preparation).
+| Branch | Purpose |
+|---|---|
+| `feel/v1-foundation` | Swift iOS + perception + BLE, ESP32, CAD, production replay |
+| `feel/v2-spatial-memory` | Remember / Recall / Return, created only after V1 validation |
+| `feel/v3-advanced` | Optional advanced work, only after V1 and V2 |
 
-## Team action needed
+Para preparar la placa en tu Mac, empieza por [SETUP-MAC-ESP32.md](docs/SETUP-MAC-ESP32.md).
 
-Upload the **original project folder including uncommitted source and tests**, or give the original repository URL. Keep CAD, firmware, iOS, models and earlier handoffs; exclude credentials, signing keys, personal recordings, caches and build products. Preserve original Git history where available. Do not force-push or replace another teammate's work.
+See [release status](docs/RELEASE-STATUS.md) for actual checks and blockers.
+**No real hardware has been tested in this build environment.**
 
-Read `docs/RELEASE-STATUS.md` on the preparation branch for verified results and the exact blockers. The simulator on that branch is a new, explicitly labeled specification model. It cannot prove the missing software or physical mechanism works.
+## Run software checks
 
-V3 Spatial Memory must remain separate and may start only after the actual V2 software gates pass. Eligibility for pre-event code/CAD needs organizer confirmation; do not hide prior work.
+Requirements: Swift5.9+ (Swift6.1.3 used locally), C++11 compiler, Python3.10+,
+OpenSCAD2021.01+, PlatformIO6.1.18. macOS/Xcode and XcodeGen are needed for the iOS
+platform apps. Linux tests compile the same Swift core and C++ controller used by
+the device adapters; Linux cannot compile Apple frameworks.
 
-## Run the preparation demo
-
-Requires Python 3.9+ (standard library; tested here with 3.12). From this branch:
-
-```bash
-python3 -m unittest discover -s validation/tests -v
-python3 -m unittest discover -s scripts/tests -v
-python3 validation/run_scenarios.py --output .artifacts/simulation
+```sh
+sh ios/scripts/test_portable.sh
+sh firmware/test/run_host_tests.sh
+sh validation/adapters/run_contract_tests.sh
+# Open .artifacts/production/index.html for the recorded offline replay.
+pio run -j 2 --project-dir firmware
+sh cad/build.sh
+python3 cad/tools/check_stl.py stl/*/*.stl
+python3 cad/tools/cam_sim.py
+python3 scripts/run_v1_checks.py
 ```
 
-Open `.artifacts/simulation/index.html`, or download/open the committed [offline replay](demo/feel-simulation.html). It displays synthetic packet traces and unmeasured nominal commands; it has no hardware connection. Browser rendering remains unverified in this environment. The generated JavaScript passed syntax checks.
+Full runner exits0 for complete pass,1 for failure,2 for blocked/not-run checks.
+The report separates available checks from the complete software gate.
 
-**Observed results:** 51 model tests + 6 tooling tests pass; 18 deterministic scenarios / 77 asserted steps pass. Read [test evidence and limits](docs/TEST-REPORT.md) and the [independent review](docs/REVIEW.md). These are new preparation checks, not the missing production test suites.
+On a Mac:
 
-```bash
-python3 scripts/check_sources.py
-python3 scripts/run_v2_checks.py --output .artifacts/v2-checks
+```sh
+python3 scripts/fetch_model.py  # Apple CoreML model; pinned revision + SHA-256
+bash scripts/check_ios.sh      # simulator tests + unsigned device builds
+cd ios
+xcodegen generate
+open Lantern.xcodeproj
 ```
 
-Both full-source checks intentionally return nonzero/BLOCKED while required sources are absent. CI preserves that distinction.
+Then select your signing team and physical device in Xcode. Do not infer LiDAR,
+BLE, NI, tactile usability or mechanical reliability from the simulator.
 
-## Team handoff
+## Source map
 
-- [Release status and next three actions](docs/RELEASE-STATUS.md)
-- [Restore the original source](docs/SOURCE-IMPORT.md)
-- [Beginner hardware bring-up](docs/HARDWARE-BRINGUP.md) and [calibration records](docs/CALIBRATION.md)
-- [90-second demo and recovery](docs/DEMO.md)
-- [Devpost draft](docs/DEVPOST.md) and [eligibility/provenance](docs/ELIGIBILITY.md)
-- [Known issues](docs/KNOWN-ISSUES.md) and [model assumptions](validation/README.md)
+- [`ios/`](ios/README.md): Lantern/FEEL app, Beacon companion, pure Swift core/tests.
+- [`firmware/`](firmware/README.md): shared C++ controller, ESP32 adapters, host CLI/tests.
+- [`cad/`](cad/README.md): parametric OpenSCAD test rig, puck, cams, pins and forearm pack.
+- [`protocol/`](protocol/vectors.json): exact wire cases; [`docs/PROTOCOL.md`](docs/PROTOCOL.md) gives policy.
+- [`validation/production/`](validation/production/README.md): compiled cross-layer replay.
+- `validation/feel_model.py`: historical independent reference model, not device code.
 
-The uploaded engineering/event/handoff documents are preserved under `AGENTS.md`, `HACKHARVARD-2026.md` and `HANDOFF-v7.md`. This preparation introduces no sponsor SDKs, credentials, source-history rewriting, physical test claims or V3 features.
+## Build and demonstrate honestly
+
+Use [hardware bring-up](docs/HARDWARE-BRINGUP.md), [calibration](docs/CALIBRATION.md),
+[demo](docs/DEMO.md), [Devpost draft](docs/DEVPOST.md), and [eligibility disclosure](docs/ELIGIBILITY.md).
+
+Only one pin per column can be selected. Neutral is not proof of clear space.
+Servo commands are not position measurements. The handoff's servo/horn dimensions
+and supply/pulse endpoints require physical confirmation before final printing or
+powered integration. Door candidates are heuristics; trained object detection is
+provided through a separate model with its own limitations.
+
+FEEL is an experimental perception interface, not a certified mobility aid or a
+route planner. Test indoors with a spotter after the bench checklist passes.

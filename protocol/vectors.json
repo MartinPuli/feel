@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "purpose": "V1 normative byte vectors: independently asserted against production Swift and C++ codecs",
+  "wire_contract": "[seq, b0, b1, b2, b3, b4, b5, b6, hl]; seq 0..255; bands 0..4; hl 0..6 or 255",
+  "limits": "No timestamp, checksum, sender boot ID, or sensor-health field is present. Legal-value corruption and absolute packet age cannot be inferred.",
+  "valid": [
+    {
+      "id": "clear",
+      "hex": "0000000000000000ff",
+      "seq": 0,
+      "bands": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "highlight": 255
+    },
+    {
+      "id": "mixed",
+      "hex": "010001020304010206",
+      "seq": 1,
+      "bands": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        1,
+        2
+      ],
+      "highlight": 6
+    },
+    {
+      "id": "max_sequence",
+      "hex": "ff0404040404040400",
+      "seq": 255,
+      "bands": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "highlight": 0
+    },
+    {
+      "id": "wrap_sequence",
+      "hex": "000101010101010103",
+      "seq": 0,
+      "bands": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "highlight": 3
+    },
+    {
+      "id": "empty_highlight_is_wire_legal",
+      "hex": "7f0000000000000004",
+      "seq": 127,
+      "bands": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "highlight": 4
+    }
+  ],
+  "invalid": [
+    {
+      "id": "empty",
+      "hex": ""
+    },
+    {
+      "id": "short",
+      "hex": "00000000000000ff"
+    },
+    {
+      "id": "long",
+      "hex": "0000000000000000ff00"
+    },
+    {
+      "id": "first_band_five",
+      "hex": "0005000000000000ff"
+    },
+    {
+      "id": "last_band_five",
+      "hex": "0000000000000005ff"
+    },
+    {
+      "id": "band_corrupted_high_bit",
+      "hex": "0000008000000000ff"
+    },
+    {
+      "id": "highlight_seven",
+      "hex": "000000000000000007"
+    },
+    {
+      "id": "highlight_254",
+      "hex": "0000000000000000fe"
+    }
+  ]
+}

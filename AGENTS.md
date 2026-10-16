@@ -1,3 +1,19 @@
+# Current user directive — October 16, 2026
+
+The latest user request supersedes the historical version labels and source assumptions below.
+The repository was empty of production source. HANDOFF-v7.md is a specification/reference,
+not evidence of implemented code. Recreate missing functionality; never wait for original code.
+
+- P0 V1: complete greenfield foundation and all available software builds/tests/simulation.
+- P1 V2: Spatial Memory only after V1 validation, in an isolated branch; preserve V1.
+- P2 V3: advanced voice, persistent memory, adaptive feedback, additional perception only after V1/V2.
+- Historical test counts and claimed original implementation do not describe this recreation.
+- Missing physical measurements and device tests remain pending and must be recorded honestly.
+
+The engineering, bounded-agent, independent-review and physical-safety procedures below still apply.
+
+---
+
 # AGENTS.md — FEEL Engineering Agent
 
 **Project:** FEEL — A Second Sense, Powered by AI  

@@ -24,3 +24,20 @@ The actual source and pinned versions must determine implementation decisions. N
 | Integrity | All nine bytes already assigned | No application checksum/timestamp is described; valid-looking corruption and delayed valid packets cannot be inferred from payload alone |
 
 The simulator documents its assumptions separately. Do not adopt them into production merely because their reference tests pass. BLE has transport-layer protections; the injection tests deliberately operate at the application-packet boundary and do not characterize radio reliability.
+
+## Greenfield implementation update
+
+The recovery questions above are historical. The user authorized recreating the
+missing implementation; new decisions are in PROTOCOL.md and BUILD-HANDOFF.md.
+
+- FEETECH FS0307 current manufacturer product page:
+  https://www.feetechrc.com/en/6v-06kg-analog-steering-gear-fs0307.html
+  lists120° for900–2100µs. This conflicts with the handoff's unmeasured175°
+  assumption; it is a device-variant/bench gate, not a reason to fake a measurement.
+- Apple-hosted CoreML model and fixed revision:
+  https://huggingface.co/apple/coreml-YOLOv3/tree/63316bf5bf817553ba9426fcac0a306a1b2ddc44
+  Download script verifies SHA-256. Apple-platform compile/inference is separate.
+- Apple ARKit, Vision, CoreBluetooth and Nearby Interaction references and assumptions
+  are documented in ios/README.md. Linux pure-Swift tests do not validate Apple APIs.
+- Arduino-ESP32 LEDC: https://docs.espressif.com/projects/arduino-esp32/en/latest/api/ledc.html
+  Actual firmware pins framework/platform versions; see firmware/platformio.ini.

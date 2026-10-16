@@ -1,121 +1,147 @@
-# FEEL hardware bring-up
+# FEEL V1 — from printed parts to one working column
 
-**Status: PHYSICAL HARDWARE NOT VERIFIED.** No servo, board, printed part, phone sensor, or completed puck was available to this engineering session. Blank records below mean **NOT RUN**, not pass. A software simulation cannot measure friction, torque, skin contact, current, or reliability.
+**Physical status: NOT VERIFIED.** These are instructions for the newly created
+CAD/firmware/app. HANDOFF-v7 is a design reference, not a physical test record.
+Do the stages in order. Stop at a failed stage and fix it before adding parts.
 
-This guide organizes the work in `HANDOFF-v7.md`. The original `cad/README.md`, CAD/STLs, production firmware, and iOS apps were missing from the supplied repository. **Recover and review those sources before printing, finishing, wiring for operation, or flashing.** This is a bring-up checklist, not a replacement for the missing assembly drawings. New portable test code is not board firmware.
+The team has confirmed two ESP32-WROOM USB-C boards and an Adafruit 5 V / 4 A supply. See [current inventory](HARDWARE-INVENTORY.md). Use the classic ESP32 build; the second board is a spare. Servo compatibility with that supply is still unverified.
 
-## 1. Lay out and identify the parts
+## 1. Lay out and label the parts
 
-Photograph each numbered group with its label visible. Record substitutions before using them.
+- 7 FS0307 servos plus 1 spare; exact manufacturer/part: ______
+- Classic ESP32 or ESP32-S3 development board, USB data cable; board: ______
+- Separate servo power supply and suitable current distribution, switch/fuse,
+  barrel connector, insulated wire and common signal ground.
+- Nominal1000 µF capacitor with suitable voltage rating and correct polarity;
+  half-size 400-point breadboard for signal work, not seven-servo current.
+- Printed hand-cranked test column and coupons first; puck/pack later.
+- 2 mm/3 mm craft foam,25 mm elastic/Velcro, zip ties, fasteners that fit the new CAD.
+- Calipers, deburring tools,400/1000-grit abrasive; finishing tools and dry lubricant
+  suited to the material. No heat polishing.
+- LiDAR iPhone, Mac/Xcode. A second NI-compatible phone is optional for Beacon.
 
-| Photo | Checklist | Record |
-|---|---|---|
-| A | [ ] Exact ESP32 board, readable model/revision, board pinout, USB cable | Board/revision: ____; pinout source: ____ |
-| B | [ ] Eight FS0307 servos per the handoff: seven operating, one spare; supplied horns, screws, leads | Manufacturer/model/revision: ____; datasheet: ____ |
-| C | [ ] Regulated servo supply, adapter, rated power distribution, switch/disconnect, meter | Voltage/current rating: ____; connector polarity: ____ |
-| D | [ ] Unpowered single-column prints and hole coupon from recovered `stl/test/` | CAD commit: ____; material: ____; print settings: ____ |
-| E | [ ] Pins, foam/template, chosen shaft, guide and face components | Shaft A/H/G: ____; foam configuration: ____ |
-| F | [ ] Calipers, appropriate finishing tools, 400/1000-grit abrasives, approved dry lubricant | Tool/material compatibility checked by: ____ |
-| G | [ ] Full puck prints, fasteners, straps, strain relief, forearm pack | Full puck deferred until one column passes: ____ |
-| H | [ ] iPhone 14 Pro Max; Mac/Xcode; second compatible phone only for optional phone finding | Phone/iOS: ____; Mac/Xcode: ____ |
+Photograph the parts together and each label. The geometry's `UNMEASURED` defaults
+are placeholders. Read `cad/README.md` before printing servo-dependent parts.
 
-Handoff supplies, **not measured fit guarantees**: half-size 400-point breadboard; barrel adapter; 1000 µF capacitor; two pack straps; eight M3 × 12 screws; 2 mm and 3 mm craft foam; 25 mm elastic/Velcro. Confirm capacitor voltage rating and polarity. Confirm screw fit and retention in recovered CAD. Keep an inspectable, removable assembly during bring-up; do not glue it shut before inspecting operation.
+## 2. Power review, with everything disconnected
 
-## 2. Review power with everything disconnected
+Read the **actual** servo and board documentation. Record operating voltage,
+connector order, pulse range and current requirements. Do not infer these from
+wire colors or the product nickname.
 
-Have the team member responsible for electronics sign this section before power or wiring changes. Record the actual servo manufacturer's operating voltage, allowed signal pulse range, signal-level requirements, current information, and connector pin order. Do not infer the pin order from wire color alone.
-
-- [ ] Servo positive power comes from a supply and distribution path rated for the measured/specified load. **Never power servos from GPIO or the ESP32's 3.3 V output. Do not route seven-servo current through undersized breadboard rails.**
-- [ ] Servo supply negative and ESP32 ground share the intended signal reference. Trace each connection against the exact board and servo documentation with power off.
-- [ ] ESP32 power follows its actual development-board documentation. A chip's supply specification is not permission to apply that voltage to any board pin.
-- [ ] USB and external power paths are reviewed to prevent unintended backfeeding. Do not join two positive supplies by assumption.
-- [ ] Measure supply voltage and polarity before plugging in a servo. Confirm current limiting/protection and an accessible power disconnect.
-- [ ] Secure leads and terminals; add strain relief; check for shorts and exposed conductors. The handoff's capacitor is not a substitute for an adequate supply.
-
-| Check | Measurement / evidence |
+| Check | Record |
 |---|---|
-| Servo voltage range, manufacturer source | ____ |
-| Servo pulse range and signal requirements, manufacturer source | ____ |
-| Supply no-load voltage and polarity | ____ |
-| Load/current budget and wire/connector ratings reviewed | ____ |
-| Ground continuity / positive rails kept as designed | ____ |
-| Wiring photo and electronics reviewer/date | ____ |
+| Servo manufacturer voltage/pulse/current source | ______ |
+| Supply measured voltage and polarity | ______ |
+| Supply, connector and wire current rating | ______ |
+| GPIO signal compatibility | ______ |
+| USB/external power cannot backfeed each other | ______ |
+| Ground continuity; positives connected only as intended | ______ |
+| Wiring photo and responsible electronics reviewer | ______ |
 
-### Signal map from the handoff
+**Never power servos from GPIO or 3.3 V, or route all seven through undersized
+breadboard rails.** Provide a reachable power disconnect. The capacitor does not
+replace adequate power distribution. Trace wires with power off before connecting.
 
-Only for a **classic ESP32** whose exact board exposes these pins and whose recovered firmware uses this mapping. These are GPIO numbers, not connector-position numbers. Confirm physical column orientation using the recovered CAD; do not assume left/right from an unlabeled part.
+Classic ESP32 mapping from the handoff:
 
-| Column / packet field | Handoff GPIO |
+| User's left → right column | GPIO |
 |---|---:|
-| 0 / b0 | 32 |
-| 1 / b1 | 33 |
-| 2 / b2 | 25 |
-| 3 / b3 | 26 |
-| 4 / b4 | 27 |
-| 5 / b5 | 14 |
-| 6 / b6 | 13 |
+|0|32|
+|1|33|
+|2|25|
+|3|26|
+|4|27|
+|5|14|
+|6|13|
 
-**ESP32-S3 mapping is unresolved.** The handoff's claim that S3 built does not establish a wiring map. Do not copy the classic mapping to an S3. Recover board configuration and consult its schematic, flash/PSRAM usage, and available pins first.
+S3 uses the explicit alternate mapping in `firmware/include/board_config.hpp`.
+Check that mapping against your exact development-board schematic; flash/PSRAM,
+USB and boot-strapping pins vary. GPIO numbers are not connector positions.
 
-## 3. Assemble one hand-cranked column, without power
+## 3. Print and assemble the hand-cranked rig
 
-1. Recover `cad/README.md` and the matching CAD/STLs. Read “Assemble the crank rig,” hole finishing, pin preparation, foam placement, shaft installation, and P1–P5 criteria. If these remain unavailable, **stop mechanical assembly here**; do not reconstruct guide geometry from this checklist.
-2. Print only the test column and coupons first. The handoff lists frame, strip, shaft variants A/H/G, two pin-tip variants, guide, crank, dummy servo, foam template, and hole coupon. Couplings wait for actual horn measurements.
-3. Follow the recovered instructions to finish eight test-column guide holes and smooth pin tips. The handoff mentions an 11/64-inch finishing bit and 400 → 1000 grit; confirm these against the actual revision, coupon fit, and tool setup before removing material. No heat polishing.
-4. Fit the foam and chosen shaft as specified. Preserve each pin's position and length. Check free travel gently by hand; never force a jam.
-5. Label the wrist and finger ends, columns and pin bands. Photograph the mechanism before closing it.
+1. Run `sh cad/build.sh` and the mesh/cam checks. Read CAD warnings; nominal
+   geometry passing does not authorize final fit-dependent prints.
+2. Print the hole coupon and a test-column frame, guide, strip, pins, shaft and
+   crank using `cad/README.md` orientation. Compare both tip radii if available.
+3. Test the coupon before enlarging guide holes. The historical 11/64-inch bit is
+   not a substitute for checking the new revision's nominal dimensions and fit.
+4. Deburr, smooth tips gradually, and remove every sprue remnant. Do not change
+   pin lengths randomly; keep wrist/finger row labels.
+5. Insert pins through both guides, fit foam return as shown by CAD instructions,
+   install the shaft and crank. Confirm alignment by hand before tightening.
+6. Mark columns 0–6 left → right and bands 1–4 wrist→fingers. A correctly assembled
+   rig must move freely without a servo forcing it.
 
-**Do P1–P5 manually before attaching a powered servo.** These practical observations supplement the missing original tolerances; they do not invent them. Record those tolerances from recovered `cad/README.md` before declaring a mechanical pass.
-
-| Test | Action and required observation | Record |
+| Test | Required observation | Result/evidence |
 |---|---|---|
-| P1 — selection | Slowly select all four bands and intervening gaps. Exactly one intended pin is up for a band; no pin remains up in the gap. Measure travel. | Band/travel measurements: ____; unintended pins: ____; PASS/FAIL: ____ |
-| P2 — return | Repeat on the side and upside down. All intended returns occur without gravity assistance or shaking. | Orientations/repeats: ____; failed returns: ____; PASS/FAIL: ____ |
-| P3 — thumb hold | After free travel passes, apply gentle, comfortable thumb contact. Check selection/return under that contact. Stop at discomfort, binding, or pin tilt. | Contact method: ____; observations: ____; PASS/FAIL: ____ |
-| P4 — endurance | Perform 100 complete four-band cycles using the same documented sequence. Stop and record any jam instead of forcing it. | Sequence: ____; completed: ____/100; jams: ____; PASS/FAIL: ____ |
-| P5 — highlight | Manually demonstrate the intended tap dip and return. Watch all neighboring pins throughout; none should lift unintentionally. | Band(s)/repeats: ____; neighbor motion: ____; PASS/FAIL: ____ |
+|P1 selection|Each band lifts only its intended pin; all gaps release pins. Measure nominal 2 mm travel.|______|
+|P2 return|Repeated return works sideways and upside down without shaking.|______|
+|P3 thumb contact|Comfortable gentle contact still allows selection/return; no binding or pain.|______|
+|P4 endurance|100 complete four-band cycles, no jam. Record sequence, failures and wear.|______|
+|P5 highlight|21° dip/return at each band; observe neighbors and actual dip travel.|______|
 
-Tester/date: ____ · CAD revision: ____ · Photo/video references: ____ · Original tolerance source: ____
+Also watch *between* band centres: the rotating cam passes intermediate lobes.
+Software does not promise no transient activation. Record shaft variant, foam,
+print settings, CAD commit, observations and video. P2 or P4 failure blocks expansion.
 
-**P2 or P4 fails → stop expansion.** Investigate fit, alignment and return using the recovered CAD guidance; repeat the whole sequence after a change. Do not compensate for a jam by commanding more servo force. Tip and 11/12 mm pitch comparisons are optional seated comfort experiments, not evidence of navigation performance.
+## 4. One unloaded servo, then one powered column
 
-## 4. Measure and calibrate one real servo
+1. Keep servo power disconnected. Build the exact PlatformIO environment, review
+   pin map/output enable and flash the ESP32 under team supervision.
+2. Read `firmware/README.md`; firmware starts with neutral commands. Keep horn/cam
+   detached for initial characterization. Check the actual servo's supported
+   pulse range before enabling power.
+3. Use the documented bench `ARM`, `US`, `B`, `HL`, `KEEP`, `STOP`, and `CAL`
+   commands. Motion expires after 500 ms without accepted refresh; bench permission
+   is a separate lease. Do not mistake this for a stable long-held calibration state.
+4. Measure servo body, tabs, spline and horn. Fill the CAD measurement table,
+   update parameters, rebuild coupling/shaft and confirm fit without slipping.
+5. After manual P1–P5 pass, couple the mechanism with power off. Check one column's
+   bands and gaps at low load. Calibrate its offset; do not force through a jam.
+6. Repeat neutral, highlight, missed-write timeout and disconnect while stationary.
+   Measure actual movement/return latency, supply voltage under load and current.
+7. Save calibration, power-cycle and verify it was retained. Follow [CALIBRATION.md](CALIBRATION.md).
 
-Follow [CALIBRATION.md](CALIBRATION.md). Keep the mechanism disconnected for the initial servo check. The handoff's G1 `650` to `2500` µs range is **unverified and is not a safe starting prescription**. Establish the real unit's supported range and unloaded behavior before coupling a cam.
+The v7 raw 650–2500 µs envelope is **unverified for your servo**, not an instruction
+to begin at either endpoint. Stop on heat, buzzing, unexpected motion or binding.
 
-Board flashing requires a human review of the exact firmware, board selection and pin map; keep servo power disconnected during that step. The historical serial commands in the handoff are not proof that any executable in this repository supports them.
+## 5. Assemble the full puck only after one column passes
 
-Measure servo and horn, update the recovered `cad/params.scad`, rebuild, inspect coupling fit, and then calibrate one powered test column. Pass its band, gap, highlight, power and timeout checks before fitting the rest.
+Follow `cad/README.md` assembly order. Match domed-face pin lengths to their printed
+positions. Finish 56 guides and recheck travel; add strain relief before connecting
+servo leads to the forearm pack. Check fastener lengths do not reach moving parts.
 
-## 5. Expand one column at a time
+The handoff suggests cutting a lower servo ear. This is irreversible: verify exact
+fit/retention with a spare or dummy first and have the team approve the cut. Do not
+cut a measured part based solely on a nominal placeholder.
 
-1. Recover “The full puck” in `cad/README.md` and confirm its CAD revision matches the parts. The handoff describes 28 pins and 56 guide holes; it does not supply their missing assembly geometry.
-2. **Lower-ear clipping is destructive.** The handoff requests it, but do not cut a servo until the responsible human checks the exact servo, recovered CAD retention design and fit. Record approval and test one spare/dummy fit first. No automatic cutting or guessed cutting depth.
-3. Assemble in the recovered order. Keep pin locations labeled, check clear travel, protect cables through the wrist slot, and fit strain relief and the forearm pack.
-4. Add one calibrated servo at a time. Check bands/gaps/taps and idle behavior on each; record supply voltage under load, current and reset behavior before adding another.
-5. After seven individual passes, verify simultaneous commanded movements, power stability, disconnect/timeout behavior, and mechanical return. Do not deliberately stall servos. Any unexpected motion, heat, persistent buzzing, jam, or supply collapse means power off and investigate.
+Add one calibrated servo at a time. Verify individual bands/gaps/taps, then
+simultaneous movements, supply droop and reset behavior. Record all seven offsets.
+Never compensate for a jam by increasing servo force or widening travel.
 
-## 6. Integrate real phone input last
+## 6. Real iPhone and BLE integration
 
-- [ ] Recover production iOS/BLE code and build/sign it with the team's reviewed setup. Record app/firmware commits and actual phone/board versions.
-- [ ] Verify physical direction and pin mapping using known left/center/right targets while stationary. Bands run wrist → fingers from near → far. Only one pin per column is selected.
-- [ ] Observe real nine-byte packets, real pin response, and real time since the last accepted packet; confirm the 500 ms watchdog behavior. A neutral command timestamp is not the same as completed mechanical return time.
-- [ ] Test tracked, stale/lost-depth, phone interruption, BLE disconnect/reconnect, malformed-input and target-loss cases safely at the bench. Visible uncertainty must not be presented as a clear path.
-- [ ] Test LiDAR and each claimed detector independently on the actual phone, recording latency and failures. Do not count a photo detector test as live detection.
-- [ ] Optional “find teammate”: test both phones, Nearby Interaction availability, direction sign and refresh rate. The handoff target is an angle across ±45° at at least 5 Hz; record observations. Omit this feature if it fails.
-- [ ] Only after bench passes: clear, supervised indoor route with a spotter and an immediately accessible stop. Obtain consent for feedback/recordings. No unsupervised blindfolded walking; FEEL is a prototype, not a replacement for a white cane or other mobility aid.
+1. Build/test on Mac, sign/install Lantern and optional Beacon. Record commits,
+   OS versions and board settings. Start with a visible bench setup.
+2. Mount as specified in `ios/README.md`, calibrate the floor from a measured camera
+   height, and confirm left/center/right against known stationary obstacles.
+3. Check all distance edges, missing depth, low confidence, tracking loss, app
+   interruption/backgrounding, BLE disconnect/reconnect and 500 ms timeout.
+4. Verify model loaded status and test chair/person, EXIT text and door candidates
+   individually. Record false positives, missed detections and inference delay.
+5. For Beacon, test both-device permissions, connection/reconnection, direction
+   sign and availability across ±45°. If direction is absent, do not claim guidance.
+6. After bench success, try a clear supervised indoor route with a spotter and
+   immediate stop. No unsupervised blindfolded walking; no mobility-aid claims.
 
-Before any walking comparison, record route length, lighting, obstacles, spotter and stop conditions. If measured, report separate time/speed and contact observations with and without FEEL, trial counts and limitations; do not extrapolate a small demo into clinical benefit.
+Keep user consent, route length, lighting, task time, contacts and failure counts
+separate from simulation results. Never report a software assertion as a physical
+measurement or a small demo as clinical validation.
 
-## First three team actions
+## Next three human actions
 
-1. Recover the original CAD/STLs, firmware and iOS sources from the machines described in the handoff; pin their revisions and read the missing assembly/board instructions.
-2. Identify the actual electronics and supply, photograph/measure them, and complete the power review while printing and manually testing one column.
-3. After P1–P5 pass, perform unloaded servo characterization and one-column calibration; only then expand and attempt real phone integration.
-
-## Sources and scope
-
-- Team-provided `AGENTS.md` and `HANDOFF-v7.md`: intended parts, geometry, staged tests and historical interfaces. Their pre-existing verification claims have not been reproduced here.
-- [Espressif ESP32 hardware design checklist](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32/schematic-checklist.html) and [ESP32-S3 checklist](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32s3/schematic-checklist.html), consulted October 16, 2026: board-family-specific power/GPIO review. These do not supply FS0307 operating limits or replace the chosen development-board schematic.
-
-No FS0307 manufacturer datasheet or physical measurements were supplied. Those remain required inputs.
+1. Inspect the board/servo labels, power documentation and measured CAD dimensions.
+2. Print the test rig, pass P1–P5, then calibrate one powered column.
+3. Install the apps and verify real BLE/LiDAR/direction before seven-column walking trials.

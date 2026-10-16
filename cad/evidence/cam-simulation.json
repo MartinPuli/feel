@@ -1,0 +1,684 @@
+{
+  "scope": "SIMULATION \u2014 rigid ideal cam/conical follower contact; no force, friction, foam, backlash, tolerance, servo or user testing",
+  "geometry": "OpenSCAD evaluated cad/lib.scad cam_points; exact polygon contact at sampled shaft angles",
+  "shaft_angle_step_degrees": 0.5,
+  "cam_polygon_step_degrees": 1,
+  "checks": [
+    {
+      "name": "protocol bands",
+      "pass": true,
+      "observed": [
+        0,
+        58,
+        117,
+        175
+      ]
+    },
+    {
+      "name": "protocol gaps",
+      "pass": true,
+      "observed": [
+        29,
+        87.5,
+        146
+      ]
+    },
+    {
+      "name": "pitch envelope",
+      "pass": true,
+      "observed": {
+        "cam_d": 11.6,
+        "pitch": 12
+      }
+    },
+    {
+      "name": "A band 1 selected",
+      "pass": true,
+      "observed": [
+        2.0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "A band 1 neighbours down",
+      "pass": true,
+      "observed": [
+        2.0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "A band 1 firmware tap angle",
+      "pass": true,
+      "observed": 21.0
+    },
+    {
+      "name": "A band 1 tap dip",
+      "pass": true,
+      "observed": {
+        "angle": 21.0,
+        "lift": 0.9998924238972489,
+        "drop": 1.0001075761027511
+      }
+    },
+    {
+      "name": "A band 1 tap no neighbour",
+      "pass": true,
+      "observed": [
+        0.9998924238972489,
+        4.730536527830509e-06,
+        4.730536527830509e-06,
+        4.730536527830509e-06
+      ]
+    },
+    {
+      "name": "A band 2 selected",
+      "pass": true,
+      "observed": [
+        0,
+        1.999999965801372,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "A band 2 neighbours down",
+      "pass": true,
+      "observed": [
+        0,
+        1.999999965801372,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "A band 2 firmware tap angle",
+      "pass": true,
+      "observed": 37.0
+    },
+    {
+      "name": "A band 2 tap dip",
+      "pass": true,
+      "observed": {
+        "angle": 37.0,
+        "lift": 0.9998957863713489,
+        "drop": 1.0001041794300232
+      }
+    },
+    {
+      "name": "A band 2 tap no neighbour",
+      "pass": true,
+      "observed": [
+        0,
+        0.9998957863713489,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "A band 3 selected",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        1.999999700445806,
+        0
+      ]
+    },
+    {
+      "name": "A band 3 neighbours down",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        1.999999700445806,
+        0
+      ]
+    },
+    {
+      "name": "A band 3 firmware tap angle",
+      "pass": true,
+      "observed": 138.0
+    },
+    {
+      "name": "A band 3 tap dip",
+      "pass": true,
+      "observed": {
+        "angle": 138.0,
+        "lift": 0.9998896050335873,
+        "drop": 1.0001100954122188
+      }
+    },
+    {
+      "name": "A band 3 tap no neighbour",
+      "pass": true,
+      "observed": [
+        2.222695556497456e-06,
+        2.222695556497456e-06,
+        0.9998896050335873,
+        2.222695556497456e-06
+      ]
+    },
+    {
+      "name": "A band 4 selected",
+      "pass": true,
+      "observed": [
+        1.621663092699066e-07,
+        1.621663092699066e-07,
+        1.621663092699066e-07,
+        2.000000721371409
+      ]
+    },
+    {
+      "name": "A band 4 neighbours down",
+      "pass": true,
+      "observed": [
+        1.621663092699066e-07,
+        1.621663092699066e-07,
+        1.621663092699066e-07,
+        2.000000721371409
+      ]
+    },
+    {
+      "name": "A band 4 firmware tap angle",
+      "pass": true,
+      "observed": 154.0
+    },
+    {
+      "name": "A band 4 tap dip",
+      "pass": true,
+      "observed": {
+        "angle": 154.0,
+        "lift": 0.9998948436394475,
+        "drop": 1.0001058777319614
+      }
+    },
+    {
+      "name": "A band 4 tap no neighbour",
+      "pass": true,
+      "observed": [
+        2.2016438143701578e-06,
+        2.2016438143701578e-06,
+        2.2016438143701578e-06,
+        0.9998948436394475
+      ]
+    },
+    {
+      "name": "A gap 29 all down",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "A gap 87.5 all down",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "A gap 146 all down",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "A sweep no two active above 0.12mm",
+      "pass": true,
+      "observed": []
+    },
+    {
+      "name": "A sweep bounded stroke",
+      "pass": true,
+      "observed": 2.000000721371409
+    },
+    {
+      "name": "H band 1 selected",
+      "pass": true,
+      "observed": [
+        2.0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "H band 1 neighbours down",
+      "pass": true,
+      "observed": [
+        2.0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "H band 1 firmware tap angle",
+      "pass": true,
+      "observed": 21.0
+    },
+    {
+      "name": "H band 1 tap dip",
+      "pass": true,
+      "observed": {
+        "angle": 21.0,
+        "lift": 1.0824185119312615,
+        "drop": 0.9175814880687385
+      }
+    },
+    {
+      "name": "H band 1 tap no neighbour",
+      "pass": true,
+      "observed": [
+        1.0824185119312615,
+        4.730536527830509e-06,
+        4.730536527830509e-06,
+        4.730536527830509e-06
+      ]
+    },
+    {
+      "name": "H band 2 selected",
+      "pass": true,
+      "observed": [
+        0,
+        1.999999965801372,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "H band 2 neighbours down",
+      "pass": true,
+      "observed": [
+        0,
+        1.999999965801372,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "H band 2 firmware tap angle",
+      "pass": true,
+      "observed": 37.0
+    },
+    {
+      "name": "H band 2 tap dip",
+      "pass": true,
+      "observed": {
+        "angle": 37.0,
+        "lift": 1.0824283997455932,
+        "drop": 0.9175715660557788
+      }
+    },
+    {
+      "name": "H band 2 tap no neighbour",
+      "pass": true,
+      "observed": [
+        0,
+        1.0824283997455932,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "H band 3 selected",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        1.999999700445806,
+        0
+      ]
+    },
+    {
+      "name": "H band 3 neighbours down",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        1.999999700445806,
+        0
+      ]
+    },
+    {
+      "name": "H band 3 firmware tap angle",
+      "pass": true,
+      "observed": 138.0
+    },
+    {
+      "name": "H band 3 tap dip",
+      "pass": true,
+      "observed": {
+        "angle": 138.0,
+        "lift": 1.0824266427001819,
+        "drop": 0.9175730577456243
+      }
+    },
+    {
+      "name": "H band 3 tap no neighbour",
+      "pass": true,
+      "observed": [
+        2.222695556497456e-06,
+        2.222695556497456e-06,
+        1.0824266427001819,
+        2.222695556497456e-06
+      ]
+    },
+    {
+      "name": "H band 4 selected",
+      "pass": true,
+      "observed": [
+        1.621663092699066e-07,
+        1.621663092699066e-07,
+        1.621663092699066e-07,
+        2.000000721371409
+      ]
+    },
+    {
+      "name": "H band 4 neighbours down",
+      "pass": true,
+      "observed": [
+        1.621663092699066e-07,
+        1.621663092699066e-07,
+        1.621663092699066e-07,
+        2.000000721371409
+      ]
+    },
+    {
+      "name": "H band 4 firmware tap angle",
+      "pass": true,
+      "observed": 154.0
+    },
+    {
+      "name": "H band 4 tap dip",
+      "pass": true,
+      "observed": {
+        "angle": 154.0,
+        "lift": 1.0824283764473064,
+        "drop": 0.9175723449241024
+      }
+    },
+    {
+      "name": "H band 4 tap no neighbour",
+      "pass": true,
+      "observed": [
+        2.2016438143701578e-06,
+        2.2016438143701578e-06,
+        2.2016438143701578e-06,
+        1.0824283764473064
+      ]
+    },
+    {
+      "name": "H gap 29 all down",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "H gap 87.5 all down",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "H gap 146 all down",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "H sweep no two active above 0.12mm",
+      "pass": true,
+      "observed": []
+    },
+    {
+      "name": "H sweep bounded stroke",
+      "pass": true,
+      "observed": 2.000000721371409
+    },
+    {
+      "name": "G band 1 selected",
+      "pass": true,
+      "observed": [
+        2.0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "G band 1 neighbours down",
+      "pass": true,
+      "observed": [
+        2.0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "G band 1 firmware tap angle",
+      "pass": true,
+      "observed": 21.0
+    },
+    {
+      "name": "G band 1 tap dip",
+      "pass": true,
+      "observed": {
+        "angle": 21.0,
+        "lift": 0.8073990652060088,
+        "drop": 1.1926009347939912
+      }
+    },
+    {
+      "name": "G band 1 tap no neighbour",
+      "pass": true,
+      "observed": [
+        0.8073990652060088,
+        4.730536527830509e-06,
+        4.730536527830509e-06,
+        4.730536527830509e-06
+      ]
+    },
+    {
+      "name": "G band 2 selected",
+      "pass": true,
+      "observed": [
+        0,
+        1.999999965801372,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "G band 2 neighbours down",
+      "pass": true,
+      "observed": [
+        0,
+        1.999999965801372,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "G band 2 firmware tap angle",
+      "pass": true,
+      "observed": 37.0
+    },
+    {
+      "name": "G band 2 tap dip",
+      "pass": true,
+      "observed": {
+        "angle": 37.0,
+        "lift": 0.8073907302568752,
+        "drop": 1.1926092355444968
+      }
+    },
+    {
+      "name": "G band 2 tap no neighbour",
+      "pass": true,
+      "observed": [
+        0,
+        0.8073907302568752,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "G band 3 selected",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        1.999999700445806,
+        0
+      ]
+    },
+    {
+      "name": "G band 3 neighbours down",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        1.999999700445806,
+        0
+      ]
+    },
+    {
+      "name": "G band 3 firmware tap angle",
+      "pass": true,
+      "observed": 138.0
+    },
+    {
+      "name": "G band 3 tap dip",
+      "pass": true,
+      "observed": {
+        "angle": 138.0,
+        "lift": 0.807396029887598,
+        "drop": 1.1926036705582082
+      }
+    },
+    {
+      "name": "G band 3 tap no neighbour",
+      "pass": true,
+      "observed": [
+        2.222695556497456e-06,
+        2.222695556497456e-06,
+        0.807396029887598,
+        2.222695556497456e-06
+      ]
+    },
+    {
+      "name": "G band 4 selected",
+      "pass": true,
+      "observed": [
+        1.621663092699066e-07,
+        1.621663092699066e-07,
+        1.621663092699066e-07,
+        2.000000721371409
+      ]
+    },
+    {
+      "name": "G band 4 neighbours down",
+      "pass": true,
+      "observed": [
+        1.621663092699066e-07,
+        1.621663092699066e-07,
+        1.621663092699066e-07,
+        2.000000721371409
+      ]
+    },
+    {
+      "name": "G band 4 firmware tap angle",
+      "pass": true,
+      "observed": 154.0
+    },
+    {
+      "name": "G band 4 tap dip",
+      "pass": true,
+      "observed": {
+        "angle": 154.0,
+        "lift": 0.8073908113488351,
+        "drop": 1.1926099100225738
+      }
+    },
+    {
+      "name": "G band 4 tap no neighbour",
+      "pass": true,
+      "observed": [
+        2.2016438143701578e-06,
+        2.2016438143701578e-06,
+        2.2016438143701578e-06,
+        0.8073908113488351
+      ]
+    },
+    {
+      "name": "G gap 29 all down",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "G gap 87.5 all down",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "G gap 146 all down",
+      "pass": true,
+      "observed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "G sweep no two active above 0.12mm",
+      "pass": true,
+      "observed": []
+    },
+    {
+      "name": "G sweep bounded stroke",
+      "pass": true,
+      "observed": 2.000000721371409
+    }
+  ],
+  "pass": true
+}

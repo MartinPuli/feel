@@ -9,3 +9,20 @@ __pycache__/
 *.mobileprovision
 DerivedData/
 .pio/
+
+# Generated toolchain and build outputs
+.build/
+.build-cache/
+firmware/build/
+stl/
+*.xcodeproj/
+*.xcworkspace/
+.swiftpm/
+cad/viewer/mesh_*.js
+
+# Download via scripts/fetch_model.py, pin hash, compile on Apple platform
+*.mlmodel
+*.mlmodelc/
+
+# Local Mac setup environment
+.venv/

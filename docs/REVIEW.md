@@ -1,16 +1,34 @@
-# Independent engineering review
+# Independent review — greenfield V1
 
-Reviewed October 16, 2026 by a separate engineering agent with read-only ownership. The author agents and lead engineer integrated fixes; the reviewer did not edit its own reviewed files. Review scope was the new preparation tools, reference model, fixture evidence, CI and hardware/submission documentation. The missing production implementation could not be reviewed.
+Reviewed October 16, 2026 by an agent with read-only ownership, separate from the
+Swift, firmware and CAD authors. The lead engineer integrated cross-layer fixes.
+The earlier reference-model review is preserved in
+`REVIEW-PREPARATION-HISTORICAL.md`; it does not review this production source.
 
-| Finding | Severity | Resolution / evidence |
-|---|---|---|
-| Empty scenario suite, empty event list, empty and nested-empty expectations falsely returned PASS; renderer could receive no step | Medium | `validation/run_scenarios.py` now rejects these inputs. Regression tests and independent direct reproductions confirm rejection. |
-| Gap-transition replay asserted bands but not actual nominal phase/angle, so an incorrect command implementation still passed | Medium | `nominal_gap_transition` asserts column commands at gap/band/hold/timeout boundaries. Independent injection of neutral/999° output now fails five replay steps. |
-| Command timeout killed only the direct process; compiler/build descendants could continue and race artifact writes | Medium | Runner owns a Linux/macOS process session and kills its process group on timeout. Real child-process regression confirms the delayed child write does not occur. |
-| Direct iOS helper invocation failed at `cd` before classifying missing sources | Low | Missing `ios/` now produces explicit BLOCKED and exit 2. Verified directly. |
+| Finding | Resolution / verification |
+|---|---|
+| Old BLE callbacks and same-peripheral reconnect could restore stale state | Callback identity and serialized disconnect/reconnect; source re-reviewed |
+| Cached camera-relative target survived phone rotation | Cache world position and reproject against each current camera pose; portable rotation tests |
+| Queued AR/Vision results survived session/finder changes | Session and finder generations reject outdated results |
+| NI target removal/suspension/reconnect could retain old guidance or inhibit new ranging | Clear world target, validate active token/session, replace token on restart and clear old suspension latch; source review |
+| PWM failure could leave a previous channel active | Detach all outputs on failure; preflight every channel before updates; host tests and enabled-path compilation |
+| JSON decoding could bypass packet invariants | Validated custom decoding; malformed JSON packet regression cases |
+| Integration replay compared an acceptance counter with a Boolean | Assert command result explicitly; invalid cases assert the precise rejection reason |
+| Replays shared neutral-gap state after reset and buffered Swift stdout | Explicit controller RESET; immediate line-oriented stdout |
+| CAD checked the wrong band-3 tap angle | Actual firmware angles 21/37/138/154; 78 geometric assertions |
+| Dependency caches could masquerade as project source | Ignore build/cache directories in source checks; regression test |
+| Model download and CAD tool regressions absent from full runner | Both are mandatory available checks |
+| Concurrent CAD renders shared temporary files and invalidated hashes | Output-directory lock, unique temporaries, isolated fast builds, competing-writer regression; final sequential export |
 
-Reviewer independently reran **51 model tests**, **6 preflight/runner tests** and **18 scenarios / 77 steps**, all passing within the stated model scope. No unresolved high/critical defect was found in the reviewed preparation tooling. This is not a guarantee of completeness or a production V2 sign-off.
+The reviewer independently executed the 38 production firmware cases and 17 CLI
+commands. Final source review found no remaining critical/high defect in the
+reviewed paths and no obvious Apple API/deployment mismatch. This is bounded
+review, not a guarantee that all defects are absent. Actual Apple framework
+compilation and simulator/device execution are still blocked by the missing Mac
+platform; parser/source review is not a substitute.
 
-The hardware and Devpost documents were checked for unsafe unverified electrical commands, concealed pre-event work and fabricated physical results. They require the missing original assembly source and measured parts; they do not prescribe blindly running the handoff's full pulse sweep. Browser rendering was not verified by this review.
-
-Remaining blockers: original CAD/firmware/iOS and production contract adapter, real toolchain builds, all physical/sensor verification, and organizer clarification. See `KNOWN-ISSUES.md`.
+The lead engineer also exercised the production replay and actual-STL viewers in
+headless Chromium, including controls and mobile width, and visually inspected
+screenshots. The final consolidated executed results are in `TEST-REPORT.md` and
+`evidence/v1/`. All servo, electrical, BLE-radio, sensing and tactile validation
+remains physical work.

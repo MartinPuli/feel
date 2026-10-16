@@ -28,6 +28,14 @@ class SourcePresenceTests(unittest.TestCase):
             self.assertEqual(result["status"], "BLOCKED")
             self.assertEqual(result["source_groups"]["Lantern app"], [])
 
+    def test_dependency_sources_do_not_count_as_firmware(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dependency = root / "firmware/.pio/libdeps/example.cpp"
+            dependency.parent.mkdir(parents=True)
+            dependency.write_text("int vendor_example() { return 1; }")
+            self.assertEqual(preflight.inspect(root)["source_groups"]["firmware source"], [])
+
     def test_presence_never_claims_release_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

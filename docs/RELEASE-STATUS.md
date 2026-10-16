@@ -1,49 +1,37 @@
-# FEEL release status — October 16, 2026
+# FEEL V1 release status
 
-**V2 software: BLOCKED. Physical validation: NOT VERIFIED. V3: NOT STARTED.**
+**Available software checks: PASS. Apple-platform validation: BLOCKED.
+Physical hardware: NOT VERIFIED.** October 16, 2026.
 
-The supplied target repository was empty. GitHub returned HTTP 404 “This repository is empty” for its contents and `[]` for branches. This session imported the three supplied documents, prepared validation tooling and hardware/demo material, and created a separate `feel/v2-preparation` branch. It did not recover the missing application, firmware or CAD. The source audit and engineering instructions prohibit treating a substitute model as V2.
+This is a greenfield implementation from the specification. It does not recover
+or inherit test results from an original implementation. The complete runner
+executed 14 available checks successfully and returned exit 2 because this Linux
+host has no Xcode/XcodeGen/iOS simulator. Native app compilation, CoreML execution,
+UI tests and signed installation must still run on a Mac. CI is configured; no hosted result for this V1 snapshot has been confirmed yet.
+The user explicitly authorized publication after the earlier automatic-review block.
 
-| Area | Status | Meaning |
+| Area | Result | Evidence / remaining gate |
 |---|---|---|
-| V2 software | **BLOCKED** | Original source, dependencies, models and tests are absent; Xcode unavailable locally. |
-| V2 production-backed simulation | **BLOCKED** | Cannot reuse/verify missing production encoder, decoder or cam implementation. |
-| New specification simulator | See `TEST-REPORT.md` | Independent, explicitly synthetic preparation tool; not V2 certification. |
-| V2 physical hardware | **NOT VERIFIED** | No real device, servo, print, phone sensor or tactile user test. |
-| V3 software | **NOT STARTED** | V2 software gate has not passed; no V3 branch or Spatial Memory implementation. |
-| V3 physical hardware | **NOT VERIFIED** | No V3 hardware demonstration. |
-| Hackathon eligibility | **BLOCKED pending organizer answer** | Pre-event work disclosed; acceptance not inferred. |
+| Production Swift core and CLI | PASS | 38 XCTest cases; compiled replay executable |
+| Production firmware controller | PASS | 38 C++ cases; 17 CLI, 6 configuration and 6 upload-guard checks |
+| ESP32 and ESP32-S3 | PASS compilation | Default and enabled-output compile fixtures, four builds; no flashing |
+| Swift → nine-byte packet → C++ replay | PASS | 1,518 assertions, 558 firmware states, seed 20261016 |
+| OpenSCAD and meshes | PASS geometry | 24 exports with manifest hashes, 78 cam assertions, 13 tool regressions |
+| Apple CoreML resource | PASS integrity | Genuine pinned model downloaded and SHA-256 verified; inference NOT RUN |
+| Offline replay and actual-mesh viewers | PASS | Chromium interaction/rendering, desktop/mobile; synthetic geometry/data |
+| Tooling / historical Python model | PASS | 7 tooling and 51 reference-model tests; model is separate from production |
+| iOS platform | BLOCKED | Run `bash scripts/check_ios.sh` on macOS with Xcode, XcodeGen and model |
+| Servos, printed parts, power, BLE radio, LiDAR, NI, tactile use | NOT VERIFIED | Physical P1–P5 and device bring-up remain required |
 
-## Baseline and evidence
+Command: `python3 scripts/run_v1_checks.py --output .artifacts/v1-validated`.
+Exact commands/logs and host limitations: [evidence/v1/report.json](evidence/v1/report.json),
+[TEST-REPORT.md](TEST-REPORT.md), [REVIEW.md](REVIEW.md).
 
-`docs/evidence/baseline.json` records input hashes, platform, installed tools and the initial empty-repository responses. Exact current test commands, timestamps, outputs and model limits are in `TEST-REPORT.md` and `docs/evidence/`. Historical counts in `HANDOFF-v7.md` remain historical claims; none of its board/iOS/CAD build claims was reproduced.
+The user's criterion is all **available** software checks. That foundation gate
+has passed; V2 Spatial Memory may now proceed in its own branch. V1 remains
+preserved here. This milestone is not full Apple-platform or physical sign-off.
 
-The preparation is pushed as commit `7c3c755e288a39096d2f18fbf4d0e585a175bd18` and available in [draft PR #1](https://github.com/MartinPuli/hackharvard/pull/1). Hosted [run 38965192589](https://github.com/MartinPuli/hackharvard/actions/runs/38965192589) passed the model/tests job and failed the required-source job as expected; production jobs were skipped. Later documentation-only commits may record that evidence without changing the tested code.
-
-| Check | Command | Current state / next action |
-|---|---|---|
-| Original source presence | `python3 scripts/check_sources.py` | **BLOCKED**, expected exit 2; restore sources per `SOURCE-IMPORT.md`. |
-| Full available-check report | `python3 scripts/run_v2_checks.py --output .artifacts/v2-checks` | Must remain **BLOCKED** until source/toolchain checks and actual contract adapter run. |
-| Original firmware host suite | `sh firmware/test/run_host_tests.sh` | **BLOCKED**, script/source absent. |
-| Original firmware board builds | `pio run --project-dir firmware` | **BLOCKED**, configuration/source/PlatformIO absent; inspect original pinned environments before use. |
-| Original CAD export | `sh cad/build.sh` | **BLOCKED**, source absent; OpenSCAD 2021.01 is installed. |
-| Mesh inspection | `python3 cad/tools/check_stl.py stl/*/*.stl` | **BLOCKED**, mesh/checker absent. |
-| Original cam simulation | `python3 cad/tools/cam_sim.py` | **BLOCKED**, original code absent. |
-| iOS tests / builds | `bash scripts/check_ios.sh` | **BLOCKED**, original project and macOS/Xcode unavailable. Helper discovers actual simulators, runs Lantern tests, compiles Beacon and unsigned device targets when available. |
-| Production protocol comparison | `sh validation/adapters/run_contract_tests.sh` | **BLOCKED**, adapter must be implemented against real production code after import. |
-
-## What this preparation changes
-
-- Preserves the supplied instructions, v7 and updated event summary under canonical filenames.
-- Adds a reference packet model, deterministic fault fixtures and an offline visual replay with no hardware I/O.
-- Adds source-presence checks, a blocker-aware command runner, an unsigned iOS check helper and minimal CI. CI does not hide missing production source as a skipped green release.
-- Adds assembly/calibration records, an honest live-versus-simulation demo, Devpost draft, source import steps, provenance and unresolved eligibility questions.
-- Records independent review findings and actual retests. There is no claim that absent production code received a line-by-line audit.
-
-## Exactly what the team does next
-
-1. **Supply the original project:** upload the full working source folder (including uncommitted work), or the actual source repository URL. Preserve original authorship/history. The new preparation branch is not a replacement for that source.
-2. **Run one-column hardware gates when parts arrive:** identify board and servo, obtain reliable electrical specs, review unpowered wiring, finish the manual rig using recovered CAD, record P1 selection / P2 return / P3 thumb contact / P4 100 cycles / P5 isolated taps. Then measure the actual servo/horn and calibrate one powered column. Stop on a failed gate.
-3. **Integrate and demonstrate only verified behavior:** expand to seven columns after one-column passes, verify power/load/timeout and phone-to-palm direction, then test real LiDAR/BLE and optional UWB indoors with a spotter. Record results, confirm eligibility and update the submission before the supplied Sunday 8 AM EDT deadline.
-
-Detailed work order: `HARDWARE-BRINGUP.md` → `CALIBRATION.md` → `DEMO.md`. V3 stays deferred until V2's actual software quality checks and review pass.
+Primary hardware is the team's classic ESP32-WROOM. Servo PWM defaults OFF.
+Published FS0307 travel/voltage differs from the handoff's 175°/650–2500 µs
+assumption. Identify and measure the actual units before enabling output. Nominal
+CAD clearances, horn fit, thin-guide stiffness and foam return are unverified.

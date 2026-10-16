@@ -1,0 +1,545 @@
+{
+  "scope": "GEOMETRY ONLY \u2014 not physically verified",
+  "hardware_measurements_confirmed": false,
+  "mode": "full",
+  "files": [
+    {
+      "path": "test/frame.stl",
+      "pass": true,
+      "triangles": 2060,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -11.0,
+          -44.399993896484375,
+          0.0
+        ],
+        [
+          11.0,
+          44.399993896484375,
+          32.5
+        ]
+      ],
+      "volume_mm3": 8550.187,
+      "errors": [],
+      "sha256": "71e3ec4e4e3f40de09c86d81ecccdb0dae59a88569b1b83e7dd4e6c20fa5cb20",
+      "seconds": 1.05
+    },
+    {
+      "path": "test/strip.stl",
+      "pass": true,
+      "triangles": 1772,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -11.0,
+          -20.0,
+          0.0
+        ],
+        [
+          11.0,
+          40.0,
+          2.5
+        ]
+      ],
+      "volume_mm3": 3045.913,
+      "errors": [],
+      "sha256": "19d3e5cd2e8d66c516b4f891c45315174f2e2954b69bb3c46002374bd66345c6",
+      "seconds": 0.89
+    },
+    {
+      "path": "test/guide.stl",
+      "pass": true,
+      "triangles": 2004,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -11.0,
+          -40.0,
+          3.814697322468419e-07
+        ],
+        [
+          11.0,
+          20.0,
+          10.399999618530273
+        ]
+      ],
+      "volume_mm3": 1804.959,
+      "errors": [],
+      "sha256": "a1e1532e6024a0b37928e17a213e0d669896ec12200dc083595bcdd980855f1c",
+      "seconds": 1.04
+    },
+    {
+      "path": "test/shaft_A.stl",
+      "pass": true,
+      "triangles": 6724,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.326324462890625,
+          -5.784027099609375,
+          0.0
+        ],
+        [
+          3.79998779296875,
+          5.79998779296875,
+          58.0
+        ]
+      ],
+      "volume_mm3": 929.234,
+      "errors": [],
+      "sha256": "44123a2af79717917e566c41b3f2b3ffc62bb9ea152b27c89de16c7353e5c529",
+      "seconds": 2.64
+    },
+    {
+      "path": "test/shaft_H.stl",
+      "pass": true,
+      "triangles": 6724,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.363861083984375,
+          -5.7880401611328125,
+          0.0
+        ],
+        [
+          3.79998779296875,
+          5.79998779296875,
+          58.0
+        ]
+      ],
+      "volume_mm3": 931.979,
+      "errors": [],
+      "sha256": "58dadb1649428f90839a9bf481b36f68f67c7b09285294fe4cf4357f81e29ed1",
+      "seconds": 2.54
+    },
+    {
+      "path": "test/shaft_G.stl",
+      "pass": true,
+      "triangles": 6724,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.2342071533203125,
+          -5.777923583984375,
+          0.0
+        ],
+        [
+          3.79998779296875,
+          5.79998779296875,
+          58.0
+        ]
+      ],
+      "volume_mm3": 921.9,
+      "errors": [],
+      "sha256": "0754831f201aa91c0276b6acc770eb202c5c59819edba8899a601b5ca4244fb7",
+      "seconds": 2.5
+    },
+    {
+      "path": "test/pins_tip21.stl",
+      "pass": true,
+      "triangles": 9892,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.0,
+          -17.0,
+          0.0
+        ],
+        [
+          5.0,
+          37.01297378540039,
+          12.195503234863281
+        ]
+      ],
+      "volume_mm3": 757.851,
+      "errors": [],
+      "sha256": "72749a5d373ba70aa2c18ee218499807f09f6c413bd9b7935471bd63f0a30791",
+      "seconds": 5.97
+    },
+    {
+      "path": "test/pins_tip15.stl",
+      "pass": true,
+      "triangles": 11044,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.0,
+          -17.0,
+          0.0
+        ],
+        [
+          5.0,
+          37.01297378540039,
+          12.19678783416748
+        ]
+      ],
+      "volume_mm3": 733.454,
+      "errors": [],
+      "sha256": "eda5089164859cde4856632fa734975f1208976c061ecdc57880536e3a18670a",
+      "seconds": 6.61
+    },
+    {
+      "path": "test/crank.stl",
+      "pass": true,
+      "triangles": 640,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.0,
+          -5.0,
+          0.0
+        ],
+        [
+          26.0,
+          5.0,
+          14.899999618530273
+        ]
+      ],
+      "volume_mm3": 1225.003,
+      "errors": [],
+      "sha256": "4772b8608e87af619357dced035cb9b56f0f0ef84919d89bfc8db35b484593fc",
+      "seconds": 0.27
+    },
+    {
+      "path": "test/dummy_servo.stl",
+      "pass": true,
+      "triangles": 220,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -4.149999618530273,
+          -38.29999923706055,
+          0.0
+        ],
+        [
+          4.149999618530273,
+          -22.489999771118164,
+          23.0
+        ]
+      ],
+      "volume_mm3": 2273.535,
+      "errors": [],
+      "sha256": "e93091805a0d3daa06732207c8a263f4ed4d93d1c4f76c7e408bf9b44fcfca0e",
+      "seconds": 0.09
+    },
+    {
+      "path": "test/foam_template.stl",
+      "pass": true,
+      "triangles": 988,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -4.5,
+          -14.5,
+          0.0
+        ],
+        [
+          4.5,
+          34.5,
+          1.1999998092651367
+        ]
+      ],
+      "volume_mm3": 455.201,
+      "errors": [],
+      "sha256": "2b39bf1d33b987cd2f027d4afb5ef26ddc9fdb44266816ecda86cac34aad8ac4",
+      "seconds": 0.31
+    },
+    {
+      "path": "test/hole_coupon.stl",
+      "pass": true,
+      "triangles": 3364,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -30.5,
+          -8.5,
+          0.0
+        ],
+        [
+          30.5,
+          8.5,
+          5.0
+        ]
+      ],
+      "volume_mm3": 4694.489,
+      "errors": [],
+      "sha256": "7f33302e205601d6944dce1f001f29bba9a029b001b70ad6c45f2bbe795cde53",
+      "seconds": 1.61
+    },
+    {
+      "path": "test/pitch_coupon.stl",
+      "pass": true,
+      "triangles": 1740,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -25.0,
+          -15.0,
+          0.0
+        ],
+        [
+          25.0,
+          15.0,
+          4.0
+        ]
+      ],
+      "volume_mm3": 3205.425,
+      "errors": [],
+      "sha256": "8b63a0be4de971406dd4a3948b90c7abd576f191d01449cfb5d512b5bb34f5c4",
+      "seconds": 0.8
+    },
+    {
+      "path": "test/coupling_C1.stl",
+      "pass": true,
+      "triangles": 1140,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.0,
+          -5.0,
+          0.0
+        ],
+        [
+          5.0,
+          5.0,
+          7.0
+        ]
+      ],
+      "volume_mm3": 447.534,
+      "errors": [],
+      "sha256": "ed36594ff86168901409e909de06dd4a2ddc65272b13cffeac9fb2fb0cbf6865",
+      "seconds": 0.49
+    },
+    {
+      "path": "test/coupling_C2.stl",
+      "pass": true,
+      "triangles": 1148,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.0,
+          -5.0,
+          0.0
+        ],
+        [
+          5.0,
+          5.0,
+          7.0
+        ]
+      ],
+      "volume_mm3": 439.451,
+      "errors": [],
+      "sha256": "bb9b7337db9b6afc9f56dea1d6f51a048f279341277a94b7bebfa7007e18ae27",
+      "seconds": 0.46
+    },
+    {
+      "path": "test/coupling_C3.stl",
+      "pass": true,
+      "triangles": 724,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.0,
+          -5.0,
+          0.0
+        ],
+        [
+          5.0,
+          5.0,
+          7.0
+        ]
+      ],
+      "volume_mm3": 483.422,
+      "errors": [],
+      "sha256": "5b95e333733302f5d883453f39709a50348c5057cbc11f48cc8f48592479797d",
+      "seconds": 0.19
+    },
+    {
+      "path": "puck/chassis.stl",
+      "pass": true,
+      "triangles": 7504,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -50.49999237060547,
+          -44.399993896484375,
+          0.0
+        ],
+        [
+          50.49999237060547,
+          44.399993896484375,
+          32.5
+        ]
+      ],
+      "volume_mm3": 54274.801,
+      "errors": [],
+      "sha256": "b6487dfba376c5c897e3260211e0a377fdf7072e1f081f27458521db0e00653d",
+      "seconds": 7.34
+    },
+    {
+      "path": "puck/face.stl",
+      "pass": true,
+      "triangles": 25424,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -44.29998779296875,
+          -44.399993896484375,
+          0.0
+        ],
+        [
+          44.29998779296875,
+          44.3580322265625,
+          5.5
+        ]
+      ],
+      "volume_mm3": 26342.008,
+      "errors": [],
+      "sha256": "7dcf6335e7bf05ab0730f5f7c7b6ee60f0494bc4b86c58839a57aa3acc672d48",
+      "seconds": 20.71
+    },
+    {
+      "path": "puck/guide.stl",
+      "pass": true,
+      "triangles": 8356,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -41.5,
+          -39.0,
+          3.814697322468419e-07
+        ],
+        [
+          41.5,
+          19.0,
+          10.399999618530273
+        ]
+      ],
+      "volume_mm3": 8176.365,
+      "errors": [],
+      "sha256": "4d11dec6c75617aed71c71923e68999292a1e44719da219bd263590ebf191064",
+      "seconds": 9.54
+    },
+    {
+      "path": "puck/shaft_A.stl",
+      "pass": true,
+      "triangles": 6724,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.326324462890625,
+          -5.784027099609375,
+          0.0
+        ],
+        [
+          3.79998779296875,
+          5.79998779296875,
+          58.0
+        ]
+      ],
+      "volume_mm3": 929.234,
+      "errors": [],
+      "sha256": "e35d1e4050ee3b9a9f487986261ccaa7ce15939a619413def45363c6a871e38c",
+      "seconds": 2.37
+    },
+    {
+      "path": "puck/pins.stl",
+      "pass": true,
+      "triangles": 67056,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -41.0,
+          -17.0,
+          0.0
+        ],
+        [
+          41.0,
+          37.01297378540039,
+          15.170255661010742
+        ]
+      ],
+      "volume_mm3": 5419.137,
+      "errors": [],
+      "sha256": "83c1f49f456e7c94336c199ac46c93a8f748ae8caeb5d624f820353a872995ff",
+      "seconds": 70.23
+    },
+    {
+      "path": "puck/foam_template.stl",
+      "pass": true,
+      "triangles": 5788,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -40.5,
+          -14.5,
+          0.0
+        ],
+        [
+          40.5,
+          34.5,
+          1.1999998092651367
+        ]
+      ],
+      "volume_mm3": 4183.259,
+      "errors": [],
+      "sha256": "17aa544434f981121a3fa6a2f2e63c6f13d3d078dc1ecc662d47ad4c32e0e30d",
+      "seconds": 5.33
+    },
+    {
+      "path": "puck/servo_retainer.stl",
+      "pass": true,
+      "triangles": 204,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -40.149993896484375,
+          -2.0,
+          0.0
+        ],
+        [
+          40.149993896484375,
+          2.0,
+          7.0
+        ]
+      ],
+      "volume_mm3": 2242.328,
+      "errors": [],
+      "sha256": "3c71278a3685b68128b57442ea07f4764b8621fe5e58ca7c90b697002cd19c88",
+      "seconds": 0.02
+    },
+    {
+      "path": "puck/pack_tray.stl",
+      "pass": true,
+      "triangles": 1944,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -40.5,
+          -56.0,
+          0.0
+        ],
+        [
+          40.5,
+          56.0,
+          13.0
+        ]
+      ],
+      "volume_mm3": 34529.957,
+      "errors": [],
+      "sha256": "62282786ce8bcb1f7bb0f2baf3ba3fdb6a0638e2f188d628ad4471d929304121",
+      "seconds": 1.31
+    }
+  ],
+  "copies": {
+    "puck/shaft_A.stl": 8,
+    "puck/pins.stl": 1,
+    "puck/foam_template.stl": 1
+  },
+  "notes": [
+    "Print 7 working shafts + 1 spare; 28 pins on removable sprues.",
+    "C3 is a nominal bore sizing coupon, not an engineered 20T spline.",
+    "Bed contact and closed mesh do not prove support-free printing."
+  ]
+}
