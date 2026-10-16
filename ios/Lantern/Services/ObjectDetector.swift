@@ -10,7 +10,7 @@ struct ImageDetection {
     let confidence: Double
 }
 enum FinderMode: String, CaseIterable, Identifiable {
-    case none="Obstacles", door="Door candidate", exit="EXIT sign", chair="Chair", person="Person", teammate="Teammate"
+    case none="Obstacles", door="Door candidate", exit="EXIT sign", chair="Chair", person="Person", teammate="Teammate", barcode="QR / barcode"
     var id: String { rawValue }
 }
 
@@ -24,12 +24,42 @@ final class ObjectDetector {
                 let configuration=MLModelConfiguration(); configuration.computeUnits = .all
                 model=try VNCoreMLModel(for:MLModel(contentsOf:url,configuration:configuration)); modelStatus="CoreML detector loaded"
             } catch { modelStatus="CoreML unavailable: \(error.localizedDescription)" }
-        } else { modelStatus="No CoreML weights bundled; EXIT, person and door-candidate fallbacks available" }
+        } else { modelStatus="No CoreML weights bundled; EXIT, person, door-candidate and barcode detection available" }
     }
+
+    /// Payload is display-only data: never a URL to open or a command to execute.
+    /// Bound both the inspected input and output, including pathological Unicode.
+    static func barcodeLabel(_ payload: String?) -> String {
+        guard let payload else { return "Barcode" }
+        var label = String.UnicodeScalarView()
+        var previousWasSpace = true
+        for scalar in payload.unicodeScalars.prefix(512) {
+            if CharacterSet.whitespacesAndNewlines.contains(scalar) {
+                if !previousWasSpace { label.append(" "); previousWasSpace = true }
+            } else {
+                switch scalar.properties.generalCategory {
+                case .control, .format, .lineSeparator, .paragraphSeparator, .surrogate:
+                    continue
+                default:
+                    label.append(scalar); previousWasSpace = false
+                }
+            }
+            if label.count >= 58 { break }
+        }
+        let text = String(label).trimmingCharacters(in: .whitespacesAndNewlines)
+        return text.isEmpty ? "Barcode" : "Code: \(text)"
+    }
+
     func detect(pixelBuffer: CVPixelBuffer, mode: FinderMode) throws -> [ImageDetection] {
         let handler=VNImageRequestHandler(cvPixelBuffer:pixelBuffer,orientation:.up,options:[:])
         switch mode {
         case .none,.teammate: return []
+        case .barcode:
+            let request=VNDetectBarcodesRequest()
+            try handler.perform([request])
+            return (request.results ?? []).filter { $0.confidence>=0.5 }.map {
+                ImageDetection(label:Self.barcodeLabel($0.payloadStringValue),box:$0.boundingBox,confidence:Double($0.confidence))
+            }
         case .exit:
             let request=VNRecognizeTextRequest(); request.recognitionLevel = .fast; request.usesLanguageCorrection=false; request.recognitionLanguages=["en-US"]
             try handler.perform([request])

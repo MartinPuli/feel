@@ -32,13 +32,15 @@ struct LanternView:View {
                         Stepper(value:$model.cameraHeight,in:0.6...2.1,step:0.05) { Text(String(format:"Camera height: %.2f m",model.cameraHeight)) }
                         Button(model.calibrated ? "Recalibrate floor" : "Calibrate floor") { model.calibrate() }.buttonStyle(.bordered)
                         Picker("Find",selection:$model.finder) {
-                            ForEach(FinderMode.allCases) { mode in Text(mode.rawValue).tag(mode).disabled(mode == .chair && !model.detectorAvailable) }
+                            ForEach(FinderMode.allCases) { mode in Text(mode.rawValue).tag(mode).disabled((mode == .chair && !model.detectorAvailable) || (mode == .teammate && model.restoredMapSession)) }
                         }.pickerStyle(.menu)
                         Text(model.detectorStatus).font(.footnote)
                         if model.finder == .door { Text("Door candidate uses rectangle shape. It cannot confirm a door or a safe opening.").font(.footnote) }
-                        if model.finder == .teammate { PeerPanel(peer:model.peer) }
+                        if model.finder == .teammate,!model.restoredMapSession { PeerPanel(peer:model.peer) }
+                        if model.restoredMapSession { Text("Teammate ranging requires a fresh Live session; it cannot share a restored AR world map.").font(.footnote) }
                     }
                     PuckConnectionPanel(puck:model.puck)
+                    AdvancedPanel(model:model,voice:model.voice)
                     DisclosureGroup("Packet and test notes") {
                         VStack(alignment:.leading,spacing:8) {
                             Text(model.packet.hex).font(.system(.body,design:.monospaced)).textSelection(.enabled)
@@ -47,8 +49,52 @@ struct LanternView:View {
                         }.font(.footnote)
                     }
                 }.padding(20)
-            }.navigationTitle("FEEL V2").navigationBarTitleDisplayMode(.inline)
+            }.navigationTitle("FEEL V3").navigationBarTitleDisplayMode(.inline)
         }
+    }
+}
+
+struct AdvancedPanel:View {
+    @ObservedObject var model:LanternModel
+    @ObservedObject var voice:VoiceControl
+    @FocusState private var editingCommand:Bool
+    var body:some View {
+        DisclosureGroup("Voice, saved map and feedback") {
+            VStack(alignment:.leading,spacing:14) {
+                Text("Commands are accepted only from this field or an explicit speech attempt. Camera text and barcode labels never execute commands.").font(.footnote)
+                Picker("Command language",selection:$model.commandLanguage) { Text("English").tag(VoiceLanguage.en); Text("Español").tag(VoiceLanguage.es) }.pickerStyle(.segmented)
+                HStack {
+                    TextField("Command",text:$model.commandText).textFieldStyle(.roundedBorder).focused($editingCommand)
+                        .submitLabel(.done).onSubmit { editingCommand=false }.accessibilityIdentifier("commandText")
+                    Button("Run command") { editingCommand=false; model.submitTypedCommand() }.buttonStyle(.borderedProminent).accessibilityIdentifier("runCommand")
+                }
+                Text(model.commandLanguage == .en ? "remember Desk · recall Desk · return · stop · list places · find barcode" : "recuerda Mesa · recupera Mesa · vuelve · para · lista lugares · busca código").font(.footnote)
+                HStack {
+                    Button("Start speaking") { editingCommand=false; model.startVoiceCommand() }.disabled(voice.isListening)
+                    Button("Finish speaking") { voice.finish() }.disabled(!voice.canFinish)
+                    Button("Cancel speech") { voice.cancel() }
+                    Button("Read result") { model.readCommandResult() }.disabled(voice.isListening)
+                }.buttonStyle(.bordered)
+                Text(voice.status).accessibilityIdentifier("voiceStatus")
+                if !voice.transcript.isEmpty { Text(voice.transcript).font(.footnote) }
+                Text(model.commandNotice).accessibilityIdentifier("commandNotice")
+                Text("Speech requires on-device support for the selected language. There is no cloud recognition fallback. Type a command if speech is unavailable.").font(.footnote)
+                Divider()
+                Picker("Target tap profile",selection:$model.adaptiveProfile) {
+                    Text("Standard").tag(AdaptiveProfile.standard); Text("Reduced").tag(AdaptiveProfile.reduced); Text("Automatic").tag(AdaptiveProfile.automatic)
+                }.pickerStyle(.menu).accessibilityIdentifier("adaptiveProfile")
+                Text("Obstacle pins stay unchanged. Reduced target taps use 1.8 seconds quiet, then 0.6 seconds highlighted. Automatic chooses reduced when any near obstacle appears and waits 2.4 seconds clear before resuming standard.").font(.footnote)
+                Divider()
+                Text("One saved local map").font(.headline)
+                HStack {
+                    Button("Save map") { model.saveMap() }.disabled(model.mode != .live || model.mapBusy || model.restoringMap)
+                    Button("Load map") { model.loadMap() }.disabled(model.mode != .live || model.mapBusy)
+                    Button("Delete saved map",role:.destructive) { model.deleteSavedMap() }.disabled(model.mapBusy)
+                }.buttonStyle(.bordered)
+                Text(model.mapNotice).accessibilityIdentifier("mapNotice")
+                Text("Save replaces the previous local map and its places. Load starts a new session in the same physical area; places stay inactive until relocalization succeeds. Select and Recall explicitly afterward. Simulation never creates a real AR map.").font(.footnote)
+            }.padding(.top,8)
+        }.accessibilityIdentifier("advancedControls")
     }
 }
 struct PuckView:View {

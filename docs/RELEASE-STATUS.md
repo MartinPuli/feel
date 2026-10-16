@@ -1,42 +1,46 @@
-# FEEL V2 release status
+# FEEL V3 release status
 
-**V2 software validation: PASS, including hosted native iOS checks.
-Physical hardware: NOT VERIFIED.** October 16, 2026.
+**V1 and V2 software: PASS. V3 available local checks: PASS; native Apple gate
+pending. Physical hardware: NOT VERIFIED.** October 16, 2026.
 
-V1 was validated first and preserved on `feel/v1-foundation`; its source is now
-published at commit `f6244379e7e8e9dad81f84fb4cd8886f9e77c7ee`. That remote tree
-exactly matches the reviewed local V1 snapshot. All four hosted jobs, including
-iOS app/UI tests and simulator/unsigned-device builds, passed in run38972250150.
-See `evidence/v1/github-actions.json`. V2 native rerun38974519620 also passed all four jobs after the UI test interaction correction.
+V3 was created in isolated branch `feel/v3-advanced` only after V1 hosted run
+38972250150 and V2 run38974519620 passed all four jobs, including app/UI tests,
+simulator builds and unsigned device builds. Their source branches are preserved.
+See `evidence/v1/github-actions.json` and `evidence/v2/github-actions.json`.
 
-This isolated `feel/v2-spatial-memory` branch adds volatile bookmarks, Remember,
-Recall, explicit Set Return Point/Return, multiple selection/rename/delete,
-accessible controls and a production-backed replay. Memory resets when the AR
-coordinate frame resets. Offscreen, behind, distant or different-level places do
-not fabricate a target highlight. Closer obstacles remain encoded.
+V3 adds explicit on-device English/Spanish commands with typed fallback/readback,
+one local persistent AR world map and its multiple bookmarks/Return point,
+inactive-until-relocalized restoration, adaptive target cadence and Vision
+barcode/QR finding. Protocol, firmware and mechanics are unchanged.
 
-| V2 check | Result |
+| Check | Actual result |
 |---|---|
-| Production Swift tests | 58 PASS, including 20 spatial-memory tests |
-| Production Swift CLI build | PASS |
-| Firmware host/controller regressions | PASS: unchanged V1 firmware |
-| Preserved V1 packet/controller replay | PASS: 1,518 assertions, 558 states |
-| Spatial-memory → packet → controller replay | PASS: 358 assertions, 43 states |
-| Recorded spatial viewer | PASS browser rendering/controls/mobile layout |
-| Apple-framework builds and app/UI tests | PASS: Xcode16.4, 6 app unit + 2 UI tests, both simulator and unsigned device builds |
-| Printed mechanics, servo/electrical, actual AR/BLE/NI/touch | NOT VERIFIED |
+| Production Swift tests | 90 PASS, including 32 new V3 tests |
+| Production Swift CLI | Build PASS |
+| Firmware regressions | 38 cases +17 CLI +6 board +6 upload guards PASS |
+| V1 packet/controller replay | 1,518 assertions, 558 states PASS |
+| V2 spatial replay | 358 assertions, 43 states PASS |
+| V3 advanced replay | 1,441 assertions, 156 states PASS |
+| Advanced recorded viewer | Browser controls, 28 pins, desktop/mobile PASS |
+| Independent source review | Complete; no unresolved critical/high finding |
+| Native Apple builds/app/UI tests | BLOCKED locally: no Apple SDK on Linux; hosted execution pending |
+| Actual speech, maps, camera, AR/BLE/NI and tactile hardware | NOT VERIFIED |
 
-Command: `python3 scripts/run_spatial_checks.py --output .artifacts/v2-validated`.
-The final run returned2 because its Apple check is BLOCKED; all five available
-checks passed. The host invocation used a PTY to avoid this environment's
-intermittent `/proc` process-monitor failure. Earlier failed wrapper attempts
-were environment failures, not successful tests; the final logs and independent
-58-test direct run are the evidence. See `TEST-REPORT.md` and `evidence/v2/`.
+Command: `python3 scripts/run_advanced_checks.py --output .artifacts/v3-validated-complete`.
+Actual exit2: six available checks PASS, one Apple gate BLOCKED. Evidence is in
+`evidence/v3/report.json` and adjacent logs; `TEST-REPORT.md` explains earlier
+failures and fixes. An actual completed XCTest transcript, not just process exit,
+is required. No native test result is inferred from Linux syntax parsing.
 
-V1 CAD, protocol and embedded source are unchanged. Their 24 exports,78 cam
-assertions,13 tool tests and four embedded builds remain the V1 evidence; these
-were not needlessly repeated as new V2 tests. PWM remains disabled by default.
-The native gate now passes in [run38974519620](https://github.com/MartinPuli/hackharvard/actions/runs/38974519620),
-source `6e59c5b5dbe3a96ba8f03d712af08a648dd3a9ff`. The initial failed run is
-preserved in `evidence/v2/github-actions-initial-failure.json`; final results are
-in `evidence/v2/github-actions.json`. V3 may now begin in an isolated branch.
+The V1 CAD and embedded source are unchanged; their prior physical limitations
+still apply. PWM is disabled by default. No phone, board, servo, microphone or
+printed assembly has been physically tested by this build environment.
+
+Next human actions:
+
+1. Clone `feel/v1-foundation` on the Mac and follow `SETUP-MAC-ESP32.md` for the
+   default output-disabled ESP32 build and serial STATUS check.
+2. Identify the exact servo variant and measure supply polarity/voltage and
+   mechanical fit before the single-column powered procedure.
+3. Use a LiDAR iPhone for the device checks in ADVANCED.md after bench bring-up;
+   keep actual results separate from simulation.

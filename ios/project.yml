@@ -13,7 +13,7 @@ settings:
     DEVELOPMENT_TEAM: ''
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     CURRENT_PROJECT_VERSION: '1'
-    MARKETING_VERSION: '2.0.0'
+    MARKETING_VERSION: '3.0.0'
 packages:
   FeelCore:
     path: Shared/FeelCore
@@ -30,6 +30,8 @@ targets:
       properties:
         CFBundleDisplayName: FEEL
         NSCameraUsageDescription: FEEL uses the camera and LiDAR to estimate nearby obstacles and find selected targets.
+        NSMicrophoneUsageDescription: FEEL records only when you explicitly start an on-device voice command.
+        NSSpeechRecognitionUsageDescription: FEEL recognizes explicit commands on this device when supported; typed commands remain available.
         NSBluetoothAlwaysUsageDescription: FEEL sends tactile commands to your chosen palm puck.
         NSLocalNetworkUsageDescription: FEEL finds a teammate's Beacon phone and exchanges Nearby Interaction tokens after both people agree.
         NSNearbyInteractionUsageDescription: FEEL measures the relative direction and distance of your chosen teammate's phone.
@@ -44,6 +46,8 @@ targets:
       - sdk: CoreBluetooth.framework
       - sdk: CoreML.framework
       - sdk: Vision.framework
+      - sdk: Speech.framework
+      - sdk: AVFoundation.framework
       - sdk: NearbyInteraction.framework
       - sdk: MultipeerConnectivity.framework
     settings:

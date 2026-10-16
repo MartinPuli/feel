@@ -1,62 +1,65 @@
-# V2 executed tests
+# V3 executed tests
 
-The final V2 runner completed five available checks successfully; its Apple gate
-is BLOCKED on Linux; hosted Xcode16.4 subsequently passed all native checks. Evidence: `docs/evidence/v2/report.json` and adjacent logs.
-Foundation evidence and exact counts are preserved in `TEST-REPORT-V1.md` and
-`docs/evidence/v1/`.
+V1 and V2 results are preserved in TEST-REPORT-V1.md, TEST-REPORT-V2.md and their
+evidence directories. Both prerequisite hosted native gates passed before V3.
 
-- `sh ios/scripts/test_portable.sh`: **58 XCTest tests,0 failures**,20 new spatial.
-- `swift build -j 2 --package-path ios/Shared/FeelCore`: **PASS**.
-- `sh firmware/test/run_host_tests.sh`: **38 C++ cases,17 CLI commands,6 board
-  configuration checks,6 compile-fixture guards PASS**.
-- `python3 validation/production/run.py`: **1,518 assertions,558 states PASS**.
-- `python3 validation/spatial/run.py`: **358 assertions,43 states PASS**.
-- The actual stateful CLI also executed `ios/Fixtures/spatial-memory.json`: PASS.
-- All17 Swift source files passed syntax parsing. This is not Apple typechecking.
-- The independent reviewer executed the58-test binary directly and reviewed the
-  app/AR/NI lifecycle and UI source. No unresolved critical/high finding remained.
-- Headless Chromium exercised the recorded spatial viewer:28pins,next,slider,
-  playback,desktop/mobile,no JavaScript errors or horizontal overflow.
+The V3 final local runner completed six available checks; it returned2 for the
+Apple gate unavailable on Linux. See `evidence/v3/report.json` and actual logs.
 
-Spatial coverage includes translations,90°/180° rotations, sector edges, arrival,
-vertical mismatch, out-of-view/behind/far places, tracking loss/recovery, stale and
-future poses, invalid bases, session isolation/reset, ID/name validation, capacity,
-multiple targets, rename/delete, Return, Stop, closer obstacles and watchdog.
-A review found pitch-dependent disagreement between memory and obstacle columns.
-Memory now uses the same inverse-camera bearing and camera x/z range as V1;20°
-and40° equivalence regressions compare it to the existing perception paths.
-World-horizontal range and vertical distance remain separate arrival criteria.
+| Command | Observed result |
+|---|---|
+| `sh ios/scripts/test_portable.sh` | 90 tests, 0 failures |
+| `swift build -j 2 --package-path ios/Shared/FeelCore` | Build complete |
+| `sh firmware/test/run_host_tests.sh` | 38 controller,17 CLI,6 board,6 upload-guard cases PASS |
+| `python3 validation/production/run.py` | 1,518 assertions,558 states PASS |
+| `python3 validation/spatial/run.py` | 358 assertions,43 states PASS |
+| `python3 validation/advanced/run.py` | 1,441 assertions,156 states PASS |
+| `bash scripts/check_ios.sh` | BLOCKED on this Linux host; hosted execution pending |
 
-Some non-PTY wrapper invocations hit the restricted host's `/proc` monitor and
-exited SIGILL. No such failed invocation is reported as PASS. Final consolidated
-execution in a PTY, and independent direct XCTest execution, both completed with
-zero failures. Swift uses the same legacy-driver/private-libncurses workaround
-recorded for V1. A normal Mac does not require those cloud-host paths.
+The32 new portable tests comprise12 adaptive,11 voice grammar and9 persistence
+tests. They exercise unchanged bands/sequence numbers, quiet-first timing and
+hysteresis, malformed/composite/partial commands, Unicode bounds, strict archive
+validation, atomic restore, map/session identity, settling gaps and timeouts.
 
-The three new Apple-platform coordinator tests and memory UI flow subsequently
-passed on hosted macOS. Together with V1, 6 app unit tests and 2 UI tests passed. No ARKit
-relocalization, real phone pose, BLE transmission, servo, current, force or human
-tactile behavior was verified. V2 memory intentionally does not persist across
-AR resets and is not an obstacle-free route planner.
+The advanced replay invokes the real compiled Swift parser/archive/guide/encoder,
+then feeds actual packet bytes into the production C++ decoder/controller. Its
+speech transcripts, AR bytes/poses/relocalization observations and motor model
+are synthetic. The baseline and spatial replays also still pass. No transport,
+real map alignment or physical motor feedback is fabricated.
 
-## First hosted Mac result
+Chromium155 checked the actual recorded viewer:28 pins, actual result/count,
+Next, slider, playback/pause, desktop screenshot,390px mobile without horizontal
+overflow and no JavaScript errors. Metadata: `evidence/v3/browser-check.json`.
 
-Run38972855892 compiled the app and passed6 app unit/coordinator tests, but the
-2-test UI suite had3 assertion failures in the memory flow: two manual scroll
-visibility preconditions and the tracking-loss control. This is a real failed
-run, not a successful validation. The UI correction and a complete native rerun
-are required before the V2 software gate passes. Metadata and exact failure lines
-are in `evidence/v2/github-actions-initial-failure.json` and
-`evidence/v2/ios-ci-initial-failure.log`.
+## Found failures and fixes
 
-## Successful native rerun
+The first version of the restore gate incorrectly counted a one-second gap
+without observations as continuous normal tracking. Root reproduced this through
+the production CLI (`expected awaitingRelocalization, got ready`). The fix resets
+settling after gaps over250ms; direct and cross-layer regressions pass. Additional
+review fixes are documented in REVIEW-V3.md.
 
-[Run38974519620](https://github.com/MartinPuli/hackharvard/actions/runs/38974519620)
-passed all four jobs for source `6e59c5b5dbe3a96ba8f03d712af08a648dd3a9ff`.
-Xcode16.4 passed6 app unit tests and2 UI tests with0 failures, followed by Beacon
-simulator and Lantern/Beacon unsigned-device builds. The correction uses native
-target scrolling and checks the actual switch value; it retains the original
-flow and additionally asserts all28 virtual pins neutral on tracking loss and
-correct target recovery. No application logic or assertion was bypassed.
-Test execution is bounded and the native result bundle is retained in CI.
-Final metadata/excerpts: `evidence/v2/github-actions.json`, `ios-ci-excerpt.log`.
+A nested Linux wrapper initially exited zero without completed XCTest output;
+that invocation is not counted as a test pass. A subsequent attempt exposed the
+restricted `/proc` SwiftPM monitor SIGILL in the extra `--show-bin-path` process.
+The Linux launcher now executes the built XCTest symlink directly after building,
+and the V3 runner requires explicit test/build completion markers. The final
+consolidated log contains all90 passing tests. Root also ran the compiled binary
+directly with90/0. Earlier failure and regression metadata remain in evidence/v3.
+The legacy-driver/private-libncurses workaround is local to this restricted host;
+a normal Mac does not require these cloud filesystem paths.
+
+## Native and physical gates
+
+All29 Swift source files passed syntax parsing, which is not Apple typechecking.
+The native suite contains22 app tests and3 UI tests awaiting hosted Xcode:
+coordinator actions, voice attempt/lifecycle bounds, secure rejection of invalid
+map data and atomic file storage, plus an actual Vision barcode request over a
+CoreImage-generated QR pixel buffer. UI tests use labeled Simulation and explicit
+typed commands, without microphone permissions. Counts describe tests present,
+not a successful execution, until the hosted result is recorded.
+
+No real speech recognition, saved-map relocalization, camera QR detection,
+CoreML inference, LiDAR, BLE, UWB, servo motion, power, fit, force or human tactile
+usability was verified. The synthetic map fixture is deliberately not ARWorldMap;
+valid real-map capture/load and environment matching remain device tests.

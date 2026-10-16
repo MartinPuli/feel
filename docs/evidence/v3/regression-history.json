@@ -1,0 +1,16 @@
+{
+  "restore_observation_gap": {
+    "before_fix": "FAIL",
+    "command": "python3 validation/advanced/run.py --output .artifacts/advanced-gap-regression",
+    "observed": "restore gate at16100: expected 'awaitingRelocalization', got 'ready'",
+    "cause": "A one-second interval without observations counted toward continuous normal tracking.",
+    "fix": "Restart settling after an inter-observation gap over 250 ms.",
+    "after_fix": "PASS in advanced replay, 1441 assertions and 156 firmware states"
+  },
+  "linux_wrapper": {
+    "before_fix": "FAIL / incomplete evidence, not a test pass",
+    "cause": "Extra SwiftPM --show-bin-path subprocess crashed in restricted /proc. An earlier nested wrapper exit zero lacked any test completion output.",
+    "fix": "Execute the built .build/debug XCTest symlink directly after the build; require test and build completion markers in V3 runner.",
+    "after_fix": "PASS: consolidated runner has actual completion of all 90 tests."
+  }
+}

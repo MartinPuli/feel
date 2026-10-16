@@ -38,6 +38,18 @@ final class LanternUITests:XCTestCase {
         tapControl(app.buttons["simResetSession"])
         XCTAssertEqual(app.staticTexts["placesCount"].label,"0 places in this session")
     }
+    func testTypedCommandFallbackRemembersWithoutMicrophone() {
+        let app=XCUIApplication(); app.launch()
+        tapControl(app.buttons["memorySimulation"])
+        tapControl(app.buttons["Voice, saved map and feedback"])
+        let command=app.textFields["commandText"]
+        tapControl(command); command.typeText("remember Lab\n")
+        tapControl(app.buttons["runCommand"])
+        XCTAssertEqual(app.staticTexts["commandNotice"].label,"Remembered Lab.")
+        XCTAssertEqual(app.staticTexts["placesCount"].label,"1 places in this session")
+        XCTAssertFalse(app.buttons["Finish speaking"].isEnabled)
+        XCTAssertTrue(app.staticTexts["SIMULATION: Synthetic inputs. No simulated movement sent to hardware."].exists)
+    }
     private func tapControl(_ element:XCUIElement,file:StaticString=#filePath,line:UInt=#line) {
         XCTAssertTrue(element.waitForExistence(timeout:5),file:file,line:line)
         // XCUI's native tap scrolls this exact control into view. App-wide swipes

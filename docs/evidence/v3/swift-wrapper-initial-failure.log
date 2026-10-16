@@ -1,0 +1,51 @@
+warning: 'feelcore': <unknown>:0: warning: legacy driver is now deprecated; consider avoiding specifying '-disallow-use-new-driver'
+[0/1] Planning build
+Building for debugging...
+[0/3] Write swift-version--3122D268934F2D49.txt
+Build complete! (0.10s)
+swift-runtime: failed to suspend thread 23736 while processing a crash; backtraces will be missing information
+swift-runtime: failed to suspend thread 23738 while processing a crash; backtraces will be missing information
+swift-runtime: failed to suspend thread 23739 while processing a crash; backtraces will be missing information
+swift-runtime: failed to suspend thread 23740 while processing a crash; backtraces will be missing information
+
+*** Signal 4: Backtracing from 0x7f1ffea45e30... done ***
+
+*** Program crashed: Illegal instruction at 0x00007f1ffea45e30 ***
+
+Thread 0 crashed:
+
+0  0x00007f1ffea45e30
+
+
+Registers:
+
+rax 0x00000000ffffffff  4294967295
+rdx 0x00007f1ff7590830  2f 70 72 6f 63 2f 36 30 2f 73 74 61 74 00 00 00  /proc/60/stat···
+rcx 0x0000000000000000  0
+rbx 0x0000000000000000  0
+rsi 0x00007f1ff75929c8  00 00 00 00 81 00 00 00 00 00 00 00 00 00 00 00  ················
+rdi 0x00007f1ff7590830  2f 70 72 6f 63 2f 36 30 2f 73 74 61 74 00 00 00  /proc/60/stat···
+rbp 0x0000000000000000  0
+rsp 0x00007f1ff75907f8  fb 00 a6 fe 1f 7f 00 00 00 00 00 00 00 00 00 00  û·¦þ············
+ r8 0x0000000000000000  0
+ r9 0x0000000000000000  0
+r10 0x0000000000000000  0
+r11 0x0000000000000293  659
+r12 0x0000000000000000  0
+r13 0x00007f1ffea80f30  c0 e5 a7 fe 1f 7f 00 00 00 00 00 00 09 00 00 00  Àå§þ············
+r14 0x00007f1ffea80fa8  c0 e8 a7 fe 1f 7f 00 00 00 00 00 00 09 00 00 00  Àè§þ············
+r15 0x00007f1ff75908b0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ················
+rip 0x00007f1ffea45e30  0f 0b 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ················
+
+rflags 0x0000000000010246  ZF PF
+
+cs 0x0033  fs 0x0000  gs 0x0000
+
+
+Images:
+
+
+
+Backtrace took 0.00s
+
+Illegal instruction

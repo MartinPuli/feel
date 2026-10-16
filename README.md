@@ -1,8 +1,11 @@
-# FEEL V2 — Spatial Memory
+# FEEL V3 — Advanced perception and memory
 
-This isolated branch adds Remember, Recall, an explicit Return point and multiple
-bookmarks. Start with [SPATIAL-MEMORY.md](docs/SPATIAL-MEMORY.md). The available
-V2 software checks pass; Apple-platform and physical validation remain separate.
+This isolated branch adds explicit voice commands, local AR world-map storage,
+adaptive target tapping and barcode/QR finding. It retains V2 Remember, Recall,
+Return and multiple bookmarks. Start with [ADVANCED.md](docs/ADVANCED.md) and
+[SPATIAL-MEMORY.md](docs/SPATIAL-MEMORY.md). V1 and V2 passed their software gates,
+including hosted iOS builds/tests, before this branch was created. V3 results are
+tracked in [release status](docs/RELEASE-STATUS.md); physical validation is separate.
 
 A prototype that translates indoor depth and target direction into a **7-column ×
 4-pin tactile puck**, using a LiDAR iPhone, BLE, an ESP32 and seven servos.
@@ -16,7 +19,7 @@ verification of this repository. The earlier preparation work is preserved on
 |---|---|
 | `feel/v1-foundation` | Swift iOS + perception + BLE, ESP32, CAD, production replay |
 | `feel/v2-spatial-memory` | Remember / Recall / Return, created only after V1 validation |
-| `feel/v3-advanced` | Optional advanced work, only after V1 and V2 |
+| `feel/v3-advanced` | Voice, persistent maps, adaptive tapping and barcode finding |
 
 Para preparar la placa en tu Mac, empieza por [SETUP-MAC-ESP32.md](docs/SETUP-MAC-ESP32.md).
 
@@ -40,6 +43,10 @@ sh cad/build.sh
 python3 cad/tools/check_stl.py stl/*/*.stl
 python3 cad/tools/cam_sim.py
 python3 scripts/run_v1_checks.py
+# V2 and V3 production paths, preserving foundation contracts:
+python3 scripts/run_spatial_checks.py
+python3 scripts/run_advanced_checks.py
+# Open .artifacts/v3-checks/advanced/index.html for the V3 recorded replay.
 ```
 
 Full runner exits0 for complete pass,1 for failure,2 for blocked/not-run checks.
@@ -65,6 +72,8 @@ BLE, NI, tactile usability or mechanical reliability from the simulator.
 - [`cad/`](cad/README.md): parametric OpenSCAD test rig, puck, cams, pins and forearm pack.
 - [`protocol/`](protocol/vectors.json): exact wire cases; [`docs/PROTOCOL.md`](docs/PROTOCOL.md) gives policy.
 - [`validation/production/`](validation/production/README.md): compiled cross-layer replay.
+- [`validation/spatial/`](validation/spatial/README.md): V2 memory replay.
+- [`validation/advanced/`](validation/advanced/README.md): V3 archive/voice/tactile replay.
 - `validation/feel_model.py`: historical independent reference model, not device code.
 
 ## Build and demonstrate honestly

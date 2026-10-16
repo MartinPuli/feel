@@ -3,6 +3,7 @@ import Combine
 import AVFoundation
 import UIKit
 import FeelCore
+import ARKit
 
 /// UI and 10Hz transmission coordinator. All state is confined to the main queue.
 final class LanternModel:ObservableObject {
@@ -21,6 +22,7 @@ final class LanternModel:ObservableObject {
     @Published var finder:FinderMode = .none {
         didSet {
             guard oldValue != finder else { return }
+            adaptive.reset()
             spatialMemory.stopGuidance(); memoryGuidance=nil
             finderEpoch += 1; perception.setFinder(finder,epoch:finderEpoch); frame=nil
             targetDescription="Searching: \(finder.rawValue)"; tick()
@@ -33,6 +35,15 @@ final class LanternModel:ObservableObject {
     @Published private(set) var simulatedPosition=Vector3.zero
     @Published private(set) var simulatedYaw=0.0
     @Published var simulatedTracking=true { didSet { if mode == .simulation,simulationScene == .memory { tick() } } }
+    @Published var adaptiveProfile:AdaptiveProfile = .standard { didSet { adaptive.reset(); tick() } }
+    @Published var commandText=""
+    @Published var commandLanguage:VoiceLanguage = .en { didSet { voice.cancel() } }
+    @Published private(set) var commandNotice="Type a command or explicitly start on-device speech."
+    @Published private(set) var mapNotice="One local map can be saved explicitly. No map loads automatically."
+    @Published private(set) var restoreState:WorldMapRestoreState = .idle
+    @Published private(set) var restoredMapSession=false
+    @Published private(set) var mapBusy=false
+    let voice=VoiceControl()
     let perception=ARPerception()
     let puck=BluetoothPuck()
     let peer=NearbyPeerService(role:.seeker)
@@ -42,19 +53,31 @@ final class LanternModel:ObservableObject {
     private var simulatedAt:TimeInterval=0
     private var startGeneration=0
     private var finderEpoch=0
+    private var adaptive=AdaptiveTactileController()
+    private var restoreGate=WorldMapRestoreGate()
+    private let mapStore=WorldMapStore()
+    private let mapQueue=DispatchQueue(label:"feel.saved-map",qos:.userInitiated)
+    private var mapOperation=0
+    var restoringMap:Bool { restoreState == .awaitingRelocalization || restoreState == .failed }
+    var speechLocale:String { commandLanguage == .en ? "en-US" : "es-ES" }
     var memoryControlsVisible:Bool { mode == .live || (mode == .simulation && simulationScene == .memory) }
     var selectedPlace:SpatialBookmark? { spatialMemory.bookmarks.first { $0.id==spatialMemory.selectedID } }
     init() {
+        voice.onFinalTranscript={ [weak self] text in self?.executeCommand(text) }
         peer.arSession=perception.session
         perception.onWorldSession={ [weak self] epoch,id in
             guard let self,self.mode == .live,epoch==self.startGeneration else { return }
+            self.mapOperation += 1; self.mapBusy=false
             self.frame=nil; self.calibrated=false; self.memoryGuidance=nil
             // NI world coordinates belong to this same AR world and must be discarded too.
             self.peer.stop()
+            self.voice.cancel(); self.adaptive.reset()
             if let id {
-                do { try self.spatialMemory.begin(session:id); self.memoryNotice="New session. Remember places or set a return point." }
+                if self.restoreGate.session != id { self.restoreGate.cancel(); self.restoreState = .idle; self.restoredMapSession=false }
+                do { try self.spatialMemory.begin(session:id); self.memoryNotice=self.restoringMap ? "Waiting for saved-map relocalization. Places are inactive." : "New session. Remember places or set a return point." }
                 catch { self.spatialMemory.end(); self.memoryNotice=String(describing:error) }
             } else {
+                self.restoreGate.cancel(); self.restoreState = .idle; self.restoredMapSession=false
                 self.spatialMemory.end(); self.memoryNotice="Session interrupted. Saved places and return point cleared."
             }
             self.tick()
@@ -63,6 +86,7 @@ final class LanternModel:ObservableObject {
             guard let self,self.mode == .live,frame.epoch==self.startGeneration,frame.finderEpoch==self.finderEpoch,
                   frame.worldSession==self.spatialMemory.session else { return }
             self.frame=frame; self.calibrated=frame.floorY != nil
+            self.observeRestoration(frame)
         }
         perception.onInvalidated={ [weak self] epoch in guard let self,epoch==self.startGeneration else { return }; self.frame=nil; self.calibrated=false; self.tick() }
         perception.onStatus={ [weak self] text in guard let self,self.mode == .live else { return }; self.status=text }
@@ -94,6 +118,8 @@ final class LanternModel:ObservableObject {
     func calibrate() { guard mode == .live else { return }; perception.calibrate(cameraHeight:cameraHeight) }
     func stop() {
         startGeneration += 1; timer?.invalidate(); timer=nil; frame=nil; calibrated=false
+        mapOperation += 1; mapBusy=false; restoreGate.cancel(); restoreState = .idle; restoredMapSession=false
+        voice.cancel(); adaptive.reset()
         perception.stop(); peer.stop(); mode = .stopped; guidanceState = .stopped
         spatialMemory.end(); memoryGuidance=nil; memoryNotice="Session ended. Saved places and return point cleared."
         sequence &+= 1; packet = .neutral(sequence:sequence); puck.send(packet)
@@ -141,12 +167,14 @@ final class LanternModel:ObservableObject {
     }
     private func performMemoryAction(_ action:() throws -> String) {
         // Kept synchronous on main so selection changes cannot race a packet tick.
+        guard !restoringMap else { memoryNotice="Saved-map coordinates are inactive until relocalization succeeds. Start fresh Live to cancel."; return }
+        adaptive.reset()
         do { memoryNotice=try action() } catch { memoryNotice=String(describing:error) }
         tick()
     }
     func resetSimulatedSession() {
         guard mode == .simulation,simulationScene == .memory else { return }
-        simulatedPosition = .zero; simulatedYaw=0; simulatedTracking=true
+        adaptive.reset(); simulatedPosition = .zero; simulatedYaw=0; simulatedTracking=true
         do { try spatialMemory.begin(session:UUID().uuidString); memoryNotice="SIMULATION: New session. Name and Remember this position, then Move back twice and Recall." }
         catch { spatialMemory.end(); memoryNotice=String(describing:error) }
         memoryGuidance=nil; tick()
@@ -176,10 +204,13 @@ final class LanternModel:ObservableObject {
     }
     private func tick() {
         let now=ProcessInfo.processInfo.systemUptime; sequence &+= 1
+        if restoreGate.state == .awaitingRelocalization,restoreGate.checkDeadline(now:now) == .failed {
+            restoreState = .failed; spatialMemory.end(); mapNotice="Map restoration timed out. Start fresh Live or explicitly Load again."
+        }
         if mode == .simulation {
             if simulationScene == .memory,let sample=currentMemoryPose(now:now) {
                 let result=spatialMemory.encode(sequence:sequence,sample:sample,now:now,distances:[nil,nil,0.7,nil,nil,nil,nil])
-                packet=result.output.packet; guidanceState=result.output.state == .live ? .simulation : result.output.state
+                packet=adapt(result.output.packet,now:now); guidanceState=result.output.state == .live ? .simulation : result.output.state
                 memoryGuidance=result.guidance; targetDescription="SIMULATION · " + memoryDescription(result.guidance)
                 return
             }
@@ -187,28 +218,125 @@ final class LanternModel:ObservableObject {
             let tracking=phase<8 || phase>=10
             let target=TargetObservation(bearingDegrees:sin(phase/2)*40,distance:1.3,timestamp:now,label:"SIMULATED target")
             let output=TactileEncoder.encode(sequence:sequence,now:now,frameTimestamp:now,tracking:tracking,distances:[0.7,1.1,nil,2,3.5,nil,nil],target:target)
-            packet=output.packet; guidanceState=output.state == .live ? .simulation : output.state
+            packet=adapt(output.packet,now:now); guidanceState=output.state == .live ? .simulation : output.state
             targetDescription=tracking ? "SIMULATED target sweeping left to right" : "SIMULATED tracking loss — all pins neutral"
             return
         }
-        guard mode == .live,let frame else {
+        guard mode == .live,let frame,!restoringMap else {
             packet = .neutral(sequence:sequence); guidanceState = mode == .live ? .staleDepth : .stopped
             memoryGuidance=nil
-            if mode == .live { targetDescription="Waiting for fresh tracking and depth — guidance neutral"; puck.send(packet) }; return
+            if mode == .live { targetDescription=restoringMap ? "Saved-map guidance inactive: \(restoreState.rawValue)" : "Waiting for fresh tracking and depth — guidance neutral"; puck.send(packet) }; return
         }
         if spatialMemory.activeID != nil,let sample=currentMemoryPose(now:now) {
             let result=spatialMemory.encode(sequence:sequence,sample:sample,now:now,distances:frame.distances,floorCalibrated:frame.floorY != nil)
-            packet=result.output.packet; guidanceState=result.output.state; memoryGuidance=result.guidance
+            packet=adapt(result.output.packet,now:now); guidanceState=result.output.state; memoryGuidance=result.guidance
             targetDescription=result.output.state == .live ? memoryDescription(result.guidance) : "Guidance neutral: \(result.output.state.rawValue)"
             puck.send(packet); return
         }
         memoryGuidance=nil
-        let target=finder == .teammate ? peer.currentTarget(pose:frame.pose,now:now) : frame.target
+        let target=finder == .teammate ? (restoredMapSession ? nil : peer.currentTarget(pose:frame.pose,now:now)) : frame.target
         let output=TactileEncoder.encode(sequence:sequence,now:now,frameTimestamp:frame.timestamp,tracking:frame.tracking,distances:frame.distances,target:target,floorCalibrated:frame.floorY != nil)
-        packet=output.packet; guidanceState=output.state; puck.send(packet)
+        packet=adapt(output.packet,now:now); guidanceState=output.state; puck.send(packet)
         if let target,target.valid(at:now),output.state == .live {
             targetDescription=String(format:"%@ · %.1f m · %.0f°",target.label,target.distance,target.bearingDegrees)
         } else { targetDescription=finder == .none ? "Obstacle sensing" : "Target unavailable — no directional highlight" }
+    }
+    private func adapt(_ packet:FeelPacket,now:Double)->FeelPacket {
+        adaptive.apply(packet:packet,profile:adaptiveProfile,session:spatialMemory.session ?? "run-\(startGeneration)",now:now)
+    }
+    func submitTypedCommand() { voice.cancel(); executeCommand(commandText) }
+    func startVoiceCommand() { voice.start(localeIdentifier:speechLocale) }
+    func readCommandResult() { voice.speak(commandNotice,localeIdentifier:speechLocale) }
+    private func executeCommand(_ text:String) {
+        do {
+            let intent=try VoiceIntentParser.parse(text:text,language:commandLanguage,isFinal:true)
+            switch intent {
+            case .remember(let name): placeName=name; remember(); commandNotice=memoryNotice
+            case .recall(let name):
+                let key=name.folding(options:[.caseInsensitive,.diacriticInsensitive],locale:Locale(identifier:"en_US_POSIX"))
+                guard let place=spatialMemory.bookmarks.first(where: { $0.name.folding(options:[.caseInsensitive,.diacriticInsensitive],locale:Locale(identifier:"en_US_POSIX"))==key }) else { throw SpatialMemoryError.unknownBookmark }
+                selectPlace(place.id); recall(); commandNotice=memoryNotice
+            case .returnToPoint: returnToPoint(); commandNotice=memoryNotice
+            case .stop: stop(); commandNotice="Stopped. Guidance is neutral."
+            case .listPlaces: commandNotice=spatialMemory.bookmarks.isEmpty ? "No places in this session." : "Places: " + spatialMemory.bookmarks.map(\.name).joined(separator:", ")
+            case .find(let mode):
+                if mode == .teammate,restoredMapSession { commandNotice="Teammate ranging requires a fresh Live session. Saved-map sessions cannot share camera assistance."; return }
+                let modes:[VoiceFindMode:FinderMode]=[.obstacles:.none,.door:.door,.exit:.exit,.chair:.chair,.person:.person,.teammate:.teammate,.barcode:.barcode]
+                finder=modes[mode] ?? .none; commandNotice="Finder selected: \(finder.rawValue). " + (self.mode == .live ? "" : "Start Live for camera perception.")
+            }
+        } catch { commandNotice=String(describing:error) }
+    }
+    func saveMap() {
+        guard mode == .live,!restoringMap,!mapBusy,let session=spatialMemory.session else { mapNotice="Save requires an active live session after relocalization, if any."; return }
+        let now=ProcessInfo.processInfo.systemUptime
+        guard let pose=currentMemoryPose(now:now),pose.tracking,now-pose.timestamp>=0,now-pose.timestamp<=0.25 else { mapNotice="Save needs fresh normal tracking."; return }
+        let snapshot=spatialMemory.snapshot; mapOperation += 1; let operation=mapOperation
+        mapBusy=true; mapNotice="Capturing local AR map…"
+        perception.captureWorldMap(sessionID:session) { [weak self] result in
+            guard let self,self.mapOperation==operation,self.spatialMemory.session==session else { return }
+            do {
+                let (bytes,mapID,anchorID)=try result.get()
+                let archive=try PersistentMemoryArchive(mapID:mapID,anchorID:anchorID,mapData:bytes,snapshot:snapshot)
+                self.mapQueue.async {
+                    let saved=Result { try self.mapStore.save(archive) }
+                    DispatchQueue.main.async {
+                        guard self.mapOperation==operation else { return }; self.mapBusy=false
+                        switch saved { case .success: self.mapNotice="Saved one local map with \(snapshot.bookmarks.count) places. Load requires relocalization in the same area."
+                        case .failure(let error): self.mapNotice=String(describing:error) }
+                    }
+                }
+            } catch { self.mapBusy=false; self.mapNotice=String(describing:error) }
+        }
+    }
+    func loadMap() {
+        guard mode == .live,!mapBusy else { mapNotice="Start Live, then explicitly Load the saved map."; return }
+        mapOperation += 1; let operation=mapOperation; mapBusy=true; mapNotice="Reading saved local map…"
+        mapQueue.async {
+            let result=Result { try self.mapStore.load() }
+            DispatchQueue.main.async {
+                guard self.mapOperation==operation,self.mode == .live else { return }; self.mapBusy=false
+                switch result {
+                case .failure(let error): self.mapNotice=String(describing:error)
+                case .success(let loaded): self.beginMapRestore(archive:loaded.archive,map:loaded.map)
+                }
+            }
+        }
+    }
+    private func beginMapRestore(archive:PersistentMemoryArchive,map:ARWorldMap) {
+        stop(); startGeneration += 1
+        let session=UUID().uuidString
+        do { try restoreGate.begin(archive:archive,session:session,now:ProcessInfo.processInfo.systemUptime) }
+        catch { mapNotice=String(describing:error); return }
+        restoreState=restoreGate.state; restoredMapSession=true; mode = .live
+        if finder == .teammate { finder = .none }
+        guard perception.start(epoch:startGeneration,restoredMap:map,mapID:archive.mapID,sessionID:session) else { stop(); mapNotice="This device cannot restore a LiDAR session."; return }
+        perception.setFinder(finder,epoch:finderEpoch)
+        mapNotice="Move slowly in the saved area. Waiting for relocalization, matching marker and 0.5 s fresh normal tracking. Places remain inactive."
+        beginTimer()
+    }
+    private func observeRestoration(_ frame:PerceptionFrame) {
+        guard restoreGate.state == .awaitingRelocalization,let mapID=frame.mapID else { return }
+        restoreState=restoreGate.observe(session:frame.worldSession,mapID:mapID,anchorID:frame.mapAnchorID,now:ProcessInfo.processInfo.systemUptime,sample:MemoryPose(session:frame.worldSession,pose:frame.pose,timestamp:frame.timestamp,tracking:frame.tracking),relocalizing:frame.relocalizing)
+        if restoreState == .ready,let archive=restoreGate.archive {
+            do {
+                try spatialMemory.restore(archive:archive,session:frame.worldSession)
+                memoryNotice="Restored \(archive.bookmarks.count) places. Select a place and explicitly Recall."
+                mapNotice="Map relocalized. Recalibrate floor before tactile guidance. Teammate ranging requires a fresh Live session."
+            } catch { restoreState = .failed; spatialMemory.end(); mapNotice=String(describing:error) }
+        } else if restoreState == .failed {
+            spatialMemory.end(); mapNotice="Map restoration failed or timed out. Start a fresh Live session, or explicitly Load again."
+        }
+    }
+    func deleteSavedMap() {
+        mapOperation += 1; let operation=mapOperation; mapBusy=true
+        mapQueue.async {
+            let result=Result { try self.mapStore.delete() }
+            DispatchQueue.main.async {
+                guard self.mapOperation==operation else { return }; self.mapBusy=false
+                switch result { case .success: self.mapNotice="Local saved map deleted. Current session places remain until Stop."
+                case .failure(let error): self.mapNotice=String(describing:error) }
+            }
+        }
     }
     private func memoryDescription(_ guidance:MemoryGuidance) -> String {
         let name=guidance.targetName ?? "Place"

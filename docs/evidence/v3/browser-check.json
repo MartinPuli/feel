@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "browser": "Chromium 155 headless",
+  "viewer": "validation/advanced/viewer.html with actual advanced-fixed report",
+  "pins": 28,
+  "assertions": 1441,
+  "states": 156,
+  "checks": [
+    "actual report status and count",
+    "Next advances",
+    "slider advances",
+    "playback advances and stops",
+    "1200px desktop screenshot inspected",
+    "390px mobile no horizontal overflow",
+    "no JavaScript errors"
+  ],
+  "physical_hardware": "NOT VERIFIED"
+}

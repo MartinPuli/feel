@@ -1,0 +1,213 @@
+Test Suite 'All tests' started at 2026-10-17 05:38:43.667
+Test Suite 'debug.xctest' started at 2026-10-17 05:38:43.668
+Test Suite 'AdaptiveTactileTests' started at 2026-10-17 05:38:43.668
+Test Case 'AdaptiveTactileTests.testAutomaticRequiresContinuousFarHoldoff' started at 2026-10-17 05:38:43.668
+Test Case 'AdaptiveTactileTests.testAutomaticRequiresContinuousFarHoldoff' passed (0.001 seconds)
+Test Case 'AdaptiveTactileTests.testAutomaticStartsStandardWhenFarAndEntersReducedOnAnyNearColumn' started at 2026-10-17 05:38:43.668
+Test Case 'AdaptiveTactileTests.testAutomaticStartsStandardWhenFarAndEntersReducedOnAnyNearColumn' passed (0.0 seconds)
+Test Case 'AdaptiveTactileTests.testBandAndSequencePreservationAcrossProfilesAndLifecycle' started at 2026-10-17 05:38:43.669
+Test Case 'AdaptiveTactileTests.testBandAndSequencePreservationAcrossProfilesAndLifecycle' passed (0.011 seconds)
+Test Case 'AdaptiveTactileTests.testColumnAndHighlightedBandChangesStartQuiet' started at 2026-10-17 05:38:43.680
+Test Case 'AdaptiveTactileTests.testColumnAndHighlightedBandChangesStartQuiet' passed (0.001 seconds)
+Test Case 'AdaptiveTactileTests.testInvalidAndBackwardClocksSuppressThenRecoverQuiet' started at 2026-10-17 05:38:43.680
+Test Case 'AdaptiveTactileTests.testInvalidAndBackwardClocksSuppressThenRecoverQuiet' passed (0.0 seconds)
+Test Case 'AdaptiveTactileTests.testNearFarFlickerCannotRestartTapAtEveryPacket' started at 2026-10-17 05:38:43.680
+Test Case 'AdaptiveTactileTests.testNearFarFlickerCannotRestartTapAtEveryPacket' passed (0.0 seconds)
+Test Case 'AdaptiveTactileTests.testNonzeroEpochsDoNotMoveDecimalBoundaries' started at 2026-10-17 05:38:43.681
+Test Case 'AdaptiveTactileTests.testNonzeroEpochsDoNotMoveDecimalBoundaries' passed (0.0 seconds)
+Test Case 'AdaptiveTactileTests.testOtherColumnChangesAndSequenceRolloverDoNotRestartWindow' started at 2026-10-17 05:38:43.681
+Test Case 'AdaptiveTactileTests.testOtherColumnChangesAndSequenceRolloverDoNotRestartWindow' passed (0.0 seconds)
+Test Case 'AdaptiveTactileTests.testReducedQuietFirstAndExactRepeatedWindowBoundaries' started at 2026-10-17 05:38:43.681
+Test Case 'AdaptiveTactileTests.testReducedQuietFirstAndExactRepeatedWindowBoundaries' passed (0.0 seconds)
+Test Case 'AdaptiveTactileTests.testSessionProfileAndExplicitResetRestartQuiet' started at 2026-10-17 05:38:43.681
+Test Case 'AdaptiveTactileTests.testSessionProfileAndExplicitResetRestartQuiet' passed (0.0 seconds)
+Test Case 'AdaptiveTactileTests.testStandardPreservesEffectiveHighlightAndEveryBand' started at 2026-10-17 05:38:43.681
+Test Case 'AdaptiveTactileTests.testStandardPreservesEffectiveHighlightAndEveryBand' passed (0.001 seconds)
+Test Case 'AdaptiveTactileTests.testTargetLossAndReacquisitionCannotRestartAnImmediateTap' started at 2026-10-17 05:38:43.683
+Test Case 'AdaptiveTactileTests.testTargetLossAndReacquisitionCannotRestartAnImmediateTap' passed (0.0 seconds)
+Test Suite 'AdaptiveTactileTests' passed at 2026-10-17 05:38:43.683
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.015 (0.015) seconds
+Test Suite 'CapturedTargetTests' started at 2026-10-17 05:38:43.683
+Test Case 'CapturedTargetTests.testBehindAndExpiredDrop' started at 2026-10-17 05:38:43.683
+Test Case 'CapturedTargetTests.testBehindAndExpiredDrop' passed (0.0 seconds)
+Test Case 'CapturedTargetTests.testRotatedCameraReprojectsTarget' started at 2026-10-17 05:38:43.683
+Test Case 'CapturedTargetTests.testRotatedCameraReprojectsTarget' passed (0.0 seconds)
+Test Case 'CapturedTargetTests.testTranslationRecomputesRange' started at 2026-10-17 05:38:43.683
+Test Case 'CapturedTargetTests.testTranslationRecomputesRange' passed (0.0 seconds)
+Test Suite 'CapturedTargetTests' passed at 2026-10-17 05:38:43.683
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.0 (0.0) seconds
+Test Suite 'ConnectionAndStatusTests' started at 2026-10-17 05:38:43.683
+Test Case 'ConnectionAndStatusTests.testStatusFaultAndMalformed' started at 2026-10-17 05:38:43.683
+Test Case 'ConnectionAndStatusTests.testStatusFaultAndMalformed' passed (0.0 seconds)
+Test Case 'ConnectionAndStatusTests.testStatusOutputDisabledIsExplicit' started at 2026-10-17 05:38:43.684
+Test Case 'ConnectionAndStatusTests.testStatusOutputDisabledIsExplicit' passed (0.0 seconds)
+Test Case 'ConnectionAndStatusTests.testSwitchedPeripheralRejectsOldCallbacks' started at 2026-10-17 05:38:43.684
+Test Case 'ConnectionAndStatusTests.testSwitchedPeripheralRejectsOldCallbacks' passed (0.0 seconds)
+Test Suite 'ConnectionAndStatusTests' passed at 2026-10-17 05:38:43.684
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.0 (0.0) seconds
+Test Suite 'GeometryTests' started at 2026-10-17 05:38:43.684
+Test Case 'GeometryTests.testBandEdges' started at 2026-10-17 05:38:43.684
+Test Case 'GeometryTests.testBandEdges' passed (0.0 seconds)
+Test Case 'GeometryTests.testDirectionSignAndBehind' started at 2026-10-17 05:38:43.684
+Test Case 'GeometryTests.testDirectionSignAndBehind' passed (0.0 seconds)
+Test Case 'GeometryTests.testInvalidBearings' started at 2026-10-17 05:38:43.684
+Test Case 'GeometryTests.testInvalidBearings' passed (0.0 seconds)
+Test Case 'GeometryTests.testInvalidPose' started at 2026-10-17 05:38:43.684
+Test Case 'GeometryTests.testInvalidPose' passed (0.0 seconds)
+Test Case 'GeometryTests.testPoseTransforms' started at 2026-10-17 05:38:43.684
+Test Case 'GeometryTests.testPoseTransforms' passed (0.0 seconds)
+Test Case 'GeometryTests.testSectorCenters' started at 2026-10-17 05:38:43.684
+Test Case 'GeometryTests.testSectorCenters' passed (0.0 seconds)
+Test Case 'GeometryTests.testSectorEdgesChooseRight' started at 2026-10-17 05:38:43.684
+Test Case 'GeometryTests.testSectorEdgesChooseRight' passed (0.0 seconds)
+Test Case 'GeometryTests.testUnprojectionAndIntrinsicScaling' started at 2026-10-17 05:38:43.684
+Test Case 'GeometryTests.testUnprojectionAndIntrinsicScaling' passed (0.0 seconds)
+Test Suite 'GeometryTests' passed at 2026-10-17 05:38:43.684
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'PerceptionTests' started at 2026-10-17 05:38:43.684
+Test Case 'PerceptionTests.testCalibratedFloorNotWorldOrigin' started at 2026-10-17 05:38:43.684
+Test Case 'PerceptionTests.testCalibratedFloorNotWorldOrigin' passed (0.0 seconds)
+Test Case 'PerceptionTests.testFloorCalibrationIsRequired' started at 2026-10-17 05:38:43.685
+Test Case 'PerceptionTests.testFloorCalibrationIsRequired' passed (0.0 seconds)
+Test Case 'PerceptionTests.testFutureInvalidTimestampAndMissingFrame' started at 2026-10-17 05:38:43.685
+Test Case 'PerceptionTests.testFutureInvalidTimestampAndMissingFrame' passed (0.0 seconds)
+Test Case 'PerceptionTests.testInvalidDistancesDoNotCreatePins' started at 2026-10-17 05:38:43.685
+Test Case 'PerceptionTests.testInvalidDistancesDoNotCreatePins' passed (0.0 seconds)
+Test Case 'PerceptionTests.testLostTrackingSuppressesFreshTarget' started at 2026-10-17 05:38:43.685
+Test Case 'PerceptionTests.testLostTrackingSuppressesFreshTarget' passed (0.0 seconds)
+Test Case 'PerceptionTests.testNearestPerSector' started at 2026-10-17 05:38:43.685
+Test Case 'PerceptionTests.testNearestPerSector' passed (0.0 seconds)
+Test Case 'PerceptionTests.testProductionEncoding' started at 2026-10-17 05:38:43.685
+Test Case 'PerceptionTests.testProductionEncoding' passed (0.0 seconds)
+Test Case 'PerceptionTests.testRejectFloorCeilingBehindAndConfidence' started at 2026-10-17 05:38:43.685
+Test Case 'PerceptionTests.testRejectFloorCeilingBehindAndConfidence' passed (0.0 seconds)
+Test Case 'PerceptionTests.testStaleDepthCutoff' started at 2026-10-17 05:38:43.685
+Test Case 'PerceptionTests.testStaleDepthCutoff' passed (0.0 seconds)
+Test Case 'PerceptionTests.testTargetCanRaisePreviouslyEmptyColumn' started at 2026-10-17 05:38:43.686
+Test Case 'PerceptionTests.testTargetCanRaisePreviouslyEmptyColumn' passed (0.0 seconds)
+Test Case 'PerceptionTests.testTargetExpiryAndConfidence' started at 2026-10-17 05:38:43.686
+Test Case 'PerceptionTests.testTargetExpiryAndConfidence' passed (0.0 seconds)
+Test Case 'PerceptionTests.testTargetPreservesCloserObstacle' started at 2026-10-17 05:38:43.686
+Test Case 'PerceptionTests.testTargetPreservesCloserObstacle' passed (0.0 seconds)
+Test Case 'PerceptionTests.testTargetSelectionDeterministic' started at 2026-10-17 05:38:43.686
+Test Case 'PerceptionTests.testTargetSelectionDeterministic' passed (0.0 seconds)
+Test Case 'PerceptionTests.testTrackingLossImmediatelyNeutral' started at 2026-10-17 05:38:43.686
+Test Case 'PerceptionTests.testTrackingLossImmediatelyNeutral' passed (0.0 seconds)
+Test Case 'PerceptionTests.testUncalibratedNeutral' started at 2026-10-17 05:38:43.686
+Test Case 'PerceptionTests.testUncalibratedNeutral' passed (0.0 seconds)
+Test Suite 'PerceptionTests' passed at 2026-10-17 05:38:43.686
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'PersistentMemoryTests' started at 2026-10-17 05:38:43.686
+Test Case 'PersistentMemoryTests.testArchiveRejectsDuplicateNamesIDsAndCapacity' started at 2026-10-17 05:38:43.686
+Test Case 'PersistentMemoryTests.testArchiveRejectsDuplicateNamesIDsAndCapacity' passed (0.005 seconds)
+Test Case 'PersistentMemoryTests.testArchiveRejectsUnknownFieldsAtEveryLevel' started at 2026-10-17 05:38:43.691
+Test Case 'PersistentMemoryTests.testArchiveRejectsUnknownFieldsAtEveryLevel' passed (0.001 seconds)
+Test Case 'PersistentMemoryTests.testArchiveRejectsVersionsIDsBase64BoundsAndCoordinates' started at 2026-10-17 05:38:43.692
+Test Case 'PersistentMemoryTests.testArchiveRejectsVersionsIDsBase64BoundsAndCoordinates' passed (0.011 seconds)
+Test Case 'PersistentMemoryTests.testObservationGapCannotCountAsContinuousNormalTracking' started at 2026-10-17 05:38:43.703
+Test Case 'PersistentMemoryTests.testObservationGapCannotCountAsContinuousNormalTracking' passed (0.101 seconds)
+Test Case 'PersistentMemoryTests.testRestoreIsInactiveAndCannotOverwriteExistingPlaces' started at 2026-10-17 05:38:43.803
+Test Case 'PersistentMemoryTests.testRestoreIsInactiveAndCannotOverwriteExistingPlaces' passed (0.001 seconds)
+Test Case 'PersistentMemoryTests.testRestoreNeedsRelocalizationIdentityAndSettling' started at 2026-10-17 05:38:43.804
+Test Case 'PersistentMemoryTests.testRestoreNeedsRelocalizationIdentityAndSettling' passed (0.0 seconds)
+Test Case 'PersistentMemoryTests.testRoundTripOmitsActiveSelectionAndSession' started at 2026-10-17 05:38:43.804
+Test Case 'PersistentMemoryTests.testRoundTripOmitsActiveSelectionAndSession' passed (0.001 seconds)
+Test Case 'PersistentMemoryTests.testTimeoutAndBackwardClockFailClosedAndCancelResets' started at 2026-10-17 05:38:43.805
+Test Case 'PersistentMemoryTests.testTimeoutAndBackwardClockFailClosedAndCancelResets' passed (0.0 seconds)
+Test Case 'PersistentMemoryTests.testTrackingLossStaleFutureAndInvalidPoseRestartSettling' started at 2026-10-17 05:38:43.805
+Test Case 'PersistentMemoryTests.testTrackingLossStaleFutureAndInvalidPoseRestartSettling' passed (0.0 seconds)
+Test Suite 'PersistentMemoryTests' passed at 2026-10-17 05:38:43.805
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.119 (0.119) seconds
+Test Suite 'ProtocolTests' started at 2026-10-17 05:38:43.805
+Test Case 'ProtocolTests.testAllSequenceValuesRoundTrip' started at 2026-10-17 05:38:43.805
+Test Case 'ProtocolTests.testAllSequenceValuesRoundTrip' passed (0.001 seconds)
+Test Case 'ProtocolTests.testCodablePreservesInvariants' started at 2026-10-17 05:38:43.806
+Test Case 'ProtocolTests.testCodablePreservesInvariants' passed (0.0 seconds)
+Test Case 'ProtocolTests.testEmptyHighlightIsWireLegalButIneffective' started at 2026-10-17 05:38:43.806
+Test Case 'ProtocolTests.testEmptyHighlightIsWireLegalButIneffective' passed (0.0 seconds)
+Test Case 'ProtocolTests.testGoldenEncoding' started at 2026-10-17 05:38:43.806
+Test Case 'ProtocolTests.testGoldenEncoding' passed (0.0 seconds)
+Test Case 'ProtocolTests.testNeutralAndRollover' started at 2026-10-17 05:38:43.807
+Test Case 'ProtocolTests.testNeutralAndRollover' passed (0.0 seconds)
+Test Case 'ProtocolTests.testRejectEveryInvalidBand' started at 2026-10-17 05:38:43.807
+Test Case 'ProtocolTests.testRejectEveryInvalidBand' passed (0.0 seconds)
+Test Case 'ProtocolTests.testRejectEveryInvalidHighlight' started at 2026-10-17 05:38:43.807
+Test Case 'ProtocolTests.testRejectEveryInvalidHighlight' passed (0.0 seconds)
+Test Case 'ProtocolTests.testRejectMalformedHex' started at 2026-10-17 05:38:43.807
+Test Case 'ProtocolTests.testRejectMalformedHex' passed (0.0 seconds)
+Test Case 'ProtocolTests.testRejectPacketLengths' started at 2026-10-17 05:38:43.807
+Test Case 'ProtocolTests.testRejectPacketLengths' passed (0.0 seconds)
+Test Suite 'ProtocolTests' passed at 2026-10-17 05:38:43.808
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'SpatialMemoryTests' started at 2026-10-17 05:38:43.808
+Test Case 'SpatialMemoryTests.testArrivalAndVerticalToleranceBoundaries' started at 2026-10-17 05:38:43.808
+Test Case 'SpatialMemoryTests.testArrivalAndVerticalToleranceBoundaries' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testBearingSignAfterTranslation' started at 2026-10-17 05:38:43.808
+Test Case 'SpatialMemoryTests.testBearingSignAfterTranslation' passed (0.1 seconds)
+Test Case 'SpatialMemoryTests.testBehindAndSideTargetsNeverClampToEdge' started at 2026-10-17 05:38:43.908
+Test Case 'SpatialMemoryTests.testBehindAndSideTargetsNeverClampToEdge' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testBeyondRangeReportsActualDistanceWithoutFakeBand' started at 2026-10-17 05:38:43.909
+Test Case 'SpatialMemoryTests.testBeyondRangeReportsActualDistanceWithoutFakeBand' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testCapacityLimitDoesNotOverwrite' started at 2026-10-17 05:38:43.909
+Test Case 'SpatialMemoryTests.testCapacityLimitDoesNotOverwrite' passed (0.01 seconds)
+Test Case 'SpatialMemoryTests.testCaptureRequiresSameFreshNormallyTrackedSession' started at 2026-10-17 05:38:43.919
+Test Case 'SpatialMemoryTests.testCaptureRequiresSameFreshNormallyTrackedSession' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testCloserObstaclesRemainAndUnavailableTargetsKeepObstacleBands' started at 2026-10-17 05:38:43.919
+Test Case 'SpatialMemoryTests.testCloserObstaclesRemainAndUnavailableTargetsKeepObstacleBands' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testEverySectorBoundaryAndOutsideFOV' started at 2026-10-17 05:38:43.919
+Test Case 'SpatialMemoryTests.testEverySectorBoundaryAndOutsideFOV' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testFloorAndDepthValidationStillGateMemoryPackets' started at 2026-10-17 05:38:43.919
+Test Case 'SpatialMemoryTests.testFloorAndDepthValidationStillGateMemoryPackets' passed (0.101 seconds)
+Test Case 'SpatialMemoryTests.testMutationFailuresAreAtomic' started at 2026-10-17 05:38:44.020
+Test Case 'SpatialMemoryTests.testMutationFailuresAreAtomic' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testPitchedCameraMatchesV1DepthAndTargetProjection' started at 2026-10-17 05:38:44.020
+Test Case 'SpatialMemoryTests.testPitchedCameraMatchesV1DepthAndTargetProjection' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testRememberSelectRenameDeleteAndSwitch' started at 2026-10-17 05:38:44.021
+Test Case 'SpatialMemoryTests.testRememberSelectRenameDeleteAndSwitch' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testResetEndAndReusedSessionIDsNeverReuseMemory' started at 2026-10-17 05:38:44.021
+Test Case 'SpatialMemoryTests.testResetEndAndReusedSessionIDsNeverReuseMemory' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testReturnPointIsExplicitAndIndependentOfBookmarks' started at 2026-10-17 05:38:44.021
+Test Case 'SpatialMemoryTests.testReturnPointIsExplicitAndIndependentOfBookmarks' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testStaleFutureInvalidAndBoundaryPoses' started at 2026-10-17 05:38:44.021
+Test Case 'SpatialMemoryTests.testStaleFutureInvalidAndBoundaryPoses' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testStopGuidanceKeepsPlacesAndReturn' started at 2026-10-17 05:38:44.021
+Test Case 'SpatialMemoryTests.testStopGuidanceKeepsPlacesAndReturn' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testTrackingLossNeutralizesWithoutLosingIntent' started at 2026-10-17 05:38:44.021
+Test Case 'SpatialMemoryTests.testTrackingLossNeutralizesWithoutLosingIntent' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testTranslationsAndNinetyAndOneEightyDegreeRotations' started at 2026-10-17 05:38:44.021
+Test Case 'SpatialMemoryTests.testTranslationsAndNinetyAndOneEightyDegreeRotations' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testUnicodeNamesAndDuplicateNormalization' started at 2026-10-17 05:38:44.022
+Test Case 'SpatialMemoryTests.testUnicodeNamesAndDuplicateNormalization' passed (0.0 seconds)
+Test Case 'SpatialMemoryTests.testUpsideDownAndVerticalMountAreInvalid' started at 2026-10-17 05:38:44.022
+Test Case 'SpatialMemoryTests.testUpsideDownAndVerticalMountAreInvalid' passed (0.0 seconds)
+Test Suite 'SpatialMemoryTests' passed at 2026-10-17 05:38:44.022
+	 Executed 20 tests, with 0 failures (0 unexpected) in 0.214 (0.214) seconds
+Test Suite 'VoiceIntentTests' started at 2026-10-17 05:38:44.022
+Test Case 'VoiceIntentTests.testAllControlsAndLineSeparatorsAreRejectedBeforeTrimming' started at 2026-10-17 05:38:44.022
+Test Case 'VoiceIntentTests.testAllControlsAndLineSeparatorsAreRejectedBeforeTrimming' passed (0.0 seconds)
+Test Case 'VoiceIntentTests.testCaseWhitespaceAndNamesRemainIntact' started at 2026-10-17 05:38:44.022
+Test Case 'VoiceIntentTests.testCaseWhitespaceAndNamesRemainIntact' passed (0.001 seconds)
+Test Case 'VoiceIntentTests.testCompositeCommandsCannotBeSilentlyAbsorbedIntoNames' started at 2026-10-17 05:38:44.023
+Test Case 'VoiceIntentTests.testCompositeCommandsCannotBeSilentlyAbsorbedIntoNames' passed (0.001 seconds)
+Test Case 'VoiceIntentTests.testEveryEnglishCommandAndMode' started at 2026-10-17 05:38:44.023
+Test Case 'VoiceIntentTests.testEveryEnglishCommandAndMode' passed (0.0 seconds)
+Test Case 'VoiceIntentTests.testEverySpanishCommandAndAccentedMode' started at 2026-10-17 05:38:44.024
+Test Case 'VoiceIntentTests.testEverySpanishCommandAndAccentedMode' passed (0.0 seconds)
+Test Case 'VoiceIntentTests.testInputLimitAndCombiningMarkBoundCannotBeBypassed' started at 2026-10-17 05:38:44.024
+Test Case 'VoiceIntentTests.testInputLimitAndCombiningMarkBoundCannotBeBypassed' passed (0.0 seconds)
+Test Case 'VoiceIntentTests.testIntentEncodingHasStableActionAndArgumentFields' started at 2026-10-17 05:38:44.024
+Test Case 'VoiceIntentTests.testIntentEncodingHasStableActionAndArgumentFields' passed (0.0 seconds)
+Test Case 'VoiceIntentTests.testLanguageIsExplicitAndCommandsAreNotTranslatedImplicitly' started at 2026-10-17 05:38:44.025
+Test Case 'VoiceIntentTests.testLanguageIsExplicitAndCommandsAreNotTranslatedImplicitly' passed (0.101 seconds)
+Test Case 'VoiceIntentTests.testNameLengthBoundsAreCheckedAfterTrimming' started at 2026-10-17 05:38:44.126
+Test Case 'VoiceIntentTests.testNameLengthBoundsAreCheckedAfterTrimming' passed (0.0 seconds)
+Test Case 'VoiceIntentTests.testNeverAcceptsPartialTranscriptsIncludingStop' started at 2026-10-17 05:38:44.126
+Test Case 'VoiceIntentTests.testNeverAcceptsPartialTranscriptsIncludingStop' passed (0.0 seconds)
+Test Case 'VoiceIntentTests.testUnknownPrefixesSuffixesAndPerceptionProseAreRejected' started at 2026-10-17 05:38:44.126
+Test Case 'VoiceIntentTests.testUnknownPrefixesSuffixesAndPerceptionProseAreRejected' passed (0.0 seconds)
+Test Suite 'VoiceIntentTests' passed at 2026-10-17 05:38:44.126
+	 Executed 11 tests, with 0 failures (0 unexpected) in 0.104 (0.104) seconds
+Test Suite 'debug.xctest' passed at 2026-10-17 05:38:44.126
+	 Executed 90 tests, with 0 failures (0 unexpected) in 0.458 (0.458) seconds
+Test Suite 'All tests' passed at 2026-10-17 05:38:44.126
+	 Executed 90 tests, with 0 failures (0 unexpected) in 0.458 (0.458) seconds
