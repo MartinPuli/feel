@@ -18,6 +18,8 @@ The supplied target repository was empty. GitHub returned HTTP 404 “This repos
 
 `docs/evidence/baseline.json` records input hashes, platform, installed tools and the initial empty-repository responses. Exact current test commands, timestamps, outputs and model limits are in `TEST-REPORT.md` and `docs/evidence/`. Historical counts in `HANDOFF-v7.md` remain historical claims; none of its board/iOS/CAD build claims was reproduced.
 
+The preparation is pushed as commit `7c3c755e288a39096d2f18fbf4d0e585a175bd18` and available in [draft PR #1](https://github.com/MartinPuli/hackharvard/pull/1). Hosted [run 38965192589](https://github.com/MartinPuli/hackharvard/actions/runs/38965192589) passed the model/tests job and failed the required-source job as expected; production jobs were skipped. Later documentation-only commits may record that evidence without changing the tested code.
+
 | Check | Command | Current state / next action |
 |---|---|---|
 | Original source presence | `python3 scripts/check_sources.py` | **BLOCKED**, expected exit 2; restore sources per `SOURCE-IMPORT.md`. |

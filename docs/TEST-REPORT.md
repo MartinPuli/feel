@@ -50,3 +50,5 @@ Seed: **20261016**. The deterministic fixture hash and replay hash are committed
 ## CI interpretation
 
 `.github/workflows/validation.yml` separates the reference model from original-source presence. Missing original sources intentionally make the source job fail; downstream production jobs cannot be mistaken for passing tests. Mac/Xcode and board-build provisioning must be reconciled with the restored project. Actual hosted-run status is recorded separately at handoff; local execution alone is not a claim that GitHub Actions ran.
+
+Hosted execution was subsequently verified at commit `7c3c755e288a39096d2f18fbf4d0e585a175bd18`: [GitHub Actions run 38965192589](https://github.com/MartinPuli/hackharvard/actions/runs/38965192589). **Specification model only: PASS**, including both test suites and replay. **Original V2 sources required: FAIL as expected**, at the source-presence step. Firmware/CAD and iOS jobs were **SKIPPED** because their required sources are missing. The overall red run is an honest blocker, not a claim of a model regression. Structured job evidence is in [`github-actions.json`](evidence/github-actions.json).

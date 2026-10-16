@@ -1,0 +1,119 @@
+{
+  "repository": "MartinPuli/hackharvard",
+  "run_id": 38965192589,
+  "url": "https://github.com/MartinPuli/hackharvard/actions/runs/38965192589",
+  "tested_commit": "7c3c755e288a39096d2f18fbf4d0e585a175bd18",
+  "status": "completed",
+  "conclusion": "failure",
+  "meaning": "Specification model passed; original-source gate failed as expected; production jobs skipped.",
+  "jobs": [
+    {
+      "id": 117189816266,
+      "name": "Specification model only",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success",
+          "started_at": "2026-10-16T20:51:03Z",
+          "completed_at": "2026-10-16T20:51:04Z"
+        },
+        {
+          "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "conclusion": "success",
+          "started_at": "2026-10-16T20:51:04Z",
+          "completed_at": "2026-10-16T20:51:06Z"
+        },
+        {
+          "name": "Run python3 --version",
+          "conclusion": "success",
+          "started_at": "2026-10-16T20:51:06Z",
+          "completed_at": "2026-10-16T20:51:06Z"
+        },
+        {
+          "name": "Run python3 -m unittest discover -s validation/tests -v",
+          "conclusion": "success",
+          "started_at": "2026-10-16T20:51:06Z",
+          "completed_at": "2026-10-16T20:51:06Z"
+        },
+        {
+          "name": "Run python3 -m unittest discover -s scripts/tests -v",
+          "conclusion": "success",
+          "started_at": "2026-10-16T20:51:06Z",
+          "completed_at": "2026-10-16T20:51:07Z"
+        },
+        {
+          "name": "Run python3 validation/run_scenarios.py --output .artifacts/simulation",
+          "conclusion": "success",
+          "started_at": "2026-10-16T20:51:07Z",
+          "completed_at": "2026-10-16T20:51:07Z"
+        },
+        {
+          "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "conclusion": "success",
+          "started_at": "2026-10-16T20:51:07Z",
+          "completed_at": "2026-10-16T20:51:08Z"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success",
+          "started_at": "2026-10-16T20:51:08Z",
+          "completed_at": "2026-10-16T20:51:08Z"
+        }
+      ]
+    },
+    {
+      "id": 117189816534,
+      "name": "Original V2 sources required",
+      "status": "completed",
+      "conclusion": "failure",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success",
+          "started_at": "2026-10-16T20:51:03Z",
+          "completed_at": "2026-10-16T20:51:03Z"
+        },
+        {
+          "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "conclusion": "success",
+          "started_at": "2026-10-16T20:51:03Z",
+          "completed_at": "2026-10-16T20:51:04Z"
+        },
+        {
+          "name": "Run python3 scripts/check_sources.py",
+          "conclusion": "failure",
+          "started_at": "2026-10-16T20:51:04Z",
+          "completed_at": "2026-10-16T20:51:04Z"
+        },
+        {
+          "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "conclusion": "success",
+          "started_at": "2026-10-16T20:51:04Z",
+          "completed_at": "2026-10-16T20:51:04Z"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success",
+          "started_at": "2026-10-16T20:51:04Z",
+          "completed_at": "2026-10-16T20:51:04Z"
+        }
+      ]
+    },
+    {
+      "id": 117189866812,
+      "name": "firmware-and-cad",
+      "status": "completed",
+      "conclusion": "skipped",
+      "steps": []
+    },
+    {
+      "id": 117189866892,
+      "name": "ios",
+      "status": "completed",
+      "conclusion": "skipped",
+      "steps": []
+    }
+  ]
+}
