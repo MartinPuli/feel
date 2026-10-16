@@ -28,3 +28,9 @@ No unresolved critical/high finding remains in this reviewed scope. The reviewer
 did not run V3 builds or tests; actual execution belongs to TEST-REPORT.md and its
 evidence. Review and simulation do not validate a real microphone, AR world,
 camera, BLE/UWB radio, servo, mechanism or tactile experience.
+
+The same independent reviewer inspected the later simulator-only barcode CPU
+policy. It uses a public, deprecated VNRequest property, leaves device request
+construction unchanged, and preserves the actual Vision payload, confidence and
+bounding-box assertions. No concrete API or test-integrity defect was identified;
+the review itself does not establish that the native rerun passes.

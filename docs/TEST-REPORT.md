@@ -107,3 +107,14 @@ selects CPU execution for simulator barcode requests using the pinned SDK's
 public `usesCPUOnly` property. Device compute selection, algorithm revision,
 symbologies, confidence threshold and expected payload remain unchanged. The
 internal cause is unproven, and a third full native run is required.
+
+## Third native hosted result
+
+Run 38979909283 for source `2521d8c0af445f4a6f9444c8e8b41eb8d84396c9`
+again passed portable, CAD and all four embedded builds. The native job executed
+22 app tests with one QR failure and all three UI tests without failures.
+Simulator CPU selection did not resolve the empty barcode observations.
+Beacon simulator and unsigned-device builds were not reached. Exact metadata
+and failure excerpts are preserved in `evidence/v3/github-actions-third-failure.json`
+and `ios-ci-third-failure.log`. The next diagnostic compares image/buffer input
+paths and raw request results without weakening the production expectation.

@@ -1,7 +1,7 @@
 # FEEL V3 release status
 
 **V1 and V2 software: PASS. V3 available local checks: PASS; native Apple gate
-FAIL: one QR test remains after the second hosted run. Physical hardware: NOT VERIFIED.** October 16, 2026.
+FAIL: one QR test remains after the third hosted run. Physical hardware: NOT VERIFIED.** October 16, 2026.
 
 V3 was created in isolated branch `feel/v3-advanced` only after V1 hosted run
 38972250150 and V2 run38974519620 passed all four jobs, including app/UI tests,
@@ -23,7 +23,7 @@ barcode/QR finding. Protocol, firmware and mechanics are unchanged.
 | V3 advanced replay | 1,441 assertions, 156 states PASS |
 | Advanced recorded viewer | Browser controls, 28 pins, desktop/mobile PASS |
 | Independent source review | Complete; no unresolved critical/high finding |
-| Native Apple builds/app/UI tests | Second hosted run FAIL: 1 QR app test; all 3 UI tests PASS; correction/rerun pending |
+| Native Apple builds/app/UI tests | Third hosted run FAIL: 1 QR app test; all 3 UI tests PASS; input-path diagnostics pending |
 | Actual speech, maps, camera, AR/BLE/NI and tactile hardware | NOT VERIFIED |
 
 Command: `python3 scripts/run_advanced_checks.py --output .artifacts/v3-validated-complete`.

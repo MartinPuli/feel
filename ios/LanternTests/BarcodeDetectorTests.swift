@@ -1,6 +1,7 @@
 import XCTest
 import CoreImage
 import CoreVideo
+import ImageIO
 import UIKit
 import Vision
 @testable import Lantern
@@ -69,10 +70,7 @@ final class BarcodeDetectorTests: XCTestCase {
         // The base-address lock is released before Vision reads the same buffer.
         let detections = try ObjectDetector().detect(pixelBuffer: pixelBuffer, mode: .barcode)
         if !detections.contains(where: { $0.label == "Code: FEEL test shelf" }) {
-            let raw=ObjectDetector.barcodeRequest()
-            try VNImageRequestHandler(cvPixelBuffer:pixelBuffer,orientation:.up,options:[:]).perform([raw])
-            let diagnostic=XCTAttachment(string:(raw.results ?? []).map { "\($0.symbology.rawValue): confidence=\($0.confidence), payload=\($0.payloadStringValue ?? "nil"), box=\($0.boundingBox)" }.joined(separator:"\n"))
-            diagnostic.name="Unfiltered Vision observations for generated fixture"; diagnostic.lifetime = .keepAlways; add(diagnostic)
+            attachBarcodeDiagnostics(pixelBuffer:pixelBuffer,cgImage:rendered)
         }
         let detection = try XCTUnwrap(detections.first { $0.label == "Code: FEEL test shelf" },"Expected generated payload; found \(detections.map(\.label))")
         XCTAssertGreaterThanOrEqual(detection.confidence, 0.5)
@@ -82,5 +80,52 @@ final class BarcodeDetectorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(detection.box.minY, 0)
         XCTAssertLessThanOrEqual(detection.box.maxX, 1)
         XCTAssertLessThanOrEqual(detection.box.maxY, 1)
+    }
+
+    /// Failure-only comparison of the same retained pixels. No result from this
+    /// matrix substitutes for the production detector assertion above.
+    private func attachBarcodeDiagnostics(pixelBuffer:CVPixelBuffer,cgImage:CGImage) {
+        let production=ObjectDetector.barcodeRequest()
+        let supported=VNDetectBarcodesRequest.supportedRevisions
+        // Bound the matrix if a future runtime adds many algorithm revisions.
+        let revisions=Array(Set([production.revision]+Array(supported.prefix(4)))).sorted()
+        var lines=["runtime=\(ProcessInfo.processInfo.operatingSystemVersionString), supportedRevisions=\(Array(supported)), productionRevision=\(production.revision), productionCPUOnly=\(production.usesCPUOnly)",
+                   "fixture=\(CVPixelBufferGetWidth(pixelBuffer))x\(CVPixelBufferGetHeight(pixelBuffer)), pixelFormat=\(CVPixelBufferGetPixelFormatType(pixelBuffer)), bytesPerRow=\(CVPixelBufferGetBytesPerRow(pixelBuffer))"]
+        func inspect(input:String,revision:Int,cpuOnly:Bool,mirrored:Bool) {
+            let request=VNDetectBarcodesRequest()
+            request.revision=revision; request.usesCPUOnly=cpuOnly
+            let orientation:CGImagePropertyOrientation = mirrored ? .upMirrored : .up
+            let handler:VNImageRequestHandler
+            if input=="CGImage" {
+                handler=VNImageRequestHandler(cgImage:cgImage,orientation:orientation,options:[:])
+            } else {
+                handler=VNImageRequestHandler(cvPixelBuffer:pixelBuffer,orientation:orientation,options:[:])
+            }
+            let prefix="input=\(input), revision=\(request.revision), cpuOnly=\(request.usesCPUOnly), orientation=\(mirrored ? "upMirrored" : "up")"
+            do {
+                try handler.perform([request])
+                let observations=(request.results ?? []).map {
+                    "{symbology=\($0.symbology.rawValue), confidence=\($0.confidence), payload=\(String(reflecting:$0.payloadStringValue)), box=\($0.boundingBox)}"
+                }.joined(separator:", ")
+                lines.append("\(prefix), observations=[\(observations)]")
+            } catch {
+                let failure=error as NSError
+                lines.append("\(prefix), error=\(failure.domain):\(failure.code) \(failure.localizedDescription)")
+            }
+        }
+        for revision in revisions {
+            for cpuOnly in [false,true] {
+                for input in ["CGImage","CVPixelBuffer"] {
+                    inspect(input:input,revision:revision,cpuOnly:cpuOnly,mirrored:false)
+                }
+            }
+        }
+        for input in ["CGImage","CVPixelBuffer"] {
+            inspect(input:input,revision:production.revision,cpuOnly:production.usesCPUOnly,mirrored:true)
+        }
+        for line in lines { print("[QR diagnostic] \(line)") }
+        let diagnostic=XCTAttachment(string:lines.joined(separator:"\n"))
+        diagnostic.name="Vision input, revision and compute diagnostic matrix"
+        diagnostic.lifetime = .keepAlways; add(diagnostic)
     }
 }
