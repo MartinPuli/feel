@@ -69,7 +69,7 @@ final class BarcodeDetectorTests: XCTestCase {
         // The base-address lock is released before Vision reads the same buffer.
         let detections = try ObjectDetector().detect(pixelBuffer: pixelBuffer, mode: .barcode)
         if !detections.contains(where: { $0.label == "Code: FEEL test shelf" }) {
-            let raw=VNDetectBarcodesRequest()
+            let raw=ObjectDetector.barcodeRequest()
             try VNImageRequestHandler(cvPixelBuffer:pixelBuffer,orientation:.up,options:[:]).perform([raw])
             let diagnostic=XCTAttachment(string:(raw.results ?? []).map { "\($0.symbology.rawValue): confidence=\($0.confidence), payload=\($0.payloadStringValue ?? "nil"), box=\($0.boundingBox)" }.joined(separator:"\n"))
             diagnostic.name="Unfiltered Vision observations for generated fixture"; diagnostic.lifetime = .keepAlways; add(diagnostic)

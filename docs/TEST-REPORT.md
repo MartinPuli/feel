@@ -86,3 +86,24 @@ retains an image attachment plus raw Vision diagnostics on failure. The actual
 production detector and payload/confidence/bounding-box expectations are unchanged.
 The initial QR cause is not conclusively established; the full native rerun must
 confirm whether the fixture correction resolves it.
+
+## Second native hosted result
+
+Run38978568683 for source `025be398e4c15777c9a5b4b9fe08b21f20faf9bb`
+passed all three UI tests, confirming the memory flow and explicit typed commands.
+All non-native jobs passed again. The 22 app tests still contain one failing QR
+case: its black/white/opaque pixel assertions passed, but production detection
+returned an empty list. This remains a failed native gate; later Beacon/device
+builds were not reached. The retained fixture and raw observations are being
+investigated. See `evidence/v3/github-actions-second-failure.json` and
+`ios-ci-second-failure.log`.
+
+An independent ZXing-C++ 2.3.0 decoder successfully read the exact retained
+350 × 350 fixture as `FEEL test shelf`. Its SHA-256 and result are recorded in
+`evidence/v3/qr-independent-decode.json`; the fixture is `qr-fixture.png`.
+The failed request's raw Vision attachment contained no observations, before
+the production confidence filter. The next corrective commit deliberately
+selects CPU execution for simulator barcode requests using the pinned SDK's
+public `usesCPUOnly` property. Device compute selection, algorithm revision,
+symbologies, confidence threshold and expected payload remain unchanged. The
+internal cause is unproven, and a third full native run is required.

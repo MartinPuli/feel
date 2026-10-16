@@ -128,6 +128,17 @@ with control/format characters removed and whitespace folded. The app does not o
 URLs, execute commands, authenticate codes, or infer a safe path from their contents.
 Printed-code detection distance and latency must be measured on the real mounted phone.
 
+Simulator builds deliberately select CPU execution with `usesCPUOnly=true`. This public
+property is supported by the pinned SDK and iOS 16 target, though deprecated in iOS 17.
+Device builds retain Vision's normal compute selection. This is a targeted execution
+policy after the hosted simulator returned no observations for an independently decoded,
+valid generated QR fixture; it does not establish which internal hardware path failed.
+The policy does not alter the request
+revision, symbologies, confidence threshold or expected payload. The retained fixture
+and independent decoder metadata are in `docs/evidence/v3/qr-fixture.png` and
+`qr-independent-decode.json`. Native test results determine whether this execution path
+is supported on the runner; the fixture alone does not prove Vision succeeds.
+
 ## Portable replay API
 
 `feel-replay stdio` accepts one JSON command per line and immediately returns one JSON
@@ -191,3 +202,6 @@ physical validation result is inferred from these software tests.
 - [Speech synthesis](https://developer.apple.com/documentation/avfaudio/avspeechsynthesizer)
 - [Audio ducking category compatibility](https://developer.apple.com/documentation/avfaudio/avaudiosession/categoryoptions-swift.struct/duckothers)
 - [Vision barcode detection](https://developer.apple.com/documentation/vision/vndetectbarcodesrequest)
+- [Vision supported compute stage devices](https://developer.apple.com/documentation/vision/vnrequest/supportedcomputestagedevices)
+- [Vision compute device selection](https://developer.apple.com/documentation/vision/vnrequest/setcomputedevice(_:for:))
+- [Vision CPU-only execution](https://developer.apple.com/documentation/vision/vnrequest/usescpuonly)

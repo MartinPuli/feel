@@ -50,12 +50,23 @@ final class ObjectDetector {
         return text.isEmpty ? "Barcode" : "Code: \(text)"
     }
 
+    static func barcodeRequest() -> VNDetectBarcodesRequest {
+        let request=VNDetectBarcodesRequest()
+        #if targetEnvironment(simulator)
+        // Deliberately select the CPU in simulator builds. The public property
+        // supports the iOS 16 target and pinned SDK; it is deprecated in iOS 17.
+        // Algorithm revision, symbologies and device compute selection are unchanged.
+        request.usesCPUOnly=true
+        #endif
+        return request
+    }
+
     func detect(pixelBuffer: CVPixelBuffer, mode: FinderMode) throws -> [ImageDetection] {
         let handler=VNImageRequestHandler(cvPixelBuffer:pixelBuffer,orientation:.up,options:[:])
         switch mode {
         case .none,.teammate: return []
         case .barcode:
-            let request=VNDetectBarcodesRequest()
+            let request=Self.barcodeRequest()
             try handler.perform([request])
             return (request.results ?? []).filter { $0.confidence>=0.5 }.map {
                 ImageDetection(label:Self.barcodeLabel($0.payloadStringValue),box:$0.boundingBox,confidence:Double($0.confidence))
