@@ -38,3 +38,13 @@ but **not executed here**. They run in the configured Mac workflow. No ARKit
 relocalization, real phone pose, BLE transmission, servo, current, force or human
 tactile behavior was verified. V2 memory intentionally does not persist across
 AR resets and is not an obstacle-free route planner.
+
+## First hosted Mac result
+
+Run38972855892 compiled the app and passed6 app unit/coordinator tests, but the
+2-test UI suite had3 assertion failures in the memory flow: two manual scroll
+visibility preconditions and the tracking-loss control. This is a real failed
+run, not a successful validation. The UI correction and a complete native rerun
+are required before the V2 software gate passes. Metadata and exact failure lines
+are in `evidence/v2/github-actions-initial-failure.json` and
+`evidence/v2/ios-ci-initial-failure.log`.

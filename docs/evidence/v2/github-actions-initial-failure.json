@@ -1,0 +1,44 @@
+{
+  "version": "V2",
+  "source_commit": "5433d7122ed8832960602787bd92cf28445fcd08",
+  "source_tree": "dc6dda63ffa08aa5d3d8196a246c8a14f50ec3d6",
+  "run_id": 38972855892,
+  "url": "https://github.com/MartinPuli/hackharvard/actions/runs/38972855892",
+  "conclusion": "failure",
+  "observed_utc": "2026-10-16T22:12:54.717Z",
+  "jobs": [
+    {
+      "id": 117215168514,
+      "name": "Swift, firmware, and production replay",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117215168808,
+      "name": "ESP32 and ESP32-S3 compile",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117215168821,
+      "name": "CAD export and geometric checks",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 117215168878,
+      "name": "iOS simulator tests and unsigned device builds",
+      "status": "completed",
+      "conclusion": "failure"
+    }
+  ],
+  "apple": {
+    "unit_tests": 6,
+    "unit_failures": 0,
+    "ui_tests": 2,
+    "ui_assertion_failures": 3,
+    "issue": "Two pre-tap reveal assertions and trackingLost expectation failed in memory UI flow; later builds were not reached.",
+    "physical_hardware": "NOT VERIFIED"
+  }
+}
+

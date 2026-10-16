@@ -1,8 +1,10 @@
 # Executed V1 tests
 
 October 16, 2026; Linux, Swift 6.1.3, OpenSCAD 2021.01, PlatformIO 6.1.18.
-The final sequential run has **14 PASS and one BLOCKED** check. No physical device
-was operated. Each log is under `docs/evidence/v1/`.
+The final Linux run has **14 PASS and one BLOCKED** check. Hosted macOS subsequently
+closed the Apple-platform gate: all four jobs in [run 38972250150](https://github.com/MartinPuli/hackharvard/actions/runs/38972250150)
+passed for commit `f6244379e7e8e9dad81f84fb4cd8886f9e77c7ee`.
+No physical device was operated. Logs and hosted result metadata are under `docs/evidence/v1/`.
 
 | Command / suite | Observed result |
 |---|---|
@@ -20,7 +22,7 @@ was operated. Each log is under `docs/evidence/v1/`.
 | `python3 cad/tools/cam_sim.py` | 78/78 geometric checks PASS using actual cam polygon vertices |
 | `python3 -m unittest discover -s cad/test -v` | 13 PASS, including collision/print gate and concurrent writer rejection |
 | `python3 scripts/fetch_model.py` | Pinned genuine model: 62,200,325 bytes; SHA-256 PASS |
-| `bash scripts/check_ios.sh` | BLOCKED: no Xcode, XcodeGen or iOS simulator on Linux |
+| `bash scripts/check_ios.sh` | PASS on hosted Xcode 16.4: 3 app unit + 1 UI tests; both simulator and unsigned device builds. Locally BLOCKED on Linux. |
 
 Protocol tests cover all 65,536 sequence pairs and 10,000 seeded corruption steps.
 Production cross-layer replay uses seed 20261016, five valid and eight invalid
@@ -49,7 +51,8 @@ newly tested CAD output lock, and completed sequentially. Linux Swift requires
 restrict subprocess monitoring; final build and all assertions completed. Raw
 logs preserve their own timestamps and source-parent/dirty-state metadata.
 
-Apple source syntax and independent API review are not Xcode typechecking.
-No CoreML inference, simulator UI suite, signed app, BLE radio, LiDAR, UWB,
-physical PWM, servo/print, electrical or human tactile test passed here: all remain
-unperformed. See `HARDWARE-BRINGUP.md` for the physical gates.
+Hosted Xcode typechecking, simulator execution and unsigned device builds passed;
+the test/build completion lines are in `evidence/v1/ios-ci-excerpt.log`.
+No CoreML inference, signed app installation, BLE radio, LiDAR, UWB, physical PWM,
+servo/print, electrical or human tactile test was performed. See
+`HARDWARE-BRINGUP.md` for the physical gates.

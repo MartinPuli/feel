@@ -71,3 +71,9 @@ jobs:
       - run: xcodegen --version && xcodebuild -version
       - run: python3 scripts/fetch_model.py
       - run: bash scripts/check_ios.sh
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ios-test-results
+          path: .artifacts/ios/results.*/*.xcresult
+          retention-days: 7

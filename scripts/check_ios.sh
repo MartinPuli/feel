@@ -35,8 +35,13 @@ if [ -z "$destination" ]; then
   exit 2
 fi
 printf 'Selected installed simulator: %s\n' "$destination"
+# Keep one simulator lifecycle and retain diagnostics even when a UI test fails.
+result_directory=$(mktemp -d ../.artifacts/ios/results.XXXXXX)
 xcodebuild -project Lantern.xcodeproj -scheme Lantern \
   -destination "platform=iOS Simulator,id=$destination" \
+  -parallel-testing-enabled NO -test-timeouts-enabled YES \
+  -maximum-test-execution-time-allowance 180 \
+  -resultBundlePath "$result_directory/Lantern.xcresult" \
   -derivedDataPath ../.artifacts/ios/DerivedData CODE_SIGNING_ALLOWED=NO test
 # Companion compilation is required separately; no claim of NI functionality in a simulator.
 xcodebuild -project Lantern.xcodeproj -scheme Beacon \

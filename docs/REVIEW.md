@@ -32,3 +32,5 @@ headless Chromium, including controls and mobile width, and visually inspected
 screenshots. The final consolidated executed results are in `TEST-REPORT.md` and
 `evidence/v1/`. All servo, electrical, BLE-radio, sensing and tactile validation
 remains physical work.
+
+Subsequent hosted validation: V1 source commit `f6244379e7e8e9dad81f84fb4cd8886f9e77c7ee` passed Xcode16.4 app/UI tests and simulator/unsigned-device builds in run38972250150. This closes the Apple software gate noted above; physical tests remain pending. See `evidence/v1/github-actions.json`.

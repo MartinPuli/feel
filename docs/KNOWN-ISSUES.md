@@ -4,7 +4,7 @@
 |---|---|---|
 |Hardware gate|FS0307 travel/voltage variant differs from handoff assumptions|Physical output disabled by default; identify units and measure supported travel before enabling. A 120° unit cannot be assumed to drive the 175° cam.|
 |Hardware gate|Servo/horn/foam/guide dimensions unmeasured|Print coupon and crank rig first; CAD fit defaults do not establish physical fit.|
-|Platform verification|Apple app API typecheck, simulator UI and CoreML inference not executed locally|Linux has no Xcode; CI configured. User has now authorized publication; hosted Mac results still pending.|
+|Device verification|CoreML inference and real AR/BLE/NI behavior not executed|V1 hosted Xcode 16.4 builds and simulator tests passed in run38972250150. Device inference, signing/install and sensing/radio tests remain pending.|
 |Perception limitation|Door finder is a rectangle candidate heuristic|UI labels it as a candidate; no door-class weights or accuracy claims.|
 |Perception limitation|LiDAR missing/noisy/outdoor/thin-object depth|Unknown stays unknown; indoors only for demo, real sensing tests pending.|
 |Protocol limitation|No timestamp/checksum/health in nine-byte packet|Reject malformed/old-sequence packets,500 ms watchdog; legal-value corruption/delayed valid packets remain undetectable.|

@@ -1,0 +1,24 @@
+2026-10-16T21:59:26.9712670Z Xcode 16.4
+2026-10-16T21:59:26.9726360Z Build version 16F6
+2026-10-16T21:59:28.8888300Z Xcode 16.4
+2026-10-16T21:59:28.8889150Z Build version 16F6
+2026-10-16T22:00:08.6467560Z Selected installed simulator: 48B2DA2E-AF18-4E36-BB25-B25969A4EBCF
+2026-10-16T22:07:26.8799290Z Test Suite 'LanternTests' passed at 2026-10-16 22:07:26.186.
+2026-10-16T22:07:26.8799850Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.008 (0.009) seconds
+2026-10-16T22:07:27.2538010Z Test Suite 'MemoryCoordinatorTests' passed at 2026-10-16 22:07:26.245.
+2026-10-16T22:07:27.2660240Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.048 (0.049) seconds
+2026-10-16T22:07:27.6215330Z Test Suite 'LanternTests.xctest' passed at 2026-10-16 22:07:26.788.
+2026-10-16T22:07:27.6216130Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.056 (0.611) seconds
+2026-10-16T22:07:27.6329460Z Test Suite 'All tests' passed at 2026-10-16 22:07:26.789.
+2026-10-16T22:07:27.6437920Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.056 (0.616) seconds
+2026-10-16T22:08:14.8524260Z /Users/runner/work/hackharvard/hackharvard/ios/LanternUITests/LanternUITests.swift:39: error: -[LanternUITests.LanternUITests testRememberMoveRecallAndTrackingLossInMemorySimulation] : XCTAssertTrue failed
+2026-10-16T22:08:43.3544810Z /Users/runner/work/hackharvard/hackharvard/ios/LanternUITests/LanternUITests.swift:39: error: -[LanternUITests.LanternUITests testRememberMoveRecallAndTrackingLossInMemorySimulation] : XCTAssertTrue failed
+2026-10-16T22:08:52.1999130Z /Users/runner/work/hackharvard/hackharvard/ios/LanternUITests/LanternUITests.swift:28: error: -[LanternUITests.LanternUITests testRememberMoveRecallAndTrackingLossInMemorySimulation] : XCTAssertTrue failed
+2026-10-16T22:09:19.8838240Z Test Suite 'LanternUITests' failed at 2026-10-16 22:09:19.824.
+2026-10-16T22:09:19.8965150Z 	 Executed 2 tests, with 3 failures (0 unexpected) in 94.423 (94.426) seconds
+2026-10-16T22:09:19.9153970Z Test Suite 'LanternUITests.xctest' failed at 2026-10-16 22:09:19.825.
+2026-10-16T22:09:19.9256970Z 	 Executed 2 tests, with 3 failures (0 unexpected) in 94.423 (94.427) seconds
+2026-10-16T22:09:19.9386090Z Test Suite 'All tests' failed at 2026-10-16 22:09:19.825.
+2026-10-16T22:09:19.9489360Z 	 Executed 2 tests, with 3 failures (0 unexpected) in 94.423 (94.428) seconds
+2026-10-16T22:10:27.2737470Z ** TEST FAILED **
+
