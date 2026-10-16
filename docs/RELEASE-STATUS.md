@@ -1,7 +1,7 @@
 # FEEL V3 release status
 
 **V1 and V2 software: PASS. V3 available local checks: PASS; native Apple gate
-pending. Physical hardware: NOT VERIFIED.** October 16, 2026.
+FAIL on the first hosted run. Physical hardware: NOT VERIFIED.** October 16, 2026.
 
 V3 was created in isolated branch `feel/v3-advanced` only after V1 hosted run
 38972250150 and V2 run38974519620 passed all four jobs, including app/UI tests,
@@ -17,17 +17,17 @@ barcode/QR finding. Protocol, firmware and mechanics are unchanged.
 |---|---|
 | Production Swift tests | 90 PASS, including 32 new V3 tests |
 | Production Swift CLI | Build PASS |
-| Firmware regressions | 38 cases +17 CLI +6 board +6 upload guards PASS |
+| Firmware regressions | 38 cases + 17 CLI + 6 board + 6 upload guards PASS |
 | V1 packet/controller replay | 1,518 assertions, 558 states PASS |
 | V2 spatial replay | 358 assertions, 43 states PASS |
 | V3 advanced replay | 1,441 assertions, 156 states PASS |
 | Advanced recorded viewer | Browser controls, 28 pins, desktop/mobile PASS |
 | Independent source review | Complete; no unresolved critical/high finding |
-| Native Apple builds/app/UI tests | BLOCKED locally: no Apple SDK on Linux; hosted execution pending |
+| Native Apple builds/app/UI tests | First hosted run FAIL: 1 app-test and 2 UI-test failures; correction/rerun pending |
 | Actual speech, maps, camera, AR/BLE/NI and tactile hardware | NOT VERIFIED |
 
 Command: `python3 scripts/run_advanced_checks.py --output .artifacts/v3-validated-complete`.
-Actual exit2: six available checks PASS, one Apple gate BLOCKED. Evidence is in
+Actual exit 2: six available checks PASS, one Apple gate BLOCKED. Evidence is in
 `evidence/v3/report.json` and adjacent logs; `TEST-REPORT.md` explains earlier
 failures and fixes. An actual completed XCTest transcript, not just process exit,
 is required. No native test result is inferred from Linux syntax parsing.

@@ -20,7 +20,7 @@ final class LanternUITests:XCTestCase {
         XCTAssertTrue(app.buttons["memorySimulation"].waitForExistence(timeout:10))
         app.buttons["memorySimulation"].tap()
         let name=app.textFields["placeName"]
-        tapControl(name); name.typeText("Desk\n")
+        enterText("Desk",in:name)
         tapControl(app.buttons["rememberPlace"])
         XCTAssertEqual(app.staticTexts["placesCount"].label,"1 places in this session")
         let back=app.buttons["simBack"]; tapControl(back); tapControl(back)
@@ -43,7 +43,7 @@ final class LanternUITests:XCTestCase {
         tapControl(app.buttons["memorySimulation"])
         tapControl(app.buttons["Voice, saved map and feedback"])
         let command=app.textFields["commandText"]
-        tapControl(command); command.typeText("remember Lab\n")
+        enterText("remember Lab",in:command)
         tapControl(app.buttons["runCommand"])
         XCTAssertEqual(app.staticTexts["commandNotice"].label,"Remembered Lab.")
         XCTAssertEqual(app.staticTexts["placesCount"].label,"1 places in this session")
@@ -56,6 +56,13 @@ final class LanternUITests:XCTestCase {
         // did not move the landscape SwiftUI scroll container in hosted CI.
         element.tap()
         XCTAssertTrue(element.isHittable,file:file,line:line)
+    }
+    private func enterText(_ text:String,in element:XCUIElement,file:StaticString=#filePath,line:UInt=#line) {
+        XCTAssertTrue(element.waitForExistence(timeout:5),file:file,line:line)
+        // A focused SwiftUI field can report isHittable=false despite a visible
+        // caret. Real typing requires focus; verify the resulting field value.
+        element.tap(); element.typeText(text + "\n")
+        XCTAssertEqual(element.value as? String,text,file:file,line:line)
     }
     private func setSwitch(_ element:XCUIElement,to enabled:Bool,file:StaticString=#filePath,line:UInt=#line) {
         let expected=enabled ? "1" : "0"

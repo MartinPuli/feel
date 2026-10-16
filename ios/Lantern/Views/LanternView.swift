@@ -94,7 +94,7 @@ struct AdvancedPanel:View {
                 Text(model.mapNotice).accessibilityIdentifier("mapNotice")
                 Text("Save replaces the previous local map and its places. Load starts a new session in the same physical area; places stay inactive until relocalization succeeds. Select and Recall explicitly afterward. Simulation never creates a real AR map.").font(.footnote)
             }.padding(.top,8)
-        }.accessibilityIdentifier("advancedControls")
+        }
     }
 }
 struct PuckView:View {

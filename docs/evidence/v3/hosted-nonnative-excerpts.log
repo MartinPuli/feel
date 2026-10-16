@@ -1,0 +1,42 @@
+Hosted run 38977441252; source af9f99a32be4532f6635280c497fdf6f0cd4d40c
+Exact selected lines from completed non-native CI job logs.
+
+v3PortableLog
+2026-10-16T22:43:48.8209540Z Ran 7 tests in 1.303s
+2026-10-16T22:43:49.3061130Z Ran 51 tests in 0.063s
+2026-10-16T22:43:53.0464930Z Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)
+2026-10-16T22:44:33.3451260Z Build complete! (35.88s)
+2026-10-16T22:44:34.1112650Z 	 Executed 90 tests, with 0 failures (0 unexpected) in 0.062 (0.066) seconds
+2026-10-16T22:44:34.1136500Z 	 Executed 90 tests, with 0 failures (0 unexpected) in 0.062 (0.068) seconds
+2026-10-16T22:44:35.6632840Z Build complete! (0.28s)
+2026-10-16T22:44:40.3838190Z PASS: 1518 cross-layer assertions, 558 firmware states; physical NOT VERIFIED
+2026-10-16T22:44:40.5189910Z PASS: 358 spatial cross-layer assertions, 43 firmware states; physical NOT VERIFIED
+2026-10-16T22:44:40.6677040Z PASS: 1441 advanced cross-layer assertions, 156 firmware states; physical NOT VERIFIED
+2026-10-16T22:44:42.3781470Z Artifact production-replay.zip successfully finalized. Artifact ID 12079586665
+2026-10-16T22:44:42.3783250Z Artifact production-replay has been successfully uploaded! Final size is 63206 bytes. Artifact ID is 12079586665
+
+v3FWLog
+2026-10-16T22:43:43.0945068Z Successfully installed ajsonrpc-1.2.0 anyio-4.15.1 bottle-0.13.4 h11-0.16.0 marshmallow-3.26.2 platformio-6.1.18 pyelftools-0.33 semantic_version-2.10.0 starlette-0.46.2 tabulate-0.10.0 typing_extensions-4.16.0 uvicorn-0.34.3 wsproto-1.3.2
+2026-10-16T22:44:23.7235697Z Successfully created esp32 image.
+2026-10-16T22:44:54.7605763Z Successfully created esp32 image.
+2026-10-16T22:44:54.9389768Z ========================= [SUCCESS] Took 71.37 seconds =========================
+2026-10-16T22:45:16.0195617Z Successfully created esp32s3 image.
+2026-10-16T22:45:48.7461500Z Successfully created esp32s3 image.
+2026-10-16T22:45:48.9173368Z ========================= [SUCCESS] Took 53.98 seconds =========================
+2026-10-16T22:45:48.9180210Z esp32          SUCCESS   00:01:11.367
+2026-10-16T22:45:48.9180801Z esp32s3        SUCCESS   00:00:53.978
+2026-10-16T22:45:51.1896193Z Successfully created esp32 image.
+2026-10-16T22:46:22.0002758Z Successfully created esp32 image.
+2026-10-16T22:46:22.1628051Z ========================= [SUCCESS] Took 33.01 seconds =========================
+2026-10-16T22:46:24.1105596Z Successfully created esp32s3 image.
+2026-10-16T22:46:56.3734752Z Successfully created esp32s3 image.
+2026-10-16T22:46:56.5298054Z ========================= [SUCCESS] Took 34.37 seconds =========================
+2026-10-16T22:46:56.5304039Z esp32-compilecheck    SUCCESS   00:00:33.014
+2026-10-16T22:46:56.5304715Z esp32s3-compilecheck  SUCCESS   00:00:34.366
+
+v3CADLog
+2026-10-16T22:46:37.4531034Z 78/78 ideal geometry checks passed; PHYSICAL VALIDATION PENDING
+2026-10-16T22:46:37.8216407Z Ran 13 tests in 0.191s
+2026-10-16T22:46:39.8262526Z Artifact nominal-cad-measure-before-print.zip successfully finalized. Artifact ID 12079791161
+2026-10-16T22:46:39.8263891Z Artifact nominal-cad-measure-before-print has been successfully uploaded! Final size is 2468360 bytes. Artifact ID is 12079791161
+
