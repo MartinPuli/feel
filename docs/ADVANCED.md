@@ -128,16 +128,21 @@ with control/format characters removed and whitespace folded. The app does not o
 URLs, execute commands, authenticate codes, or infer a safe path from their contents.
 Printed-code detection distance and latency must be measured on the real mounted phone.
 
-Simulator builds deliberately select CPU execution with `usesCPUOnly=true`. This public
-property is supported by the pinned SDK and iOS 16 target, though deprecated in iOS 17.
-Device builds retain Vision's normal compute selection. This is a targeted execution
-policy after the hosted simulator returned no observations for an independently decoded,
-valid generated QR fixture; it does not establish which internal hardware path failed.
-The policy does not alter the request
-revision, symbologies, confidence threshold or expected payload. The retained fixture
-and independent decoder metadata are in `docs/evidence/v3/qr-fixture.png` and
-`qr-independent-decode.json`. Native test results determine whether this execution path
-is supported on the runner; the fixture alone does not prove Vision succeeds.
+Simulator builds select the documented barcode request revision 2 when the runtime
+reports it supported; otherwise they retain the framework default. Device builds retain
+the default revision. All builds use normal compute selection. The public revision 2
+constant is available in the pinned SDK and iOS 16 target, though deprecated in iOS 18.
+
+This policy follows a retained diagnostic on the hosted iOS 26.2 simulator (build 23C54):
+supported revisions were 1–4, with default 4. Revisions 1 and 2 decoded the generated
+`FEEL test shelf` QR at confidence 1.0 through both CGImage and the same CVPixelBuffer,
+with `usesCPUOnly` both false and true. Revisions 3 and 4 returned no observations for
+all those combinations; mirrored orientation also did not help revision 4. This isolates
+revision-dependent behavior on that runtime, not a general device defect. The failed
+production assertion remains in the test; diagnostic successes never substitute for it.
+Neither the confidence threshold nor expected payload/bounds were relaxed. The retained
+fixture and independent decoder metadata are in `docs/evidence/v3/qr-fixture.png` and
+`qr-independent-decode.json`. Camera and printed-code performance still need device tests.
 
 ## Portable replay API
 
@@ -205,3 +210,5 @@ physical validation result is inferred from these software tests.
 - [Vision supported compute stage devices](https://developer.apple.com/documentation/vision/vnrequest/supportedcomputestagedevices)
 - [Vision compute device selection](https://developer.apple.com/documentation/vision/vnrequest/setcomputedevice(_:for:))
 - [Vision CPU-only execution](https://developer.apple.com/documentation/vision/vnrequest/usescpuonly)
+- [Vision barcode revision 2](https://developer.apple.com/documentation/vision/vndetectbarcodesrequestrevision2)
+- [Vision request revision](https://developer.apple.com/documentation/vision/vnrequest/revision)

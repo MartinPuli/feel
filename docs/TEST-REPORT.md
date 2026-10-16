@@ -118,3 +118,24 @@ Beacon simulator and unsigned-device builds were not reached. Exact metadata
 and failure excerpts are preserved in `evidence/v3/github-actions-third-failure.json`
 and `ios-ci-third-failure.log`. The next diagnostic compares image/buffer input
 paths and raw request results without weakening the production expectation.
+
+## Fourth native hosted result: revision diagnostics
+
+Run 38980829989 for source `03b50d641a4573b03f4b25b0cc1a5e4e02743f7d`
+passed the three non-native jobs and all three UI tests; the same one of 22 app
+tests still failed. The failure-only diagnostic matrix used the same retained
+fixture and did not substitute its results for the production assertion.
+
+On iOS 26.2 (23C54), Vision reported supported revisions 1, 2, 3 and 4; the default
+request selected revision 4. Revisions 1 and 2 decoded the exact expected payload
+with confidence 1.0 and normalized bounding box (0.142857, 0.142857, 0.714286,
+0.714286), for both CGImage and CVPixelBuffer inputs and both CPU flag settings.
+Revisions 3 and 4 returned no observations for each of those inputs; mirrored
+revision-4 input also returned none. This establishes revision-dependent behavior
+on this simulator, not a general defect on physical iPhones.
+
+The correction selects documented revision 2 in simulator builds when supported
+and removes the ineffective CPU override. Device request defaults remain unchanged.
+The production payload/confidence/bounds expectations and diagnostic matrix remain.
+A complete native rerun is still required. Exact observations and job metadata are
+in `evidence/v3/ios-ci-fourth-failure.log` and `github-actions-fourth-failure.json`.

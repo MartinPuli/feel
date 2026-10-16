@@ -53,10 +53,13 @@ final class ObjectDetector {
     static func barcodeRequest() -> VNDetectBarcodesRequest {
         let request=VNDetectBarcodesRequest()
         #if targetEnvironment(simulator)
-        // Deliberately select the CPU in simulator builds. The public property
-        // supports the iOS 16 target and pinned SDK; it is deprecated in iOS 17.
-        // Algorithm revision, symbologies and device compute selection are unchanged.
-        request.usesCPUOnly=true
+        // The retained iOS 26.2 fixture decodes with revisions 1/2, but returns
+        // no observations with 3/4 through either image input or CPU policy.
+        // Select the verified revision only for simulator builds when supported.
+        // Device requests and normal compute selection retain framework defaults.
+        if VNDetectBarcodesRequest.supportedRevisions.contains(VNDetectBarcodesRequestRevision2) {
+            request.revision=VNDetectBarcodesRequestRevision2
+        }
         #endif
         return request
     }

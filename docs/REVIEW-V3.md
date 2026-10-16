@@ -34,3 +34,11 @@ policy. It uses a public, deprecated VNRequest property, leaves device request
 construction unchanged, and preserves the actual Vision payload, confidence and
 bounding-box assertions. No concrete API or test-integrity defect was identified;
 the review itself does not establish that the native rerun passes.
+
+After the CPU attempt failed, a retained native diagnostic established that
+revisions 1/2 decoded the exact fixture while 3/4 returned no observations on
+the hosted iOS 26.2 simulator. The reviewer also checked the resulting revision-2
+compatibility patch: supported-revision guard and simulator conditional are
+correctly scoped, the CPU override is removed, device defaults are unchanged,
+and every production detection assertion remains intact. The full native gate
+and physical-device performance remain separate from this source review.
