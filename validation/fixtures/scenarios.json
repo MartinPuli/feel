@@ -1,0 +1,1968 @@
+{
+  "schema_version": 1,
+  "seed": 20261016,
+  "provenance": "Hand-authored expected packet/state fixtures. Seeded drop choices frozen on 2026-10-16. No sensor recordings or production code supplied.",
+  "limitations": [
+    "This is a new specification model. The supplied remote repository had no production source; there is no shared encoder/decoder implementation or Swift/C++ parity evidence yet.",
+    "The packet is exactly nine bytes with no checksum, timestamp, sender boot ID, or sensor-health field. Valid-byte corruption and old packets after 256 sequence values are not detectable from these bytes alone.",
+    "Band 0 means no pin request. It cannot distinguish free space, unknown depth, lost tracking, stopped input, or a model timeout. Highlight on a zero band cannot raise a target pin.",
+    "Sequence observe/forward_only, exact timeout boundary, disconnect behavior, freshness thresholds, field of view, edge rounding, conflict resolution, neutral choices and timing are reference policies pending recovery of docs/PROTOCOL.md and production code.",
+    "Nominal gap angles derive from the handoff; 40 ms gap / 120 ms settling are configurable unmeasured illustrations. These phases do not demonstrate collision freedom, physical pin return, no neighboring-pin activation, torque, or timing.",
+    "Synthetic inputs are already grouped into seven sectors. Pose is metadata only. No ARKit projection, camera orientation, CoreML, UWB, BLE radio, mechanical model, servo output, or physical control is present.",
+    "No live sensor data appears anywhere in this replay. Every view is SIMULATION. Future production adapters must pass the golden vectors and their own device/build tests."
+  ],
+  "scenarios": [
+    {
+      "id": "startup_and_band_selection",
+      "description": "A receiver starts empty. Mixed band bytes select at most one logical pin per column; this is not physical motion.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "tick",
+          "label": "Startup without a packet",
+          "expect": {
+            "state": {
+              "status": "awaiting_packet",
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "highlight": 255
+            }
+          }
+        },
+        {
+          "time_ms": 10,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "state": {
+              "bands": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                1,
+                2
+              ],
+              "highlight": 6,
+              "status": "active"
+            },
+            "result": {
+              "accepted": true,
+              "sequence": "first"
+            }
+          },
+          "hex": "010001020304010206"
+        },
+        {
+          "time_ms": 130,
+          "kind": "tick",
+          "label": "Reference settling time elapsed; actual motion unknown",
+          "expect": {
+            "state": {
+              "status": "active",
+              "bands": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                1,
+                2
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "timeout_boundary",
+      "description": "Reference timeout occurs exactly 500 ms after the last accepted receipt. Time is virtual and monotonic.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0a01010101010101ff"
+        },
+        {
+          "time_ms": 499,
+          "kind": "tick",
+          "label": "One millisecond before timeout",
+          "expect": {
+            "state": {
+              "status": "active",
+              "bands": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ]
+            }
+          }
+        },
+        {
+          "time_ms": 500,
+          "kind": "tick",
+          "label": "500 ms boundary: clear logical requests",
+          "expect": {
+            "state": {
+              "status": "failsafe_timeout",
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "highlight": 255,
+              "counts": {
+                "timeouts": 1
+              }
+            }
+          }
+        },
+        {
+          "time_ms": 800,
+          "kind": "tick",
+          "label": "Timeout is latched, not repeatedly counted",
+          "expect": {
+            "state": {
+              "counts": {
+                "timeouts": 1
+              },
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "time_ms": 900,
+          "kind": "packet",
+          "label": "Sender restarts after timeout",
+          "expect": {
+            "state": {
+              "status": "active",
+              "bands": [
+                4,
+                4,
+                4,
+                4,
+                4,
+                4,
+                4
+              ]
+            },
+            "result": {
+              "sequence": "first",
+              "accepted": true
+            }
+          },
+          "hex": "0004040404040404ff"
+        }
+      ]
+    },
+    {
+      "id": "nominal_gap_transition",
+      "description": "Nominal reference command phases use unmeasured 40 ms gap and 120 ms settling. They cannot prove pins clear during travel.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0001020304010203ff"
+        },
+        {
+          "time_ms": 200,
+          "kind": "packet",
+          "label": "Request changed bands and clear three columns",
+          "expect": {
+            "state": {
+              "bands": [
+                4,
+                3,
+                2,
+                1,
+                0,
+                0,
+                0
+              ],
+              "highlight": 2,
+              "columns": [
+                {
+                  "target_band": 4,
+                  "phase": "gap_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 3,
+                  "phase": "gap_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 2,
+                  "phase": "gap_requested",
+                  "nominal_command_degrees": 146.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": true,
+                  "nominal_tap_dip_degrees": 37.0
+                },
+                {
+                  "target_band": 1,
+                  "phase": "gap_requested",
+                  "nominal_command_degrees": 146.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 146.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                }
+              ]
+            }
+          },
+          "hex": "010403020100000002"
+        },
+        {
+          "time_ms": 239,
+          "kind": "tick",
+          "label": "Reference gap phase",
+          "expect": {
+            "state": {
+              "status": "active",
+              "columns": [
+                {
+                  "target_band": 4,
+                  "phase": "gap_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 3,
+                  "phase": "gap_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 2,
+                  "phase": "gap_requested",
+                  "nominal_command_degrees": 146.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": true,
+                  "nominal_tap_dip_degrees": 37.0
+                },
+                {
+                  "target_band": 1,
+                  "phase": "gap_requested",
+                  "nominal_command_degrees": 146.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 146.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                }
+              ]
+            }
+          }
+        },
+        {
+          "time_ms": 240,
+          "kind": "tick",
+          "label": "Reference band command phase",
+          "expect": {
+            "state": {
+              "status": "active",
+              "columns": [
+                {
+                  "target_band": 4,
+                  "phase": "band_requested",
+                  "nominal_command_degrees": 175.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 3,
+                  "phase": "band_requested",
+                  "nominal_command_degrees": 117.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 2,
+                  "phase": "band_requested",
+                  "nominal_command_degrees": 58.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": true,
+                  "nominal_tap_dip_degrees": 37.0
+                },
+                {
+                  "target_band": 1,
+                  "phase": "band_requested",
+                  "nominal_command_degrees": 0.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 146.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                }
+              ]
+            }
+          }
+        },
+        {
+          "time_ms": 360,
+          "kind": "tick",
+          "label": "Reference hold phase; not measured",
+          "expect": {
+            "state": {
+              "status": "active",
+              "columns": [
+                {
+                  "target_band": 4,
+                  "phase": "hold_assumed",
+                  "nominal_command_degrees": 175.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 3,
+                  "phase": "hold_assumed",
+                  "nominal_command_degrees": 117.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 2,
+                  "phase": "hold_assumed",
+                  "nominal_command_degrees": 58.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": true,
+                  "nominal_tap_dip_degrees": 37.0
+                },
+                {
+                  "target_band": 1,
+                  "phase": "hold_assumed",
+                  "nominal_command_degrees": 0.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 146.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                }
+              ]
+            }
+          }
+        },
+        {
+          "time_ms": 700,
+          "kind": "tick",
+          "label": "Timeout commands nominal gaps",
+          "expect": {
+            "state": {
+              "status": "failsafe_timeout",
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "columns": [
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 146.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 146.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 146.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "invalid_packets_do_not_refresh",
+      "description": "Length, band and highlight validation rejects bad payloads without refreshing the receipt watchdog.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0001010101010101ff"
+        },
+        {
+          "time_ms": 100,
+          "kind": "packet",
+          "label": "Band 5 is invalid",
+          "expect": {
+            "result": {
+              "accepted": false
+            },
+            "state": {
+              "last_accepted_receipt_ms": 0
+            }
+          },
+          "hex": "0105000000000000ff"
+        },
+        {
+          "time_ms": 200,
+          "kind": "packet",
+          "label": "Highlight 7 is invalid",
+          "expect": {
+            "result": {
+              "accepted": false
+            },
+            "state": {
+              "last_accepted_receipt_ms": 0
+            }
+          },
+          "hex": "020000000000000007"
+        },
+        {
+          "time_ms": 300,
+          "kind": "packet",
+          "label": "Short packet is invalid",
+          "expect": {
+            "result": {
+              "accepted": false
+            }
+          },
+          "hex": "03000000000000ff"
+        },
+        {
+          "time_ms": 400,
+          "kind": "packet",
+          "label": "Long packet is invalid",
+          "expect": {
+            "result": {
+              "accepted": false
+            }
+          },
+          "hex": "0400000000000000ff00"
+        },
+        {
+          "time_ms": 499,
+          "kind": "packet",
+          "label": "High-bit band corruption is invalid",
+          "expect": {
+            "result": {
+              "accepted": false
+            },
+            "state": {
+              "counts": {
+                "invalid": 5
+              },
+              "status": "active"
+            }
+          },
+          "hex": "0500008000000000ff"
+        },
+        {
+          "time_ms": 500,
+          "kind": "tick",
+          "label": "Invalid traffic cannot postpone timeout",
+          "expect": {
+            "state": {
+              "status": "failsafe_timeout",
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "sequence_wrap",
+      "description": "The one-byte sequence rolls from 255 to 0. It does not encode absolute age or wrap count.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "sequence": "first",
+              "accepted": true
+            }
+          },
+          "hex": "fe01010101010101ff"
+        },
+        {
+          "time_ms": 100,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "sequence": "expected",
+              "accepted": true
+            }
+          },
+          "hex": "ff01010101010101ff"
+        },
+        {
+          "time_ms": 200,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "sequence": "expected",
+              "accepted": true
+            }
+          },
+          "hex": "0001010101010101ff"
+        },
+        {
+          "time_ms": 300,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "sequence": "expected",
+              "accepted": true
+            },
+            "state": {
+              "last_seq": 1
+            }
+          },
+          "hex": "0101010101010101ff"
+        }
+      ]
+    },
+    {
+      "id": "forward_gap",
+      "description": "Sequence 10 -> 13 suggests two missing sequence values under a short-gap assumption, not proven radio loss.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0a01010101010101ff"
+        },
+        {
+          "time_ms": 100,
+          "kind": "drop",
+          "label": "Inject dropped sequence 11",
+          "expect": {
+            "state": {
+              "last_seq": 10
+            }
+          }
+        },
+        {
+          "time_ms": 200,
+          "kind": "drop",
+          "label": "Inject dropped sequence 12",
+          "expect": {
+            "state": {
+              "last_seq": 10
+            }
+          }
+        },
+        {
+          "time_ms": 300,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "sequence": "forward_gap"
+            },
+            "state": {
+              "counts": {
+                "possible_missing_packets": 2,
+                "forward_gap_events": 1
+              }
+            }
+          },
+          "hex": "0d01010101010101ff"
+        }
+      ]
+    },
+    {
+      "id": "observe_duplicate_and_reorder",
+      "description": "Default observe policy accepts duplicates and ambiguous backward traffic because the handoff defines no ordering policy. This exposes stale-data risk.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0a01010101010101ff"
+        },
+        {
+          "time_ms": 100,
+          "kind": "packet",
+          "label": "Duplicate accepted under observe policy",
+          "expect": {
+            "result": {
+              "accepted": true,
+              "sequence": "duplicate"
+            },
+            "state": {
+              "bands": [
+                2,
+                2,
+                2,
+                2,
+                2,
+                2,
+                2
+              ],
+              "last_accepted_receipt_ms": 100
+            }
+          },
+          "hex": "0a02020202020202ff"
+        },
+        {
+          "time_ms": 200,
+          "kind": "packet",
+          "label": "Possibly old packet accepted: explicit contract gap",
+          "expect": {
+            "result": {
+              "accepted": true,
+              "sequence": "ambiguous_backward_or_large_gap"
+            },
+            "state": {
+              "bands": [
+                4,
+                4,
+                4,
+                4,
+                4,
+                4,
+                4
+              ]
+            }
+          },
+          "hex": "0904040404040404ff"
+        }
+      ]
+    },
+    {
+      "id": "optional_forward_only_policy",
+      "description": "Optional synthetic half-range ordering rejects duplicates / backward-or-large-gap packets and forgets sequence after timeout. This is not claimed production behavior.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0a01010101010101ff"
+        },
+        {
+          "time_ms": 100,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": false,
+              "sequence": "duplicate"
+            },
+            "state": {
+              "last_accepted_receipt_ms": 0,
+              "bands": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "hex": "0a02020202020202ff"
+        },
+        {
+          "time_ms": 200,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": false,
+              "sequence": "ambiguous_backward_or_large_gap"
+            },
+            "state": {
+              "last_accepted_receipt_ms": 0
+            }
+          },
+          "hex": "0903030303030303ff"
+        },
+        {
+          "time_ms": 500,
+          "kind": "tick",
+          "label": "Repeated stale traffic cannot hold model active",
+          "expect": {
+            "state": {
+              "status": "failsafe_timeout",
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "counts": {
+                "sequence_rejected": 2
+              }
+            }
+          }
+        },
+        {
+          "time_ms": 600,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": true,
+              "sequence": "first"
+            },
+            "state": {
+              "bands": [
+                4,
+                4,
+                4,
+                4,
+                4,
+                4,
+                4
+              ]
+            }
+          },
+          "hex": "0004040404040404ff"
+        }
+      ],
+      "receiver_policy": {
+        "sequence_policy": "forward_only"
+      }
+    },
+    {
+      "id": "disconnect_and_reconnect",
+      "description": "Reference connection policy immediately requests neutral on disconnect and waits for a new packet after reconnect.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "000303030303030303"
+        },
+        {
+          "time_ms": 10,
+          "kind": "connection",
+          "label": "Disconnect event",
+          "expect": {
+            "state": {
+              "status": "disconnected",
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "highlight": 255
+            }
+          },
+          "connected": false
+        },
+        {
+          "time_ms": 20,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": false,
+              "reason": "disconnected"
+            },
+            "state": {
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "hex": "0104040404040404ff"
+        },
+        {
+          "time_ms": 30,
+          "kind": "connection",
+          "label": "Reconnect without old state",
+          "expect": {
+            "state": {
+              "status": "awaiting_packet",
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "connected": true
+        },
+        {
+          "time_ms": 50,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": true,
+              "sequence": "first"
+            },
+            "state": {
+              "bands": [
+                2,
+                2,
+                2,
+                2,
+                2,
+                2,
+                2
+              ]
+            }
+          },
+          "hex": "0202020202020202ff"
+        }
+      ]
+    },
+    {
+      "id": "synthetic_tracking_loss",
+      "description": "Synthetic upstream tracking loss sends all-zero bands / no highlight immediately. No real ARKit tracking is exercised.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "synthetic_frame",
+          "label": "Synthetic observations",
+          "expect": {
+            "state": {
+              "bands": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "highlight": 3
+            }
+          },
+          "seq": 0,
+          "frame": {
+            "captured_ms": 0,
+            "tracking": true,
+            "distances_m": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5
+            ],
+            "targets": [
+              {
+                "bearing_degrees": 0,
+                "observed_ms": 0
+              }
+            ]
+          }
+        },
+        {
+          "time_ms": 100,
+          "kind": "synthetic_frame",
+          "label": "Injected tracking loss",
+          "expect": {
+            "state": {
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "highlight": 255
+            },
+            "input": {
+              "upstream_policy": "tracking_lost"
+            }
+          },
+          "seq": 1,
+          "frame": {
+            "captured_ms": 100,
+            "tracking": false,
+            "distances_m": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5
+            ],
+            "targets": [
+              {
+                "bearing_degrees": 0,
+                "observed_ms": 100
+              }
+            ]
+          }
+        },
+        {
+          "time_ms": 200,
+          "kind": "synthetic_frame",
+          "label": "Synthetic tracking returns",
+          "expect": {
+            "state": {
+              "bands": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "highlight": 255
+            },
+            "input": {
+              "upstream_policy": "synthetic_observations"
+            }
+          },
+          "seq": 2,
+          "frame": {
+            "captured_ms": 200,
+            "tracking": true,
+            "distances_m": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5
+            ],
+            "targets": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "synthetic_depth_freshness",
+      "description": "Synthetic depth older than 250 ms clears output. Exact freshness edges and clock meaning are reference choices.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "synthetic_frame",
+          "label": "Synthetic observations",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "seq": 0,
+          "frame": {
+            "captured_ms": 0,
+            "tracking": true,
+            "distances_m": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5
+            ],
+            "targets": []
+          }
+        },
+        {
+          "time_ms": 250,
+          "kind": "synthetic_frame",
+          "label": "Age 250 ms is accepted in this policy",
+          "expect": {
+            "state": {
+              "bands": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            "input": {
+              "upstream_policy": "synthetic_observations"
+            }
+          },
+          "seq": 1,
+          "frame": {
+            "captured_ms": 0,
+            "tracking": true,
+            "distances_m": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5
+            ],
+            "targets": []
+          }
+        },
+        {
+          "time_ms": 251,
+          "kind": "synthetic_frame",
+          "label": "Age 251 ms is rejected in this policy",
+          "expect": {
+            "state": {
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "highlight": 255
+            },
+            "input": {
+              "upstream_policy": "stale_depth"
+            }
+          },
+          "seq": 2,
+          "frame": {
+            "captured_ms": 0,
+            "tracking": true,
+            "distances_m": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5
+            ],
+            "targets": []
+          }
+        },
+        {
+          "time_ms": 400,
+          "kind": "synthetic_frame",
+          "label": "New synthetic depth restores requests",
+          "expect": {
+            "state": {
+              "bands": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "seq": 3,
+          "frame": {
+            "captured_ms": 400,
+            "tracking": true,
+            "distances_m": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5
+            ],
+            "targets": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "target_lost_and_conflict",
+      "description": "Synthetic target disappearance clears highlight; two target candidates suppress highlight. Neither changes obstacle bands.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "synthetic_frame",
+          "label": "One synthetic target",
+          "expect": {
+            "state": {
+              "highlight": 0,
+              "bands": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "seq": 0,
+          "frame": {
+            "captured_ms": 0,
+            "tracking": true,
+            "distances_m": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5
+            ],
+            "targets": [
+              {
+                "bearing_degrees": -40,
+                "observed_ms": 0
+              }
+            ]
+          }
+        },
+        {
+          "time_ms": 100,
+          "kind": "synthetic_frame",
+          "label": "Target disappears",
+          "expect": {
+            "state": {
+              "highlight": 255,
+              "bands": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "seq": 1,
+          "frame": {
+            "captured_ms": 100,
+            "tracking": true,
+            "distances_m": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5
+            ],
+            "targets": []
+          }
+        },
+        {
+          "time_ms": 200,
+          "kind": "synthetic_frame",
+          "label": "Conflicting target candidates",
+          "expect": {
+            "state": {
+              "highlight": 255
+            },
+            "input": {
+              "target_policy": [
+                "conflicting_targets_highlight_suppressed"
+              ]
+            }
+          },
+          "seq": 2,
+          "frame": {
+            "captured_ms": 200,
+            "tracking": true,
+            "distances_m": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5
+            ],
+            "targets": [
+              {
+                "bearing_degrees": -40,
+                "observed_ms": 200
+              },
+              {
+                "bearing_degrees": 40,
+                "observed_ms": 200
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "delayed_detection_result",
+      "description": "A synthetic detector result older than 250 ms is ignored even with fresh depth. No network or inference engine is simulated.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "synthetic_frame",
+          "label": "Synthetic observations",
+          "expect": {
+            "state": {
+              "highlight": 3
+            }
+          },
+          "seq": 0,
+          "frame": {
+            "captured_ms": 0,
+            "tracking": true,
+            "distances_m": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5
+            ],
+            "targets": [
+              {
+                "bearing_degrees": 0,
+                "observed_ms": 0
+              }
+            ]
+          }
+        },
+        {
+          "time_ms": 300,
+          "kind": "synthetic_frame",
+          "label": "Delayed stale target result arrives",
+          "expect": {
+            "state": {
+              "highlight": 255,
+              "bands": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ]
+            },
+            "input": {
+              "target_policy": [
+                "stale_target_ignored",
+                "no_current_target"
+              ]
+            }
+          },
+          "seq": 1,
+          "frame": {
+            "captured_ms": 300,
+            "tracking": true,
+            "distances_m": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5
+            ],
+            "targets": [
+              {
+                "bearing_degrees": 0,
+                "observed_ms": 0
+              }
+            ]
+          }
+        },
+        {
+          "time_ms": 400,
+          "kind": "synthetic_frame",
+          "label": "Current target result arrives",
+          "expect": {
+            "state": {
+              "highlight": 3
+            }
+          },
+          "seq": 2,
+          "frame": {
+            "captured_ms": 400,
+            "tracking": true,
+            "distances_m": [
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5,
+              0.5
+            ],
+            "targets": [
+              {
+                "bearing_degrees": 0,
+                "observed_ms": 400
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "distance_edges_reference_policy",
+      "description": "Band interval edges are explicit: [0.3,0.9), [0.9,1.6), [1.6,2.5), [2.5,4.0]. Positive closer readings saturate to band 1 by default.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "synthetic_frame",
+          "label": "Exact boundaries and closer-than-range observation",
+          "expect": {
+            "state": {
+              "bands": [
+                1,
+                1,
+                2,
+                3,
+                4,
+                4,
+                0
+              ]
+            }
+          },
+          "seq": 0,
+          "frame": {
+            "captured_ms": 0,
+            "tracking": true,
+            "distances_m": [
+              0.1,
+              0.3,
+              0.9,
+              1.6,
+              2.5,
+              4.0,
+              4.001
+            ],
+            "targets": []
+          }
+        },
+        {
+          "time_ms": 100,
+          "kind": "synthetic_frame",
+          "label": "Unknown readings and values below boundaries",
+          "expect": {
+            "state": {
+              "bands": [
+                0,
+                0,
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            }
+          },
+          "seq": 1,
+          "frame": {
+            "captured_ms": 100,
+            "tracking": true,
+            "distances_m": [
+              0,
+              -1,
+              null,
+              0.899,
+              1.599,
+              2.499,
+              3.999
+            ],
+            "targets": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "legal_byte_corruption_is_undetectable",
+      "description": "The packet has no checksum: flipping band 1 to legal band 0 is accepted. PASS means the limitation was demonstrated, not that corruption is safe.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0001010101010101ff"
+        },
+        {
+          "time_ms": 100,
+          "kind": "packet",
+          "label": "Legal-value bit flip: band 1 -> 0",
+          "expect": {
+            "result": {
+              "accepted": true
+            },
+            "state": {
+              "bands": [
+                0,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "counts": {
+                "invalid": 0
+              }
+            }
+          },
+          "hex": "0100010101010101ff"
+        }
+      ]
+    },
+    {
+      "id": "seeded_packet_loss",
+      "description": "Committed loss decisions from Python random.Random(20261016), 12 draws with p(drop)=0.4. Events are replayed as fixed fixtures.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0001010101010101ff"
+        },
+        {
+          "time_ms": 100,
+          "kind": "drop",
+          "label": "Seed 20261016: sequence 1 dropped",
+          "expect": {
+            "state": {
+              "connected": true
+            }
+          }
+        },
+        {
+          "time_ms": 200,
+          "kind": "packet",
+          "label": "Seed 20261016: sequence 2 delivered",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0201010101010101ff"
+        },
+        {
+          "time_ms": 300,
+          "kind": "packet",
+          "label": "Seed 20261016: sequence 3 delivered",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0301010101010101ff"
+        },
+        {
+          "time_ms": 400,
+          "kind": "packet",
+          "label": "Seed 20261016: sequence 4 delivered",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0401010101010101ff"
+        },
+        {
+          "time_ms": 500,
+          "kind": "drop",
+          "label": "Seed 20261016: sequence 5 dropped",
+          "expect": {
+            "state": {
+              "connected": true
+            }
+          }
+        },
+        {
+          "time_ms": 600,
+          "kind": "drop",
+          "label": "Seed 20261016: sequence 6 dropped",
+          "expect": {
+            "state": {
+              "connected": true
+            }
+          }
+        },
+        {
+          "time_ms": 700,
+          "kind": "packet",
+          "label": "Seed 20261016: sequence 7 delivered",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0701010101010101ff"
+        },
+        {
+          "time_ms": 800,
+          "kind": "packet",
+          "label": "Seed 20261016: sequence 8 delivered",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0801010101010101ff"
+        },
+        {
+          "time_ms": 900,
+          "kind": "packet",
+          "label": "Seed 20261016: sequence 9 delivered",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0901010101010101ff"
+        },
+        {
+          "time_ms": 1000,
+          "kind": "packet",
+          "label": "Seed 20261016: sequence 10 delivered",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0a01010101010101ff"
+        },
+        {
+          "time_ms": 1100,
+          "kind": "drop",
+          "label": "Seed 20261016: sequence 11 dropped",
+          "expect": {
+            "state": {
+              "connected": true
+            }
+          }
+        },
+        {
+          "time_ms": 1200,
+          "kind": "packet",
+          "label": "Seed 20261016: sequence 12 delivered",
+          "expect": {
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "0c01010101010101ff"
+        },
+        {
+          "time_ms": 1800,
+          "kind": "tick",
+          "label": "No more traffic: final timeout",
+          "expect": {
+            "state": {
+              "status": "failsafe_timeout",
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "counts": {
+                "accepted": 9
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "unknown_depth_pose_metadata",
+      "description": "Synthetic pose is metadata only, not an implemented camera transform. Missing depth selects 0 without claiming free space.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "synthetic_frame",
+          "label": "Synthetic observations",
+          "expect": {
+            "state": {
+              "bands": [
+                0,
+                0,
+                0,
+                2,
+                0,
+                0,
+                0
+              ]
+            },
+            "input": {
+              "pose_metadata_only": {
+                "x_m": 0,
+                "z_m": 0,
+                "yaw_degrees": 0
+              }
+            }
+          },
+          "seq": 0,
+          "frame": {
+            "captured_ms": 0,
+            "tracking": true,
+            "distances_m": [
+              null,
+              null,
+              null,
+              1.2,
+              null,
+              null,
+              null
+            ],
+            "targets": [],
+            "pose": {
+              "x_m": 0,
+              "z_m": 0,
+              "yaw_degrees": 0
+            }
+          }
+        },
+        {
+          "time_ms": 100,
+          "kind": "synthetic_frame",
+          "label": "Pose metadata changes; sector fixtures remain independent",
+          "expect": {
+            "state": {
+              "bands": [
+                0,
+                0,
+                0,
+                2,
+                0,
+                0,
+                0
+              ]
+            },
+            "input": {
+              "pose_metadata_only": {
+                "x_m": 1,
+                "z_m": 2,
+                "yaw_degrees": 90
+              }
+            }
+          },
+          "seq": 1,
+          "frame": {
+            "captured_ms": 100,
+            "tracking": true,
+            "distances_m": [
+              null,
+              null,
+              null,
+              1.2,
+              null,
+              null,
+              null
+            ],
+            "targets": [],
+            "pose": {
+              "x_m": 1,
+              "z_m": 2,
+              "yaw_degrees": 90
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "empty_highlight_is_not_a_pin",
+      "description": "The wire contract allows hl on an empty column. This model keeps the empty band and shows only a highlight request, without inventing a target-distance pin.",
+      "events": [
+        {
+          "time_ms": 0,
+          "kind": "packet",
+          "label": "Valid packet",
+          "expect": {
+            "state": {
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "highlight": 4
+            },
+            "result": {
+              "accepted": true
+            }
+          },
+          "hex": "000000000000000004"
+        },
+        {
+          "time_ms": 500,
+          "kind": "tick",
+          "label": "Timeout clears even an empty highlight",
+          "expect": {
+            "state": {
+              "bands": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "highlight": 255,
+              "status": "failsafe_timeout"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+name: FEEL preparation checks (not V2 certification)
+
+on:
+  push:
+    branches: [main, 'feel/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: feel-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reference-model:
+    name: Specification model only
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - run: python3 --version
+      - run: python3 -m unittest discover -s validation/tests -v
+      - run: python3 -m unittest discover -s scripts/tests -v
+      - run: python3 validation/run_scenarios.py --output .artifacts/simulation
+
+  source-presence:
+    name: Original V2 sources required
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      # Intentionally fails while the original project is missing.
+      - run: python3 scripts/check_sources.py
+
+  firmware-and-cad:
+    needs: source-presence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - run: sudo apt-get update && sudo apt-get install -y openscad
+      - run: sh firmware/test/run_host_tests.sh
+      - run: QT_QPA_PLATFORM=offscreen sh cad/build.sh
+      - run: python3 cad/tools/check_stl.py stl/*/*.stl
+      - run: python3 cad/tools/cam_sim.py
+      # This adapter must call the actual imported encoder/decoder. No fake placeholder.
+      - run: sh validation/adapters/run_contract_tests.sh
+
+  ios:
+    needs: source-presence
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      # No guessed Xcode/XcodeGen upgrade. The imported project determines compatible versions.
+      # This fails with BLOCKED if XcodeGen is absent; pin/provision after source audit.
+      - run: bash scripts/check_ios.sh

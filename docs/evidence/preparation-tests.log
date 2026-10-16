@@ -1,0 +1,11 @@
+test_documentation_and_empty_files_do_not_count_as_implementation (test_preflight.SourcePresenceTests.test_documentation_and_empty_files_do_not_count_as_implementation) ... ok
+test_empty_repository_is_blocked (test_preflight.SourcePresenceTests.test_empty_repository_is_blocked) ... ok
+test_presence_never_claims_release_pass (test_preflight.SourcePresenceTests.test_presence_never_claims_release_pass) ... ok
+test_failed_command_retains_output_and_exit (test_runner.RunnerTests.test_failed_command_retains_output_and_exit) ... ok
+test_missing_production_source_does_not_execute_command (test_runner.RunnerTests.test_missing_production_source_does_not_execute_command) ... ok
+test_timeout_also_stops_build_descendants (test_runner.RunnerTests.test_timeout_also_stops_build_descendants) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 1.174s
+
+OK

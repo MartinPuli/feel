@@ -1,0 +1,56 @@
+[
+  {
+    "check": "preparation-tests",
+    "timestamp_utc": "2026-10-16T20:47:40.915716+00:00",
+    "command": "python3 -m unittest discover -s scripts/tests -v",
+    "observed_exit": 0,
+    "expected_exit": 0,
+    "matched_expected_exit": true,
+    "log": "docs/evidence/preparation-tests.log"
+  },
+  {
+    "check": "all-checks",
+    "timestamp_utc": "2026-10-16T20:47:42.143250+00:00",
+    "command": "python3 scripts/run_v2_checks.py --output .artifacts/v2-checks",
+    "observed_exit": 2,
+    "expected_exit": 2,
+    "matched_expected_exit": true,
+    "log": "docs/evidence/all-checks.log"
+  },
+  {
+    "check": "python-compile",
+    "timestamp_utc": "2026-10-16T20:47:42.524201+00:00",
+    "command": "python3 -m compileall -q validation scripts",
+    "observed_exit": 0,
+    "expected_exit": 0,
+    "matched_expected_exit": true,
+    "log": "docs/evidence/python-compile.log"
+  },
+  {
+    "check": "shell-syntax",
+    "timestamp_utc": "2026-10-16T20:47:42.559730+00:00",
+    "command": "bash -n scripts/check_ios.sh",
+    "observed_exit": 0,
+    "expected_exit": 0,
+    "matched_expected_exit": true,
+    "log": "docs/evidence/shell-syntax.log"
+  },
+  {
+    "check": "ios-missing-source",
+    "timestamp_utc": "2026-10-16T20:47:42.561824+00:00",
+    "command": "bash scripts/check_ios.sh",
+    "observed_exit": 2,
+    "expected_exit": 2,
+    "matched_expected_exit": true,
+    "log": "docs/evidence/ios-missing-source.log"
+  },
+  {
+    "check": "generated-js-syntax",
+    "timestamp_utc": "2026-10-16T20:48:15.165694+00:00",
+    "command": "node --check .artifacts/replay-ui.js",
+    "observed_exit": 0,
+    "expected_exit": 0,
+    "matched_expected_exit": true,
+    "scope": "syntax only; browser rendering NOT RUN because no browser executable is installed"
+  }
+]

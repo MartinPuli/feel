@@ -1,0 +1,36 @@
+{
+  "recorded_at_utc": "2026-10-16T20:41:42.911936+00:00",
+  "repository": "MartinPuli/hackharvard",
+  "initial_remote_evidence": {
+    "contents_response": "HTTP 404: This repository is empty.",
+    "branches_response": [],
+    "source": "Authenticated GitHub connector GET /repos/MartinPuli/hackharvard/contents/ and /branches, before bootstrap commit"
+  },
+  "bootstrap_commit": "c019b12b9c174f8155b1ea4f739745ab276fabed",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+  "tool_versions": {
+    "python3": "Python 3.12.14",
+    "git": "git version 2.51.1",
+    "g++": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "openscad": "OpenSCAD version 2021.01"
+  },
+  "missing_tools": [
+    "swift",
+    "xcodegen",
+    "xcodebuild",
+    "xcrun",
+    "pio"
+  ],
+  "physical_access": "No board, servo, printed parts or phone access provided",
+  "input_sha256": {
+    "AGENTS.md": "75fbe4e1ec021f206207e5c1ff2bb1d4d0776f408879bc4c862f2f0f15a904e6",
+    "HANDOFF-v7.md": "c943e4e5299b477d71ba2cf6e7543d6d97f10ef6935925781d774e69e1605738",
+    "HACKHARVARD-2026.md": "2c7cc79a21d0fc965775103712153d998527eef2f6763c3b6303b96b1db88623"
+  },
+  "canonical_names": {
+    "HANDOFF-v7 (1).md": "HANDOFF-v7.md",
+    "HACKHARVARD-2026-UPDATED.md": "HACKHARVARD-2026.md",
+    "AGENTS.md": "AGENTS.md"
+  },
+  "original_builds_and_tests": "BLOCKED: original implementation absent; historical handoff claims not reproduced"
+}

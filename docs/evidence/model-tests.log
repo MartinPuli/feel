@@ -1,0 +1,56 @@
+test_all_sequence_bytes_are_legal (test_model.PacketContractTests.test_all_sequence_bytes_are_legal) ... ok
+test_byte_decoder_rejects_nonbytes (test_model.PacketContractTests.test_byte_decoder_rejects_nonbytes) ... ok
+test_encoder_rejects_range_and_noninteger_fields (test_model.PacketContractTests.test_encoder_rejects_range_and_noninteger_fields) ... ok
+test_every_byte_value_in_every_band_position (test_model.PacketContractTests.test_every_byte_value_in_every_band_position) ... ok
+test_every_highlight_byte (test_model.PacketContractTests.test_every_highlight_byte) ... ok
+test_golden_invalid_payloads (test_model.PacketContractTests.test_golden_invalid_payloads) ... ok
+test_golden_valid_bytes_and_fields (test_model.PacketContractTests.test_golden_valid_bytes_and_fields) ... ok
+test_legal_byte_corruption_cannot_be_detected (test_model.PacketContractTests.test_legal_byte_corruption_cannot_be_detected) ... ok
+test_packet_freezes_caller_owned_bands (test_model.PacketContractTests.test_packet_freezes_caller_owned_bands) ... ok
+test_256_sequence_values_cannot_encode_absolute_age (test_model.ReceiverTests.test_256_sequence_values_cannot_encode_absolute_age) ... ok
+test_changed_bands_have_explicit_nominal_gap_phase (test_model.ReceiverTests.test_changed_bands_have_explicit_nominal_gap_phase) ... ok
+test_clear_uses_last_band_gap_without_claiming_actual_return (test_model.ReceiverTests.test_clear_uses_last_band_gap_without_claiming_actual_return) ... ok
+test_disconnect_clears_and_blocks_then_reconnect_waits (test_model.ReceiverTests.test_disconnect_clears_and_blocks_then_reconnect_waits) ... ok
+test_equal_time_is_allowed_for_atomic_events (test_model.ReceiverTests.test_equal_time_is_allowed_for_atomic_events) ... ok
+test_forward_only_accepts_delta_127_but_does_not_prove_freshness (test_model.ReceiverTests.test_forward_only_accepts_delta_127_but_does_not_prove_freshness) ... ok
+test_forward_only_rejects_ambiguous_half_range (test_model.ReceiverTests.test_forward_only_rejects_ambiguous_half_range) ... ok
+test_highlight_empty_column_does_not_invent_a_pin_or_tap (test_model.ReceiverTests.test_highlight_empty_column_does_not_invent_a_pin_or_tap) ... ok
+test_invalid_model_configuration_rejected (test_model.ReceiverTests.test_invalid_model_configuration_rejected) ... ok
+test_invalid_traffic_does_not_refresh_timeout (test_model.ReceiverTests.test_invalid_traffic_does_not_refresh_timeout) ... ok
+test_monotonic_time_is_required_everywhere (test_model.ReceiverTests.test_monotonic_time_is_required_everywhere) ... ok
+test_nominal_angles_and_tap_directions_are_reference_only (test_model.ReceiverTests.test_nominal_angles_and_tap_directions_are_reference_only) ... ok
+test_observe_policy_exposes_duplicate_and_backward_risk (test_model.ReceiverTests.test_observe_policy_exposes_duplicate_and_backward_risk) ... ok
+test_repeated_band_command_does_not_restart_reference_settling (test_model.ReceiverTests.test_repeated_band_command_does_not_restart_reference_settling) ... ok
+test_sender_restart_can_recover_after_timeout (test_model.ReceiverTests.test_sender_restart_can_recover_after_timeout) ... ok
+test_snapshot_is_not_a_mutable_backdoor (test_model.ReceiverTests.test_snapshot_is_not_a_mutable_backdoor) ... ok
+test_startup_has_no_logical_guidance (test_model.ReceiverTests.test_startup_has_no_logical_guidance) ... ok
+test_timeout_exact_boundary_and_recovery (test_model.ReceiverTests.test_timeout_exact_boundary_and_recovery) ... ok
+test_timeout_is_configurable_but_default_is_500 (test_model.ReceiverTests.test_timeout_is_configurable_but_default_is_500) ... ok
+test_wrap_and_short_forward_gap (test_model.ReceiverTests.test_wrap_and_short_forward_gap) ... ok
+test_empty_fixture_cannot_generate_a_passing_report (test_model.ReplayTests.test_empty_fixture_cannot_generate_a_passing_report) ... ok
+test_empty_suites_events_and_expectations_are_rejected (test_model.ReplayTests.test_empty_suites_events_and_expectations_are_rejected) ... ok
+test_every_scenario_matches_hand_authored_expectations (test_model.ReplayTests.test_every_scenario_matches_hand_authored_expectations) ... ok
+test_html_escapes_script_terminators_in_fixture_text (test_model.ReplayTests.test_html_escapes_script_terminators_in_fixture_text) ... ok
+test_html_is_self_contained_trace_not_second_protocol_model (test_model.ReplayTests.test_html_is_self_contained_trace_not_second_protocol_model) ... ok
+test_logical_single_pin_invariant_across_all_traces (test_model.ReplayTests.test_logical_single_pin_invariant_across_all_traces) ... ok
+test_loss_fixture_matches_declared_seed (test_model.ReplayTests.test_loss_fixture_matches_declared_seed) ... ok
+test_replay_is_byte_deterministic (test_model.ReplayTests.test_replay_is_byte_deterministic) ... ok
+test_schema_ids_time_and_event_shape_are_checked (test_model.ReplayTests.test_schema_ids_time_and_event_shape_are_checked) ... ok
+test_wrong_fixture_expectation_is_reported (test_model.ReplayTests.test_wrong_fixture_expectation_is_reported) ... ok
+test_wrong_nominal_command_phases_fail_replay (test_model.ReplayTests.test_wrong_nominal_command_phases_fail_replay) ... ok
+test_band_interval_edges (test_model.SyntheticInputTests.test_band_interval_edges) ... ok
+test_bearing_boundaries_and_out_of_field_of_view (test_model.SyntheticInputTests.test_bearing_boundaries_and_out_of_field_of_view) ... ok
+test_close_policy_is_explicit_and_configurable (test_model.SyntheticInputTests.test_close_policy_is_explicit_and_configurable) ... ok
+test_delayed_target_cannot_restore_old_highlight (test_model.SyntheticInputTests.test_delayed_target_cannot_restore_old_highlight) ... ok
+test_depth_freshness_boundary (test_model.SyntheticInputTests.test_depth_freshness_boundary) ... ok
+test_future_timestamps_rejected (test_model.SyntheticInputTests.test_future_timestamps_rejected) ... ok
+test_input_configuration_and_shape_validation (test_model.SyntheticInputTests.test_input_configuration_and_shape_validation) ... ok
+test_synthetic_pose_is_metadata_not_an_arkit_transform (test_model.SyntheticInputTests.test_synthetic_pose_is_metadata_not_an_arkit_transform) ... ok
+test_target_loss_and_conflict_do_not_change_obstacles (test_model.SyntheticInputTests.test_target_loss_and_conflict_do_not_change_obstacles) ... ok
+test_tracking_loss_clears_bands_and_highlight (test_model.SyntheticInputTests.test_tracking_loss_clears_bands_and_highlight) ... ok
+test_unknown_depth_is_not_a_free_space_claim (test_model.SyntheticInputTests.test_unknown_depth_is_not_a_free_space_claim) ... ok
+
+----------------------------------------------------------------------
+Ran 51 tests in 0.049s
+
+OK

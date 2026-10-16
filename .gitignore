@@ -1,0 +1,11 @@
+.artifacts/
+__pycache__/
+*.py[cod]
+.DS_Store
+.env
+.env.*
+!.env.example
+*.p12
+*.mobileprovision
+DerivedData/
+.pio/

@@ -1,0 +1,36 @@
+{
+  "status": "BLOCKED",
+  "meaning": "File presence only; does not prove V2 builds, tests, compatibility, or readiness.",
+  "missing": [
+    "HANDOFF-v6.md",
+    "docs/BUILD-HANDOFF.md",
+    "docs/PROTOCOL.md",
+    "cad/README.md",
+    "cad/params.scad",
+    "cad/build.sh",
+    "cad/tools/check_stl.py",
+    "cad/tools/cam_sim.py",
+    "firmware/README.md",
+    "firmware/test/run_host_tests.sh",
+    "ios/README.md",
+    "ios/project.yml",
+    "cad/: cad source missing or empty",
+    "firmware/: firmware source missing or empty",
+    "firmware/test/: firmware tests missing or empty",
+    "ios/Lantern/: Lantern app missing or empty",
+    "ios/Beacon/: Beacon app missing or empty",
+    "ios/Shared/: shared iOS code missing or empty",
+    "ios/: iOS tests missing or empty",
+    "research/: research missing or empty"
+  ],
+  "source_groups": {
+    "cad source": [],
+    "firmware source": [],
+    "firmware tests": [],
+    "Lantern app": [],
+    "Beacon app": [],
+    "shared iOS code": [],
+    "iOS tests": [],
+    "research": []
+  }
+}
