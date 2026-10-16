@@ -9,6 +9,7 @@ public struct Vector3: Equatable, Codable, Sendable {
     public static func -(a: Self, b: Self) -> Self { Self(a.x-b.x,a.y-b.y,a.z-b.z) }
     public static func *(a: Self, b: Double) -> Self { Self(a.x*b,a.y*b,a.z*b) }
     public func dot(_ b: Self) -> Double { x*b.x+y*b.y+z*b.z }
+    public func cross(_ b: Self) -> Self { Self(y*b.z-z*b.y,z*b.x-x*b.z,x*b.y-y*b.x) }
 }
 
 public struct CameraPose: Equatable, Codable, Sendable {
@@ -20,7 +21,8 @@ public struct CameraPose: Equatable, Codable, Sendable {
     public var isValid: Bool {
         position.isFinite && right.isFinite && up.isFinite && back.isFinite &&
         abs(right.dot(right)-1)<0.02 && abs(up.dot(up)-1)<0.02 && abs(back.dot(back)-1)<0.02 &&
-        abs(right.dot(up))<0.02 && abs(right.dot(back))<0.02 && abs(up.dot(back))<0.02
+        abs(right.dot(up))<0.02 && abs(right.dot(back))<0.02 && abs(up.dot(back))<0.02 &&
+        right.cross(up).dot(back)>0.98
     }
     public func worldPoint(camera point: Vector3) -> Vector3 { position + right*point.x + up*point.y + back*point.z }
     public func cameraPoint(world point: Vector3) -> Vector3 {

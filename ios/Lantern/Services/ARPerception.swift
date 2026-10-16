@@ -5,6 +5,7 @@ import FeelCore
 
 struct PerceptionFrame {
     let epoch:Int
+    let worldSession:String
     let finderEpoch:Int
     let timestamp: TimeInterval
     let tracking: Bool
@@ -20,6 +21,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
     let session=ARSession()
     var onFrame: ((PerceptionFrame)->Void)?
     var onInvalidated: ((Int)->Void)?
+    var onWorldSession: ((Int,String?)->Void)?
     var onStatus: ((String)->Void)?
     var onModelStatus: ((String,Bool)->Void)?
     private let queue=DispatchQueue(label:"feel.arkit",qos:.userInitiated)
@@ -27,6 +29,8 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private lazy var detector=ObjectDetector()
     private var floorY: Double?
     private var sessionEpoch=0
+    private var worldSession:String?
+    private var running=false
     private var earliestFrame:TimeInterval = 0
     private var finder: FinderMode = .none
     private var finderEpoch=0
@@ -46,7 +50,9 @@ final class ARPerception: NSObject, ARSessionDelegate {
     @discardableResult func start(epoch:Int) -> Bool {
         guard ARWorldTrackingConfiguration.isSupported,ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) else { publishStatus("Live sensing requires a LiDAR iPhone or iPad. Use Simulation for software replay."); return false }
         queue.async {
-            self.sessionEpoch=epoch; self.earliestFrame=ProcessInfo.processInfo.systemUptime
+            self.running=true; self.sessionEpoch=epoch; self.earliestFrame=ProcessInfo.processInfo.systemUptime
+            let id=UUID().uuidString; self.worldSession=id
+            DispatchQueue.main.async { self.onWorldSession?(epoch,id) }
             self.floorY=nil; self.lastTarget=nil; self.generation += 1; self.lastProcessed = -.infinity
             let config=ARWorldTrackingConfiguration(); config.frameSemantics=[.sceneDepth]; config.worldAlignment = .gravity
             self.session.run(config,options:[.resetTracking,.removeExistingAnchors]); self.publishStatus("Move slowly, then calibrate measured camera height")
@@ -54,7 +60,12 @@ final class ARPerception: NSObject, ARSessionDelegate {
         return true
     }
     func stop() {
-        queue.async { self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.publishStatus("Stopped") }
+        queue.async {
+            self.running=false; self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.worldSession=nil
+            let epoch=self.sessionEpoch
+            DispatchQueue.main.async { self.onWorldSession?(epoch,nil) }
+            self.publishStatus("Stopped")
+        }
     }
     func setFinder(_ mode: FinderMode,epoch:Int) { queue.async { self.finder=mode; self.finderEpoch=epoch; self.lastTarget=nil; self.generation += 1 } }
     func calibrate(cameraHeight: Double) {
@@ -73,12 +84,12 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private func publishStatus(_ status: String) { DispatchQueue.main.async { self.onStatus?(status) } }
     private func publish(_ frame: PerceptionFrame) { DispatchQueue.main.async { self.onFrame?(frame) } }
     func session(_ session: ARSession,didUpdate frame: ARFrame) {
-        guard frame.timestamp>=earliestFrame,frame.timestamp-lastProcessed>=0.095 else { return }; lastProcessed=frame.timestamp
+        guard running,let worldSession,frame.timestamp>=earliestFrame,frame.timestamp-lastProcessed>=0.095 else { return }; lastProcessed=frame.timestamp
         let pose=Self.pose(frame.camera.transform)
         let normal: Bool; if case .normal=frame.camera.trackingState { normal=true } else { normal=false }
         guard normal,Self.mountValid(pose),let depth=frame.sceneDepth,let map=DepthCopy(depth) else {
             lastTarget=nil; generation += 1
-            publish(PerceptionFrame(epoch:sessionEpoch,finderEpoch:finderEpoch,timestamp:frame.timestamp,tracking:false,distances:Array(repeating:nil,count:7),target:nil,pose:pose,floorY:floorY))
+            publish(PerceptionFrame(epoch:sessionEpoch,worldSession:worldSession,finderEpoch:finderEpoch,timestamp:frame.timestamp,tracking:false,distances:Array(repeating:nil,count:7),target:nil,pose:pose,floorY:floorY))
             publishStatus(normal ? "Depth missing or mounting orientation invalid — guidance neutral" : "Tracking uncertain — guidance neutral")
             return
         }
@@ -93,7 +104,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
             }
         }
         let distances=DepthProjector.sectors(samples:samples,pose:pose,floorY:floorY)
-        publish(PerceptionFrame(epoch:sessionEpoch,finderEpoch:finderEpoch,timestamp:frame.timestamp,tracking:true,distances:distances,target:lastTarget?.observation(pose:pose,now:frame.timestamp),pose:pose,floorY:floorY))
+        publish(PerceptionFrame(epoch:sessionEpoch,worldSession:worldSession,finderEpoch:finderEpoch,timestamp:frame.timestamp,tracking:true,distances:distances,target:lastTarget?.observation(pose:pose,now:frame.timestamp),pose:pose,floorY:floorY))
         guard finder != .none,finder != .teammate,!visionBusy,frame.timestamp-lastVision>=0.35 else { return }
         visionBusy=true; lastVision=frame.timestamp
         let mode=finder,token=generation,image=frame.capturedImage,timestamp=frame.timestamp
@@ -118,13 +129,13 @@ final class ARPerception: NSObject, ARSessionDelegate {
     }
     func sessionShouldAttemptRelocalization(_ session: ARSession) -> Bool { false }
     private func invalidate() {
-        lastTarget=nil; floorY=nil; generation += 1
+        lastTarget=nil; floorY=nil; worldSession=nil; generation += 1
         let epoch=sessionEpoch
-        DispatchQueue.main.async { self.onInvalidated?(epoch) }
+        DispatchQueue.main.async { self.onWorldSession?(epoch,nil); self.onInvalidated?(epoch) }
     }
-    func sessionWasInterrupted(_ session: ARSession) { invalidate(); publishStatus("AR interrupted — recalibrate after restart") }
-    func sessionInterruptionEnded(_ session: ARSession) { _=start(epoch:sessionEpoch) }
-    func session(_ session: ARSession,didFailWithError error: Error) { invalidate(); publishStatus("AR error: \(error.localizedDescription)") }
+    func sessionWasInterrupted(_ session: ARSession) { guard running else { return }; invalidate(); publishStatus("AR interrupted — session places cleared; recalibrate after restart") }
+    func sessionInterruptionEnded(_ session: ARSession) { guard running else { return }; _=start(epoch:sessionEpoch) }
+    func session(_ session: ARSession,didFailWithError error: Error) { guard running else { return }; running=false; invalidate(); publishStatus("AR error: \(error.localizedDescription)") }
 }
 
 private struct DepthCopy {

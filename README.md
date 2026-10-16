@@ -1,4 +1,8 @@
-# FEEL
+# FEEL V2 — Spatial Memory
+
+This isolated branch adds Remember, Recall, an explicit Return point and multiple
+bookmarks. Start with [SPATIAL-MEMORY.md](docs/SPATIAL-MEMORY.md). The available
+V2 software checks pass; Apple-platform and physical validation remain separate.
 
 A prototype that translates indoor depth and target direction into a **7-column ×
 4-pin tactile puck**, using a LiDAR iPhone, BLE, an ESP32 and seven servos.

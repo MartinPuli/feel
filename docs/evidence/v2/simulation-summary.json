@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "version": "V2",
+  "label": "SIMULATION \u2014 production spatial memory and controller",
+  "physical_hardware": "NOT VERIFIED",
+  "status": "PASS",
+  "seed": 20261016,
+  "assertions": 358,
+  "motor_model": {
+    "speed_deg_s": 300,
+    "measured": false,
+    "jam_feedback": false
+  },
+  "firmware_states": 43
+}

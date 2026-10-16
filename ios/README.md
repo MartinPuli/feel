@@ -102,3 +102,17 @@ On this Linux host, portable sources and app syntax can be checked. Full Apple-f
 - [Nearby-object world transform](https://developer.apple.com/documentation/nearbyinteraction/nisession/worldtransform(for:))
 - [NI orientation guidance](https://developer.apple.com/design/human-interface-guidelines/nearby-interactions)
 - [Swift compiler driver fallback](https://github.com/swiftlang/swift/blob/main/docs/DebuggingTheCompiler.md)
+
+## V2 spatial memory branch
+
+The isolated V2 branch adds session-only Remember, My Places, Recall, explicit Set
+return point / Return, and Stop guidance using production `SpatialMemoryManager`.
+The **Memory simulation** scene exercises the same encoder with synthetic pose
+controls and no simulated BLE movement. Stopping/resetting/interruption clears
+places; transient tracking loss neutralizes guidance and can recover in the same
+world. See [SPATIAL-MEMORY.md](../docs/SPATIAL-MEMORY.md) for coordinate conventions,
+arrival assumptions, stateful CLI schema, lifecycle rules, and remaining validation.
+
+`FeelCore` includes 20 spatial-memory regression tests. `LanternTests` adds three
+coordinator tests and `LanternUITests` adds the explicit simulation flow; these
+Apple-target tests require Xcode and have not been run on the Linux host.

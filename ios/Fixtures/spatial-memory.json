@@ -1,0 +1,9 @@
+[
+  {"op":"memoryBegin","session":"demo"},
+  {"op":"memoryRemember","session":"demo","id":"desk","name":"Desk","now":1,"frameTimestamp":1,"tracking":true,"pose":{"position":[0,0,0],"right":[1,0,0],"up":[0,1,0],"back":[0,0,1]}},
+  {"op":"memorySetReturn","session":"demo","now":1,"frameTimestamp":1,"tracking":true,"pose":{"position":[0,0,0],"right":[1,0,0],"up":[0,1,0],"back":[0,0,1]}},
+  {"op":"memoryRecall","id":"desk"},
+  {"op":"memoryGuide","seq":1,"session":"demo","now":2,"frameTimestamp":2,"tracking":true,"pose":{"position":[0,0,2],"right":[1,0,0],"up":[0,1,0],"back":[0,0,1]},"distances":[null,null,0.7,null,null,null,null],"expectedHex":"010000010300000003"},
+  {"op":"memoryStop"},
+  {"op":"memoryEnd"}
+]

@@ -1,0 +1,1 @@
+PASS recorded spatial replay:28pins,next,slider,play/pause,desktop/mobile,no JS errors or horizontal overflow. Headless Chromium155.0.8059.84. Synthetic inputs, no physical devices.

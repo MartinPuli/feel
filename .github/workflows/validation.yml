@@ -24,11 +24,14 @@ jobs:
       - run: swift build --package-path ios/Shared/FeelCore
       - run: sh firmware/test/run_host_tests.sh
       - run: python3 validation/production/run.py
+      - run: python3 validation/spatial/run.py
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: production-replay
-          path: .artifacts/production/
+          path: |
+            .artifacts/production/
+            .artifacts/spatial/
   firmware:
     name: ESP32 and ESP32-S3 compile
     runs-on: ubuntu-24.04

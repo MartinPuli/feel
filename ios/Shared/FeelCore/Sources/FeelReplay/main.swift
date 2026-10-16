@@ -6,25 +6,45 @@ struct TargetInput: Decodable {
     var confidence: Double?, label: String?
     var observation: TargetObservation { .init(bearingDegrees:bearingDegrees,distance:distance,timestamp:timestamp,confidence:confidence ?? 1,label:label ?? "target") }
 }
+struct PoseInput: Decodable {
+    var position: [Double], right: [Double], up: [Double], back: [Double]
+    func pose() throws -> CameraPose {
+        func vector(_ values: [Double]) throws -> Vector3 {
+            guard values.count==3 else { throw CommandError.range("pose vectors require three numbers") }
+            return Vector3(values[0],values[1],values[2])
+        }
+        return try CameraPose(position:vector(position),right:vector(right),up:vector(up),back:vector(back))
+    }
+}
 struct Command: Decodable {
     var op: String
     var seq: Int?, bands: [Int]?, highlight: Int?, hex: String?
     var now: Double?, frameTimestamp: Double?, tracking: Bool?, distances: [Double?]?, target: TargetInput?, floorCalibrated: Bool?
     var expectedHex: String?
+    var session: String?, id: String?, name: String?, pose: PoseInput?
 }
 struct Reply: Encodable {
     var valid: Bool
     var hex: String?, seq: Int?, bands: [UInt8]?, highlight: UInt8?, state: String?, error: String?
+    var memory: SpatialMemorySnapshot?, memoryState: String?, distance: Double?, horizontalDistance: Double?, bearingDegrees: Double?, targetName: String?
+    init(memory: SpatialMemorySnapshot) { valid=true; self.memory=memory }
     init(packet: FeelPacket, state: String?=nil) { valid=true; hex=packet.hex; seq=Int(packet.sequence); bands=packet.bands; highlight=packet.highlight; self.state=state }
     init(error: String) { valid=false; self.error=error }
 }
 enum CommandError: Error { case missing(String), range(String), mismatch(String) }
+var memoryManager=SpatialMemoryManager()
 func execute(_ command: Command) throws -> Reply {
     func byte(_ value: Int?, _ field: String) throws -> UInt8 {
         guard let value else { throw CommandError.missing(field) }
         guard let result=UInt8(exactly:value) else { throw CommandError.range(field) }; return result
     }
-    let reply: Reply
+    func required<T>(_ value: T?, _ name: String) throws -> T {
+        guard let value else { throw CommandError.missing(name) }; return value
+    }
+    func memoryPose() throws -> MemoryPose {
+        try MemoryPose(session:required(command.session,"session"),pose:required(command.pose,"pose").pose(),timestamp:required(command.frameTimestamp,"frameTimestamp"),tracking:required(command.tracking,"tracking"))
+    }
+    var reply: Reply
     switch command.op {
     case "decode":
         guard let hex=command.hex else { throw CommandError.missing("hex") }
@@ -36,6 +56,32 @@ func execute(_ command: Command) throws -> Reply {
         guard let now=command.now,let time=command.frameTimestamp,let tracking=command.tracking,let distances=command.distances else { throw CommandError.missing("perceive fields") }
         let output=TactileEncoder.encode(sequence:try byte(command.seq,"seq"),now:now,frameTimestamp:time,tracking:tracking,distances:distances,target:command.target?.observation,floorCalibrated:command.floorCalibrated ?? true)
         reply=Reply(packet:output.packet,state:output.state.rawValue)
+    case "memoryBegin":
+        try memoryManager.begin(session:required(command.session,"session")); reply=Reply(memory:memoryManager.snapshot)
+    case "memoryEnd":
+        memoryManager.end(); reply=Reply(memory:memoryManager.snapshot)
+    case "memoryState": reply=Reply(memory:memoryManager.snapshot)
+    case "memoryRemember":
+        try memoryManager.remember(id:required(command.id,"id"),name:required(command.name,"name"),sample:memoryPose(),now:required(command.now,"now")); reply=Reply(memory:memoryManager.snapshot)
+    case "memorySelect":
+        try memoryManager.select(id:required(command.id,"id")); reply=Reply(memory:memoryManager.snapshot)
+    case "memoryRename":
+        try memoryManager.rename(id:required(command.id,"id"),name:required(command.name,"name")); reply=Reply(memory:memoryManager.snapshot)
+    case "memoryDelete":
+        try memoryManager.delete(id:required(command.id,"id")); reply=Reply(memory:memoryManager.snapshot)
+    case "memoryRecall":
+        try memoryManager.recall(id:command.id); reply=Reply(memory:memoryManager.snapshot)
+    case "memorySetReturn":
+        try memoryManager.setReturnPoint(sample:memoryPose(),now:required(command.now,"now")); reply=Reply(memory:memoryManager.snapshot)
+    case "memoryReturn":
+        try memoryManager.returnToStart(); reply=Reply(memory:memoryManager.snapshot)
+    case "memoryStop":
+        memoryManager.stopGuidance(); reply=Reply(memory:memoryManager.snapshot)
+    case "memoryGuide":
+        let result=try memoryManager.encode(sequence:byte(command.seq,"seq"),sample:memoryPose(),now:required(command.now,"now"),distances:required(command.distances,"distances"),floorCalibrated:command.floorCalibrated ?? true)
+        reply=Reply(packet:result.output.packet,state:result.output.state.rawValue)
+        reply.memory=memoryManager.snapshot; reply.memoryState=result.guidance.state.rawValue
+        reply.distance=result.guidance.distance; reply.horizontalDistance=result.guidance.horizontalDistance; reply.bearingDegrees=result.guidance.bearingDegrees; reply.targetName=result.guidance.targetName
     default: throw CommandError.missing("Unknown op: \(command.op)")
     }
     if let expected=command.expectedHex, expected.lowercased() != reply.hex { throw CommandError.mismatch("expected \(expected), got \(reply.hex ?? "nil")") }
@@ -59,5 +105,5 @@ if args.first == "stdio" {
 } else if args.first == "decode",args.count == 2 {
     if !run(try! JSONSerialization.data(withJSONObject:["op":"decode","hex":args[1]])) { exit(1) }
 } else {
-    FileHandle.standardError.write(Data("Usage: feel-replay stdio | replay fixtures.json | decode <18 hex digits>\nJSON ops: encode, decode, perceive. See ios/README.md.\n".utf8)); exit(2)
+    FileHandle.standardError.write(Data("Usage: feel-replay stdio | replay fixtures.json | decode <18 hex digits>\nJSON ops: encode, decode, perceive, memory*. See docs/SPATIAL-MEMORY.md.\n".utf8)); exit(2)
 }
