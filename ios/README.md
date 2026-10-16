@@ -1,6 +1,6 @@
-# FEEL V1 iOS — greenfield implementation
+# FEEL iOS — greenfield implementation
 
-This source recreates the intended system from the handoff. No original Swift project or model weights were recovered. Historical handoff test counts do not apply to this implementation. `Lantern` is the internal app target; the display name is FEEL. `Beacon` is the second-phone app. V2 Spatial Memory is a later isolated branch.
+This source recreates the intended system from the handoff. No original Swift project or model weights were recovered. Historical handoff test counts do not apply to this implementation. `Lantern` is the internal app target; the display name is FEEL. `Beacon` is the second-phone app. This V3 branch includes the V1 foundation and V2 Spatial Memory, with each earlier version preserved on its own branch.
 
 ## What is implemented
 
@@ -116,3 +116,24 @@ arrival assumptions, stateful CLI schema, lifecycle rules, and remaining validat
 `FeelCore` includes 20 spatial-memory regression tests. `LanternTests` adds three
 coordinator tests and `LanternUITests` adds the explicit simulation flow; these
 Apple-target tests require Xcode and have not been run on the Linux host.
+
+## V3 advanced branch
+
+The isolated V3 branch adds explicit English/Spanish push-to-talk commands with
+typed fallback and optional spoken readback, one local saved AR world map with
+multiple bookmarks, a guarded relocalization flow, adaptive target highlighting,
+and Vision QR/barcode finding. Read [ADVANCED.md](../docs/ADVANCED.md) for controls,
+supported grammar, archive bounds, lifecycle behavior and replay commands.
+
+Loading a map never immediately activates remembered guidance. The app requires
+matching map/session evidence, fresh stable tracking, floor recalibration and
+explicit Recall. Teammate finding is disabled throughout a restored-map session;
+start fresh Live to use it. Simulation never transmits synthetic movement to BLE.
+
+The software suite now contains 90 portable core tests, 22 native app tests and
+3 UI tests. Run `python3 scripts/fetch_model.py` followed by
+`bash scripts/check_ios.sh` from the repository root for the full native gate,
+including Beacon simulator and both unsigned device builds. Actual executed
+results and the simulator barcode revision compatibility policy are recorded in
+[TEST-REPORT.md](../docs/TEST-REPORT.md). Speech recognition, real map alignment,
+camera detection and physical tactile guidance still require device validation.

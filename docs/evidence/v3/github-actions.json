@@ -1,0 +1,410 @@
+{
+  "run_id": 38981718320,
+  "url": "https://github.com/MartinPuli/hackharvard/actions/runs/38981718320",
+  "source_commit": "61460a2f787ed52b328a74874afd62a5c7220d07",
+  "source_tree": "2663e23ad0bf0006b0fea8b74ec95f54c8dc0a4d",
+  "status": "PASS",
+  "jobs": [
+    {
+      "id": 117243868169,
+      "name": "iOS simulator tests and unsigned device builds",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 38981718320,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run brew install xcodegen",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run xcodegen --version && xcodebuild -version",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run python3 scripts/fetch_model.py",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run bash scripts/check_ios.sh",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ]
+    },
+    {
+      "id": 117243868464,
+      "name": "Swift, firmware, and production replay",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 38981718320,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run python3 scripts/check_sources.py",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run python3 -m unittest discover -s scripts/tests -v",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run python3 -m unittest discover -s validation/tests -v",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run swift --version && sh ios/scripts/test_portable.sh",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run swift build --package-path ios/Shared/FeelCore",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run sh firmware/test/run_host_tests.sh",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run python3 validation/production/run.py",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Run python3 validation/spatial/run.py",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Run python3 validation/advanced/run.py",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25
+        }
+      ]
+    },
+    {
+      "id": 117243868493,
+      "name": "CAD export and geometric checks",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 38981718320,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run sudo apt-get update && sudo apt-get install -y openscad",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run sh cad/build.sh",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run python3 cad/tools/check_stl.py stl/*/*.stl",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run python3 cad/tools/cam_sim.py",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run python3 -m unittest discover -s cad/test -v",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ]
+    },
+    {
+      "id": 117243868548,
+      "name": "ESP32 and ESP32-S3 compile",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 38981718320,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run python3 -m pip install platformio==6.1.18",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run pio run -j 2 --project-dir firmware",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run sh firmware/test/build_output_paths.sh",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run sh firmware/test/run_host_tests.sh",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ]
+    }
+  ],
+  "portable": {
+    "swift_tests": 90,
+    "failures": 0,
+    "script_tests": 7,
+    "legacy_validation_tests": 51,
+    "firmware_cases": 38,
+    "firmware_cli_cases": 17,
+    "board_checks": 6,
+    "upload_guard_checks": 6
+  },
+  "replays": {
+    "v1": {
+      "assertions": 1518,
+      "states": 558
+    },
+    "v2": {
+      "assertions": 358,
+      "states": 43
+    },
+    "v3": {
+      "assertions": 1441,
+      "states": 156
+    }
+  },
+  "cad": {
+    "stl_exports": 24,
+    "cam_checks": 78,
+    "tool_tests": 13
+  },
+  "embedded_builds": [
+    "esp32",
+    "esp32s3",
+    "esp32-compilecheck",
+    "esp32s3-compilecheck"
+  ],
+  "native": {
+    "xcode": "16.4 (16F6)",
+    "sdk": "iOS 18.5",
+    "simulator": "iOS 26.2 (23C54)",
+    "app_tests": {
+      "executed": 22,
+      "failures": 0
+    },
+    "ui_tests": {
+      "executed": 3,
+      "failures": 0
+    },
+    "actual_vision_qr": "PASS",
+    "beacon_simulator_build": "PASS",
+    "lantern_unsigned_device_build": "PASS",
+    "beacon_unsigned_device_build": "PASS"
+  },
+  "compatibility": "Simulator uses supported Vision barcode revision2; device default revision/compute selection unchanged. Earlier failed default-revision runs and exact diagnostic matrix retained.",
+  "artifacts": [
+    {
+      "id": 12081318900,
+      "name": "ios-test-results",
+      "size_in_bytes": 378555,
+      "url": "https://api.github.com/repos/MartinPuli/hackharvard/actions/artifacts/12081318900",
+      "archive_download_url": "https://api.github.com/repos/MartinPuli/hackharvard/actions/artifacts/12081318900/zip",
+      "expired": false,
+      "created_at": "2026-10-16T23:38:05Z",
+      "expires_at": "2026-10-23T23:38:04Z",
+      "updated_at": "2026-10-16T23:38:05Z",
+      "digest": "sha256:13beca1b352a1df25b865d97d7cbd7d68e531d311c714835e26d993d29a4abf0",
+      "workflow_run": {
+        "id": 38981718320,
+        "repository_id": 1422634991,
+        "head_repository_id": 1422634991,
+        "head_branch": "feel/v3-advanced",
+        "head_sha": "61460a2f787ed52b328a74874afd62a5c7220d07"
+      }
+    },
+    {
+      "id": 12081302931,
+      "name": "nominal-cad-measure-before-print",
+      "size_in_bytes": 2467842,
+      "url": "https://api.github.com/repos/MartinPuli/hackharvard/actions/artifacts/12081302931",
+      "archive_download_url": "https://api.github.com/repos/MartinPuli/hackharvard/actions/artifacts/12081302931/zip",
+      "expired": false,
+      "created_at": "2026-10-16T23:32:03Z",
+      "expires_at": "2027-01-14T23:29:36Z",
+      "updated_at": "2026-10-16T23:32:03Z",
+      "digest": "sha256:ce9f716bc289ad2303399603830c5ca5b962572db3c99826755b7cdb2e5943b4",
+      "workflow_run": {
+        "id": 38981718320,
+        "repository_id": 1422634991,
+        "head_repository_id": 1422634991,
+        "head_branch": "feel/v3-advanced",
+        "head_sha": "61460a2f787ed52b328a74874afd62a5c7220d07"
+      }
+    },
+    {
+      "id": 12081237937,
+      "name": "production-replay",
+      "size_in_bytes": 63206,
+      "url": "https://api.github.com/repos/MartinPuli/hackharvard/actions/artifacts/12081237937",
+      "archive_download_url": "https://api.github.com/repos/MartinPuli/hackharvard/actions/artifacts/12081237937/zip",
+      "expired": false,
+      "created_at": "2026-10-16T23:30:28Z",
+      "expires_at": "2027-01-14T23:29:36Z",
+      "updated_at": "2026-10-16T23:30:28Z",
+      "digest": "sha256:c0d43ddd5be3719aaefa7adcf29603656829589755efea3c9f609f3db8ea9bc0",
+      "workflow_run": {
+        "id": 38981718320,
+        "repository_id": 1422634991,
+        "head_repository_id": 1422634991,
+        "head_branch": "feel/v3-advanced",
+        "head_sha": "61460a2f787ed52b328a74874afd62a5c7220d07"
+      }
+    }
+  ],
+  "physical_hardware": "NOT VERIFIED",
+  "signed_device_install": "NOT RUN",
+  "scope": "Software validation only; speech recognition, real map alignment, camera/CoreML inference, AR/BLE/NI, servo and mechanical behavior require physical devices."
+}

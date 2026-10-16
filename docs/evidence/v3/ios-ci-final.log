@@ -1,0 +1,36 @@
+2026-10-16T23:29:52.9519920Z Xcode 16.4
+2026-10-16T23:29:52.9527080Z Build version 16F6
+2026-10-16T23:29:55.5772480Z Xcode 16.4
+2026-10-16T23:29:55.5775890Z Build version 16F6
+2026-10-16T23:31:02.2475620Z Selected installed simulator: 48B2DA2E-AF18-4E36-BB25-B25969A4EBCF
+2026-10-16T23:31:04.6876610Z     /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/xcodebuild -project Lantern.xcodeproj -scheme Lantern -destination "platform=iOS Simulator,id=48B2DA2E-AF18-4E36-BB25-B25969A4EBCF" -parallel-testing-enabled NO -test-timeouts-enabled YES -maximum-test-execution-time-allowance 180 -resultBundlePath ../.artifacts/ios/results.jLzINV/Lantern.xcresult -derivedDataPath ../.artifacts/ios/DerivedData CODE_SIGNING_ALLOWED=NO test
+2026-10-16T23:35:19.7521680Z Test Suite 'All tests' started at 2026-10-16 23:35:18.369.
+2026-10-16T23:35:19.7526170Z Test Suite 'LanternTests.xctest' started at 2026-10-16 23:35:18.370.
+2026-10-16T23:35:21.0505540Z 2026-10-16 23:35:19.464489+0000 Lantern[27580:80765] The filter 'CIPortraitEffectSpillCorrection' is not implemented in the bundle at /Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/System/Library/CoreImage/PortraitFilters.cifilter.
+2026-10-16T23:35:21.5121990Z Test Case '-[LanternTests.BarcodeDetectorTests testVisionDetectsGeneratedQRCodeWithUsableBoundingBox]' passed (2.115 seconds).
+2026-10-16T23:35:21.5271640Z Test Suite 'LanternTests' started at 2026-10-16 23:35:21.440.
+2026-10-16T23:35:21.5282420Z Test Suite 'LanternTests' passed at 2026-10-16 23:35:21.482.
+2026-10-16T23:35:21.5283070Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.041 (0.042) seconds
+2026-10-16T23:35:22.0506280Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.177 (0.178) seconds
+2026-10-16T23:35:24.9414190Z 2026-10-16 23:35:21.909795+0000 Lantern[27580:80765] [general] *** -[NSKeyedUnarchiver validateAllowedClass:forKey:] allowed unarchiving safe plist type ''NSString' (0x1f2705cc8) [/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/System/Library/Frameworks/Foundation.framework]' for key 'root', even though it was not explicitly included in the client allowed classes set: '{(
+2026-10-16T23:35:24.9417600Z     "'ARWorldMap' (0x1f3e8ef90) [/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/System/Library/Frameworks/ARKit.framework]"
+2026-10-16T23:35:24.9484380Z Test Suite 'LanternTests.xctest' passed at 2026-10-16 23:35:21.915.
+2026-10-16T23:35:24.9485710Z 	 Executed 22 tests, with 0 failures (0 unexpected) in 3.417 (3.545) seconds
+2026-10-16T23:35:24.9486820Z Test Suite 'All tests' passed at 2026-10-16 23:35:21.915.
+2026-10-16T23:35:24.9490740Z 	 Executed 22 tests, with 0 failures (0 unexpected) in 3.417 (3.546) seconds
+2026-10-16T23:36:03.7364280Z Test Suite 'All tests' started at 2026-10-16 23:35:52.752.
+2026-10-16T23:36:04.0636060Z Test Suite 'LanternUITests.xctest' started at 2026-10-16 23:35:52.753.
+2026-10-16T23:36:05.7217900Z Test Suite 'LanternUITests' started at 2026-10-16 23:35:52.753.
+2026-10-16T23:37:14.3291290Z Test Suite 'LanternUITests' passed at 2026-10-16 23:37:14.326.
+2026-10-16T23:37:14.3291830Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 81.571 (81.573) seconds
+2026-10-16T23:37:14.3427350Z Test Suite 'LanternUITests.xctest' passed at 2026-10-16 23:37:14.327.
+2026-10-16T23:37:14.3428500Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 81.571 (81.574) seconds
+2026-10-16T23:37:14.3429340Z Test Suite 'All tests' passed at 2026-10-16 23:37:14.328.
+2026-10-16T23:37:14.3429870Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 81.571 (81.575) seconds
+2026-10-16T23:37:15.9521780Z ** TEST SUCCEEDED **
+2026-10-16T23:37:22.5980090Z     /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/xcodebuild -project Lantern.xcodeproj -scheme Beacon -destination "platform=iOS Simulator,id=48B2DA2E-AF18-4E36-BB25-B25969A4EBCF" -derivedDataPath ../.artifacts/ios/DerivedData CODE_SIGNING_ALLOWED=NO build
+2026-10-16T23:37:29.6502490Z ** BUILD SUCCEEDED **
+2026-10-16T23:37:30.6490720Z     /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/xcodebuild -project Lantern.xcodeproj -scheme Lantern -destination generic/platform=iOS -derivedDataPath ../.artifacts/ios/DerivedData CODE_SIGNING_ALLOWED=NO build
+2026-10-16T23:37:58.8693150Z ** BUILD SUCCEEDED **
+2026-10-16T23:37:59.8704020Z     /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/xcodebuild -project Lantern.xcodeproj -scheme Beacon -destination generic/platform=iOS -derivedDataPath ../.artifacts/ios/DerivedData CODE_SIGNING_ALLOWED=NO build
+2026-10-16T23:38:04.2379450Z ** BUILD SUCCEEDED **

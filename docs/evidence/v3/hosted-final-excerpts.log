@@ -1,0 +1,51 @@
+PORTABLE
+2026-10-16T23:29:49.1713690Z Ran 7 tests in 1.298s
+2026-10-16T23:29:49.3791440Z Ran 51 tests in 0.038s
+2026-10-16T23:29:51.7410980Z Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)
+2026-10-16T23:30:20.0434170Z 	 Executed 90 tests, with 0 failures (0 unexpected) in 0.069 (0.073) seconds
+2026-10-16T23:30:20.0435080Z 	 Executed 90 tests, with 0 failures (0 unexpected) in 0.069 (0.075) seconds
+2026-10-16T23:30:25.2106170Z 38/38 firmware host tests passed; physical hardware NOT VERIFIED
+2026-10-16T23:30:26.2479710Z PASS firmware CLI: 17 commands, JSON states, production decoder and timeout assertions
+2026-10-16T23:30:26.5013460Z PASS firmware board config: 6 compile-only default/required-limit/range checks (no physical outputs)
+2026-10-16T23:30:26.5556420Z PASS firmware compile-only hook: 6 target guard cases (no upload command executed)
+2026-10-16T23:30:26.8009160Z PASS: 1518 cross-layer assertions, 558 firmware states; physical NOT VERIFIED
+2026-10-16T23:30:26.9332510Z PASS: 358 spatial cross-layer assertions, 43 firmware states; physical NOT VERIFIED
+2026-10-16T23:30:27.0995070Z PASS: 1441 advanced cross-layer assertions, 156 firmware states; physical NOT VERIFIED
+
+FIRMWARE
+2026-10-16T23:31:50.6574898Z esp32          SUCCESS   00:01:09.463
+2026-10-16T23:31:50.6575400Z esp32s3        SUCCESS   00:00:54.439
+2026-10-16T23:33:00.0684752Z esp32-compilecheck    SUCCESS   00:00:34.115
+2026-10-16T23:33:00.0685455Z esp32s3-compilecheck  SUCCESS   00:00:35.061
+2026-10-16T23:33:02.1199532Z 38/38 firmware host tests passed; physical hardware NOT VERIFIED
+2026-10-16T23:33:02.9444120Z PASS firmware CLI: 17 commands, JSON states, production decoder and timeout assertions
+2026-10-16T23:33:03.0306852Z PASS firmware board config: 6 compile-only default/required-limit/range checks (no physical outputs)
+2026-10-16T23:33:03.0644004Z PASS firmware compile-only hook: 6 target guard cases (no upload command executed)
+
+CAD
+2026-10-16T23:32:00.9906005Z PASS stl/puck/chassis.stl: 7504 triangles / 1 body / on bed
+2026-10-16T23:32:00.9922751Z PASS stl/puck/face.stl: 25424 triangles / 1 body / on bed
+2026-10-16T23:32:00.9923307Z PASS stl/puck/foam_template.stl: 5788 triangles / 1 body / on bed
+2026-10-16T23:32:00.9923743Z PASS stl/puck/guide.stl: 8356 triangles / 1 body / on bed
+2026-10-16T23:32:00.9924142Z PASS stl/puck/pack_tray.stl: 1944 triangles / 1 body / on bed
+2026-10-16T23:32:00.9924548Z PASS stl/puck/pins.stl: 68820 triangles / 1 body / on bed
+2026-10-16T23:32:00.9924964Z PASS stl/puck/servo_retainer.stl: 204 triangles / 1 body / on bed
+2026-10-16T23:32:00.9925579Z PASS stl/puck/shaft_A.stl: 6724 triangles / 1 body / on bed
+2026-10-16T23:32:00.9926055Z PASS stl/test/coupling_C1.stl: 1140 triangles / 1 body / on bed
+2026-10-16T23:32:00.9929981Z PASS stl/test/coupling_C2.stl: 1148 triangles / 1 body / on bed
+2026-10-16T23:32:00.9930471Z PASS stl/test/coupling_C3.stl: 724 triangles / 1 body / on bed
+2026-10-16T23:32:00.9930899Z PASS stl/test/crank.stl: 640 triangles / 1 body / on bed
+2026-10-16T23:32:00.9931901Z PASS stl/test/dummy_servo.stl: 220 triangles / 1 body / on bed
+2026-10-16T23:32:00.9932344Z PASS stl/test/foam_template.stl: 988 triangles / 1 body / on bed
+2026-10-16T23:32:00.9932769Z PASS stl/test/frame.stl: 2060 triangles / 1 body / on bed
+2026-10-16T23:32:00.9933181Z PASS stl/test/guide.stl: 2004 triangles / 1 body / on bed
+2026-10-16T23:32:00.9933597Z PASS stl/test/hole_coupon.stl: 4620 triangles / 1 body / on bed
+2026-10-16T23:32:00.9934026Z PASS stl/test/pins_tip15.stl: 11424 triangles / 1 body / on bed
+2026-10-16T23:32:00.9934453Z PASS stl/test/pins_tip21.stl: 10272 triangles / 1 body / on bed
+2026-10-16T23:32:00.9934875Z PASS stl/test/pitch_coupon.stl: 1740 triangles / 1 body / on bed
+2026-10-16T23:32:00.9935300Z PASS stl/test/shaft_A.stl: 6724 triangles / 1 body / on bed
+2026-10-16T23:32:00.9935710Z PASS stl/test/shaft_G.stl: 6724 triangles / 1 body / on bed
+2026-10-16T23:32:00.9936114Z PASS stl/test/shaft_H.stl: 6724 triangles / 1 body / on bed
+2026-10-16T23:32:00.9936520Z PASS stl/test/strip.stl: 1772 triangles / 1 body / on bed
+2026-10-16T23:32:01.7652610Z 78/78 ideal geometry checks passed; PHYSICAL VALIDATION PENDING
+2026-10-16T23:32:02.0212637Z Ran 13 tests in 0.167s

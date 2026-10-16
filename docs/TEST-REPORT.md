@@ -6,6 +6,11 @@ evidence directories. Both prerequisite hosted native gates passed before V3.
 The V3 final local runner completed six available checks; it returned 2 for the
 Apple gate unavailable on Linux. See `evidence/v3/report.json` and actual logs.
 
+The complete software gate subsequently **PASSED** in hosted run **38981718320**
+for source `61460a2f787ed52b328a74874afd62a5c7220d07`: all four jobs succeeded,
+including 22 native app tests, 3 UI tests and all simulator/unsigned device builds.
+The final-result section below records the exact scope and preceding failed runs.
+
 | Command | Observed result |
 |---|---|
 | `sh ios/scripts/test_portable.sh` | 90 tests, 0 failures |
@@ -14,7 +19,7 @@ Apple gate unavailable on Linux. See `evidence/v3/report.json` and actual logs.
 | `python3 validation/production/run.py` | 1,518 assertions, 558 states PASS |
 | `python3 validation/spatial/run.py` | 358 assertions, 43 states PASS |
 | `python3 validation/advanced/run.py` | 1,441 assertions, 156 states PASS |
-| `bash scripts/check_ios.sh` | BLOCKED on this Linux host; hosted execution pending |
+| `bash scripts/check_ios.sh` | BLOCKED locally on Linux; PASS on hosted Xcode 16.4, 22 app + 3 UI tests and all required builds |
 
 The 32 new portable tests comprise 12 adaptive, 11 voice grammar and 9 persistence
 tests. They exercise unchanged bands/sequence numbers, quiet-first timing and
@@ -52,12 +57,12 @@ a normal Mac does not require these cloud filesystem paths.
 ## Native and physical gates
 
 All 29 Swift source files passed syntax parsing, which is not Apple typechecking.
-The native suite contains 22 app tests and 3 UI tests awaiting hosted Xcode:
+The native suite contains 22 app tests and 3 UI tests executed on hosted Xcode:
 coordinator actions, voice attempt/lifecycle bounds, secure rejection of invalid
 map data and atomic file storage, plus an actual Vision barcode request over a
 CoreImage-generated QR pixel buffer. UI tests use labeled Simulation and explicit
 typed commands, without microphone permissions. Counts describe tests present,
-not a successful execution, until the hosted result is recorded.
+not physical-device verification. The successful hosted execution is recorded below.
 
 No real speech recognition, saved-map relocalization, camera QR detection,
 CoreML inference, LiDAR, BLE, UWB, servo motion, power, fit, force or human tactile
@@ -139,3 +144,30 @@ and removes the ineffective CPU override. Device request defaults remain unchang
 The production payload/confidence/bounds expectations and diagnostic matrix remain.
 A complete native rerun is still required. Exact observations and job metadata are
 in `evidence/v3/ios-ci-fourth-failure.log` and `github-actions-fourth-failure.json`.
+
+## Final native hosted result: PASS
+
+[Run 38981718320](https://github.com/MartinPuli/hackharvard/actions/runs/38981718320)
+validated source commit `61460a2f787ed52b328a74874afd62a5c7220d07`, tree
+`2663e23ad0bf0006b0fea8b74ec95f54c8dc0a4d`. All four jobs passed:
+
+- Portable Swift: 90 tests with zero failures, production CLI build, firmware host
+  regressions, and all three production-backed replays (1,518 / 358 / 1,441 assertions).
+- CAD: 24 STL exports, 78 ideal cam checks and 13 tool tests.
+- Embedded: ESP32 and ESP32-S3 default builds plus both output-enabled compile fixtures.
+- Native job 117243868169: Xcode 16.4 (16F6), SDK 18.5, iOS 26.2 simulator (23C54).
+  All 22 app tests and all 3 UI tests passed with zero failures. The actual generated-QR
+  Vision test passed in 2.115 seconds; its payload, confidence and bounding-box
+  assertions were preserved. Beacon simulator and both Lantern/Beacon unsigned
+  device builds each ended with `BUILD SUCCEEDED`.
+
+Metadata and selected verbatim log lines are in `evidence/v3/github-actions.json`,
+`ios-ci-final.log` and `hosted-final-excerpts.log`. The iOS result artifact is
+12081318900 (retention ends October 23, 2026); durable excerpts and the earlier
+failed-run matrix are committed. Subsequent edits are documentation/evidence only.
+
+This verifies software builds, generated-image detection, explicit typed UI commands,
+state transitions and deterministic simulations. It does not validate real speech,
+saved-room alignment, CoreML/camera performance, LiDAR, BLE, UWB, servo output,
+power, printed fit, force or tactile usability. No signed app was installed on a
+phone, no board was flashed here and no physical actuator was energized.
