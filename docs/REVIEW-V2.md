@@ -16,3 +16,8 @@ mutations, geometry, app lifecycle and UI; the author integrated changes.
 
 No unresolved critical/high defect was found in the reviewed scope. Apple SDK
 compilation, simulator execution and physical behavior remain separate gates.
+
+Hosted follow-up: initial UI interaction failures were corrected in test
+automation; all6 app unit tests and2 UI tests then passed on Xcode16.4, including
+exact neutral-pin and highlight-recovery assertions. Both native app builds
+passed. The physical gate remains unverified. See run38974519620.

@@ -1,7 +1,7 @@
 # V2 executed tests
 
 The final V2 runner completed five available checks successfully; its Apple gate
-is BLOCKED on Linux. Evidence: `docs/evidence/v2/report.json` and adjacent logs.
+is BLOCKED on Linux; hosted Xcode16.4 subsequently passed all native checks. Evidence: `docs/evidence/v2/report.json` and adjacent logs.
 Foundation evidence and exact counts are preserved in `TEST-REPORT-V1.md` and
 `docs/evidence/v1/`.
 
@@ -33,8 +33,8 @@ execution in a PTY, and independent direct XCTest execution, both completed with
 zero failures. Swift uses the same legacy-driver/private-libncurses workaround
 recorded for V1. A normal Mac does not require those cloud-host paths.
 
-Three new Apple-platform coordinator tests and one memory UI flow were written
-but **not executed here**. They run in the configured Mac workflow. No ARKit
+The three new Apple-platform coordinator tests and memory UI flow subsequently
+passed on hosted macOS. Together with V1, 6 app unit tests and 2 UI tests passed. No ARKit
 relocalization, real phone pose, BLE transmission, servo, current, force or human
 tactile behavior was verified. V2 memory intentionally does not persist across
 AR resets and is not an obstacle-free route planner.
@@ -48,3 +48,15 @@ run, not a successful validation. The UI correction and a complete native rerun
 are required before the V2 software gate passes. Metadata and exact failure lines
 are in `evidence/v2/github-actions-initial-failure.json` and
 `evidence/v2/ios-ci-initial-failure.log`.
+
+## Successful native rerun
+
+[Run38974519620](https://github.com/MartinPuli/hackharvard/actions/runs/38974519620)
+passed all four jobs for source `6e59c5b5dbe3a96ba8f03d712af08a648dd3a9ff`.
+Xcode16.4 passed6 app unit tests and2 UI tests with0 failures, followed by Beacon
+simulator and Lantern/Beacon unsigned-device builds. The correction uses native
+target scrolling and checks the actual switch value; it retains the original
+flow and additionally asserts all28 virtual pins neutral on tracking loss and
+correct target recovery. No application logic or assertion was bypassed.
+Test execution is bounded and the native result bundle is retained in CI.
+Final metadata/excerpts: `evidence/v2/github-actions.json`, `ios-ci-excerpt.log`.

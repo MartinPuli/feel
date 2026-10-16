@@ -1,0 +1,24 @@
+2026-10-16T22:14:34.6857910Z Xcode 16.4
+2026-10-16T22:14:34.6861270Z Build version 16F6
+2026-10-16T22:14:37.3115070Z Xcode 16.4
+2026-10-16T22:14:37.3122600Z Build version 16F6
+2026-10-16T22:14:59.6826580Z Selected installed simulator: 48B2DA2E-AF18-4E36-BB25-B25969A4EBCF
+2026-10-16T22:20:10.3427090Z Test Suite 'LanternTests' passed at 2026-10-16 22:20:09.690.
+2026-10-16T22:20:10.3533980Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.005 (0.005) seconds
+2026-10-16T22:20:10.5847630Z Test Suite 'MemoryCoordinatorTests' passed at 2026-10-16 22:20:09.721.
+2026-10-16T22:20:10.5848280Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.025 (0.029) seconds
+2026-10-16T22:20:10.6855910Z Test Suite 'LanternTests.xctest' passed at 2026-10-16 22:20:09.989.
+2026-10-16T22:20:10.7024040Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.030 (0.304) seconds
+2026-10-16T22:20:10.7242910Z Test Suite 'All tests' passed at 2026-10-16 22:20:09.989.
+2026-10-16T22:20:10.7352970Z 	 Executed 6 tests, with 0 failures (0 unexpected) in 0.030 (0.306) seconds
+2026-10-16T22:21:38.4203790Z Test Suite 'LanternUITests' passed at 2026-10-16 22:21:38.387.
+2026-10-16T22:21:38.4206500Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 64.620 (64.621) seconds
+2026-10-16T22:21:38.6252260Z Test Suite 'LanternUITests.xctest' passed at 2026-10-16 22:21:38.388.
+2026-10-16T22:21:38.6254350Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 64.620 (64.622) seconds
+2026-10-16T22:21:38.6274020Z Test Suite 'All tests' passed at 2026-10-16 22:21:38.389.
+2026-10-16T22:21:38.7255260Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 64.620 (64.624) seconds
+2026-10-16T22:21:39.6889270Z ** TEST SUCCEEDED **
+2026-10-16T22:22:01.2649440Z ** BUILD SUCCEEDED **
+2026-10-16T22:22:39.9075380Z ** BUILD SUCCEEDED **
+2026-10-16T22:22:44.6180910Z ** BUILD SUCCEEDED **
+
