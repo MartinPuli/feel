@@ -1,0 +1,4 @@
+# Only needed for evaluations (feel_chalk/where_is_eval.py). The gateway client and
+# check_connection.py use the Python standard library.
+chalkcompute==2.13.7
+pyarrow==26.0.0
