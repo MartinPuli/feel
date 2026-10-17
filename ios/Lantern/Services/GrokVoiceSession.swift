@@ -103,6 +103,8 @@ final class GrokVoiceSession: ObservableObject {
     private var awaitingResponse = false
     private var discardNextResponse = false
     private let speaksLocally: Bool
+    /// While another listener borrows the microphone, nothing is sent to Grok.
+    private var uplinkMuted = false
 
     var isActive: Bool { phase != .idle && phase != .failed }
     var isConfigured: Bool { configuration?.isValid == true }
@@ -265,8 +267,31 @@ final class GrokVoiceSession: ObservableObject {
         outgoing = []; sending = false; configured = false; receivedConfiguration = false
         handledCalls = []; interruptedResponses = []; responseID = nil; responseRunning = false
         continuationPending = false; assistantItemID = nil
-        userSpeaking = false
+        userSpeaking = false; uplinkMuted = false
         phase = .idle; caption = ""; onEnded?()
+    }
+
+    /// Lends the running microphone to `handler` and mutes the uplink, so the assistant neither
+    /// hears nor answers the target word said after a V sign. Pass nil to give it back.
+    /// Returns false when the assistant's microphone is not running.
+    @discardableResult func borrowMicrophone(_ handler: ((AVAudioPCMBuffer) -> Void)?) -> Bool {
+        guard let handler else { audio.setAuxiliaryInput(nil); uplinkMuted = false; return true }
+        guard isActive, receivedConfiguration else { return false }
+        uplinkMuted = true; audio.setAuxiliaryInput(handler)
+        return true
+    }
+
+    /// Asks the wearer a question that the app needs answered through a tool call
+    /// (which of several targets to guide to). Not throttled like scene announcements.
+    @discardableResult func ask(_ text: String) -> Bool {
+        guard phase == .listening, receivedConfiguration, !userSpeaking, !responseRunning, !awaitingResponse,
+              !discardNextResponse, !audio.pendingPlayback else { return false }
+        lastAnnouncement = Date()
+        awaitingResponse = true
+        phase = .thinking
+        enqueue(["type": "conversation.item.create", "item": ["type": "force_message", "role": "assistant",
+                 "content": [["type": "output_text", "text": String(text.prefix(240))]]]])
+        return isActive
     }
 
     /// Only exact, freshly produced app text may be announced without a user turn.
@@ -402,7 +427,7 @@ final class GrokVoiceSession: ObservableObject {
             let id = generation
             do {
                 try audio.start(onInput: { [weak self] data in
-                    guard let self, self.generation == id, self.isActive else { return }
+                    guard let self, self.generation == id, self.isActive, !self.uplinkMuted else { return }
                     self.enqueue(["type": "input_audio_buffer.append", "audio": data.base64EncodedString()])
                 }, onPlaybackDrained: { [weak self] in
                     guard let self, self.generation == id, self.isActive else { return }

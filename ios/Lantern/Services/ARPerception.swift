@@ -3,6 +3,12 @@ import ARKit
 import CoreVideo
 import FeelCore
 
+/// A distinct target of the selected kind that is in view now.
+struct VisibleCandidate {
+    let position: Vector3
+    let observation: TargetObservation
+}
+
 struct PerceptionFrame {
     let epoch:Int
     let finderEpoch:Int
@@ -14,6 +20,8 @@ struct PerceptionFrame {
     let floorY: Double?
     /// Route to the currently visible target over the local floor grid; nil without one.
     var routeHint: RouteHint? = nil
+    /// Distinct targets of the selected kind in view, left to right.
+    var candidates: [VisibleCandidate] = []
 }
 
 /// The AR delegate queue owns all mutable perception state. Vision has one in-flight
@@ -37,6 +45,10 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private var grid=FloorGrid()
     private var lastPlan: TimeInterval = -.infinity
     private var lastHint: RouteHint?
+    /// Distinct detections from the latest Vision pass (≥ 1 m apart).
+    private var candidates: [CapturedTarget] = []
+    /// When set, guidance follows the detection nearest this point instead of the most confident.
+    private var lockPosition: Vector3?
     private var pointingBusy=false
     private var lastPointing: TimeInterval = -.infinity
     private lazy var detector=ObjectDetector()
@@ -63,16 +75,28 @@ final class ARPerception: NSObject, ARSessionDelegate {
         queue.async {
             self.sessionEpoch=epoch; self.earliestFrame=ProcessInfo.processInfo.systemUptime
             self.floorY=nil; self.lastTarget=nil; self.generation += 1; self.lastProcessed = -.infinity
-            self.grid.reset(); self.lastHint=nil
+            self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil
             let config=ARWorldTrackingConfiguration(); config.frameSemantics=[.sceneDepth]; config.worldAlignment = .gravity
             self.session.run(config,options:[.resetTracking,.removeExistingAnchors]); self.publishStatus("Move slowly, then calibrate measured camera height")
         }
         return true
     }
     func stop() {
-        queue.async { self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.grid.reset(); self.lastHint=nil; self.publishStatus("Stopped") }
+        queue.async { self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.publishStatus("Stopped") }
     }
-    func setFinder(_ mode: FinderMode,epoch:Int) { queue.async { self.finder=mode; self.finderEpoch=epoch; self.lastTarget=nil; self.lastHint=nil; self.generation += 1 } }
+    func setFinder(_ mode: FinderMode,epoch:Int) { queue.async { self.finder=mode; self.finderEpoch=epoch; self.lastTarget=nil; self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.generation += 1 } }
+    /// Follow the target nearest `position` (one of several in view) until the finder changes.
+    func lockTarget(at position: Vector3) {
+        queue.async {
+            self.lockPosition=position
+            self.lastTarget=Self.nearest(self.candidates,to:position)
+            self.lastHint=nil; self.lastPlan = -.infinity
+        }
+    }
+    private static func flatDistance(_ a: Vector3,_ b: Vector3) -> Double { hypot(a.x-b.x,a.z-b.z) }
+    private static func nearest(_ targets: [CapturedTarget],to point: Vector3) -> CapturedTarget? {
+        targets.filter { flatDistance($0.position,point)<=1.5 }.min { flatDistance($0.position,point)<flatDistance($1.position,point) }
+    }
     func calibrate(cameraHeight: Double) {
         queue.async {
             guard cameraHeight.isFinite,cameraHeight>=0.6,cameraHeight<=2.1,let frame=self.session.currentFrame,case .normal=frame.camera.trackingState,ProcessInfo.processInfo.systemUptime-frame.timestamp<=0.25 else { self.publishStatus("Calibration needs fresh normal tracking and camera height 0.6–2.1 m"); return }
@@ -110,7 +134,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
         }
         let normal: Bool; if case .normal=frame.camera.trackingState { normal=true } else { normal=false }
         guard normal,Self.mountValid(pose),let depth=frame.sceneDepth,let map=DepthCopy(depth) else {
-            lastTarget=nil; lastHint=nil; generation += 1
+            lastTarget=nil; lastHint=nil; candidates=[]; generation += 1
             publish(PerceptionFrame(epoch:sessionEpoch,finderEpoch:finderEpoch,timestamp:frame.timestamp,tracking:false,distances:Array(repeating:nil,count:7),target:nil,pose:pose,floorY:floorY))
             publishStatus(normal ? "Depth missing or mounting orientation invalid — guidance neutral" : "Tracking uncertain — guidance neutral")
             return
@@ -141,6 +165,8 @@ final class ARPerception: NSObject, ARSessionDelegate {
         }
         var published=PerceptionFrame(epoch:sessionEpoch,finderEpoch:finderEpoch,timestamp:frame.timestamp,tracking:true,distances:distances,target:target,pose:pose,floorY:floorY)
         published.routeHint=lastHint
+        published.candidates=candidates.compactMap { c in c.observation(pose:pose,now:frame.timestamp).map { VisibleCandidate(position:c.position,observation:$0) } }
+            .sorted { $0.observation.bearingDegrees<$1.observation.bearingDegrees }
         publish(published)
         guard finder != .none,finder != .teammate,!visionBusy,frame.timestamp-lastVision>=0.35 else { return }
         visionBusy=true; lastVision=frame.timestamp
@@ -163,14 +189,23 @@ final class ARPerception: NSObject, ARSessionDelegate {
                 self.visionBusy=false
                 guard token==self.generation else { return }
                 let now=ProcessInfo.processInfo.systemUptime
-                self.lastTarget=targets.filter { $0.observation(pose:pose,now:now) != nil }.sorted { $0.confidence > $1.confidence }.first
+                // Several of the same kind (two exits) stay separate if at least 1 m apart.
+                var distinct: [CapturedTarget]=[]
+                for t in targets.filter({ $0.observation(pose:pose,now:now) != nil }).sorted(by: { $0.confidence > $1.confidence })
+                where !distinct.contains(where: { Self.flatDistance($0.position,t.position)<1.0 }) { distinct.append(t) }
+                self.candidates=distinct
+                if let lock=self.lockPosition {
+                    // Never jump to a different one: losing the chosen target means no target.
+                    self.lastTarget=Self.nearest(distinct,to:lock)
+                    if let kept=self.lastTarget { self.lockPosition=kept.position }
+                } else { self.lastTarget=distinct.first }
                 if let failure { self.publishStatus(failure) }
             }
         }
     }
     func sessionShouldAttemptRelocalization(_ session: ARSession) -> Bool { false }
     private func invalidate() {
-        lastTarget=nil; floorY=nil; grid.reset(); lastHint=nil; generation += 1
+        lastTarget=nil; floorY=nil; grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; generation += 1
         let epoch=sessionEpoch
         DispatchQueue.main.async { self.onInvalidated?(epoch) }
     }

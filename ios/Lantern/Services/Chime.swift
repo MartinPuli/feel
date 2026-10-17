@@ -1,40 +1,51 @@
 import Foundation
 import AVFoundation
+import FeelCore
 
-/// A short rising two-note chime, synthesized in memory (no bundled audio).
-/// Plays when a V sign successfully starts direction guidance.
+/// Short feedback tones, synthesized in memory (no bundled audio). Direction guidance uses
+/// only these, never speech: a rising chime for success, a soft falling pair for failure, and a
+/// quiet blip when the phone starts listening for the target word.
 final class Chime {
     private var player: AVAudioPlayer?
-    private lazy var data = Chime.wav()
+    private var cache: [RequestSound: Data] = [:]
 
-    func play() {
+    func play(_ sound: RequestSound = .success) {
         let session = AVAudioSession.sharedInstance()
-        // Keep the assistant's microphone session if it is running; otherwise use playback,
-        // which stays audible with the ring/silent switch on, like the app's spoken fallback.
+        // Keep the microphone session (assistant or target-word listening) if one is running;
+        // otherwise use playback, which stays audible with the ring/silent switch on.
         if session.category != .playAndRecord {
-            try? session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+            try? session.setCategory(.playback, mode: .default, options: [.duckOthers])
         }
         try? session.setActive(true)
+        let data = cache[sound] ?? Self.wav(sound)
+        cache[sound] = data
         player = try? AVAudioPlayer(data: data)
-        player?.volume = 0.8
+        player?.volume = sound == .listening ? 0.5 : 0.8
         player?.play()
     }
 
-    /// 16-bit mono PCM WAV: E6 then A6, 110 ms each, with short fades so neither note clicks.
-    static func wav(sampleRate: Int = 44_100) -> Data {
-        let notes: [Double] = [1318.5, 1760.0]
-        let noteSamples = sampleRate * 110 / 1000
+    static func notes(_ sound: RequestSound) -> (frequencies: [Double], milliseconds: Int, decay: Double) {
+        switch sound {
+        case .success: return ([1318.5, 1760.0], 110, 14)   // E6 → A6
+        case .failure: return ([466.2, 349.2], 140, 9)       // B♭4 → F4
+        case .listening: return ([1046.5], 60, 30)           // C6 blip
+        }
+    }
+
+    /// 16-bit mono PCM WAV with short fades so no note clicks.
+    static func wav(_ sound: RequestSound = .success, sampleRate: Int = 44_100) -> Data {
+        let (frequencies, milliseconds, decayRate) = notes(sound)
+        let noteSamples = sampleRate * milliseconds / 1000
         let fade = sampleRate * 8 / 1000
         var samples: [Int16] = []
-        samples.reserveCapacity(noteSamples * notes.count)
-        for frequency in notes {
+        samples.reserveCapacity(noteSamples * frequencies.count)
+        for frequency in frequencies {
             for i in 0..<noteSamples {
                 let t = Double(i) / Double(sampleRate)
                 let edge = min(1, Double(min(i, noteSamples - 1 - i)) / Double(fade))
-                // Gentle decay with a quiet octave overtone reads as a chime rather than a beep.
-                let decay = exp(-t * 14)
+                // A quiet octave overtone with a fast decay reads as a modern chime rather than a beep.
                 let value = (sin(2 * .pi * frequency * t) + 0.25 * sin(4 * .pi * frequency * t)) / 1.25
-                samples.append(Int16(value * edge * decay * 0.6 * Double(Int16.max)))
+                samples.append(Int16(value * edge * exp(-t * decayRate) * 0.6 * Double(Int16.max)))
             }
         }
         var out = Data()

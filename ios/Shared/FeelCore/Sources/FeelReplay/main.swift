@@ -1,5 +1,6 @@
 import Foundation
 import FeelCore
+import FeelSim
 
 struct TargetInput: Decodable {
     var bearingDegrees: Double, distance: Double, timestamp: Double
@@ -56,8 +57,37 @@ if args.first == "stdio" {
         guard !commands.isEmpty else { throw CommandError.missing("Replay is empty") }
         for command in commands { emit(try execute(command)) }
     } catch { emit(Reply(error:String(describing:error))); exit(1) }
+} else if args.first == "synth",args.count == 3 {
+    // Scene JSON (or a scenario file with a "scene" key) → deterministic .feelrec recording.
+    do {
+        let object=try JSONSerialization.jsonObject(with:Data(contentsOf:URL(fileURLWithPath:args[1])))
+        let sceneObject=(object as? [String:Any])?["scene"] ?? object
+        var renderer=try SceneRenderer(JSONDecoder().decode(SceneSpec.self,from:JSONSerialization.data(withJSONObject:sceneObject)))
+        try renderer.render().write(to:URL(fileURLWithPath:args[2]))
+    } catch { FileHandle.standardError.write(Data("synth failed: \(error)\n".utf8)); exit(1) }
+} else if args.first == "session",args.count >= 2 {
+    // Recording → one JSON line per 10 Hz tick: the packet the phone would send and why.
+    do {
+        var options=ReplayOptions()
+        var rest=args.dropFirst(2).makeIterator()
+        while let flag=rest.next() {
+            guard let raw=rest.next(),let value=Double(raw),value.isFinite,value>=0 else { throw CommandError.range(flag) }
+            switch flag {
+            case "--tick-offset": options.tickOffset=value
+            case "--latency": options.deliveryLatency=value
+            case "--tail": options.tail=value
+            default: throw CommandError.missing("Unknown flag \(flag)")
+            }
+        }
+        let recording=try SessionRecording.decode(Data(contentsOf:URL(fileURLWithPath:args[1])))
+        guard !recording.frames.isEmpty else { throw CommandError.missing("Recording has no frames") }
+        let lineEncoder=JSONEncoder(); lineEncoder.outputFormatting=[.sortedKeys]
+        var out=Data()
+        for tick in SessionReplayer.run(recording.frames,options:options) { out.append(try lineEncoder.encode(tick)); out.append(10) }
+        FileHandle.standardOutput.write(out)
+    } catch { FileHandle.standardError.write(Data("session failed: \(error)\n".utf8)); exit(1) }
 } else if args.first == "decode",args.count == 2 {
     if !run(try! JSONSerialization.data(withJSONObject:["op":"decode","hex":args[1]])) { exit(1) }
 } else {
-    FileHandle.standardError.write(Data("Usage: feel-replay stdio | replay fixtures.json | decode <18 hex digits>\nJSON ops: encode, decode, perceive. See ios/README.md.\n".utf8)); exit(2)
+    FileHandle.standardError.write(Data("Usage: feel-replay stdio | replay fixtures.json | decode <18 hex digits> | synth scene.json out.feelrec | session in.feelrec [--tick-offset s] [--latency s] [--tail s]\nJSON ops: encode, decode, perceive. See ios/README.md.\n".utf8)); exit(2)
 }

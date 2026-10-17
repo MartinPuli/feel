@@ -8,6 +8,8 @@ enum VoiceCommand: Equatable {
     case find(FinderMode)
     case calibrate(Double)
     case connectPuck(UUID)
+    /// 1-based option from the app's "which one?" question.
+    case chooseTarget(Int)
 
     static func decode(name: String, arguments: String) throws -> VoiceCommand {
         guard arguments.utf8.count <= 2048,
@@ -34,6 +36,10 @@ enum VoiceCommand: Equatable {
                   CFGetTypeID(height) != CFBooleanGetTypeID(), height.doubleValue.isFinite,
                   (0.6...2.1).contains(height.doubleValue) else { throw InvalidCommand() }
             return .calibrate(height.doubleValue)
+        case "choose_target":
+            guard args.count == 1, let option = args["option"] as? NSNumber, CFGetTypeID(option) != CFBooleanGetTypeID(),
+                  option.doubleValue == option.doubleValue.rounded(), (1...4).contains(option.intValue) else { throw InvalidCommand() }
+            return .chooseTarget(option.intValue)
         case "connect_puck":
             guard args.count == 1, let value = args["device_id"] as? String,
                   let id = UUID(uuidString: value) else { throw InvalidCommand() }
@@ -60,7 +66,8 @@ enum VoiceCommand: Equatable {
             tool("scan_pucks", "Begin Bluetooth discovery when the user asks to connect. Wait briefly, then list_pucks. Do not select a device yourself."),
             tool("list_pucks", "List currently discovered puck IDs and names. Ask the user which one to connect, even if there is only one."),
             tool("connect_puck", "Connect ONLY the device explicitly selected by the user from list_pucks. Use the exact returned ID.", properties: ["device_id": ["type": "string"]]),
-            tool("open_settings", "Open the existing settings panel for manual setup, including teammate consent.")
+            tool("open_settings", "Open the existing settings panel for manual setup, including teammate consent."),
+            tool("choose_target", "Only after you asked 'I see N ... Which one?': call with the option number the user picked, matching their words (left, right, ahead, nearer, farther, or a number) to the options you listed. If unclear, ask once more.", properties: ["option": ["type": "integer", "minimum": 1, "maximum": 4]])
         ]
     }
 
@@ -77,6 +84,7 @@ enum VoiceCommand: Equatable {
     Call get_status before describing the scene. You do not receive camera images.
     Say stop: call stop immediately, then keep listening. Say pause assistant or stop listening: call pause_assistant.
     For missing information, ask one short question and wait. Do not repeat a completed action.
+    When you have just asked which of several targets to guide to, wait for the answer and call choose_target. Don't add anything after it; the app confirms with a sound.
 
     ## Guardrails & Escalation
     Describe only observations returned by tools. Use spoken_observation when provided; keep its past tense because speech follows the camera sample.

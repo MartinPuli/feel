@@ -44,4 +44,10 @@ final class ChimeTests: XCTestCase {
         let player = try AVAudioPlayer(data: data)
         XCTAssertEqual(player.duration, 0.22, accuracy: 0.01)
     }
+    func testFailureAndListeningSoundsDiffer() throws {
+        XCTAssertEqual(try AVAudioPlayer(data: Chime.wav(.failure)).duration, 0.28, accuracy: 0.01)
+        XCTAssertEqual(try AVAudioPlayer(data: Chime.wav(.listening)).duration, 0.06, accuracy: 0.01)
+        XCTAssertGreaterThan(Chime.notes(.success).frequencies.first!, Chime.notes(.failure).frequencies.first!)
+        XCTAssertGreaterThan(Chime.notes(.failure).frequencies.first!, Chime.notes(.failure).frequencies.last!, "failure falls")
+    }
 }

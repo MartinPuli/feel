@@ -35,7 +35,8 @@ targets:
         CFBundleShortVersionString: '$(MARKETING_VERSION)'
         CFBundleDisplayName: FEEL
         NSCameraUsageDescription: FEEL uses the camera and LiDAR to estimate nearby obstacles and find selected targets.
-        NSMicrophoneUsageDescription: FEEL listens while the app is open so you can control it hands-free. Your voice is sent to Grok. You can pause listening anytime.
+        NSMicrophoneUsageDescription: FEEL listens while the app is open so you can control it hands-free, and for a few seconds after a V sign to hear what you want to find. Assistant speech is sent to Grok; the word after a V sign is recognized on your iPhone. You can pause listening anytime.
+        NSSpeechRecognitionUsageDescription: After a V sign, FEEL recognizes the one word you say, such as exit or door, on your iPhone to choose what to guide you to.
         NSBluetoothAlwaysUsageDescription: FEEL sends tactile commands to your chosen palm puck.
         NSLocalNetworkUsageDescription: FEEL finds a teammate's Beacon phone and exchanges Nearby Interaction tokens after both people agree.
         NSNearbyInteractionUsageDescription: FEEL measures the relative direction and distance of your chosen teammate's phone.

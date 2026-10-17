@@ -5,6 +5,11 @@
 > Lantern unit tests (1 pointing detector test skipped in the simulator), 8 UI tests
 > and the 11-scenario pointing harness passed. Both apps build. Not installed on the
 > phone. No real hand, LiDAR map, route or physical column tested.
+> Update: the V sign plus one spoken word ("exit") picks the target, using on-device
+> recognition. Guidance uses sounds only (success chime, failure tone, listening blip).
+> Several targets in view make the Grok assistant ask which one (`choose_target`).
+> Now 135 FeelCore, 40 Lantern unit and 8 UI tests pass. Speech recognition, the
+> microphone hand-off and the assistant question are not tested on a device.
 
 > Seven-servo preparation: `esp32-production` and its English setup guide are
 > ready in source. Host/configuration tests, enabled-output compile fixtures and

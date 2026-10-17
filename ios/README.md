@@ -115,11 +115,22 @@ Apple recommends portrait orientation for strongest NI performance; FEEL's fixed
   | Arrived | target within 1 m | two pulses of the middle columns |
 
   Thresholds favour the previous cue by 5°.
+- **Asking for a target:** make the V sign and say one word: "exit", "door", "chair", "person" or "teammate" (also "way out", "doorway", "seat", "someone").
+  - Listening starts as soon as the sign is seen, so the word can be said while holding it. If the word isn't in yet when the hold completes, a quiet blip means "listening" and the window stays open for 2.5 s.
+  - Recognition is on-device only (`Lantern/Services/KeywordListener.swift`). While the Grok assistant runs, its microphone is borrowed and its uplink muted for the window, so it neither hears nor answers the word.
+  - With no word, the target already chosen (Settings or "find a door" to the assistant) is used.
+- **Starting:** the target must appear with a route within 3 s.
+  - If two or more of that kind are in view, at least 1 m apart, the assistant asks: "I see 2 exits. 1: left, about 3 meters. 2: right, about 5 meters. Which one?" The answer comes back through the `choose_target` tool, and guidance then follows only that one; it never jumps to the other.
+  - Without a running assistant, the one most straight ahead is chosen.
+- **No speech, only sounds** (`Lantern/Services/Chime.swift`, synthesized in memory):
+  - A rising two-note chime when guidance starts, repeats or arrives.
+  - A soft falling pair on failure: no word or target, target not seen, no route, target lost, or no answer within 15 s.
+  - The quiet listening blip.
+  - Later route changes are pins only.
 - **When an arrow plays:**
-  - On the sign, then only after a noticeable change that holds for 0.8 s, at least 1.5 s after the last arrow. Slight-turn drifts under two columns are ignored.
-  - The sign again replays the current arrow.
+  - On request, then only after a noticeable change that holds for 0.8 s, at least 1.5 s after the last arrow. Slight-turn drifts under two columns are ignored.
+  - The sign again replays the current arrow (or switches target if a new word is said).
   - Guidance ends on arrival, or 3 s without the target in view.
-  - Local speech names each arrow and failure ("No door in view", "No way through the mapped area").
 - **Override:** an obstacle within 0.9 m holds the arrow back. It restarts if the obstacle clears within 2 s; otherwise it is dropped.
 - **Simulation:** **Simulate V sign** plays arrows toward the synthetic target on screen. Simulation still sends nothing to the puck.
 - **Limits:** the map covers only what the camera has seen in the current room. Objects under 10 cm, glass, mirrors, dark surfaces and moving people can be missed. A suggested direction, not a safe route.
