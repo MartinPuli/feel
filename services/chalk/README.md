@@ -109,7 +109,8 @@ success from memorizing the same corrected phrase.
 
 ### Genuine hosted Chalk Evaluations
 
-Install `chalkcompute` and `pyarrow` in a separate environment; authenticate with
+Install pinned `requirements-evaluation.txt` (chalkcompute 2.13.7, pyarrow 26.0.0)
+in a separate environment; authenticate with
 Chalk CLI and select the environment. Ask Chalk to confirm Evaluations, async
 Function queue and dataset storage are enabled. Then:
 
@@ -119,7 +120,8 @@ python3 services/chalk/chalk_evaluation.py validation/chalk/holdout.json \
 ```
 
 This uploads **real candidate outputs from Gateway runs** and their pinned context,
-creates a Chalk Evaluation with a recorded-output task and four deployed scorers
+explicitly deploys its task/scorers only after input validation, then creates a
+Chalk Evaluation with a recorded-output task and four deployed scorers
 (exact intent/destination, grounding, tracking guard, latency budget), runs it and
 reads the result dataset. It intentionally does not claim new remote inference:
 model calls already happened in evaluate.py. Mock reports are rejected. A hosted
@@ -135,3 +137,16 @@ Official sources consulted October 17, 2026:
 - https://docs.chalk.ai/docs/model-gateway
 - https://docs.chalk.ai/docs/evaluations/quick-start
 - https://docs.chalk.ai/docs/evaluations/scorers
+
+### Export explicit feedback without leaking future labels
+
+```sh
+python3 services/chalk/export_feedback.py --database /private/path/feel-chalk.sqlite3 \
+  --output /private/path/feel-feedback-development.json
+```
+
+The output is created with mode 0600 and refuses to overwrite an existing file.
+It contains consented text/context, so keep it outside Git. Export excludes traces
+without reference labels and expired traces. Feedback-derived examples are a
+**development dataset**, not independent holdout evidence. Export uses the original
+pre-correction alias snapshot; a future correction is only the expected output.

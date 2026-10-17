@@ -1,5 +1,6 @@
 """Immutable-context evaluation. Live mode calls Chalk; mock mode is explicitly synthetic."""
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
 import math
@@ -67,7 +68,8 @@ if __name__=='__main__':
     if args.mock:
         # Fixed abstention deliberately does not inspect expected labels.
         gateway=lambda request,aliases: {'action':'clarify','place_id':None,'name':None,'message':'Synthetic fixture: choose a place.'}
+    started_at=datetime.now(timezone.utc).isoformat()
     result=run(dataset,gateway,'MOCK_FIXED_ABSTENTION' if args.mock else gateway.model,args.budget_ms)
-    result.update(validation='MOCK_NOT_LIVE' if args.mock else 'LIVE_CHALK_GATEWAY',dataset_sha256=hashlib.sha256(data).hexdigest(),budget_ms=args.budget_ms)
+    result.update(started_at=started_at,completed_at=datetime.now(timezone.utc).isoformat(),model='MOCK_FIXED_ABSTENTION' if args.mock else gateway.model,prompt_version=PROMPT_VERSION,validation='MOCK_NOT_LIVE' if args.mock else 'LIVE_CHALK_GATEWAY',dataset_sha256=hashlib.sha256(data).hexdigest(),budget_ms=args.budget_ms)
     Path(args.output).write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps({k:v for k,v in result.items() if k!='rows'}))
