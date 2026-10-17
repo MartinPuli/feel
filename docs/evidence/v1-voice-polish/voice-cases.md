@@ -1,6 +1,6 @@
 # Voice acceptance cases
 
-These are target behaviors, not transcripts from a live Grok session.
+These are target behaviors, not transcripts from a live OpenAI session.
 
 | Input or event | Expected wording | Required grounding |
 |---|---|---|
@@ -14,8 +14,8 @@ These are target behaviors, not transcripts from a live Grok session.
 | Voice permission denied | Microphone access is off. Enable it in iPhone Settings. | Permission callback denied |
 | Missing service setup | Voice needs setup. Open Assistant settings. | No valid configuration |
 
-The deterministic observation helper and recovery strings are implemented. Grok
+The deterministic observation helper and recovery strings are implemented. OpenAI
 response wording is instructed, not guaranteed by unit tests. Verify live speech
 for accuracy, brevity, natural pronunciation and interruption behavior after
-provisioning. Default provider voice is Sal at normal speed. A higher-quality
+provisioning. Default provider voice is Cedar at normal speed. A higher-quality
 installed iOS English voice is preferred for local fallback; no voice is downloaded.

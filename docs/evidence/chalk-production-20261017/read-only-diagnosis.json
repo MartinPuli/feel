@@ -1,0 +1,38 @@
+{
+  "observed_at": "2026-10-17T19:51:44.988132+00:00",
+  "scope": "Existing infrastructure smoke only; read-only snapshot",
+  "functions": [
+    {
+      "name": "infrastructure_echo",
+      "version_id": "22b308cc-2c93-4324-9c3d-4f31e69681a9",
+      "scaling_group_name": "infrastructure-echo",
+      "status": "ScaledToZero",
+      "ready_replicas": 0,
+      "available_replicas": 0,
+      "has_status_message": false,
+      "has_status_details": false
+    },
+    {
+      "name": "infrastructure_exact_match",
+      "version_id": "f00afb8e-fc67-49c2-a8e9-177d365531ec",
+      "scaling_group_name": "infrastructure-exact-match",
+      "status": "ScaledToZero",
+      "ready_replicas": 0,
+      "available_replicas": 0,
+      "has_status_message": false,
+      "has_status_details": false
+    }
+  ],
+  "run": {
+    "id": "3ed17030-a278-41ab-9358-dfe93439d3d7",
+    "status": "running",
+    "terminal": false,
+    "environment_id": "flnyc749e8d9",
+    "started_at": "2026-10-17 19:43:00.943000+00:00",
+    "completed_at": "None",
+    "result_dataset_id": null,
+    "result_revision_id": null,
+    "has_server_error": false
+  },
+  "interpretation": "The earlier TimeoutError is a local wait timeout, not evidence of remote terminal failure. ScaledToZero is permitted by this smoke configuration; zero replicas alone does not prove a runtime failure. No results means infrastructure execution is not verified."
+}

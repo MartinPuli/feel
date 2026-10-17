@@ -1,0 +1,282 @@
+{
+  "absent_count": 4,
+  "api_host": "https://api.chalk.ai",
+  "dataset_sha256": "fcedfcab877ee76227cb9977c484763e4d0fcacd8cebe904a8e901c2f6394e3a",
+  "environment_id": "flnyc749e8d9",
+  "execution_mode": "local",
+  "execution_status": "succeeded",
+  "hash_scope": "ordered questions, normalized JPEG bytes and expected boxes",
+  "image_encoding": {
+    "jpeg_quality": 60,
+    "max_long_side": 1024
+  },
+  "latency_ms": {
+    "max": 3373.6,
+    "p50": 2317.4,
+    "p95": 3373.6,
+    "rows": 12
+  },
+  "metrics": {
+    "absent_accuracy": {
+      "denominator": 4,
+      "numerator": 4.0,
+      "rate": 1.0
+    },
+    "false_found": {
+      "denominator": 4,
+      "numerator": 0.0,
+      "rate": 0.0
+    },
+    "missing_response": {
+      "denominator": 12,
+      "numerator": 0,
+      "rate": 0.0
+    },
+    "present_localization": {
+      "denominator": 8,
+      "numerator": 8.0,
+      "rate": 1.0
+    },
+    "well_formed": {
+      "denominator": 12,
+      "numerator": 12.0,
+      "rate": 1.0
+    }
+  },
+  "model": "openai/gpt-6.1-sol",
+  "preflight_status": "PASS",
+  "present_count": 8,
+  "prompt_sha256": "38f6970eb9d5fdb26c002892cd76b7caf77c25a9c09fabad7433f12d4e6aae9d",
+  "quality_note": "Execution completion is not a quality pass.",
+  "quality_status": "NOT_ASSESSED",
+  "resolved_models": [
+    "gpt-6.1-sol"
+  ],
+  "result_row_count": 12,
+  "row_count": 12,
+  "rows": [
+    {
+      "absent": false,
+      "elapsed_ms": 3373.6,
+      "error_columns": [],
+      "model": "gpt-6.1-sol",
+      "row_index": 0,
+      "scores": {
+        "false_found": 0.0,
+        "points_correctly": 1.0,
+        "reply_is_well_formed": 1.0
+      },
+      "status": "ok",
+      "usage": {
+        "completion_tokens": 46,
+        "prompt_tokens": 1112,
+        "total_tokens": 1158
+      }
+    },
+    {
+      "absent": false,
+      "elapsed_ms": 2213.5,
+      "error_columns": [],
+      "model": "gpt-6.1-sol",
+      "row_index": 1,
+      "scores": {
+        "false_found": 0.0,
+        "points_correctly": 1.0,
+        "reply_is_well_formed": 1.0
+      },
+      "status": "ok",
+      "usage": {
+        "completion_tokens": 45,
+        "prompt_tokens": 1111,
+        "total_tokens": 1156
+      }
+    },
+    {
+      "absent": true,
+      "elapsed_ms": 2317.4,
+      "error_columns": [],
+      "model": "gpt-6.1-sol",
+      "row_index": 2,
+      "scores": {
+        "false_found": 0.0,
+        "points_correctly": 1.0,
+        "reply_is_well_formed": 1.0
+      },
+      "status": "ok",
+      "usage": {
+        "completion_tokens": 23,
+        "prompt_tokens": 1112,
+        "total_tokens": 1135
+      }
+    },
+    {
+      "absent": false,
+      "elapsed_ms": 3019.1,
+      "error_columns": [],
+      "model": "gpt-6.1-sol",
+      "row_index": 3,
+      "scores": {
+        "false_found": 0.0,
+        "points_correctly": 1.0,
+        "reply_is_well_formed": 1.0
+      },
+      "status": "ok",
+      "usage": {
+        "completion_tokens": 45,
+        "prompt_tokens": 1111,
+        "total_tokens": 1156
+      }
+    },
+    {
+      "absent": false,
+      "elapsed_ms": 2752.7,
+      "error_columns": [],
+      "model": "gpt-6.1-sol",
+      "row_index": 4,
+      "scores": {
+        "false_found": 0.0,
+        "points_correctly": 1.0,
+        "reply_is_well_formed": 1.0
+      },
+      "status": "ok",
+      "usage": {
+        "completion_tokens": 44,
+        "prompt_tokens": 1112,
+        "total_tokens": 1156
+      }
+    },
+    {
+      "absent": true,
+      "elapsed_ms": 1528.0,
+      "error_columns": [],
+      "model": "gpt-6.1-sol",
+      "row_index": 5,
+      "scores": {
+        "false_found": 0.0,
+        "points_correctly": 1.0,
+        "reply_is_well_formed": 1.0
+      },
+      "status": "ok",
+      "usage": {
+        "completion_tokens": 23,
+        "prompt_tokens": 1111,
+        "total_tokens": 1134
+      }
+    },
+    {
+      "absent": false,
+      "elapsed_ms": 2396.9,
+      "error_columns": [],
+      "model": "gpt-6.1-sol",
+      "row_index": 6,
+      "scores": {
+        "false_found": 0.0,
+        "points_correctly": 1.0,
+        "reply_is_well_formed": 1.0
+      },
+      "status": "ok",
+      "usage": {
+        "completion_tokens": 44,
+        "prompt_tokens": 1112,
+        "total_tokens": 1156
+      }
+    },
+    {
+      "absent": false,
+      "elapsed_ms": 2932.3,
+      "error_columns": [],
+      "model": "gpt-6.1-sol",
+      "row_index": 7,
+      "scores": {
+        "false_found": 0.0,
+        "points_correctly": 1.0,
+        "reply_is_well_formed": 1.0
+      },
+      "status": "ok",
+      "usage": {
+        "completion_tokens": 45,
+        "prompt_tokens": 1111,
+        "total_tokens": 1156
+      }
+    },
+    {
+      "absent": true,
+      "elapsed_ms": 1772.3,
+      "error_columns": [],
+      "model": "gpt-6.1-sol",
+      "row_index": 8,
+      "scores": {
+        "false_found": 0.0,
+        "points_correctly": 1.0,
+        "reply_is_well_formed": 1.0
+      },
+      "status": "ok",
+      "usage": {
+        "completion_tokens": 23,
+        "prompt_tokens": 1112,
+        "total_tokens": 1135
+      }
+    },
+    {
+      "absent": false,
+      "elapsed_ms": 2666.1,
+      "error_columns": [],
+      "model": "gpt-6.1-sol",
+      "row_index": 9,
+      "scores": {
+        "false_found": 0.0,
+        "points_correctly": 1.0,
+        "reply_is_well_formed": 1.0
+      },
+      "status": "ok",
+      "usage": {
+        "completion_tokens": 45,
+        "prompt_tokens": 1111,
+        "total_tokens": 1156
+      }
+    },
+    {
+      "absent": false,
+      "elapsed_ms": 1989.3,
+      "error_columns": [],
+      "model": "gpt-6.1-sol",
+      "row_index": 10,
+      "scores": {
+        "false_found": 0.0,
+        "points_correctly": 1.0,
+        "reply_is_well_formed": 1.0
+      },
+      "status": "ok",
+      "usage": {
+        "completion_tokens": 46,
+        "prompt_tokens": 1112,
+        "total_tokens": 1158
+      }
+    },
+    {
+      "absent": true,
+      "elapsed_ms": 1629.2,
+      "error_columns": [],
+      "model": "gpt-6.1-sol",
+      "row_index": 11,
+      "scores": {
+        "false_found": 0.0,
+        "points_correctly": 1.0,
+        "reply_is_well_formed": 1.0
+      },
+      "status": "ok",
+      "usage": {
+        "completion_tokens": 23,
+        "prompt_tokens": 1111,
+        "total_tokens": 1134
+      }
+    }
+  ],
+  "rows_complete": true,
+  "usage": {
+    "completion_tokens": 452,
+    "prompt_tokens": 13338,
+    "rows": 12,
+    "total_tokens": 13790
+  }
+}

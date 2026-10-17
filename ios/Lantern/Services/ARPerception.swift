@@ -1,6 +1,8 @@
 import Foundation
 import ARKit
+import CoreImage
 import CoreVideo
+import ImageIO
 import FeelCore
 
 /// A distinct target of the selected kind that is in view now.
@@ -12,6 +14,8 @@ struct VisibleCandidate {
 struct PerceptionFrame {
     let epoch:Int
     let finderEpoch:Int
+    /// Increments on every tracking reset; a held target from an older world is stale.
+    let worldEpoch:Int
     let timestamp: TimeInterval
     let tracking: Bool
     let distances: [Double?]
@@ -36,6 +40,23 @@ final class ARPerception: NSObject, ARSessionDelegate {
     var onPointing: ((Int,PointingObservation)->Void)?
     /// V-sign checks, tagged with the session epoch. Skipped while the puck's codes are in view.
     var onHandSign: ((Int,HandSignObservation)->Void)?
+    /// Printed FEEL room tags recognized by ARKit image detection, tagged with the session epoch. The frame is the
+    /// tag's image anchor in the current world; room memory places remembered targets through it.
+    var onTag: ((Int,TagSighting)->Void)?
+    /// The printed width ARKit is told. ios/Lantern/Resources/feel-tag-01.png must be printed exactly this wide,
+    /// or every remembered target lands at the wrong distance.
+    static let roomTagWidthMetres=0.20
+    /// The tags shipped in the bundle (ios/scripts/make_room_tag.py draws them), named by tag id.
+    private static let roomTags: Set<ARReferenceImage>={
+        var tags: Set<ARReferenceImage>=[]
+        for name in ["feel-tag-01"] {
+            guard let url=Bundle.main.url(forResource:name,withExtension:"png"),let source=CGImageSourceCreateWithURL(url as CFURL,nil),
+                  let image=CGImageSourceCreateImageAtIndex(source,0,nil) else { continue }
+            let tag=ARReferenceImage(image,orientation:.up,physicalWidth:CGFloat(roomTagWidthMetres)); tag.name=name; tags.insert(tag)
+        }
+        return tags
+    }()
+    private var lastTagPublished: [String: TimeInterval]=[:]
     private let queue=DispatchQueue(label:"feel.arkit",qos:.userInitiated)
     private let visionQueue=DispatchQueue(label:"feel.vision",qos:.userInitiated)
     private let pointingQueue=DispatchQueue(label:"feel.pointing",qos:.userInitiated)
@@ -55,7 +76,11 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private var lastPointing: TimeInterval = -.infinity
     private lazy var detector=ObjectDetector()
     private var floorY: Double?
+    private var automaticFloor=AutomaticFloorCalibration()
+    private var isRunning=false
+    private var isInterrupted=false
     private var sessionEpoch=0
+    private var worldEpoch=0
     private var earliestFrame:TimeInterval = 0
     private var finder: FinderMode = .none
     private var finderEpoch=0
@@ -68,6 +93,9 @@ final class ARPerception: NSObject, ARSessionDelegate {
     let recorder=SessionRecorder()
     override init() {
         super.init(); session.delegate=self; session.delegateQueue=queue
+        if ARWorldTrackingConfiguration.isSupported {
+            for tag in Self.roomTags { tag.validate { [weak self] error in if let error { self?.publishStatus("Room tag \(tag.name ?? "") unusable: \(error.localizedDescription)") } } }
+        }
         visionQueue.async { [weak self] in
             guard let self else { return }
             let status=self.detector.modelStatus, available=self.detector.model != nil
@@ -76,17 +104,23 @@ final class ARPerception: NSObject, ARSessionDelegate {
     }
     @discardableResult func start(epoch:Int) -> Bool {
         guard ARWorldTrackingConfiguration.isSupported,ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) else { publishStatus("Live sensing requires a LiDAR iPhone or iPad. Use Simulation for software replay."); return false }
-        queue.async {
-            self.sessionEpoch=epoch; self.earliestFrame=ProcessInfo.processInfo.systemUptime
-            self.floorY=nil; self.lastTarget=nil; self.generation += 1; self.lastProcessed = -.infinity
-            self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil
-            let config=ARWorldTrackingConfiguration(); config.frameSemantics=[.sceneDepth]; config.worldAlignment = .gravity
-            self.session.run(config,options:[.resetTracking,.removeExistingAnchors]); self.publishStatus("Move slowly, then calibrate measured camera height")
-        }
+        queue.async { self.isRunning=true; self.runSession(epoch:epoch) }
         return true
     }
+    /// Called only on the AR delegate queue, including interruption recovery.
+    private func runSession(epoch: Int) {
+        isInterrupted=false; sessionEpoch=epoch; worldEpoch += 1; earliestFrame=ProcessInfo.processInfo.systemUptime
+        floorY=nil; automaticFloor.reset(); lastTarget=nil; generation += 1; lastProcessed = -.infinity
+        grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil
+        let config=ARWorldTrackingConfiguration(); config.frameSemantics=[.sceneDepth]
+        config.worldAlignment = .gravity; config.planeDetection=[.horizontal]
+        // Room tags: the printed FEEL tag gives room memory its frame (RoomMemory.swift).
+        config.detectionImages=Self.roomTags; config.maximumNumberOfTrackedImages=Self.roomTags.isEmpty ? 0 : 1; lastTagPublished=[:]
+        session.run(config,options:[.resetTracking,.removeExistingAnchors])
+        publishStatus(ARPlaneAnchor.isClassificationSupported ? "Looking for floor — move slowly with the floor in view" : "Automatic floor detection unavailable — calibrate measured camera height")
+    }
     func stop() {
-        queue.async { self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.publishStatus("Stopped") }
+        queue.async { self.isRunning=false; self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.automaticFloor.reset(); self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.publishStatus("Stopped") }
     }
     func setFinder(_ mode: FinderMode,epoch:Int) { queue.async { self.finder=mode; self.finderEpoch=epoch; self.lastTarget=nil; self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.generation += 1 } }
     /// Route to a fixed world point (two fingers on a puck column) until cleared with nil.
@@ -107,12 +141,51 @@ final class ARPerception: NSObject, ARSessionDelegate {
     }
     func calibrate(cameraHeight: Double) {
         queue.async {
-            guard cameraHeight.isFinite,cameraHeight>=0.6,cameraHeight<=2.1,let frame=self.session.currentFrame,case .normal=frame.camera.trackingState,ProcessInfo.processInfo.systemUptime-frame.timestamp<=0.25 else { self.publishStatus("Calibration needs fresh normal tracking and camera height 0.6–2.1 m"); return }
+            guard self.isRunning,!self.isInterrupted,cameraHeight.isFinite,cameraHeight>=0.6,cameraHeight<=2.1,let frame=self.session.currentFrame,frame.timestamp>=self.earliestFrame,case .normal=frame.camera.trackingState,ProcessInfo.processInfo.systemUptime>=frame.timestamp,ProcessInfo.processInfo.systemUptime-frame.timestamp<=0.25 else { self.publishStatus("Calibration needs fresh normal tracking and camera height 0.6–2.1 m"); return }
             let pose=Self.pose(frame.camera.transform)
             guard Self.mountValid(pose) else { self.publishStatus("Hold camera landscape-left, upright and facing forward"); return }
             // Heights in the floor map depend on the floor level, so start the map again.
-            self.floorY=pose.position.y-cameraHeight; self.grid.reset(); self.lastHint=nil; self.publishStatus("Floor calibrated from measured camera height")
+            self.floorY=pose.position.y-cameraHeight; self.automaticFloor.reset(); self.grid.reset(); self.lastHint=nil; self.publishStatus("Floor calibrated from measured camera height")
         }
+    }
+    /// One frame for Where-is: photo, depth and pose captured together, or nil when the
+    /// camera is not tracking normally, is mounted wrong, or has no depth. No photo is kept.
+    /// Runs the detector on a Where-is photo for the on-device fallback. Completion on the Vision queue;
+    /// nil when the detector cannot run that query here (object queries without the Core ML weights).
+    func detectLocal(_ query: LocalQuery,jpeg: Data,completion: @escaping ([ImageDetection]?) -> Void) {
+        visionQueue.async {
+            guard self.detector.canRun(query) else { completion(nil); return }
+            completion((try? self.detector.detect(jpeg:jpeg,query:query)) ?? [])
+        }
+    }
+    func snapshot(completion: @escaping (FrameSnapshot?) -> Void) {
+        queue.async {
+            var result: FrameSnapshot?
+            if let frame=self.session.currentFrame, case .normal=frame.camera.trackingState {
+                let pose=Self.pose(frame.camera.transform)
+                if Self.mountValid(pose), let depth=frame.sceneDepth, let map=DepthGrid(depth), let jpeg=Self.jpegBase64(frame.capturedImage) {
+                    result=FrameSnapshot(timestamp:frame.timestamp,worldEpoch:self.worldEpoch,pose:pose,intrinsics:Self.intrinsics(frame,map),depth:map,jpegBase64:jpeg)
+                }
+            }
+            DispatchQueue.main.async { completion(result) }
+        }
+    }
+    /// Intrinsics are published for the full captured image; scale them to the depth grid.
+    private static func intrinsics(_ frame: ARFrame,_ map: DepthGrid) -> CameraIntrinsics {
+        let raw=frame.camera.intrinsics
+        return CameraIntrinsics(fx:Double(raw.columns.0.x),fy:Double(raw.columns.1.y),cx:Double(raw.columns.2.x),cy:Double(raw.columns.2.y))
+            .scaled(x:Double(map.width)/Double(frame.camera.imageResolution.width),y:Double(map.height)/Double(frame.camera.imageResolution.height))
+    }
+    private static let imageContext=CIContext()
+    /// JPEG of the captured frame in its native orientation, long side at most 1024 px, quality 0.6.
+    private static func jpegBase64(_ buffer: CVPixelBuffer) -> String? {
+        let image=CIImage(cvPixelBuffer:buffer)
+        let longSide=max(image.extent.width,image.extent.height)
+        guard longSide>0 else { return nil }
+        let scale=min(1,1024/longSide)
+        let scaled=image.transformed(by:CGAffineTransform(scaleX:scale,y:scale))
+        let quality=CIImageRepresentationOption(rawValue:kCGImageDestinationLossyCompressionQuality as String)
+        return imageContext.jpegRepresentation(of:scaled,colorSpace:CGColorSpaceCreateDeviceRGB(),options:[quality:0.6])?.base64EncodedString()
     }
     private static func mountValid(_ pose: CameraPose) -> Bool { DepthFrameProcessor.mountValid(pose) }
     private static func pose(_ matrix: simd_float4x4) -> CameraPose {
@@ -122,6 +195,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private func publishStatus(_ status: String) { DispatchQueue.main.async { self.onStatus?(status) } }
     private func publish(_ frame: PerceptionFrame) { DispatchQueue.main.async { self.onFrame?(frame) } }
     func session(_ session: ARSession,didUpdate frame: ARFrame) {
+        guard isRunning,!isInterrupted else { return }
         // Camera video for replay runs at its own rate, before the 10 Hz processing gate.
         if frame.timestamp>=earliestFrame,recorder.isActive { recorder.appendVideo(frame.capturedImage,timestamp:frame.timestamp) }
         guard frame.timestamp>=earliestFrame,frame.timestamp-lastProcessed>=0.095 else { return }; lastProcessed=frame.timestamp
@@ -143,10 +217,29 @@ final class ARPerception: NSObject, ARSessionDelegate {
             }
         }
         let normal: Bool; if case .normal=frame.camera.trackingState { normal=true } else { normal=false }
-        guard normal,Self.mountValid(pose),let depth=frame.sceneDepth,let map=DepthFrame(depth,camera:frame.camera) else {
+        let depthMap=frame.sceneDepth.flatMap { DepthFrame($0,camera:frame.camera) }
+        // Stability is sampled across fresh frames containing the same classified anchor,
+        // not independent classification events. A manual calibration or accepted automatic floor
+        // remains latched until the AR session resets; automatic updates never overwrite it.
+        if floorY == nil {
+            let planes: [FloorPlaneObservation] = ARPlaneAnchor.isClassificationSupported ? frame.anchors.compactMap { anchor in
+                guard let plane=anchor as? ARPlaneAnchor,plane.alignment == .horizontal else { return nil }
+                let center=plane.transform * SIMD4<Float>(plane.center.x,plane.center.y,plane.center.z,1)
+                return FloorPlaneObservation(id:plane.identifier.uuidString,
+                    classification:plane.classification == .floor ? .floor : .other,
+                    worldY:Double(center.y),width:Double(plane.planeExtent.width),length:Double(plane.planeExtent.height))
+            } : []
+            if let accepted=automaticFloor.observe(planes:planes,timestamp:frame.timestamp,
+                now:ProcessInfo.processInfo.systemUptime,cameraY:pose.position.y,
+                trackingNormal:normal && depthMap != nil,mountValid:Self.mountValid(pose)) {
+                floorY=accepted; grid.reset(); lastHint=nil
+                publishStatus("Floor calibrated automatically")
+            }
+        }
+        guard normal,Self.mountValid(pose),let map=depthMap else {
             if recorder.isActive { recorder.append(RecordedFrame(timestamp:frame.timestamp,trackingNormal:normal,pose:pose,floorY:floorY,depth:nil)) }
             lastTarget=nil; lastHint=nil; candidates=[]; generation += 1
-            publish(PerceptionFrame(epoch:sessionEpoch,finderEpoch:finderEpoch,timestamp:frame.timestamp,tracking:false,distances:Array(repeating:nil,count:7),target:nil,pose:pose,floorY:floorY))
+            publish(PerceptionFrame(epoch:sessionEpoch,finderEpoch:finderEpoch,worldEpoch:worldEpoch,timestamp:frame.timestamp,tracking:false,distances:Array(repeating:nil,count:7),target:nil,pose:pose,floorY:floorY))
             publishStatus(normal ? "Depth missing or mounting orientation invalid — guidance neutral" : "Tracking uncertain — guidance neutral")
             return
         }
@@ -170,7 +263,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
             lastPlan=frame.timestamp
             lastHint=RouteHint.make(path:grid.route(from:pose.position,to:goal.position),pose:pose,target:goal.position,timestamp:frame.timestamp,label:goal.label)
         }
-        var published=PerceptionFrame(epoch:sessionEpoch,finderEpoch:finderEpoch,timestamp:frame.timestamp,tracking:true,distances:distances,target:target,pose:pose,floorY:floorY)
+        var published=PerceptionFrame(epoch:sessionEpoch,finderEpoch:finderEpoch,worldEpoch:worldEpoch,timestamp:frame.timestamp,tracking:true,distances:distances,target:target,pose:pose,floorY:floorY)
         published.routeHint=lastHint
         published.candidates=candidates.compactMap { c in c.observation(pose:pose,now:frame.timestamp).map { VisibleCandidate(position:c.position,observation:$0) } }
             .sorted { $0.observation.bearingDegrees<$1.observation.bearingDegrees }
@@ -210,15 +303,54 @@ final class ARPerception: NSObject, ARSessionDelegate {
             }
         }
     }
+    func session(_ session: ARSession,didAdd anchors: [ARAnchor]) { publishTags(anchors) }
+    func session(_ session: ARSession,didUpdate anchors: [ARAnchor]) { publishTags(anchors) }
+    /// A tracked tag becomes a sighting at most twice a second: its anchor transform is the room frame in this world.
+    private func publishTags(_ anchors: [ARAnchor]) {
+        let now=ProcessInfo.processInfo.systemUptime
+        for case let anchor as ARImageAnchor in anchors where anchor.isTracked {
+            guard let name=anchor.referenceImage.name,RoomMemoryStore.isTagId(name),now-(lastTagPublished[name] ?? -.infinity)>=0.5,
+                  let frame=RoomFrame(columnMajor:Self.columnMajor(anchor.transform)) else { continue }
+            lastTagPublished[name]=now
+            let sighting=TagSighting(tagId:name,frame:frame,worldEpoch:worldEpoch,timestamp:now), epoch=sessionEpoch
+            DispatchQueue.main.async { self.onTag?(epoch,sighting) }
+        }
+    }
+    private static func columnMajor(_ m: simd_float4x4) -> [Double] {
+        [m.columns.0,m.columns.1,m.columns.2,m.columns.3].flatMap { [Double($0.x),Double($0.y),Double($0.z),Double($0.w)] }
+    }
     func sessionShouldAttemptRelocalization(_ session: ARSession) -> Bool { false }
     private func invalidate() {
-        lastTarget=nil; floorY=nil; grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil; generation += 1
+        lastTarget=nil; floorY=nil; automaticFloor.reset(); grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil; generation += 1
         let epoch=sessionEpoch
         DispatchQueue.main.async { self.onInvalidated?(epoch) }
     }
-    func sessionWasInterrupted(_ session: ARSession) { invalidate(); publishStatus("AR interrupted — recalibrate after restart") }
-    func sessionInterruptionEnded(_ session: ARSession) { _=start(epoch:sessionEpoch) }
-    func session(_ session: ARSession,didFailWithError error: Error) { invalidate(); publishStatus("AR error: \(error.localizedDescription)") }
+    func sessionWasInterrupted(_ session: ARSession) { isInterrupted=true; invalidate(); publishStatus("AR interrupted — recalibrate after restart") }
+    func sessionInterruptionEnded(_ session: ARSession) {
+        guard isRunning else { return }
+        runSession(epoch:sessionEpoch)
+    }
+    func session(_ session: ARSession,didFailWithError error: Error) { isRunning=false; invalidate(); publishStatus("AR error: \(error.localizedDescription)") }
+}
+
+extension DepthGrid {
+    /// Copies one ARKit depth frame (Float32 metres) with its confidence map (0 low, 1 medium, 2 high).
+    init?(_ data: ARDepthData) {
+        let map=data.depthMap
+        guard CVPixelBufferGetPixelFormatType(map)==kCVPixelFormatType_DepthFloat32,let confidenceMap=data.confidenceMap else { return nil }
+        let width=CVPixelBufferGetWidth(map), height=CVPixelBufferGetHeight(map)
+        guard CVPixelBufferGetWidth(confidenceMap)==width,CVPixelBufferGetHeight(confidenceMap)==height else { return nil }
+        CVPixelBufferLockBaseAddress(map,.readOnly); CVPixelBufferLockBaseAddress(confidenceMap,.readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(map,.readOnly); CVPixelBufferUnlockBaseAddress(confidenceMap,.readOnly) }
+        guard let base=CVPixelBufferGetBaseAddress(map),let confidenceBase=CVPixelBufferGetBaseAddress(confidenceMap) else { return nil }
+        var values:[Double]=[]; var confidences:[UInt8]=[]; values.reserveCapacity(width*height); confidences.reserveCapacity(width*height)
+        for y in 0..<height {
+            let row=base.advanced(by:y*CVPixelBufferGetBytesPerRow(map)).assumingMemoryBound(to:Float.self)
+            let confidenceRow=confidenceBase.advanced(by:y*CVPixelBufferGetBytesPerRow(confidenceMap)).assumingMemoryBound(to:UInt8.self)
+            for x in 0..<width { values.append(Double(row[x])); confidences.append(confidenceRow[x]) }
+        }
+        self.init(width:width,height:height,depths:values,confidence:confidences)
+    }
 }
 
 extension DepthFrame {

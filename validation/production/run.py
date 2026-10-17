@@ -64,10 +64,10 @@ class Replay:
         for key, value in expected.items():
             actual = (state.get('result') == 'ok') if key == 'accepted' else state.get(key)
             self.expect(actual, value, f'{name or line}: {key}')
-        self.expect(all(0 <= angle <= 120 for angle in state['angles_deg']), True,
-                    f'{name or line}: 120-degree envelope')
-        self.expect(all(900 <= pulse <= 2100 for pulse in state['pulses_us']), True,
-                    f'{name or line}: FS0307 nominal pulse envelope')
+        self.expect(all(0 <= angle <= 175 for angle in state['angles_deg']), True,
+                    f'{name or line}: 175-degree assumed envelope')
+        self.expect(all(650 <= pulse <= 2500 for pulse in state['pulses_us']), True,
+                    f'{name or line}: FS0307 assumed wide pulse envelope')
         # Synthetic speed-limited motor model integrates the PREVIOUS command.
         # 300deg/s is illustrative, not a measured FS0307 rating; jam is injected.
         now = int(line.split()[1])
@@ -185,9 +185,9 @@ def run(replay):
     r.reset(4000)
     p=r.swift_call(op='encode',seq=1,bands=[1,2,3,4,0,0,0],highlight=0)
     r.packet(4000,p['hex'],'Band centres plus first highlight dip',accepted=True,
-             angles_deg=[13,40,80,120,20,20,20],tap_active=True)
-    r.command('TICK 4100','Tap returns after100ms',angles_deg=[0,40,80,120,20,20,20],tap_active=False)
-    r.command('TICK 4500','Timeout gaps by former band',angles_deg=[20,20,60,100,20,20,20],bands=[0]*7)
+             angles_deg=[13,58,116,174,29,29,29],tap_active=True)
+    r.command('TICK 4100','Tap returns after100ms',angles_deg=[0,58,116,174,29,29,29],tap_active=False)
+    r.command('TICK 4500','Timeout gaps by former band',angles_deg=[29,29,87,145,29,29,29],bands=[0]*7)
     r.reset(0xfffffff0)
     p=r.swift_call(op='encode',seq=42,bands=[1]*7,highlight=255)
     r.packet(0xfffffff0,p['hex'],'millis rollover baseline',accepted=True)

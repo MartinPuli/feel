@@ -48,14 +48,14 @@ DERIVED = {  # CAD.md section 2, as stated
     'z_bottom': -31.2, 'servo_tab_y': -7.5, 'bulk_y0': -7.0, 'bulk_y1': -0.5, 'wrist_in_y': -25.5,
     'wrist_out_y': -30.5, 'far_in_y': 57.0, 'far_out_y': 62.0, 'half_w': 44.25, 'crown_yc': 34.0,
     'crown_R': 1019.7, 'screw_x': 41.25, 'screw_y0': -28.0, 'screw_y1': 59.5, 'lift': 2.85,
-    'cam_max_r': 5.45, 'gap0': 29.0, 'gap1': 87.5, 'gap2': 146.0, 'pack_in_l': 101.4,
+    'cam_max_r': 5.45, 'gap0': 29.0, 'gap1': 87.0, 'gap2': 145.0, 'pack_in_l': 101.4,
     'pack_in_w': 55.7, 'pack_out_l': 105.4, 'pack_out_w': 59.7, 'pack_y1': -48.5, 'pack_y0': -153.9,
     'foam_strip_w': 11.0,
 }
 # Stated values are rounded to the digits shown; crown_R to 0.1.
 DERIVED_TOL = {'crown_R': 0.05}
 
-SWEEP_ANGLES = [-5, 0, 29, 58, 87.5, 117, 146, 175, 180]
+SWEEP_ANGLES = [-5, 0, 29, 58, 87, 116, 145, 174, 180]
 # shaft4 lobes and gaps, plus the tap reach either side of the end lobes.
 SWEEP_ANGLES_120 = [-13, -5, 0, 20, 40, 60, 80, 100, 120, 125, 133]
 SHAFT_PAIRS = ['x_shaft_chassis', 'x_shaft_servo', 'x_shaft_guide', 'x_shaft_shaft']
@@ -67,7 +67,7 @@ TOUCH_MM3 = 1e-6
 # Cam parameters, CAD.md section 2 (mirrors params.scad; DERIVED check ties lift/max_r back to it).
 CAM = dict(base_r=2.6, lift=2.85, foot_clear=0.3, step=0.5, stroke=2.55)
 SHAFTS = {
-    'shaft': dict(rows=[0, 1, 2, 3], angles=[0, 58, 117, 175], flat=5, ramp=24),
+    'shaft': dict(rows=[0, 1, 2, 3], angles=[0, 58, 116, 174], flat=5, ramp=24),
     'shaft3': dict(rows=[0, 2, 3], angles=[0, 55, 110], flat=5, ramp=22.5),
     'shaft4': dict(rows=[0, 1, 2, 3], angles=[0, 40, 80, 120], flat=5, ramp=15),
 }

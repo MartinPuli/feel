@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compare compiled controller commands with evaluated CAD polygon contact.
 
-No device I/O. Fails if firmware angles/pulses diverge from the 120-degree CAD
+No device I/O. Fails if firmware angles/pulses diverge from the 175-degree assumed CAD
 or if a commanded band/gap/tap violates ideal static pin-selection criteria.
 """
 import argparse
@@ -21,7 +21,7 @@ def main():
     args = parser.parse_args()
     params, profiles = load_geometry()
     bands, gaps, tap, base, stroke, pin_r, tip_r, half_angle, *_ = params
-    assert bands == [0, 40, 80, 120] and gaps == [20, 60, 100] and tap == 13
+    assert bands == [0, 58, 116, 174] and gaps == [29, 87, 145] and tap == 13
     checks = 0
 
     def check(condition, message):
@@ -46,7 +46,7 @@ def main():
                     (4, [tapped]+[angle]*6), (5, [angle]*7), (6, [gap]*7)]
         for index, angles in expected:
             check(states[index]['angles_deg'] == angles, f'Band {band}: CAD/controller angle mismatch at {commands[index]}')
-            check(states[index]['pulses_us'] == [900+10*a for a in angles], f'Band {band}: pulse mapping mismatch')
+            check(states[index]['pulses_us'] == [int(650 + 1850*a/175 + .5) for a in angles], f'Band {band}: pulse mapping mismatch')
         for variant in range(3):
             def lifts(at):
                 return [max(0, contact_height(profiles[(variant, b)], at, pin_r, tip_r, half_angle)-base)

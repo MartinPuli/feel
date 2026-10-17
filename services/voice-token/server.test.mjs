@@ -17,7 +17,11 @@ async function fixture(t, options = {}, overrides = {}) {
     now: () => timestamp,
     fetchImpl: async (...args) => {
       calls.push(args);
-      return Response.json({ ...session, ignored: 'must not return extra fields' });
+      return Response.json({
+        ...session,
+        session: { type: 'realtime', model: 'gpt-realtime-2.1', instructions: 'Provider defaults' },
+        ignored: 'must not return extra fields',
+      });
     },
     ...options,
   });
@@ -34,11 +38,11 @@ async function fixture(t, options = {}, overrides = {}) {
 }
 
 test('configuration fails closed without exposing supplied values', () => {
-  assert.throws(() => readConfig({}), /Set XAI_API_KEY/);
-  assert.throws(() => readConfig({ XAI_API_KEY: config.apiKey }), /distinct FEEL/);
-  assert.throws(() => readConfig({ XAI_API_KEY: config.accessToken,
+  assert.throws(() => readConfig({}), /Set OPENAI_API_KEY/);
+  assert.throws(() => readConfig({ OPENAI_API_KEY: config.apiKey }), /distinct FEEL/);
+  assert.throws(() => readConfig({ OPENAI_API_KEY: config.accessToken,
     FEEL_VOICE_ACCESS_TOKEN: config.accessToken }), /distinct FEEL/);
-  const env = { XAI_API_KEY: config.apiKey, FEEL_VOICE_ACCESS_TOKEN: config.accessToken };
+  const env = { OPENAI_API_KEY: config.apiKey, FEEL_VOICE_ACCESS_TOKEN: config.accessToken };
   assert.equal(readConfig(env).port, 8081);
   assert.throws(() => readConfig({ ...env, PORT: 'bad' }), /PORT/);
   assert.throws(() => readConfig({ ...env, REQUIRE_HTTPS: 'typo' }), /REQUIRE_HTTPS/);
@@ -53,11 +57,16 @@ test('authenticated session uses fixed official contract and returns only epheme
   assert.deepEqual(await response.json(), session);
   assert.equal(calls.length, 1);
   const [url, options] = calls[0];
-  assert.equal(url, 'https://api.x.ai/v1/realtime/client_secrets');
+  assert.equal(url, 'https://api.openai.com/v1/realtime/client_secrets');
   assert.equal(options.headers.Authorization, `Bearer ${config.apiKey}`);
   assert.equal(options.method, 'POST');
   assert.equal(options.redirect, 'error');
-  assert.deepEqual(JSON.parse(options.body), { expires_after: { seconds: 300 } });
+  assert.deepEqual(JSON.parse(options.body), {
+    expires_after: { anchor: 'created_at', seconds: 300 },
+    session: {
+      type: 'realtime', model: 'gpt-realtime-2.1', audio: { output: { voice: 'cedar' } },
+    },
+  });
 });
 
 test('missing and wrong credentials never reach provider or echo credentials', async t => {

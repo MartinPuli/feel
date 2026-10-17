@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "about": "Shared test vector for room memory: chalk/feel_chalk/anchors.py and FeelCore RememberedTarget must turn the same anchors into the same remembered targets. Positions are in the printed tag's frame (ARKit image anchor: x right along the tag, y out of the tag into the room, z down along the tag), in metres.",
+  "venue_id": "example-hall",
+  "tag_id": "feel-tag-01",
+  "anchors": [
+    {"label": "exit", "x": -3.9, "y": 5.2, "z": 0.0, "confidence": 0.9, "seen_at": "2026-10-17T18:00:00Z"},
+    {"label": "exit", "x": -4.1, "y": 4.8, "z": 0.1, "confidence": 0.8, "seen_at": "2026-10-17T19:00:00Z"},
+    {"label": "Exit", "x": -4.3, "y": 5.0, "z": -0.1, "confidence": 0.7, "seen_at": "2026-10-16T09:00:00Z"},
+    {"label": "exit ", "x": -3.7, "y": 5.6, "z": 0.2, "confidence": 0.95, "seen_at": "2026-10-17T20:00:00Z"},
+    {"label": "water  fountain", "x": 2.0, "y": 2.5, "z": 0.3, "confidence": 0.9, "seen_at": "2026-10-17T19:30:00Z"},
+    {"label": "Water Fountain", "x": 2.2, "y": 2.3, "z": 0.3, "confidence": 0.6, "seen_at": "2026-10-15T19:30:00Z"},
+    {"label": "water fountain", "x": 1.8, "y": 2.9, "z": 0.4, "confidence": 0.8, "seen_at": "2026-10-17T20:10:00Z"},
+    {"label": "   ", "x": 0.0, "y": 1.0, "z": 0.0, "confidence": 1.0, "seen_at": "2026-10-17T20:00:00Z"},
+    {"label": "chair", "x": null, "y": 1.0, "z": 0.0, "confidence": 1.0, "seen_at": "2026-10-17T20:00:00Z"},
+    {"label": "chair", "x": 1.0, "y": 1.0, "z": 0.0, "confidence": 1.0, "seen_at": null}
+  ],
+  "remembered": [
+    {"label": "exit", "x": -4.0, "y": 5.1, "z": 0.05, "sightings": 4, "last_seen_at": "2026-10-17T20:00:00Z"},
+    {"label": "water fountain", "x": 2.0, "y": 2.5, "z": 0.3, "sightings": 3, "last_seen_at": "2026-10-17T20:10:00Z"}
+  ]
+}

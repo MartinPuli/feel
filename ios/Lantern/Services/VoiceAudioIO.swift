@@ -42,7 +42,7 @@ enum VoiceAudioError: LocalizedError {
     }
 }
 
-/// Grok's wire format is mono, signed 16-bit little-endian PCM at 24 kHz.
+/// OpenAI Realtime's wire format is mono, signed 16-bit little-endian PCM at 24 kHz.
 enum VoicePCM {
     static let sampleRate = 24_000.0
     static let maximumQueuedFrames = 24_000 * 20
@@ -75,6 +75,7 @@ enum VoicePCM {
 final class DeviceVoiceAudio: VoiceAudioIO {
     private var engine: AVAudioEngine?
     private var player: AVAudioPlayerNode?
+    private var captureFormat: AVAudioFormat?
     private var inputDelivery: VoiceInputDelivery?
     private var onPlaybackDrained: (() -> Void)?
     private var playbackGeneration = UUID()
@@ -132,6 +133,7 @@ final class DeviceVoiceAudio: VoiceAudioIO {
                 capture.receive(buffer)
             }
             tapInstalled = true
+            captureFormat = inputFormat
             let newPlayer = AVAudioPlayerNode()
             player = newPlayer
             newEngine.attach(newPlayer)
@@ -149,7 +151,20 @@ final class DeviceVoiceAudio: VoiceAudioIO {
 
     func play(_ pcm: Data) throws {
         precondition(Thread.isMainThread)
-        guard let engine, engine.isRunning, let player else { throw VoiceAudioError.notRunning }
+        guard let engine, let player else { throw VoiceAudioError.notRunning }
+        if !engine.isRunning {
+            // A system output-format change can stop the engine just after startup.
+            // Restart the existing graph only if its microphone converter is still valid.
+            // Explicit stop clears engine, so this cannot restart a stopped session.
+            guard let captureFormat,
+                  engine.inputNode.outputFormat(forBus: 0).isEqual(captureFormat) else {
+                VoiceDiagnostics.record("audio_input_format_changed")
+                throw VoiceAudioError.unavailableInput
+            }
+            try engine.start()
+            guard engine.isRunning else { throw VoiceAudioError.notRunning }
+            VoiceDiagnostics.record("audio_engine_restarted")
+        }
         guard !pcm.isEmpty else { return }
         guard pcm.count.isMultiple(of: 2) else { throw VoiceAudioError.invalidPCM }
         let frames = pcm.count / 2
@@ -209,6 +224,7 @@ final class DeviceVoiceAudio: VoiceAudioIO {
         engine?.stop()
         if tapInstalled { engine?.inputNode.removeTap(onBus: 0) }
         tapInstalled = false
+        captureFormat = nil
         player = nil
         engine = nil
         if ownsAudioSession {

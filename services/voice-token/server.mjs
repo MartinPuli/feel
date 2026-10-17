@@ -2,18 +2,18 @@ import { createServer } from 'node:http';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
-const UPSTREAM = 'https://api.x.ai/v1/realtime/client_secrets';
+const UPSTREAM = 'https://api.openai.com/v1/realtime/client_secrets';
 const hash = value => createHash('sha256').update(value).digest();
 
 export function readConfig(env = process.env) {
   const config = {
-    apiKey: env.XAI_API_KEY ?? '',
+    apiKey: env.OPENAI_API_KEY ?? '',
     accessToken: env.FEEL_VOICE_ACCESS_TOKEN ?? '',
     port: Number(env.PORT ?? 8081),
     requireHTTPS: env.REQUIRE_HTTPS === 'true',
   };
   if (!/^[\x21-\x7e]{1,4096}$/.test(config.apiKey)) {
-    throw new Error('Set XAI_API_KEY on the server.');
+    throw new Error('Set OPENAI_API_KEY on the server.');
   }
   if (!/^[\x21-\x7e]{32,4096}$/.test(config.accessToken)
       || config.accessToken === config.apiKey) {
@@ -129,7 +129,14 @@ export function createTokenHandler(config, {
           Authorization: `Bearer ${config.apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ expires_after: { seconds: 300 } }),
+        body: JSON.stringify({
+          expires_after: { anchor: 'created_at', seconds: 300 },
+          session: {
+            type: 'realtime',
+            model: 'gpt-realtime-2.1',
+            audio: { output: { voice: 'cedar' } },
+          },
+        }),
         redirect: 'error',
         signal: controller.signal,
       });

@@ -1,3 +1,43 @@
+> **Room memory on `feel/chalk-track` (2026-10-17, night):** a printed FEEL tag (`ios/Lantern/Resources/feel-tag-01.png`,
+> printed 20 cm wide) recognized by ARKit image detection gives the room a frame; targets confirmed with "found it" or by
+> arriving at a Where-is target are stored in that frame on the phone (`RoomMemoryStore`) and, when the user shares them,
+> aggregated by Chalk (`Anchor` → `RoomMemory`, named query `room_anchors`, the `anchors` table with an opt-in `shared`
+> flag). A later "where is the exit" with the tag seen points the pins at once and answers "Last time the exit was about
+> 2 meters ahead to your left. Pins point there. Say photo to check again."; `get_status` reports `room_memory` hits and
+> misses. Software checks on this Mac: chalk 78 tests (5 skip without chalkpy, pass with it), FeelCore 224, Lantern 154
+> unit tests on the simulator. NOT RUN on a device: ARKit's recognition of the printed tag and the frame it returns, the
+> accuracy of a remembered position after relocalization, and the spoken cue behaviour. Still pending: the Chalk
+> deployment, the SQL against a live Postgres, and the phone's write of anchors to Supabase.
+
+> **`feel/chalk-track` (2026-10-17 evening):** Chalk context features (`chalk/feel_context`: Find, ObjectHistory, VenueEntry,
+> Venue with named queries `last_seen` and `venue_pack`), Postgres schema and seed, a standard-library query client, a `--local`
+> evaluation mode with a synthetic dataset (12-row run recorded in `docs/evidence/chalk-synthetic/`), the open-side finder
+> (FeelCore `OpenSide`: "more room to your left" in obstacle notices, `open_side` in status, one sweep cue under the arrows toggle)
+> and five SVG figures. Software checks on this Mac: FeelCore 208 tests, Lantern 143 unit tests, chalk 65 tests (3 skip without
+> chalkpy, which pass in a venv that has it). Not done: the Chalk deployment (needs the Postgres data source and the CLI), the
+> phone write path for finds, and any device test of the open-side cue.
+
+> **Chalk production setup (2026-10-17):** metadata-only trace policy saved; two synthetic image requests passed. Quota enforcement is disabled in the managed backend and has been escalated to Chalk with user authorization. Public production remains blocked. See [current gates](CHALK-PRODUCTION.md).
+
+> **Current Chalk environment follow-up (2026-10-17):** Feel production routing and two generic text requests passed. CLI login is configured; no dataset or hosted evaluation run exists yet. Earlier image/simulator results below are historical and do not validate the new key on the phone. See [current implementation and remaining checks](CHALK-IMPLEMENTATION.md).
+
+> **V4 on `feel/v4-chalk` (2026-10-17 03:40): Where-is through Chalk's Model Gateway with an on-device
+> fallback (Vision reads EXIT signs, door shapes and people; the bundled Core ML detector finds chairs
+> and common objects), typed requests, sessions that survive missing sound output, a review fix pass,
+> and a minimalist-neobrutalist restyle, on top of main's OpenAI voice stack. Software checks PASS on
+> this Mac and in the iOS Simulator. Physical camera, LiDAR, puck and live speech: NOT RUN here.**
+> Details at the end of this file.
+
+> **Merged Ethan's branch (2026-10-17 ~11:45): direction arrows, point-to-describe, target spans,
+> depth recording, synthetic scenes and the replay harness now live on `main` next to Where-is,
+> on main's OpenAI voice stack.** Ported: the keyword listener borrows the OpenAI session's
+> microphone; the "which one?" question is an in-conversation `response.create` (OpenAI has no
+> `force_message`). A placed Where-is target becomes the arrows' route goal, so "where is the exit"
+> gets the tactile arrow along the planned route and the pin, with no failure tone while the planner
+> has no route yet. After the merge: FeelCore + FeelSim 184 tests, Lantern 112 unit tests (1 skipped
+> in the simulator) and the UI suite pass locally. Ethan's own caveats below still hold: nothing of
+> his has run on a hand, a LiDAR map, a route or a physical column.
+
 > Replay harness (October 17): `python3 simulation/run.py` replays labelled depth
 > recordings (12 synthetic scenes now; iPhone recordings via the new Lantern
 > **Record depth** toggle) through the shared FeelCore depth step, the production
@@ -19,7 +59,7 @@
 > phone. No real hand, LiDAR map, route or physical column tested.
 > Update: the V sign plus one spoken word ("exit") picks the target, using on-device
 > recognition. Guidance uses sounds only (success chime, failure tone, listening blip).
-> Several targets in view make the Grok assistant ask which one (`choose_target`).
+> Several targets in view make the assistant ask which one (`choose_target`).
 > Now 135 FeelCore, 40 Lantern unit and 8 UI tests pass. Speech recognition, the
 > microphone hand-off and the assistant question are not tested on a device.
 
@@ -38,32 +78,33 @@
 
 # Current V1 release candidate
 
-## Current iPhone voice provisioning
+## Current proactive voice update — October 17
 
-Build 8 is signed and installed. The protected Vercel token service is deployed,
-and a real native Grok session returned “I'm here” using Sal at 24 kHz.
-33 native tests and 18 token-service tests passed. Provider credentials remain
-server-side. The Voice-only API key expires November 16, 2026.
-The unlocked iPhone was provisioned and launched at 01:24 EDT. The user confirmed
-live voice input and spoken responses; server logs show successful token requests.
-Cold relaunch, headset routing and interruption checks remain pending.
-[Evidence](evidence/v1-voice-provisioning/validation.txt).
+Build 14 is signed, installed and launched on the paired iPhone at 01:48 EDT.
+OpenAI accepted the expanded voice tool set; phone diagnostics show readiness
+and successful audio-engine recovery. Spoken action checks with the user and
+headset behavior remain pending. The production token service retains provider
+credentials on Vercel. The FEEL wordmark has a matching control background.
 
-## Current iPhone assistant update
+V1 adds event-driven nearby-obstacle and target-movement notices, sensing
+recovery, and spoken access to the app's operational controls. “Silence yourself”
+mutes speech while preserving microphone capture and commands; “speak again”
+unmutes. “Stop listening” ends capture and requires touch to resume. iOS permission
+choices and credential entry remain manual. The phone still pauses capture when
+backgrounded or locked. [Evidence](evidence/v1-proactive-voice/validation.txt).
 
-V1 build 6 adds the [personal voice assistant](V1-VOICE.md). After provisioning,
-it listens automatically on app foreground entry and reports readiness aloud.
-Stop preserves listening; Pause assistant ends the microphone. The FEEL wordmark
-has no background or LIVE label. Native sensing and V2/V3 branches are preserved.
+All 60 native unit/integration tests and 7 UI tests passed.
+Independent review identified a sub-0.3 m filtering issue, fixed with regression
+coverage. Earlier [OpenAI migration evidence](evidence/v1-openai-voice/validation.txt)
+records the prior 40 native tests, 7 UI tests and 18 service tests.
 
-Signed build 1.0.0 (6) is installed and launched on the paired iPhone 17 Pro.
-The first launch attempt was blocked by the locked phone; retry succeeded at
-00:49:08 EDT. Thirty-six native tests and ten token-service tests passed locally. [Voice validation](evidence/v1-voice/validation.txt).
+## Prior iPhone voice provisioning
 
-**Live Grok activation is BLOCKED** on an xAI key and reachable HTTPS token
-service. No real conversation, headset routing or physical voice latency result
-is claimed. Camera images remain local. Audio is sent to xAI only during an
-active assistant session. The app pauses streaming when backgrounded/locked.
+Build 8 used Grok/Sal. The user confirmed live voice input and spoken responses,
+then reported disconnections. Its historical activation evidence is preserved
+in [the provisioning record](evidence/v1-voice-provisioning/validation.txt).
+Build 6 introduced foreground listening and accessible Assistant controls.
+Backgrounding or locking pauses microphone capture; camera images remain local.
 
 ## Current iPhone visual update
 
@@ -168,3 +209,73 @@ Primary hardware is the team's classic ESP32-WROOM. Servo PWM defaults OFF.
 Published FS0307 travel/voltage differs from the handoff's 175°/650–2500 µs
 assumption. Identify and measure the actual units before enabling output. Nominal
 CAD clearances, horn fit, thin-guide stiffness and foam return are unverified.
+
+## V4: Where-is through Chalk with an on-device fallback, typed requests, no-audio resilience (2026-10-17)
+
+| Check | Result | How |
+|---|---|---|
+| Swift core (portable) | PASS, 65 tests incl. held target, depth grid, placement, on-device vocabulary, held-target guidance | `sh ios/scripts/test_portable.sh` |
+| App unit tests (simulator) | PASS, 104 tests: gateway, Where-is service with the on-device fallback, `where_is` command, the review fix pass, existing suites | `xcodebuild … -only-testing:LanternTests` |
+| On-device fallback (simulator) | PASS: `ObjectDetectorTests` reads a rendered EXIT sign through the same Vision path the phone uses; the Core ML classes need `python3 scripts/fetch_model.py` before the device build | `xcodebuild … -only-testing:LanternTests/ObjectDetectorTests` |
+| UI tests | PASS, 8 tests: existing suite with the restyle and the Where-is setup (the voice-setup test now scrolls without momentum) | `bash scripts/check_ios.sh` |
+| Chalk gateway from this Mac | PASS: text and image requests on `openai/gpt-6.1-sol`, 2.6–3.7 s | `chalk/check_connection.py --chat` |
+| Chalk gateway from the app | PASS in the iOS Simulator: the sample photo went through the real request, parser and placement code; "Found '3D puck model' … in 4.2 s" | Assistant panel → Where-is setup → Test with a sample photo |
+| Chalk Evaluation run | BLOCKED: needs `chalk login` and venue photos | `chalk/README.md` → Run the evaluation |
+| OpenAI Realtime voice | PASS in the iOS Simulator for connect, session setup, readiness line, a typed request, the app tool call and the spoken reply as a caption. Sound output is unavailable in the simulator (no running audio engine); the session now continues without it. Audible speech and the microphone: check on the phone | Assistant panel, typed request "where is the exit" |
+| Where-is on the LiDAR iPhone | NOT RUN: checklist below | — |
+
+### Camera and LiDAR conventions, checked against Apple's documentation
+
+- `ARCamera.transform`: in camera space the x-axis points right when the device is in
+  `UIDeviceOrientation.landscapeLeft`, y points up, z points toward the screen side. The
+  app's landscape-left mount therefore gives +x right, +y up and −z forward, which is what
+  `CameraIntrinsics.unproject` and `TactileGeometry.bearing` assume.
+- `ARCamera.intrinsics`: fx, fy and the principal point are in pixels from the top-left of
+  the captured image; the app scales them to the 256×192 depth grid by the ratio of depth
+  size to `imageResolution` (`ARPerception.intrinsics`).
+- `ARDepthData.depthMap`: metres, `kCVPixelFormatType_DepthFloat32`; `confidenceMap` holds
+  `ARConfidenceLevel` low/medium/high (0/1/2) and only medium and high are used.
+- `ARFrame.capturedImage`: full-range YCbCr; `CIImage` converts it for the Where-is JPEG. It
+  shares the depth map's orientation, so the model's box maps to depth pixels unrotated.
+
+### On-device fallback
+
+"Where is X?" asks Chalk first. Without Chalk settings, or when the gateway fails or does not
+answer within 12 s, the same photo goes to the phone's own detector (`LocalWhereIs` →
+`ObjectDetector`): Vision text recognition for EXIT signs, Vision rectangles for door candidates,
+Core ML or Vision human rectangles for people, and the bundled Core ML detector
+(`FEELDetector.mlmodelc`, Apple's pinned YOLOv3, 80 COCO classes) for chairs and common objects.
+The user's words are matched against a fixed vocabulary (`LocalVocabulary`: articles dropped,
+plurals tried, last word as a fallback, so "registration desk" finds a table). Anything else
+offline gets "I can only look for the exit, a door, a person, a chair or common objects right
+now." The target is named by the user's own words, never by a model label. The sample-photo
+self-test stays Chalk-only so its result reflects the gateway setup.
+
+### Review fix pass (fresh-context review of the whole branch)
+
+Fixed, each with a test that failed first: a new ask clears the previous target, cancels the
+lookup in flight and resets the finder; a photo from an earlier ask is dropped; a placement from
+a world that has since reset is refused ("Lost tracking. Say it again."); a target placed outside
+the pins' field says its direction at once and "I no longer see your target" is never spoken for
+a held target; finder and teammate targets never shadow a held target; a result line the
+assistant could not speak (mid-reply, or inside the five-second announce throttle) is retried
+from the tick for ten seconds; a typed request is refused while a reply is running instead of
+racing it; the "audio engine not running" tolerance is confined to simulator builds; arrival
+("You're at the …") counts only while sensing is live.
+
+### Device checklist for the hardware session (not yet run)
+
+1. Run `python3 scripts/fetch_model.py` (pinned, SHA-256 checked) so the bundle includes the Core ML
+   detector, then install from `feel/v4-chalk-ben` (or `main` after the merge). In Assistant
+   settings enter the voice service; the Where-is gateway settings are optional (or launch with the
+   DEBUG provisioning variables). Without them Where-is runs on-device only.
+2. Start the camera, calibrate with the measured lens height, confirm `Where-is ready` (Chalk) or
+   `Where-is not set up` (on-device only).
+3. Say "where is the chair": confirmation within 1 s, spoken observation and pin within 6 s;
+   turn 90°, the pin follows; walk to it: "You're at the chair."
+4. Say "where is the refrigerator" with none present: "I couldn't see a refrigerator in the photo."; no pin change.
+5. Hold a target, cover the camera until tracking resets: "Lost tracking. Say it again."; pins neutral.
+6. Hold a target, turn your back to it: "chair is behind you." within 5 s; "stop": highlight off, obstacles still shown.
+7. Airplane mode with Chalk configured, near an EXIT sign: "where is the exit" → pin within about
+   13 s (12 s gateway timeout, then on-device); "where is the unicorn" → the vocabulary line.
+8. Record PASS/FAIL per step here with the commit.

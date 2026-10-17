@@ -31,7 +31,7 @@ def main():
     check('replay-scenarios',[sys.executable,'simulation/run.py','--repeat','2','--out',str(output/'replay')],tools=('swift','c++'),timeout=900,scope='labelled depth scenes through production Swift encoder and C++ controller; no servo physics or feel')
     check('firmware-build',['pio','run','-j','2','--project-dir','firmware'],tools=('pio',),timeout=1200)
     check('firmware-single-demo-build',['pio','run','-j','2','--project-dir','firmware','-e','esp32-single-demo'],tools=('pio',),files=('firmware/platformio.ini',),timeout=1200,scope='single-servo BLE demo compile only; no upload')
-    check('firmware-single-live-build',['pio','run','-j','2','--project-dir','firmware','-e','esp32-single-live'],tools=('pio',),files=('firmware/platformio.ini',),timeout=1200,scope='single-servo nominal120 live compile only; no upload')
+    check('firmware-single-live-build',['pio','run','-j','2','--project-dir','firmware','-e','esp32-single-live'],tools=('pio',),files=('firmware/platformio.ini',),timeout=1200,scope='single-servo assumed175 live compile only; no upload')
     check('firmware-bench-build',['pio','run','-j','2','--project-dir','firmware/bench-single','-e','esp32-single-center'],tools=('pio',),files=('firmware/bench-single/platformio.ini',),timeout=1200,scope='standalone single-servo bench compile only; no upload')
     check('firmware-enabled-compile',['sh','firmware/test/build_output_paths.sh'],tools=('pio',),timeout=1200)
     if not args.skip_cad_build:check('cad-build',['sh','cad/build.sh'],tools=('openscad',),timeout=1200)

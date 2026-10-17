@@ -34,6 +34,16 @@ Open `Lantern.xcodeproj`, select your own signing team for each application, and
 
 The generated Xcode project is disposable; edit `project.yml`. The `FeelCore` dependency is a local Swift package, so core builds require no package downloads.
 
+## Sign-in and accounts (Supabase)
+
+Lantern can require an account before anything else opens. The first screen has **Sign in** and **Create account**; **Settings → Sign out** returns to it and stops the camera, puck output and microphone. The screen uses Password AutoFill (saved logins fill with Face ID; new accounts can take a suggested strong password), labelled fields, Return to advance, no time limit or CAPTCHA, and spoken results.
+
+1. In Supabase, create a project. For a demo, turn off **Authentication → Sign In / Providers → Email → Confirm email** so a new account signs straight in. With it on, the app asks people to open the confirmation email and then sign in.
+2. Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (publishable/anon key only) to `chalk/.env`.
+3. Run `ios/scripts/supabase_config.sh` (or pass another env file), then rebuild.
+
+Without those settings, and in UI tests, the app opens without sign-in. Simulator builds forget the session on relaunch.
+
 ## Portable builds and production replay
 
 Swift 5.9+ is sufficient for the package (validated here with Swift 6.1.3 Linux).
@@ -62,7 +72,7 @@ For the restricted build host used in this session only, Swift's new driver and 
 
 1. Keep the rear camera facing forward in **UIDevice landscape-left** orientation: the phone's top edge/camera end points to your left as you look at its screen. This is native ARKit camera orientation. The app requests `UIInterfaceOrientationLandscapeRight`; UIKit's interface naming is opposite the physical-device rotation.
 2. Keep the phone's camera-up axis roughly vertical. The app neutralizes when excessive roll/orientation makes the fixed mount invalid. Face the same direction as the wearer; turning the phone separately changes the tactile reference frame.
-3. Measure the lens height above the floor. Enter it in the app (0.60–2.10 m), start Live, wait for normal tracking and tap **Calibrate floor**. The baseline is `camera world y − measured lens height`; ARKit's arbitrary world origin is never assumed to be the floor. Recalibrate after an AR reset, interruption or change of mounting height/environment.
+3. Start Live and move slowly with some floor visible. On supported devices, floor calibration automatically accepts a stable ARKit-classified horizontal floor. Until accepted, pins remain logically neutral. If no classified floor is available, measure lens height above the floor (0.60–2.10 m), enter it in Floor setup and tap **Use measured height**. This manual override uses `camera world y − measured lens height`; ARKit world origin is never assumed to be the floor. Session resets/interruption restart automatic calibration. See `docs/AUTOMATIC-FLOOR-CALIBRATION.md` for acceptance criteria and limits.
 4. Start with a stationary cardboard obstacle at center, left and right. Confirm the intended column in the virtual puck before enabling any mechanical output. Log actual direction sign and range on the phone.
 
 World points 0.60–2.10 m above the calibrated floor are considered. The upper bound is a documented engineering assumption absent from the reference. Distance bands use horizontal radial range (not optical z distance): positive distances below 0.9 m → band1, [0.9,1.6) →2, [1.6,2.5) →3, [2.5,4.0] →4. Positive distances below the handoff's nominal 0.3 m minimum conservatively remain near band1. Nonfinite/nonpositive/>4 m/unknown samples are neutral, not proof of clearance.
@@ -71,11 +81,23 @@ Seven equal horizontal sectors span −45°...+45°, including the endpoints; ex
 
 Only medium/high-confidence depth contributes. The app samples every third depth pixel; thin objects may be missed. A fresh normal frame is required, and depth older than250 ms neutralizes all output. Target detections expire after500 ms. Detection image/depth/pose are captured together, stored in world coordinates and reprojected after camera motion. Session and finder epochs discard queued results from old sessions/selections. A closer obstacle remains encoded when a target shares its column. A tapping target indicates direction only.
 
+## Room tag and room memory
+
+Print `Lantern/Resources/feel-tag-01.png` **20 cm wide** on plain paper and hang it flat at about chest height
+near the room's entrance. `ARPerception` registers it as an ARKit reference image of that width, so a tag printed
+at another size places every remembered target at the wrong distance. Once the tag is recognized (about a second
+with it in view), targets the user confirms with "found it" or by arriving at a Where-is target are stored in the
+tag's frame under `Application Support/RoomMemory/<tag id>.json`, and a later "where is the exit" with the tag
+seen points the pins at once with "Last time the exit was about 2 meters ahead to your left. Pins point there.
+Say photo to check again." Saying photo runs the normal Where-is photo path. The pins keep showing live depth
+throughout; memory only replaces the photo round trip. `ios/scripts/make_room_tag.py` redraws the tag. The tag
+recognition, the placement accuracy after relocalization and the cue have not been tested on a device yet.
+
 ## BLE and physical-output status
 
 Choose the intended device under **Puck connection**; the app does not automatically connect to an arbitrary puck. Packets use the UUIDs in `FeelBLE`, matching the firmware. Connection/status notifications do not prove actuation.
 
-Status decoding explicitly distinguishes **Physical PWM DISABLED**, **PWM enabled — unverified physically**, and **OUTPUT FAULT**. The current CAD/controller targets the user-selected FS0307 nominal 120° / 900–2100 µs design. Servo PWM remains disabled until actual pulse limits, power and single-column mechanics are verified. The old 175° design is superseded; do not reuse its shafts or saved calibration. Never send a servo sweep based only on virtual pins.
+Status decoding explicitly distinguishes **Physical PWM DISABLED**, **PWM enabled — unverified physically**, and **OUTPUT FAULT**. The shared controller uses the current0/58/116/174° design described in `docs/FS0307-175-DESIGN.md`. Default builds remain PWM-disabled; explicit live profiles apply the user-requested alignment and extended output. The seven-live profile is described in `docs/SEVEN-SERVO-LIVE.md`. These configurations do not establish measured travel or production readiness. Never send a servo sweep based only on virtual pins.
 
 The nine-byte command has no application checksum or timestamp. A valid-looking changed byte/delayed packet cannot always be detected by this protocol. BLE transport behavior and real firmware timeout must be measured; host simulation is not radio validation.
 

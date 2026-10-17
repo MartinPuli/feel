@@ -10,8 +10,8 @@ import math
 
 COLUMNS = 7
 NO_HIGHLIGHT = 255
-BAND_ANGLES = (0.0, 40.0, 80.0, 120.0)
-GAP_ANGLES = (20.0, 60.0, 100.0)
+BAND_ANGLES = (0.0, 58.0, 116.0, 174.0)
+GAP_ANGLES = (29.0, 87.0, 145.0)
 
 
 def integer(value, name, minimum=0, maximum=None):

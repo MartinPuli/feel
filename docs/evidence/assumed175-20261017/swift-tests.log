@@ -1,0 +1,504 @@
+[0/1] Planning build
+Building for debugging...
+[0/9] Write sources
+[3/9] Write swift-version--58304C5D6DBC2206.txt
+[5/21] Compiling FeelCore DirectionCues.swift
+[6/21] Compiling FeelCore DirectionRequest.swift
+[7/21] Compiling FeelCore HandSign.swift
+[8/21] Compiling FeelCore Perception.swift
+[9/21] Compiling FeelCore DepthFrame.swift
+[10/21] Compiling FeelCore DepthGrid.swift
+[11/21] Compiling FeelCore FloorGrid.swift
+[12/21] Emitting module FeelCore
+[13/21] Compiling FeelCore LocalWhereIs.swift
+[14/21] Compiling FeelCore Pointing.swift
+[15/21] Compiling FeelCore Protocol.swift
+[16/21] Compiling FeelCore HeldTarget.swift
+[17/22] Compiling FeelCore WhereIs.swift
+[18/34] Compiling FeelCoreTests LocalWhereIsTests.swift
+[19/34] Compiling FeelCoreTests WhereIsTests.swift
+[20/34] Emitting module FeelSim
+[21/34] Compiling FeelSim Replay.swift
+[22/34] Compiling FeelSim Scene.swift
+[23/34] Compiling FeelCoreTests DirectionRequestTests.swift
+[24/38] Emitting module FeelCoreTests
+[25/38] Compiling FeelCoreTests DirectionTests.swift
+[26/38] Compiling FeelCoreTests HeldTargetTests.swift
+[27/38] Compiling FeelCoreTests FeelCoreTests.swift
+[28/38] Compiling FeelCoreTests PointingTests.swift
+[29/38] Compiling FeelCoreTests HeldTargetGuidanceTests.swift
+[30/38] Emitting module FeelSimTests
+[31/38] Compiling FeelSimTests ReplayTests.swift
+[31/38] Write Objects.LinkFileList
+[33/38] Emitting module FeelReplay
+[34/38] Compiling FeelReplay main.swift
+[34/38] Write Objects.LinkFileList
+[35/38] Linking feel-replay
+[36/38] Applying feel-replay
+[37/38] Linking FeelCorePackageTests
+Build complete! (3.56s)
+Test Suite 'All tests' started at 2026-10-17 15:48:31.929.
+Test Suite 'FeelCorePackageTests.xctest' started at 2026-10-17 15:48:31.930.
+Test Suite 'CapturedTargetTests' started at 2026-10-17 15:48:31.931.
+Test Case '-[FeelCoreTests.CapturedTargetTests testBehindAndExpiredDrop]' started.
+Test Case '-[FeelCoreTests.CapturedTargetTests testBehindAndExpiredDrop]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.CapturedTargetTests testRotatedCameraReprojectsTarget]' started.
+Test Case '-[FeelCoreTests.CapturedTargetTests testRotatedCameraReprojectsTarget]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.CapturedTargetTests testTranslationRecomputesRange]' started.
+Test Case '-[FeelCoreTests.CapturedTargetTests testTranslationRecomputesRange]' passed (0.000 seconds).
+Test Suite 'CapturedTargetTests' passed at 2026-10-17 15:48:31.933.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'ConnectionAndStatusTests' started at 2026-10-17 15:48:31.933.
+Test Case '-[FeelCoreTests.ConnectionAndStatusTests testStatusFaultAndMalformed]' started.
+Test Case '-[FeelCoreTests.ConnectionAndStatusTests testStatusFaultAndMalformed]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.ConnectionAndStatusTests testStatusOutputDisabledIsExplicit]' started.
+Test Case '-[FeelCoreTests.ConnectionAndStatusTests testStatusOutputDisabledIsExplicit]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.ConnectionAndStatusTests testSwitchedPeripheralRejectsOldCallbacks]' started.
+Test Case '-[FeelCoreTests.ConnectionAndStatusTests testSwitchedPeripheralRejectsOldCallbacks]' passed (0.000 seconds).
+Test Suite 'ConnectionAndStatusTests' passed at 2026-10-17 15:48:31.934.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'CuePlayerTests' started at 2026-10-17 15:48:31.934.
+Test Case '-[FeelCoreTests.CuePlayerTests testCueFramesKeepSequenceAndDropHighlight]' started.
+Test Case '-[FeelCoreTests.CuePlayerTests testCueFramesKeepSequenceAndDropHighlight]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.CuePlayerTests testJitter]' started.
+Test Case '-[FeelCoreTests.CuePlayerTests testJitter]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.CuePlayerTests testLongObstacleDropsCue]' started.
+Test Case '-[FeelCoreTests.CuePlayerTests testLongObstacleDropsCue]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.CuePlayerTests testNearObstacleHoldsThenRestarts]' started.
+Test Case '-[FeelCoreTests.CuePlayerTests testNearObstacleHoldsThenRestarts]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.CuePlayerTests testNonLiveStateCancels]' started.
+Test Case '-[FeelCoreTests.CuePlayerTests testNonLiveStateCancels]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.CuePlayerTests testPlaysOnceThenReturnsToBase]' started.
+Test Case '-[FeelCoreTests.CuePlayerTests testPlaysOnceThenReturnsToBase]' passed (0.000 seconds).
+Test Suite 'CuePlayerTests' passed at 2026-10-17 15:48:31.935.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'DirectionCueTests' started at 2026-10-17 15:48:31.935.
+Test Case '-[FeelCoreTests.DirectionCueTests testAllFramesWireLegalAndDistinct]' started.
+Test Case '-[FeelCoreTests.DirectionCueTests testAllFramesWireLegalAndDistinct]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.DirectionCueTests testClassification]' started.
+Test Case '-[FeelCoreTests.DirectionCueTests testClassification]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionCueTests testFrames]' started.
+Test Case '-[FeelCoreTests.DirectionCueTests testFrames]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionCueTests testHysteresis]' started.
+Test Case '-[FeelCoreTests.DirectionCueTests testHysteresis]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionCueTests testNoticeableDifference]' started.
+Test Case '-[FeelCoreTests.DirectionCueTests testNoticeableDifference]' passed (0.000 seconds).
+Test Suite 'DirectionCueTests' passed at 2026-10-17 15:48:31.937.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'DirectionGuideTests' started at 2026-10-17 15:48:31.937.
+Test Case '-[FeelCoreTests.DirectionGuideTests testArrivalEndsGuidance]' started.
+Test Case '-[FeelCoreTests.DirectionGuideTests testArrivalEndsGuidance]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionGuideTests testBlockedRouteReportedOnceThenRecovered]' started.
+Test Case '-[FeelCoreTests.DirectionGuideTests testBlockedRouteReportedOnceThenRecovered]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionGuideTests testBriefWobbleIgnored]' started.
+Test Case '-[FeelCoreTests.DirectionGuideTests testBriefWobbleIgnored]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionGuideTests testChangePlaysOnceAfterItHolds]' started.
+Test Case '-[FeelCoreTests.DirectionGuideTests testChangePlaysOnceAfterItHolds]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionGuideTests testNothingWithoutSign]' started.
+Test Case '-[FeelCoreTests.DirectionGuideTests testNothingWithoutSign]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionGuideTests testSignAgainRepeats]' started.
+Test Case '-[FeelCoreTests.DirectionGuideTests testSignAgainRepeats]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionGuideTests testSignStartsAndPlaysCurrentCue]' started.
+Test Case '-[FeelCoreTests.DirectionGuideTests testSignStartsAndPlaysCurrentCue]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionGuideTests testSignWithoutTarget]' started.
+Test Case '-[FeelCoreTests.DirectionGuideTests testSignWithoutTarget]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionGuideTests testSteadyRouteNeverRepeats]' started.
+Test Case '-[FeelCoreTests.DirectionGuideTests testSteadyRouteNeverRepeats]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionGuideTests testTargetLostEndsGuidance]' started.
+Test Case '-[FeelCoreTests.DirectionGuideTests testTargetLostEndsGuidance]' passed (0.000 seconds).
+Test Suite 'DirectionGuideTests' passed at 2026-10-17 15:48:31.938.
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'DirectionRequestTests' started at 2026-10-17 15:48:31.938.
+Test Case '-[FeelCoreTests.DirectionRequestTests testAlreadyFollowingOneSkipsTheQuestion]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testAlreadyFollowingOneSkipsTheQuestion]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionRequestTests testBriefHandWithoutFireStopsListening]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testBriefHandWithoutFireStopsListening]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionRequestTests testChoiceTimesOut]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testChoiceTimesOut]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionRequestTests testInvalidChoiceIgnored]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testInvalidChoiceIgnored]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionRequestTests testNewSignRestarts]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testNewSignRestarts]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionRequestTests testNoWordNoTargetFails]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testNoWordNoTargetFails]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionRequestTests testNoWordUsesSelectedTarget]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testNoWordUsesSelectedTarget]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionRequestTests testSameWordAsSelectedDoesNotReselect]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testSameWordAsSelectedDoesNotReselect]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionRequestTests testSignWordSeenStarts]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testSignWordSeenStarts]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionRequestTests testStaleHintIgnored]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testStaleHintIgnored]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionRequestTests testTargetNeverSeenFails]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testTargetNeverSeenFails]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionRequestTests testTwoTargetsAskTheAssistant]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testTwoTargetsAskTheAssistant]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionRequestTests testWithoutAssistantTakesTheOneAhead]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testWithoutAssistantTakesTheOneAhead]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.DirectionRequestTests testWordDuringHoldResolvesOnFire]' started.
+Test Case '-[FeelCoreTests.DirectionRequestTests testWordDuringHoldResolvesOnFire]' passed (0.000 seconds).
+Test Suite 'DirectionRequestTests' passed at 2026-10-17 15:48:31.941.
+	 Executed 14 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'FingertipMarkerTests' started at 2026-10-17 15:48:31.941.
+Test Case '-[FeelCoreTests.FingertipMarkerTests testColourClasses]' started.
+Test Case '-[FeelCoreTests.FingertipMarkerTests testColourClasses]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.FingertipMarkerTests testLargestBlobCentroid]' started.
+Test Case '-[FeelCoreTests.FingertipMarkerTests testLargestBlobCentroid]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.FingertipMarkerTests testTooSmallOrTooLargeIgnored]' started.
+Test Case '-[FeelCoreTests.FingertipMarkerTests testTooSmallOrTooLargeIgnored]' passed (0.001 seconds).
+Test Suite 'FingertipMarkerTests' passed at 2026-10-17 15:48:31.943.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'FloorGridTests' started at 2026-10-17 15:48:31.943.
+Test Case '-[FeelCoreTests.FloorGridTests testBlockedReturnsNil]' started.
+Test Case '-[FeelCoreTests.FloorGridTests testBlockedReturnsNil]' passed (0.023 seconds).
+Test Case '-[FeelCoreTests.FloorGridTests testCellStates]' started.
+Test Case '-[FeelCoreTests.FloorGridTests testCellStates]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.FloorGridTests testFarCellsForgotten]' started.
+Test Case '-[FeelCoreTests.FloorGridTests testFarCellsForgotten]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.FloorGridTests testFloorObstacleBelowSectorWindowStillAvoided]' started.
+Test Case '-[FeelCoreTests.FloorGridTests testFloorObstacleBelowSectorWindowStillAvoided]' passed (0.013 seconds).
+Test Case '-[FeelCoreTests.FloorGridTests testLowFloorObjectBelowThresholdIsFloor]' started.
+Test Case '-[FeelCoreTests.FloorGridTests testLowFloorObjectBelowThresholdIsFloor]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.FloorGridTests testObstacleClearsWhenFloorSeenAgain]' started.
+Test Case '-[FeelCoreTests.FloorGridTests testObstacleClearsWhenFloorSeenAgain]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.FloorGridTests testPointsBeyondRangeIgnored]' started.
+Test Case '-[FeelCoreTests.FloorGridTests testPointsBeyondRangeIgnored]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.FloorGridTests testRouteGoesAroundObstacle]' started.
+Test Case '-[FeelCoreTests.FloorGridTests testRouteGoesAroundObstacle]' passed (0.015 seconds).
+Test Case '-[FeelCoreTests.FloorGridTests testStraightRouteInOpenRoom]' started.
+Test Case '-[FeelCoreTests.FloorGridTests testStraightRouteInOpenRoom]' passed (0.012 seconds).
+Test Case '-[FeelCoreTests.FloorGridTests testTargetOnAWallIsReachable]' started.
+Test Case '-[FeelCoreTests.FloorGridTests testTargetOnAWallIsReachable]' passed (0.016 seconds).
+Test Case '-[FeelCoreTests.FloorGridTests testUnknownAroundFeetIsPassable]' started.
+Test Case '-[FeelCoreTests.FloorGridTests testUnknownAroundFeetIsPassable]' passed (0.005 seconds).
+Test Suite 'FloorGridTests' passed at 2026-10-17 15:48:32.030.
+	 Executed 11 tests, with 0 failures (0 unexpected) in 0.085 (0.086) seconds
+Test Suite 'GeometryTests' started at 2026-10-17 15:48:32.030.
+Test Case '-[FeelCoreTests.GeometryTests testBandEdges]' started.
+Test Case '-[FeelCoreTests.GeometryTests testBandEdges]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.GeometryTests testDirectionSignAndBehind]' started.
+Test Case '-[FeelCoreTests.GeometryTests testDirectionSignAndBehind]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.GeometryTests testInvalidBearings]' started.
+Test Case '-[FeelCoreTests.GeometryTests testInvalidBearings]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.GeometryTests testInvalidPose]' started.
+Test Case '-[FeelCoreTests.GeometryTests testInvalidPose]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.GeometryTests testPoseTransforms]' started.
+Test Case '-[FeelCoreTests.GeometryTests testPoseTransforms]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.GeometryTests testSectorCenters]' started.
+Test Case '-[FeelCoreTests.GeometryTests testSectorCenters]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.GeometryTests testSectorEdgesChooseRight]' started.
+Test Case '-[FeelCoreTests.GeometryTests testSectorEdgesChooseRight]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.GeometryTests testUnprojectionAndIntrinsicScaling]' started.
+Test Case '-[FeelCoreTests.GeometryTests testUnprojectionAndIntrinsicScaling]' passed (0.000 seconds).
+Test Suite 'GeometryTests' passed at 2026-10-17 15:48:32.031.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'HandSignTests' started at 2026-10-17 15:48:32.031.
+Test Case '-[FeelCoreTests.HandSignTests testBriefFlashDoesNotFire]' started.
+Test Case '-[FeelCoreTests.HandSignTests testBriefFlashDoesNotFire]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HandSignTests testDistanceEstimate]' started.
+Test Case '-[FeelCoreTests.HandSignTests testDistanceEstimate]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HandSignTests testFarHandDoesNotCount]' started.
+Test Case '-[FeelCoreTests.HandSignTests testFarHandDoesNotCount]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HandSignTests testGapRestartsHold]' started.
+Test Case '-[FeelCoreTests.HandSignTests testGapRestartsHold]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HandSignTests testMissingJointsRejected]' started.
+Test Case '-[FeelCoreTests.HandSignTests testMissingJointsRejected]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HandSignTests testOtherHandShapesRejected]' started.
+Test Case '-[FeelCoreTests.HandSignTests testOtherHandShapesRejected]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HandSignTests testReleaseThenFireAgain]' started.
+Test Case '-[FeelCoreTests.HandSignTests testReleaseThenFireAgain]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HandSignTests testShortDropDoesNotRearm]' started.
+Test Case '-[FeelCoreTests.HandSignTests testShortDropDoesNotRearm]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HandSignTests testTriggerNeedsHoldAndFiresOnce]' started.
+Test Case '-[FeelCoreTests.HandSignTests testTriggerNeedsHoldAndFiresOnce]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HandSignTests testTwoFingersTogetherIsNotAV]' started.
+Test Case '-[FeelCoreTests.HandSignTests testTwoFingersTogetherIsNotAV]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HandSignTests testVSignAnyOrientation]' started.
+Test Case '-[FeelCoreTests.HandSignTests testVSignAnyOrientation]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HandSignTests testVSignAnySize]' started.
+Test Case '-[FeelCoreTests.HandSignTests testVSignAnySize]' passed (0.000 seconds).
+Test Suite 'HandSignTests' passed at 2026-10-17 15:48:32.034.
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'HeldTargetGuidanceTests' started at 2026-10-17 15:48:32.034.
+Test Case '-[FeelCoreTests.HeldTargetGuidanceTests testArrivalCountsOnlyWhileSensingIsLive]' started.
+Test Case '-[FeelCoreTests.HeldTargetGuidanceTests testArrivalCountsOnlyWhileSensingIsLive]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetGuidanceTests testFinderTargetsNeverShadowAHeldTarget]' started.
+Test Case '-[FeelCoreTests.HeldTargetGuidanceTests testFinderTargetsNeverShadowAHeldTarget]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetGuidanceTests testInFieldTargetIsLeftToThePins]' started.
+Test Case '-[FeelCoreTests.HeldTargetGuidanceTests testInFieldTargetIsLeftToThePins]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetGuidanceTests testOutOfFieldTargetSpeaksItsDirectionEveryFiveSeconds]' started.
+Test Case '-[FeelCoreTests.HeldTargetGuidanceTests testOutOfFieldTargetSpeaksItsDirectionEveryFiveSeconds]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetGuidanceTests testTargetLostIsOnlyAnnouncedForFinderTargets]' started.
+Test Case '-[FeelCoreTests.HeldTargetGuidanceTests testTargetLostIsOnlyAnnouncedForFinderTargets]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetGuidanceTests testWorldChangeLosesTheTargetEvenWhenSensingIsNotLive]' started.
+Test Case '-[FeelCoreTests.HeldTargetGuidanceTests testWorldChangeLosesTheTargetEvenWhenSensingIsNotLive]' passed (0.000 seconds).
+Test Suite 'HeldTargetGuidanceTests' passed at 2026-10-17 15:48:32.035.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'HeldTargetTests' started at 2026-10-17 15:48:32.035.
+Test Case '-[FeelCoreTests.HeldTargetTests testBehindSpeaksBehind]' started.
+Test Case '-[FeelCoreTests.HeldTargetTests testBehindSpeaksBehind]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetTests testBeyondRangeSpeaksDistance]' started.
+Test Case '-[FeelCoreTests.HeldTargetTests testBeyondRangeSpeaksDistance]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetTests testDepthGridMedianIgnoresLowConfidenceAndOutOfRange]' started.
+Test Case '-[FeelCoreTests.HeldTargetTests testDepthGridMedianIgnoresLowConfidenceAndOutOfRange]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetTests testEpochChangeInvalidates]' started.
+Test Case '-[FeelCoreTests.HeldTargetTests testEpochChangeInvalidates]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetTests testInsideFieldSaysNothing]' started.
+Test Case '-[FeelCoreTests.HeldTargetTests testInsideFieldSaysNothing]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetTests testNoDepthGivesNoTarget]' started.
+Test Case '-[FeelCoreTests.HeldTargetTests testNoDepthGivesNoTarget]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetTests testNotFoundGivesNoTarget]' started.
+Test Case '-[FeelCoreTests.HeldTargetTests testNotFoundGivesNoTarget]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetTests testObservationIsStampedNow]' started.
+Test Case '-[FeelCoreTests.HeldTargetTests testObservationIsStampedNow]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetTests testOutsideFieldHasNoObservationButSpeaks]' started.
+Test Case '-[FeelCoreTests.HeldTargetTests testOutsideFieldHasNoObservationButSpeaks]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetTests testPlacementUsesMedianDepthAtBoxCentre]' started.
+Test Case '-[FeelCoreTests.HeldTargetTests testPlacementUsesMedianDepthAtBoxCentre]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetTests testReached]' started.
+Test Case '-[FeelCoreTests.HeldTargetTests testReached]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetTests testRelativeBearingIsFullCircle]' started.
+Test Case '-[FeelCoreTests.HeldTargetTests testRelativeBearingIsFullCircle]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HeldTargetTests testRightSpeaksRight]' started.
+Test Case '-[FeelCoreTests.HeldTargetTests testRightSpeaksRight]' passed (0.000 seconds).
+Test Suite 'HeldTargetTests' passed at 2026-10-17 15:48:32.037.
+	 Executed 13 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'HomographyTests' started at 2026-10-17 15:48:32.037.
+Test Case '-[FeelCoreTests.HomographyTests testDegenerateInputsRejected]' started.
+Test Case '-[FeelCoreTests.HomographyTests testDegenerateInputsRejected]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HomographyTests testExactFitFromFourPoints]' started.
+Test Case '-[FeelCoreTests.HomographyTests testExactFitFromFourPoints]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HomographyTests testInverseRoundTrip]' started.
+Test Case '-[FeelCoreTests.HomographyTests testInverseRoundTrip]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.HomographyTests testLeastSquaresAveragesNoise]' started.
+Test Case '-[FeelCoreTests.HomographyTests testLeastSquaresAveragesNoise]' passed (0.001 seconds).
+Test Suite 'HomographyTests' passed at 2026-10-17 15:48:32.039.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'LocalWhereIsTests' started at 2026-10-17 15:48:32.039.
+Test Case '-[FeelCoreTests.LocalWhereIsTests testEverydayThingsMapToAQueryTheDetectorCanRun]' started.
+Test Case '-[FeelCoreTests.LocalWhereIsTests testEverydayThingsMapToAQueryTheDetectorCanRun]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.LocalWhereIsTests testLastWordFallsBackToAKnownThing]' started.
+Test Case '-[FeelCoreTests.LocalWhereIsTests testLastWordFallsBackToAKnownThing]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.LocalWhereIsTests testModelLabelsMatchAcrossNamingStyles]' started.
+Test Case '-[FeelCoreTests.LocalWhereIsTests testModelLabelsMatchAcrossNamingStyles]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.LocalWhereIsTests testUnknownThingsHaveNoLocalQuery]' started.
+Test Case '-[FeelCoreTests.LocalWhereIsTests testUnknownThingsHaveNoLocalQuery]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.LocalWhereIsTests testVisionBoxConvertsToTopLeftOrigin]' started.
+Test Case '-[FeelCoreTests.LocalWhereIsTests testVisionBoxConvertsToTopLeftOrigin]' passed (0.000 seconds).
+Test Suite 'LocalWhereIsTests' passed at 2026-10-17 15:48:32.041.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'PerceptionTests' started at 2026-10-17 15:48:32.041.
+Test Case '-[FeelCoreTests.PerceptionTests testCalibratedFloorNotWorldOrigin]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testCalibratedFloorNotWorldOrigin]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testFloorCalibrationIsRequired]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testFloorCalibrationIsRequired]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testFutureInvalidTimestampAndMissingFrame]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testFutureInvalidTimestampAndMissingFrame]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testInvalidDistancesDoNotCreatePins]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testInvalidDistancesDoNotCreatePins]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testLostTrackingSuppressesFreshTarget]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testLostTrackingSuppressesFreshTarget]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testNearestPerSector]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testNearestPerSector]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testProductionEncoding]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testProductionEncoding]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testRejectFloorCeilingBehindAndConfidence]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testRejectFloorCeilingBehindAndConfidence]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testStaleDepthCutoff]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testStaleDepthCutoff]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testTargetCanRaisePreviouslyEmptyColumn]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testTargetCanRaisePreviouslyEmptyColumn]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testTargetExpiryAndConfidence]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testTargetExpiryAndConfidence]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testTargetPreservesCloserObstacle]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testTargetPreservesCloserObstacle]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testTargetSelectionDeterministic]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testTargetSelectionDeterministic]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testTrackingLossImmediatelyNeutral]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testTrackingLossImmediatelyNeutral]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PerceptionTests testUncalibratedNeutral]' started.
+Test Case '-[FeelCoreTests.PerceptionTests testUncalibratedNeutral]' passed (0.000 seconds).
+Test Suite 'PerceptionTests' passed at 2026-10-17 15:48:32.043.
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'PointingControllerTests' started at 2026-10-17 15:48:32.043.
+Test Case '-[FeelCoreTests.PointingControllerTests testArmsAfterHoldThenDescribesAfterDwell]' started.
+Test Case '-[FeelCoreTests.PointingControllerTests testArmsAfterHoldThenDescribesAfterDwell]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.PointingControllerTests testExpiresAfterThreeSeconds]' started.
+Test Case '-[FeelCoreTests.PointingControllerTests testExpiresAfterThreeSeconds]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PointingControllerTests testFlickerIsIgnoredSteadyCellDescribedOnce]' started.
+Test Case '-[FeelCoreTests.PointingControllerTests testFlickerIsIgnoredSteadyCellDescribedOnce]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PointingControllerTests testFrozenPacketIsTheCachedScene]' started.
+Test Case '-[FeelCoreTests.PointingControllerTests testFrozenPacketIsTheCachedScene]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PointingControllerTests testLoweringThePuckReleases]' started.
+Test Case '-[FeelCoreTests.PointingControllerTests testLoweringThePuckReleases]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PointingControllerTests testNoArmBeforeHoldOrWhenGateFails]' started.
+Test Case '-[FeelCoreTests.PointingControllerTests testNoArmBeforeHoldOrWhenGateFails]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PointingControllerTests testTurnedSinceSceneRefuses]' started.
+Test Case '-[FeelCoreTests.PointingControllerTests testTurnedSinceSceneRefuses]' passed (0.000 seconds).
+Test Suite 'PointingControllerTests' passed at 2026-10-17 15:48:32.046.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'PointingDescriberTests' started at 2026-10-17 15:48:32.046.
+Test Case '-[FeelCoreTests.PointingDescriberTests testNothingMeasuredIsNotCalledClear]' started.
+Test Case '-[FeelCoreTests.PointingDescriberTests testNothingMeasuredIsNotCalledClear]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PointingDescriberTests testTargetInSpanNamedFirst]' started.
+Test Case '-[FeelCoreTests.PointingDescriberTests testTargetInSpanNamedFirst]' passed (0.000 seconds).
+Test Suite 'PointingDescriberTests' passed at 2026-10-17 15:48:32.046.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'PointingGateTests' started at 2026-10-17 15:48:32.046.
+Test Case '-[FeelCoreTests.PointingGateTests testFingersUpOrDownRejected]' started.
+Test Case '-[FeelCoreTests.PointingGateTests testFingersUpOrDownRejected]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PointingGateTests testMirroredFitRejected]' started.
+Test Case '-[FeelCoreTests.PointingGateTests testMirroredFitRejected]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PointingGateTests testThumbUpEitherHandPasses]' started.
+Test Case '-[FeelCoreTests.PointingGateTests testThumbUpEitherHandPasses]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PointingGateTests testTooFarAndTiltedRejected]' started.
+Test Case '-[FeelCoreTests.PointingGateTests testTooFarAndTiltedRejected]' passed (0.000 seconds).
+Test Suite 'PointingGateTests' passed at 2026-10-17 15:48:32.047.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'PointingRouterTests' started at 2026-10-17 15:48:32.047.
+Test Case '-[FeelCoreTests.PointingRouterTests testNothingMeasuredOrTooCloseRefuses]' started.
+Test Case '-[FeelCoreTests.PointingRouterTests testNothingMeasuredOrTooCloseRefuses]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PointingRouterTests testObstacleStopsShort]' started.
+Test Case '-[FeelCoreTests.PointingRouterTests testObstacleStopsShort]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PointingRouterTests testTargetInColumnIsTheGoal]' started.
+Test Case '-[FeelCoreTests.PointingRouterTests testTargetInColumnIsTheGoal]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PointingRouterTests testTooCloseTapsTheColumnSilently]' started.
+Test Case '-[FeelCoreTests.PointingRouterTests testTooCloseTapsTheColumnSilently]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PointingRouterTests testWorldPointFollowsHeading]' started.
+Test Case '-[FeelCoreTests.PointingRouterTests testWorldPointFollowsHeading]' passed (0.000 seconds).
+Test Suite 'PointingRouterTests' passed at 2026-10-17 15:48:32.048.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'ProtocolTests' started at 2026-10-17 15:48:32.048.
+Test Case '-[FeelCoreTests.ProtocolTests testAllSequenceValuesRoundTrip]' started.
+Test Case '-[FeelCoreTests.ProtocolTests testAllSequenceValuesRoundTrip]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.ProtocolTests testCodablePreservesInvariants]' started.
+Test Case '-[FeelCoreTests.ProtocolTests testCodablePreservesInvariants]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.ProtocolTests testEmptyHighlightIsWireLegalButIneffective]' started.
+Test Case '-[FeelCoreTests.ProtocolTests testEmptyHighlightIsWireLegalButIneffective]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.ProtocolTests testGoldenEncoding]' started.
+Test Case '-[FeelCoreTests.ProtocolTests testGoldenEncoding]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.ProtocolTests testNeutralAndRollover]' started.
+Test Case '-[FeelCoreTests.ProtocolTests testNeutralAndRollover]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.ProtocolTests testRejectEveryInvalidBand]' started.
+Test Case '-[FeelCoreTests.ProtocolTests testRejectEveryInvalidBand]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.ProtocolTests testRejectEveryInvalidHighlight]' started.
+Test Case '-[FeelCoreTests.ProtocolTests testRejectEveryInvalidHighlight]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.ProtocolTests testRejectMalformedHex]' started.
+Test Case '-[FeelCoreTests.ProtocolTests testRejectMalformedHex]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.ProtocolTests testRejectPacketLengths]' started.
+Test Case '-[FeelCoreTests.ProtocolTests testRejectPacketLengths]' passed (0.000 seconds).
+Test Suite 'ProtocolTests' passed at 2026-10-17 15:48:32.053.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.005 (0.006) seconds
+Test Suite 'PuckBackLayoutTests' started at 2026-10-17 15:48:32.053.
+Test Case '-[FeelCoreTests.PuckBackLayoutTests testBackIsMirroredColumnZeroOnTheRight]' started.
+Test Case '-[FeelCoreTests.PuckBackLayoutTests testBackIsMirroredColumnZeroOnTheRight]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PuckBackLayoutTests testCodesSitBelowTheGridAndOnTheSheet]' started.
+Test Case '-[FeelCoreTests.PuckBackLayoutTests testCodesSitBelowTheGridAndOnTheSheet]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PuckBackLayoutTests testEveryCellCentreMapsBack]' started.
+Test Case '-[FeelCoreTests.PuckBackLayoutTests testEveryCellCentreMapsBack]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.PuckBackLayoutTests testOutsideGridIsNil]' started.
+Test Case '-[FeelCoreTests.PuckBackLayoutTests testOutsideGridIsNil]' passed (0.000 seconds).
+Test Suite 'PuckBackLayoutTests' passed at 2026-10-17 15:48:32.054.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'RecordingTests' started at 2026-10-17 15:48:32.054.
+Test Case '-[FeelSimTests.RecordingTests testCorruptFilesAreRejected]' started.
+Test Case '-[FeelSimTests.RecordingTests testCorruptFilesAreRejected]' passed (0.001 seconds).
+Test Case '-[FeelSimTests.RecordingTests testRoundTripKeepsEveryField]' started.
+Test Case '-[FeelSimTests.RecordingTests testRoundTripKeepsEveryField]' passed (0.000 seconds).
+Test Suite 'RecordingTests' passed at 2026-10-17 15:48:32.055.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'RouteHintTests' started at 2026-10-17 15:48:32.055.
+Test Case '-[FeelCoreTests.RouteHintTests testBearingSignAndLookahead]' started.
+Test Case '-[FeelCoreTests.RouteHintTests testBearingSignAndLookahead]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.RouteHintTests testNoPathIsBlocked]' started.
+Test Case '-[FeelCoreTests.RouteHintTests testNoPathIsBlocked]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.RouteHintTests testTurningChangesBearing]' started.
+Test Case '-[FeelCoreTests.RouteHintTests testTurningChangesBearing]' passed (0.000 seconds).
+Test Suite 'RouteHintTests' passed at 2026-10-17 15:48:32.056.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'SceneReplayTests' started at 2026-10-17 15:48:32.056.
+Test Case '-[FeelSimTests.SceneReplayTests testDetectorCadenceAndFreshness]' started.
+Test Case '-[FeelSimTests.SceneReplayTests testDetectorCadenceAndFreshness]' passed (12.155 seconds).
+Test Case '-[FeelSimTests.SceneReplayTests testInvalidScenesAreRejected]' started.
+Test Case '-[FeelSimTests.SceneReplayTests testInvalidScenesAreRejected]' passed (0.000 seconds).
+Test Case '-[FeelSimTests.SceneReplayTests testRenderIsDeterministicAndSeeded]' started.
+Test Case '-[FeelSimTests.SceneReplayTests testRenderIsDeterministicAndSeeded]' passed (1.406 seconds).
+Test Case '-[FeelSimTests.SceneReplayTests testTrackingLossFrameGapAndUncalibratedGoNeutral]' started.
+Test Case '-[FeelSimTests.SceneReplayTests testTrackingLossFrameGapAndUncalibratedGoNeutral]' passed (3.230 seconds).
+Test Case '-[FeelSimTests.SceneReplayTests testTurningRightMovesObstacleTowardCentre]' started.
+Test Case '-[FeelSimTests.SceneReplayTests testTurningRightMovesObstacleTowardCentre]' passed (2.652 seconds).
+Test Case '-[FeelSimTests.SceneReplayTests testWallRangesFollowColumnEdgeBearings]' started.
+Test Case '-[FeelSimTests.SceneReplayTests testWallRangesFollowColumnEdgeBearings]' passed (0.099 seconds).
+Test Suite 'SceneReplayTests' passed at 2026-10-17 15:48:51.599.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 19.543 (19.543) seconds
+Test Suite 'TargetSpanTests' started at 2026-10-17 15:48:51.599.
+Test Case '-[FeelCoreTests.TargetSpanTests testCapturedTargetWidthScalesWithDistance]' started.
+Test Case '-[FeelCoreTests.TargetSpanTests testCapturedTargetWidthScalesWithDistance]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TargetSpanTests testDecodingWithoutWidthIsPointTarget]' started.
+Test Case '-[FeelCoreTests.TargetSpanTests testDecodingWithoutWidthIsPointTarget]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TargetSpanTests testGroupTapDropsSpanOncePerPeriod]' started.
+Test Case '-[FeelCoreTests.TargetSpanTests testGroupTapDropsSpanOncePerPeriod]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TargetSpanTests testInvalidTargetHasNoColumns]' started.
+Test Case '-[FeelCoreTests.TargetSpanTests testInvalidTargetHasNoColumns]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TargetSpanTests testPointTargetKeepsSingleColumnFirmwareTap]' started.
+Test Case '-[FeelCoreTests.TargetSpanTests testPointTargetKeepsSingleColumnFirmwareTap]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TargetSpanTests testSmallOverlapDoesNotJoinNeighbour]' started.
+Test Case '-[FeelCoreTests.TargetSpanTests testSmallOverlapDoesNotJoinNeighbour]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TargetSpanTests testSpanClipsAtFieldEdge]' started.
+Test Case '-[FeelCoreTests.TargetSpanTests testSpanClipsAtFieldEdge]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TargetSpanTests testSpanPreservesCloserObstacles]' started.
+Test Case '-[FeelCoreTests.TargetSpanTests testSpanPreservesCloserObstacles]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TargetSpanTests testWideTargetCoversColumnsAndUsesPhoneTap]' started.
+Test Case '-[FeelCoreTests.TargetSpanTests testWideTargetCoversColumnsAndUsesPhoneTap]' passed (0.000 seconds).
+Test Suite 'TargetSpanTests' passed at 2026-10-17 15:48:51.601.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'TargetWordTests' started at 2026-10-17 15:48:51.601.
+Test Case '-[FeelCoreTests.TargetWordTests testEarliestWordWins]' started.
+Test Case '-[FeelCoreTests.TargetWordTests testEarliestWordWins]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TargetWordTests testMatches]' started.
+Test Case '-[FeelCoreTests.TargetWordTests testMatches]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TargetWordTests testQuestion]' started.
+Test Case '-[FeelCoreTests.TargetWordTests testQuestion]' passed (0.000 seconds).
+Test Suite 'TargetWordTests' passed at 2026-10-17 15:48:51.602.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'TwoFingerControllerTests' started at 2026-10-17 15:48:51.602.
+Test Case '-[FeelCoreTests.TwoFingerControllerTests testRefusedRouteKeepsPointing]' started.
+Test Case '-[FeelCoreTests.TwoFingerControllerTests testRefusedRouteKeepsPointing]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TwoFingerControllerTests testTooShortHoldDoesNothingAndOneFingerStillDescribes]' started.
+Test Case '-[FeelCoreTests.TwoFingerControllerTests testTooShortHoldDoesNothingAndOneFingerStillDescribes]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TwoFingerControllerTests testTwoFingersHeldSetRouteOnceAndHandItOverOnRelease]' started.
+Test Case '-[FeelCoreTests.TwoFingerControllerTests testTwoFingersHeldSetRouteOnceAndHandItOverOnRelease]' passed (0.000 seconds).
+Test Suite 'TwoFingerControllerTests' passed at 2026-10-17 15:48:51.603.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'TwoFingerTests' started at 2026-10-17 15:48:51.603.
+Test Case '-[FeelCoreTests.TwoFingerTests testBlackAndBlueTouchingStaySeparate]' started.
+Test Case '-[FeelCoreTests.TwoFingerTests testBlackAndBlueTouchingStaySeparate]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.TwoFingerTests testColourClasses]' started.
+Test Case '-[FeelCoreTests.TwoFingerTests testColourClasses]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TwoFingerTests testFarStrayBlobIgnored]' started.
+Test Case '-[FeelCoreTests.TwoFingerTests testFarStrayBlobIgnored]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.TwoFingerTests testOneRoundBandIsOneFinger]' started.
+Test Case '-[FeelCoreTests.TwoFingerTests testOneRoundBandIsOneFinger]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.TwoFingerTests testRouteColumnNeedsFingersAlongTheColumn]' started.
+Test Case '-[FeelCoreTests.TwoFingerTests testRouteColumnNeedsFingersAlongTheColumn]' passed (0.000 seconds).
+Test Case '-[FeelCoreTests.TwoFingerTests testSameColourPressedTogetherReadsAsTwo]' started.
+Test Case '-[FeelCoreTests.TwoFingerTests testSameColourPressedTogetherReadsAsTwo]' passed (0.001 seconds).
+Test Suite 'TwoFingerTests' passed at 2026-10-17 15:48:51.608.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.005 (0.006) seconds
+Test Suite 'WhereIsTests' started at 2026-10-17 15:48:51.608.
+Test Case '-[FeelCoreTests.WhereIsTests testPromptMatchesSharedFile]' started.
+Test Case '-[FeelCoreTests.WhereIsTests testPromptMatchesSharedFile]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.WhereIsTests testRequestBodyCarriesPromptQuestionAndImage]' started.
+Test Case '-[FeelCoreTests.WhereIsTests testRequestBodyCarriesPromptQuestionAndImage]' passed (0.001 seconds).
+Test Case '-[FeelCoreTests.WhereIsTests testSharedParserCases]' started.
+Test Case '-[FeelCoreTests.WhereIsTests testSharedParserCases]' passed (0.001 seconds).
+Test Suite 'WhereIsTests' passed at 2026-10-17 15:48:51.611.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'FeelCorePackageTests.xctest' passed at 2026-10-17 15:48:51.611.
+	 Executed 184 tests, with 0 failures (0 unexpected) in 19.668 (19.681) seconds
+Test Suite 'All tests' passed at 2026-10-17 15:48:51.611.
+	 Executed 184 tests, with 0 failures (0 unexpected) in 19.668 (19.682) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.

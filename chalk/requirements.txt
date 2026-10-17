@@ -1,0 +1,6 @@
+# Only needed for evaluations (feel_chalk/where_is_eval.py). The gateway client and
+# check_connection.py use the Python standard library.
+chalkcompute==2.13.7
+pyarrow==26.0.0
+# Re-encodes the venue photos the way the phone does (feel_chalk/images.py).
+Pillow==12.2.0

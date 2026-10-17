@@ -4,20 +4,20 @@ import Speech
 import FeelCore
 
 /// Hears the one target word said with a V sign ("exit", "door" …). Recognition runs on the
-/// phone only; audio is never sent anywhere. When the Grok assistant is running, its microphone
+/// phone only; audio is never sent anywhere. When the assistant is running, its microphone
 /// is borrowed and its uplink muted for the window, so it neither hears nor answers the word.
 /// All calls and callbacks are on the main thread.
 final class KeywordListener {
     var onWord: ((TargetWord) -> Void)?
     private let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
-    private weak var voice: GrokVoiceSession?
+    private weak var voice: RealtimeVoiceSession?
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
     private var engine: AVAudioEngine?
     private var borrowed = false
     private var generation = 0
 
-    init(voice: GrokVoiceSession) { self.voice = voice }
+    init(voice: RealtimeVoiceSession) { self.voice = voice }
 
     var isListening: Bool { request != nil }
 

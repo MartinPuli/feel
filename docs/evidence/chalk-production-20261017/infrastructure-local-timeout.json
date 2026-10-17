@@ -1,0 +1,34 @@
+{
+  "scope": "INFRASTRUCTURE ONLY; NOT MODEL QUALITY",
+  "sdk_version": "2.13.7",
+  "row_count": 3,
+  "source_file": "infrastructure_smoke.py",
+  "source_sha256": "ecbee83b4d249319f3bc0e9e812275c125af59b2cc31d46dbac6fd1f5df61123",
+  "dataset_sha256": "9dbe053da8e4a64f5f9d6f30c1ab099cf93f813d1262ae3b368072ddf6777f5e",
+  "uploaded_rows": [
+    {
+      "text": "alpha",
+      "expected": "alpha"
+    },
+    {
+      "text": "beta",
+      "expected": "beta"
+    },
+    {
+      "text": "gamma",
+      "expected": "gamma"
+    }
+  ],
+  "local_checks": "PASS",
+  "execution_status": "failed",
+  "model_quality": "NOT_ASSESSED",
+  "bundle": "This single Python file plus SDK-generated handler/runtime; no local directory mount.",
+  "secrets_attached_to_functions": false,
+  "dataset_id": "c19e60f4-6da7-4767-988b-353624c0e229",
+  "dataset_revision_id": "c64018cb-c6a6-47a5-aa42-4291b3823ba5",
+  "evaluation_id": "cmvcszzug03uq013eju3pcaw7",
+  "suite_id": "cmvcszzt003uo013erbjyjn3z",
+  "run_id": "3ed17030-a278-41ab-9358-dfe93439d3d7",
+  "infrastructure_status": "FAIL",
+  "error_type": "TimeoutError"
+}

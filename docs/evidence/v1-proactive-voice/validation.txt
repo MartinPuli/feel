@@ -1,0 +1,57 @@
+FEEL V1 proactive voice and app controls — October 17, 2026 EDT
+
+Behavior
+Fresh calibrated live frames feed a deterministic policy. Observations need 0.8 s
+stability and 8 s between accepted notices. Near obstacles take priority over target
+updates. Unchanged readings stay quiet. Target side/0.5 m movement and obstacle
+side/0.4 m approach trigger new notices. Positive sub-0.3 m ranges remain supported.
+Pending scene notices are canceled when their source observation changes.
+Simulation cannot create live proactive claims. Invalid sensing reports its
+state; recovery is announced. No walking or clear-path instructions are added.
+
+Voice coverage
+Camera, targets, height/calibration, puck scan/list/select/disconnect, teammate
+scan/list/selected invite/stop, simulation, panels/drawer, speech and useful
+updates. iPhone settings can open, permission decisions remain manual. Forgetting
+voice setup needs explicit confirmation. Credential entry remains manual.
+Muting stops speech immediately but preserves capture/tools/captions; unmute is
+available by voice. Pausing capture requires touch to resume. No background mic.
+
+Physical observation before final build
+Build 13 installed at 01:42:58 EDT and launched 01:43:18. Device diagnostics show
+session_ready 05:43:19Z and audio_engine_restarted 05:43:20Z. At 01:45:56 EDT there
+was no failure after this launch; only the benign response_cancel_not_active
+race, which is ignored. This verifies connection/recovery telemetry, not a user
+listening judgment or all spoken actions.
+
+Review
+Independent review identified a sub-0.3 m obstacle filtering error. Fixed to accept
+all finite positive readings through 1.6 m; regression crosses 0.3 to 0.29/0.1/0.01 m.
+Final independent re-review found no remaining P0/P1 issues in live gating,
+target invalidation, app actions or mute behavior.
+
+Validation
+xcodegen generate --spec ios/project.yml: PASS.
+xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern -configuration Debug
+  -destination 'generic/platform=iOS' -derivedDataPath /tmp/feel-camera-install
+  DEVELOPMENT_TEAM=39D23XHM5Z -allowProvisioningUpdates build: PASS.
+Native simulator run: 60 tests PASS (including 12 policy and 32 voice-session tests).
+UI run: 7 tests PASS. Total 67 native/UI tests, zero failures.
+xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern -configuration Debug
+  -destination 'platform=iOS Simulator,id=2CEF5AB6-CC8C-4F3F-898F-AB4A7335DFFD'
+  -derivedDataPath /tmp/feel-drawer-sim -parallel-testing-enabled NO
+  -collect-test-diagnostics never -only-testing:LanternTests
+  -only-testing:LanternUITests CODE_SIGNING_ALLOWED=NO test
+Result /tmp/feel-drawer-sim/Logs/Test/Test-Lantern-2026.10.17_01-47-20--0400.xcresult
+Completed 01:49:20 EDT. Credential scan: PASS (tracked and nonignored files).
+
+Build 14 installed 01:48:01 EDT, launched 01:48:08 EDT with devicectl.
+Phone diagnostics: session_ready 05:48:10Z, audio_engine_restarted 05:48:11Z.
+Only response_cancel_not_active codes after readiness, handled nonfatally.
+No transport/playback failure through 01:48:26 EDT. No personal audio/transcripts
+or credentials were read or saved. User silence/unmute confirmation requested.
+
+Pending physical checks
+- Confirm spoken silence/unmute and direct app actions without touch.
+- Evaluate intended headset routing and interruption/reconnection behavior.
+- Validate live sensing, BLE/tactile output and warning usefulness separately.

@@ -13,7 +13,7 @@ struct VoiceConfiguration: Codable, Equatable {
     var isValid: Bool {
         url != nil && (32...4096).contains(accessToken.utf8.count)
             && accessToken.utf8.allSatisfy { (33...126).contains($0) }
-            && !accessToken.hasPrefix("grok_") && !accessToken.hasPrefix("xai-")
+            && !accessToken.hasPrefix("grok_") && !accessToken.hasPrefix("xai-") && !accessToken.hasPrefix("sk-")
     }
 }
 

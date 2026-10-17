@@ -33,6 +33,9 @@ cad/viewer/mesh_*.js
 firmware/production-measurements.local.json
 firmware/production-evidence/
 
+# Where-is evaluation photos (consented captures only; never commit)
+chalk/data/
+
 # Replay harness: generated output and personal sensor recordings (never commit recordings)
 simulation/out/
 simulation/recordings/*
@@ -40,3 +43,6 @@ simulation/recordings/*
 
 # FEEL site build output (contains replay data)
 web/dist/
+
+# Supabase project URL and publishable key for the Lantern build (ios/scripts/supabase_config.sh)
+ios/Config/Supabase.local.xcconfig

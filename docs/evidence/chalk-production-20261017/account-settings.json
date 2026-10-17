@@ -1,0 +1,26 @@
+{
+  "environment_id": "flnyc749e8d9",
+  "sampling_policy": {
+    "enabled": true,
+    "default_rate": 1,
+    "default_content_logging": false,
+    "conversation_rate_floor": 0,
+    "match_rules": [],
+    "outcome_rules": [],
+    "verification": "Saved and reloaded in Chalk UI"
+  },
+  "rate_limit": {
+    "status": "BLOCKED_NOT_CREATED",
+    "error": "quota enforcement is disabled (set ROUTER_QUOTA_BACKEND)",
+    "requested_rpm": 30,
+    "requested_burst": 5,
+    "planned_concurrency": 2
+  },
+  "support": {
+    "status": "SUBMITTED",
+    "subject": "Enable gateway quota enforcement for Feel production",
+    "confirmation": "Thank you for submitting a ticket! Email follow-up confirmed by Chalk.",
+    "ticket_id": "Not displayed"
+  },
+  "public_production_ready": false
+}

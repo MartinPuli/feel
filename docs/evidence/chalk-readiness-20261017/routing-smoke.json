@@ -1,0 +1,19 @@
+{
+  "utc": "2026-10-17T19:20:51.003663+00:00",
+  "environment": "flnyc749e8d9",
+  "tests": [
+    {
+      "model": "openai/gpt-6-luna",
+      "pass": true,
+      "reply": "OK",
+      "seconds": 2.31
+    },
+    {
+      "model": "openai/gpt-6.1-sol",
+      "pass": true,
+      "reply": "OK",
+      "seconds": 1.499
+    }
+  ],
+  "scope": "Exactly two generic text requests. No repository content, CAD images, personal data, audio, camera frames or place context transmitted."
+}
