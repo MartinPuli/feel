@@ -1,6 +1,8 @@
 # October 17 V1 voice synchronization
 
-Source main: `6ad7004`. V1 remains on main; version-specific code stays isolated.
+Initial source main: `6ad7004`. V1 remains on main; version-specific code stays isolated.
+Concurrent published main advanced to `76e0453`; the follow-up below incorporates
+that snapshot without overwriting its Where-is work.
 
 ## V2 Spatial Memory
 
@@ -23,6 +25,57 @@ Evidence logs: `/tmp/feel-v2-core-sync.log`, `/tmp/feel-v2-sync-tests.log`,
 live visual observations in voice snapshots.
 No V2 installation, hardware flashing or cloud deployment performed.
 
+## V2 follow-up from current main
+
+Integrated main `76e0453`, including Where-is, local object lookup, typed Assistant
+requests, updated controls and the existing photo gateway setup. Preserved V2's
+session-bound places. Explicit memory recall cancels pending Where-is work so a
+late photo or response cannot replace the selected place. World/session invalidation
+clears both types of guidance. A stored place remains separate from live detections.
+
+PASS: 85 portable core tests, 109 native tests, 15 Where-is Python tests and
+the unsigned iPhone build. All nine UI tests passed, including the unchanged retry
+of a camera-recovery test whose first app launch timed out. Retry evidence:
+`/tmp/feel-v2-current-main-ui-retry.log`. Independent review was interrupted;
+these results establish the tested checkpoint only. Commands: core and Xcode commands above; `python3 -m unittest discover
+-s chalk/tests -p 'test_*.py'`.
+Evidence: `/tmp/feel-v2-current-main-core.log`, `/tmp/feel-where-is-python.log`,
+`/tmp/feel-v2-current-main-tests.log`, `/tmp/feel-v2-current-main-device.log`.
+
+## Latest main snapshot f2fb703
+
+The user requested all newly published main work. Local main now includes
+`f2fb703`: direction cues, V-sign keyword capture, pointing, depth/video recording,
+synthetic scenes, web replay, production CAD references and simplified settings.
+Version branches retain their own memory/advanced features during propagation.
+
+V2 preserves memory/Where-is cancellation while adding direction/pointing mutual
+exclusion. Session loss resets those interactions; cached pointing output requires
+live encoder state. Pointing speech respects global mute. Independent model review
+found no new critical/high issues at these merge seams.
+
+PASS: 204 core tests, 19 Where-is Python tests, three replay web tests.
+The deterministic simulation ran twice: nine scenarios PASS and three retain
+known upstream limitations (door lintel, slow detection, LiDAR outliers). All
+baselines match. This is not a clean physical-navigation acceptance result.
+Commands: `swift test -j 2 --package-path ios/Shared/FeelCore`,
+`python3 -m unittest discover -s chalk/tests -p 'test_*.py'`, `npm test --prefix web`,
+`python3 simulation/run.py --repeat 2 --no-web`.
+Logs: `/tmp/feel-latest-v2-core.log`, `/tmp/feel-latest-chalk-python.log`,
+`/tmp/feel-latest-web-tests.log`, `/tmp/feel-latest-simulation.log`.
+PASS: all 15 pointing scenarios through the real macOS Vision detector
+(`sh ios/scripts/pointing_harness.sh`, `/tmp/feel-latest-pointing.log`). These use
+synthetic frames and do not prove physical puck tracking.
+PASS: unsigned iPhone build (`/tmp/feel-latest-v2-device.log`). Independent
+ARPerception review found no new critical/high issue in session, world-epoch,
+route-reset or callback guards. Native tests: 117 passed, one skipped because the
+simulator cannot run that Vision barcode path; the Mac harness covers all 15
+synthetic scenarios. All 10 UI tests passed (`/tmp/feel-latest-v2-tests.log`),
+completed October 17 at 13:35 EDT.
+No phone installation or board deployment.
+
+## V3 initial voice checkpoint
+
 ## V3 Advanced
 
 Integrated validated V2 `2620acf` into existing V3 `e56e141`. Preserved saved-map
@@ -43,6 +96,24 @@ Voice token service: 18 tests passed (`npm test --prefix services/voice-token`),
 using local mock HTTP servers. Independent review found no new critical/high
 issues in audio ownership, global mute, saved-map gates or barcode isolation.
 No V3 installation or hardware deployment performed.
+
+## V3 latest-main propagation
+
+Integrated V2 `79a8863`, including main `f2fb703`. Preserved saved-map restoration,
+local command speech, adaptive feedback and barcode detection. Local speech and
+V-sign keyword capture release one another's microphone ownership. Restoring maps
+cancels pending interactions; barcode payloads remain display-only. Independent
+review found no new critical/high issues in those merge paths.
+PASS: 236 core tests, 135 native tests across the full run and targeted detector
+retry, three selected UI tests, and unsigned iPhone build. The initial simulator
+Vision backend returned no codes; the detector now uses the already verified CPU
+revision in simulator builds, with unchanged defaults on physical devices. The
+capability probe uses that same factory; all 15 assertions run and pass. No test
+assertions were removed. The Mac harness also passed all 15 scenarios again.
+Additional logs: `/tmp/feel-latest-v3-pointing-cpu.log`,
+`/tmp/feel-latest-pointing-factory.log`. Completed October 17 at 13:43 EDT.
+Logs: `/tmp/feel-latest-v3-core.log`, `/tmp/feel-latest-v3-tests.log`,
+`/tmp/feel-latest-v3-device.log`. Version 3.0.0, build 14; no device installation.
 
 ## V4 Chalk
 
@@ -69,8 +140,26 @@ Evidence logs: `/tmp/feel-v4-core-sync.log`, `/tmp/feel-v4-chalk-sync.log`,
 
 Independent review found no new critical/high issues in the V4 merge paths.
 
-## Remaining physical validation
+## V4 latest main integration
 
-These branch integrations validate software only. Headphone routing, real-device
-perception, BLE/tactile end-to-end behavior and supervised user acceptance remain
-pending. The phone retains V1. No V2/V3/V4 build replaced it.
+Integrated validated V3 `54b08ac`, including main `f2fb703`. Preserved the
+text-command Chalk service and its independent consent. New Where-is, pointing
+and direction interactions cancel delayed text commands. The new regression
+confirms a delayed cloud recall cannot override a subsequent Where-is request.
+
+PASS: 236 portable core tests, 159 native tests, 28 Chalk service tests, four
+report tests and the unsigned iPhone build. The 67-file hardware boundary matches
+validated V3 exactly. Only the upstream target-span encoder and replay command
+files changed from the previous baseline; their hashes were compared to V3 before
+refreshing the boundary. Independent merge review found no new critical/high issue.
+
+Evidence: `/tmp/feel-latest-v4-core.log`, `/tmp/feel-latest-v4-tests.log`,
+`/tmp/feel-latest-v4-device.log`, `/tmp/feel-latest-v4-chalk.log`. Commands match
+the preceding V3/V4 sections. No device installation or hardware test performed.
+
+PASS: all three selected UI cases across the completed runs. The first Chalk UI
+attempt was interrupted after XCUI entered an automatic-scroll alert loop; the
+next overshot the disclosure. Bounded bidirectional scrolling passed the unchanged
+consent-default and reachable-Stop assertions. Direction arrows and typed commands
+passed in the preceding run. Logs: `/tmp/feel-latest-v4-ui-retry.log` and
+`/tmp/feel-latest-v4-chalk-ui.log`. Completed October 17 at 13:52 EDT.

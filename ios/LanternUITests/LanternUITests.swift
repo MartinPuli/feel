@@ -6,7 +6,7 @@ final class LanternUITests: XCTestCase {
         continueAfterFailure = false
         XCUIDevice.shared.orientation = .landscapeLeft
         let app = XCUIApplication()
-        app.launchArguments += ["--uitesting"] + extraArguments
+        app.launchArguments += ["--uitesting", "-directionArrowsEnabled", "YES"] + extraArguments
         app.launch()
         XCTAssertTrue(app.buttons["controlsToggle"].waitForExistence(timeout: 10))
         if expandControls {
@@ -54,7 +54,8 @@ final class LanternUITests: XCTestCase {
         XCTAssertTrue(app.textFields["voiceEndpoint"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["controlsToggle"].exists)
         let save = app.buttons["saveVoiceSetup"]
-        for _ in 0..<4 where !save.isHittable { app.scrollViews["cameraSettingsScroll"].swipeUp() }
+        // Slow swipes scroll without momentum, so a longer panel cannot carry the button past the viewport.
+        for _ in 0..<6 where !save.isHittable { app.scrollViews["cameraSettingsScroll"].swipeUp(velocity: .slow) }
         save.tap()
         XCTAssertTrue(app.staticTexts["voiceSetupError"].exists)
         capture("voice-setup")
@@ -111,6 +112,28 @@ final class LanternUITests: XCTestCase {
             app.buttons["closeCameraPanel"].tap()
             assertStopped(app)
         }
+    }
+
+    func testDirectionArrowPlaysOnSimulatedSign() {
+        let app = launch()
+        app.buttons["cameraSettings"].tap()
+        let toggle = app.switches["directionArrowsToggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+        XCTAssertEqual(toggle.value as? String, "1")
+        app.buttons["closeCameraPanel"].tap()
+        simulate(app)
+        let title = app.staticTexts["guidanceTitle"]
+        XCTAssertEqual(title.label, "SIMULATION", "no arrow plays without a request")
+        let sign = app.buttons["simulateSign"]
+        XCTAssertTrue(sign.waitForExistence(timeout: 5))
+        // The simulated target is in view except during the 8–10 s tracking-loss window.
+        sign.tap()
+        let arrow = NSPredicate(format: "label BEGINSWITH 'SIMULATION · '")
+        expectation(for: arrow, evaluatedWith: title)
+        waitForExpectations(timeout: 3)
+        capture("direction-arrow-simulation")
+        app.buttons["stopSession"].tap()
+        assertStopped(app)
     }
 
     func testLargestTextKeepsStopReachable() {
@@ -241,16 +264,21 @@ final class LanternUITests: XCTestCase {
         app.buttons["Voice, saved map and feedback"].tap()
         let chalk=app.buttons["Chalk understanding"]
         XCTAssertTrue(chalk.waitForExistence(timeout:5))
+        // Reveal the disclosure inside this modal before tapping. Native automatic
+        // scrolling can treat its Cancel speech control as an alert interruption.
         let scroll=app.scrollViews["cameraSettingsScroll"]
-        for _ in 0..<20 {
-            if chalk.isHittable && chalk.frame.maxY < app.buttons["panelStop"].frame.minY { break }
-            let upward=chalk.frame.minY >= scroll.frame.minY
-            scroll.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:upward ? 0.7 : 0.3))
-                .press(forDuration:0.05,thenDragTo:scroll.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:upward ? 0.3 : 0.7)))
+        for _ in 0..<24 {
+            let viewport=scroll.frame
+            if chalk.frame.minY >= viewport.minY && chalk.frame.maxY <= viewport.maxY { break }
+            let upward=chalk.frame.midY > viewport.midY
+            scroll.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:upward ? 0.65 : 0.35))
+                .press(forDuration:0.1,thenDragTo:scroll.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:upward ? 0.35 : 0.65)),withVelocity:.slow,thenHoldForDuration:0.1)
         }
+        XCTAssertGreaterThanOrEqual(chalk.frame.minY,scroll.frame.minY)
+        XCTAssertLessThanOrEqual(chalk.frame.maxY,scroll.frame.maxY)
+        chalk.tap()
         XCTAssertTrue(chalk.isHittable)
         XCTAssertLessThan(chalk.frame.maxY,app.buttons["panelStop"].frame.minY)
-        chalk.tap()
         XCTAssertEqual(app.switches["cloudEnabled"].value as? String,"0")
         XCTAssertEqual(app.switches["cloudSharing"].value as? String,"0")
         XCTAssertEqual(app.switches["cloudRetention"].value as? String,"0")

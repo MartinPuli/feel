@@ -1,0 +1,13 @@
+{
+  "title": "Floor not calibrated",
+  "description": "A wall 1.2 m ahead, but the floor height was never calibrated. Heights are unknown, so guidance must stay neutral rather than guess.",
+  "scene": {
+    "duration": 3,
+    "path": [{"t": 0, "x": 0, "z": 0}],
+    "objects": [{"kind": "box", "min": [-10, 0, -1.4], "max": [10, 3, -1.2], "label": "wall"}],
+    "floorCalibrated": false
+  },
+  "expect": [
+    {"from": 0.0, "to": 3.0, "columns": "all", "band": 0, "state": "uncalibrated"}
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "title": "Low box ignored, overhang shown",
+  "description": "A 0.5 m box on the floor ahead-left and a head-height sign (1.6–1.9 m) 1.3 m ahead. Only 0.6–2.1 m counts as an obstacle, so the box never shows and the sign does (columns 2–4, band 2). By design; the cane covers the floor.",
+  "scene": {
+    "duration": 4,
+    "path": [{"t": 0, "x": 0, "z": 0}],
+    "objects": [
+      {"kind": "box", "min": [-0.7, 0, -1.4], "max": [-0.3, 0.5, -1.0], "label": "low box"},
+      {"kind": "box", "min": [-0.3, 1.6, -1.5], "max": [0.3, 1.9, -1.3], "label": "overhanging sign"}
+    ],
+    "sensor": {"noise": 0.005, "seed": 9}
+  },
+  "expect": [
+    {"from": 0.3, "to": 4.0, "columns": [2, 3, 4], "band": 2, "label": "overhang shown"},
+    {"from": 0.3, "to": 4.0, "columns": [0, 1, 5, 6], "band": 0, "label": "low box not shown"}
+  ]
+}

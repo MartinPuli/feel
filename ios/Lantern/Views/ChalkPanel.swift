@@ -7,9 +7,9 @@ struct ChalkPanel: View {
         DisclosureGroup("Chalk understanding") {
             VStack(alignment:.leading,spacing:12) {
                 Toggle("Use Chalk for commands",isOn:$model.cloudEnabled).accessibilityIdentifier("cloudEnabled")
-                Text("This setting applies to typed and on-device speech commands in this panel. Supported commands run locally; only unresolved requests use Chalk. The separate Assistant sends microphone audio to OpenAI while active.").font(.footnote)
+                Text("This setting applies to typed and on-device speech commands in this panel. Supported commands run locally; only unresolved requests use Chalk. The separate Assistant sends microphone audio to OpenAI while active. Optional Where-is photo sharing is configured there.").font(.footnote)
                 Toggle("Share command text and place names",isOn:$model.cloudSharing).accessibilityIdentifier("cloudSharing")
-                Text("For unresolved panel commands only, Chalk sends your final command text, place IDs and names, language, session ID, return-point availability and tracking state to your FEEL server and its configured AI provider. Chalk receives no audio, camera frames, coordinates or AR maps.").font(.footnote)
+                Text("For unresolved panel commands only, Chalk sends your final command text, place IDs and names, language, session ID, return-point availability and tracking state to your FEEL server and its configured AI provider. This text-command service receives no audio, camera frames, coordinates or AR maps.").font(.footnote)
                 Toggle("Keep requests and corrections for evaluation",isOn:$model.cloudFeedbackConsent).accessibilityIdentifier("cloudRetention")
                 Text("Optional. Allows the server to retain these requests and your explicit feedback. Turning this off stops future command text and context retention; it does not delete previously retained records. Basic request IDs, action types and timing may still be stored. Ask the server operator to delete retained records.").font(.footnote)
                 DisclosureGroup("Connection") {

@@ -1,5 +1,5 @@
 {
-  "baseline": "e56e141",
+  "baseline": "54b08ac",
   "purpose": "V4 cloud intelligence must not alter firmware, nominal mechanics, BLE encoding or production tactile core. This is source-boundary evidence, not proof of physical safety.",
   "sha256": {
     "cad/build.sh": "ff166db303f276c267c20d3d787a4b1ddeef917691fc20a539faa787bdea18ba",
@@ -62,12 +62,14 @@
     "firmware/tools/production_setup.py": "e60ae79aad80aa130e72cf0562922eef75ba8f17799df93ec025fdec143d0f7a",
     "ios/Lantern/Services/BluetoothPuck.swift": "f8e286f14b1b20e98cd41b0ce3c862beda3a05326965e898f3ce38a7fc7b3cdd",
     "ios/Shared/FeelCore/Sources/FeelCore/AdaptiveTactile.swift": "a78208a3b4b1c4fa8897838498d9ddc35331326b1e70a69ccc8ebe54622311c1",
-    "ios/Shared/FeelCore/Sources/FeelCore/Perception.swift": "831edc91218c3ba0f2a8446e89c19547862febc7d528e9504cf391c0c6789429",
+    "ios/Shared/FeelCore/Sources/FeelCore/Perception.swift": "c187e18ea9e2e5537d18708c0e856c61996b1b5965bf71d3462dd9f80b1b28a4",
     "ios/Shared/FeelCore/Sources/FeelCore/PersistentMemory.swift": "161453de19d0a81400fed89d0dce4e2291ede1676d4f2a520b51385b6f66d7be",
     "ios/Shared/FeelCore/Sources/FeelCore/Protocol.swift": "813bfe368732195db6efcd825524b03cdc67e002a72d5b892baf41d64f8730da",
     "ios/Shared/FeelCore/Sources/FeelCore/SpatialMemory.swift": "1ee7215658d93980dc0d09277c205b7862614b50f2b2c79e22c52a2d75e43d7c",
     "ios/Shared/FeelCore/Sources/FeelCore/VoiceIntent.swift": "4a66f8a8dd4b9cb7cdc01a53c5db5cb33c3599019c1d14f11d60ea57da19b807",
-    "ios/Shared/FeelCore/Sources/FeelReplay/main.swift": "f0b4fb0488332b8202cf554ff81c482bff3dfeb50a3b873abf1e01049f14b01b",
+    "ios/Shared/FeelCore/Sources/FeelReplay/main.swift": "8bd5f6660a4e83431cfeef8bed42e5165f8fa1bb89066191cb6aa6d5b0d33ea9",
     "protocol/vectors.json": "563212f59a2d9cf8cc80c62de475cfdb48f9816da1823c23cd2dd0c1dd7b320a"
-  }
+  },
+  "previous_baseline": "e56e141",
+  "baseline_update": "Latest main f2fb703 via validated V3. All protected files match V3 exactly; only Perception.swift (target spans) and FeelReplay/main.swift (replay commands) changed from the prior baseline."
 }

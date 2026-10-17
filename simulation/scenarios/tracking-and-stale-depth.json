@@ -1,0 +1,19 @@
+{
+  "title": "Tracking loss and frame stall",
+  "description": "Wall 1.2 m ahead. ARKit tracking is limited from 3 to 5 s, then frames stop entirely from 6.5 to 7.5 s. Pins must go neutral in both (trackingLost, then staleDepth once the newest frame is older than 250 ms) and recover after.",
+  "scene": {
+    "duration": 9,
+    "path": [{"t": 0, "x": 0, "z": 0}],
+    "objects": [{"kind": "box", "min": [-10, 0, -1.4], "max": [10, 3, -1.2], "label": "wall"}],
+    "trackingLost": [[3, 5]],
+    "frameGaps": [[6.5, 7.5]],
+    "sensor": {"noise": 0.005, "seed": 2}
+  },
+  "expect": [
+    {"from": 0.3, "to": 2.9, "columns": "all", "band": 2, "label": "wall shown"},
+    {"from": 3.15, "to": 4.95, "columns": "all", "band": 0, "state": "trackingLost", "label": "tracking lost → neutral"},
+    {"from": 5.3, "to": 6.4, "columns": "all", "band": 2, "label": "recovered"},
+    {"from": 6.8, "to": 7.5, "columns": "all", "band": 0, "state": "staleDepth", "label": "no frames → neutral"},
+    {"from": 7.8, "to": 9.0, "columns": "all", "band": 2, "label": "recovered"}
+  ]
+}

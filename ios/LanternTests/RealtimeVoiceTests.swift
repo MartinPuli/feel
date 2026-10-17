@@ -665,3 +665,49 @@ private final class FakeVoiceAudio: VoiceAudioIO {
     func stop() { running = false; interruptPlayback() }
     func drain() { pendingPlayback = false; onDrained?() }
 }
+
+extension RealtimeVoiceTests {
+    private func idle() -> (RealtimeVoiceSession, FakeVoiceTransport, FakeVoiceAudio) {
+        let (voice, transport, audio) = ready()
+        // Finish the "I'm here" greeting so the session is listening.
+        transport.emit(["type": "response.created", "response": ["id": "greet"]])
+        transport.emit(["type": "response.done", "response": ["id": "greet"]])
+        XCTAssertEqual(voice.phase, .listening)
+        return (voice, transport, audio)
+    }
+
+    func testChooseTargetCommand() throws {
+        XCTAssertEqual(try VoiceCommand.decode(name: "choose_target", arguments: "{\"option\":2}"), .chooseTarget(2))
+        for args in ["{\"option\":0}", "{\"option\":5}", "{\"option\":1.5}", "{\"option\":true}", "{\"option\":\"1\"}", "{}"] {
+            XCTAssertThrowsError(try VoiceCommand.decode(name: "choose_target", arguments: args), args)
+        }
+        XCTAssertTrue(VoiceCommand.tools.contains { $0["name"] as? String == "choose_target" })
+    }
+
+    func testBorrowedMicrophoneMutesUplink() {
+        let (voice, transport, audio) = idle()
+        let before = transport.sent.count
+        XCTAssertTrue(voice.borrowMicrophone { _ in })
+        audio.onInput?(Data([1, 0]))
+        XCTAssertEqual(transport.sent.count, before, "the target word must not reach the assistant")
+        voice.borrowMicrophone(nil)
+        audio.onInput?(Data([1, 0]))
+        XCTAssertEqual(transport.sent.last?["type"] as? String, "input_audio_buffer.append")
+    }
+
+    func testBorrowFailsWithoutRunningAssistant() {
+        let voice = makeVoice(FakeVoiceToken(), FakeVoiceTransport(), FakeVoiceAudio())
+        XCTAssertFalse(voice.borrowMicrophone { _ in })
+    }
+
+    func testAskSpeaksTheQuestionOnlyWhenIdle() {
+        let (voice, transport, _) = idle()
+        XCTAssertTrue(voice.ask("I see 2 exits. 1: left, about 3 meters. 2: right, about 5 meters. Which one?"))
+        // OpenAI has no force_message: the question is an in-conversation response with verbatim instructions.
+        XCTAssertEqual(transport.sent.last?["type"] as? String, "response.create")
+        let response = transport.sent.last?["response"] as? [String: Any]
+        XCTAssertTrue((response?["instructions"] as? String)?.contains("Which one?") == true)
+        XCTAssertNil(response?["conversation"], "the answer must be matched in the conversation")
+        XCTAssertFalse(voice.ask("again"), "a question already waiting for its response")
+    }
+}

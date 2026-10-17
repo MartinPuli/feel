@@ -6,6 +6,7 @@ import FeelCore
 enum VoiceCommand: Equatable {
     case startCamera, stop, pauseAssistant, status, scanPucks, listPucks, openSettings
     case find(FinderMode)
+    case whereIs(String)
     case calibrate(Double)
     case connectPuck(UUID)
     case setSpokenOutput(Bool), setProactiveUpdates(Bool), setControlsExpanded(Bool)
@@ -13,6 +14,8 @@ enum VoiceCommand: Equatable {
     case openSystemSettings, forgetVoiceConnection
     case setCameraHeight(Double)
     case openPanel(String), findTeammate(String)
+    /// 1-based option from the app's "which one?" question.
+    case chooseTarget(Int)
 
     static func decode(name: String, arguments: String) throws -> VoiceCommand {
         guard arguments.utf8.count <= 2048,
@@ -70,10 +73,20 @@ enum VoiceCommand: Equatable {
             return .find(mode)
         case "calibrate_floor":
             return .calibrate(try measuredHeight())
+        case "choose_target":
+            guard args.count == 1, let option = args["option"] as? NSNumber, CFGetTypeID(option) != CFBooleanGetTypeID(),
+                  option.doubleValue == option.doubleValue.rounded(), (1...4).contains(option.intValue) else { throw InvalidCommand() }
+            return .chooseTarget(option.intValue)
         case "connect_puck":
             guard args.count == 1, let value = args["device_id"] as? String,
                   let id = UUID(uuidString: value) else { throw InvalidCommand() }
             return .connectPuck(id)
+        case "where_is":
+            guard args.count == 1, let raw = args["thing"] as? String else { throw InvalidCommand() }
+            let thing = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard (1...60).contains(thing.count),
+                  !thing.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) || CharacterSet.newlines.contains($0) }) else { throw InvalidCommand() }
+            return .whereIs(thing)
         default: throw InvalidCommand()
         }
     }
@@ -94,6 +107,8 @@ enum VoiceCommand: Equatable {
             tool("set_proactive_updates", "Enable or disable unsolicited app status announcements. Disabling them still permits spoken replies to the user's requests.", properties: ["enabled": ["type": "boolean"]]),
             tool("get_status", "Read fresh sensing, calibration, target and connection state. ALWAYS call before describing surroundings. Never reuse old readings."),
             tool("find_target", "Select the target the user asks for. This does not confirm a detection or start the camera.", properties: ["target": ["type": "string", "enum": ["obstacles", "door", "exit", "chair", "person", "teammate", "barcode"]]]),
+            tool("where_is", "Find one thing the user names that is not in find_target's list, such as the registration desk, a water fountain or the stairs. Takes one camera photo and points the pins at it when found. Confirm once; the result arrives a few seconds later as an observation. Call get_status to check progress.", properties: ["thing": ["type": "string", "minLength": 1, "maxLength": 60]]),
+
             tool("calibrate_floor", "Calibrate only after the user supplies a measured lens height in meters and confirms the phone is mounted upright with rear camera forward and top edge to their left. Never guess height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
             tool("set_camera_height", "Set the measured camera lens height without calibrating. Ask the user for their measurement in meters; never infer it from their body height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
             tool("start_simulation", "Start the synthetic demo only when requested. Always identify it as simulation, never live sensing."),
@@ -110,7 +125,8 @@ enum VoiceCommand: Equatable {
             tool("close_panel", "Close the current floating panel when requested."),
             tool("open_system_settings", "Open FEEL's iPhone Settings page when requested. The user must change permissions there manually; never claim permission was granted."),
             tool("forget_voice_connection", "Remove saved voice setup ONLY after explaining that the assistant will stop and need setup again, and the user explicitly confirms. Say that explanation before calling; the connection ends immediately. Never request or read credentials aloud.", properties: ["confirmed": ["type": "boolean", "enum": [true]]]),
-            tool("set_controls_expanded", "Show or hide the camera's lower drawer containing tactile dots and camera controls.", properties: ["expanded": ["type": "boolean"]])
+            tool("set_controls_expanded", "Show or hide the camera's lower drawer containing tactile dots and camera controls.", properties: ["expanded": ["type": "boolean"]]),
+            tool("choose_target", "Only after you asked 'I see N ... Which one?': call with the option number the user picked, matching their words (left, right, ahead, nearer, farther, or a number) to the options you listed. If unclear, ask once more.", properties: ["option": ["type": "integer", "minimum": 1, "maximum": 4]])
         ]
     }
 
@@ -125,17 +141,20 @@ enum VoiceCommand: Equatable {
     ## Conversation Flow
     Use the provided tools for actions. Wait for their results before confirming anything.
     Call get_status before describing the scene. You do not receive camera images.
+    For a thing not in find_target's list, call where_is with a short description; it uses one camera photo, and the result comes later as an observation. Without Chalk setup or a connection it uses the phone's own detector, which knows exits, doors, people, chairs and common objects.
     Say stop: call stop immediately, then keep listening. Say pause assistant or stop listening: call pause_assistant.
     Say silence yourself, mute, be quiet, or silenciate: call set_spoken_output with enabled=false. Keep listening and executing requested actions while muted.
     Say speak again or unmute: call set_spoken_output with enabled=true. Muting voice is different from pausing microphone capture.
     Say stop automatic updates: call set_proactive_updates with enabled=false while continuing to answer direct questions.
     For missing information, ask one short question and wait. Do not repeat a completed action.
+    When you have just asked which of several targets to guide to, wait for the answer and call choose_target. Don't add anything after it; the app confirms with a sound.
 
     ## Guardrails & Escalation
     Describe only observations returned by tools. Use spoken_observation when provided; keep its past tense because speech follows the camera sample.
     Unknown, stale and neutral never mean a clear path.
     Do not give walking directions, promise safe passage, identify unobserved objects or invent distances.
     A rectangle candidate is only a possible door, never a confirmed door or safe opening.
+    A where_is result is a model's reading of one photo, never a confirmed object.
     Always call synthetic results simulation. Ask for a measured height before floor calibration.
     Start the camera, calibrate and connect hardware only when requested. Ask which discovered puck to connect.
     Discovering teammate phones never authorizes an invitation. List them, ask the user to choose, then request that exact phone and wait for its owner's consent.

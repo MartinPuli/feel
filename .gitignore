@@ -39,3 +39,13 @@ firmware/production-evidence/
 *.sqlite3-wal
 *.sqlite3-shm
 services/chalk/private/
+# Where-is evaluation photos (consented captures only; never commit)
+chalk/data/
+
+# Replay harness: generated output and personal sensor recordings (never commit recordings)
+simulation/out/
+simulation/recordings/*
+!simulation/recordings/README.md
+
+# FEEL site build output (contains replay data)
+web/dist/
