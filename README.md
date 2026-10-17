@@ -32,6 +32,14 @@ To test the current app and single-servo setup, follow [TEST-V1.md](docs/TEST-V1
 To set up the board on your Mac, start with [SETUP-MAC-ESP32.md](docs/SETUP-MAC-ESP32.md).
 
 See [release status](docs/RELEASE-STATUS.md) for actual checks and blockers.
+
+## How it fits together
+
+![FEEL at a glance](docs/diagrams/feel-system.svg)
+
+More figures: [sensing to pins](docs/diagrams/sensing-to-pins.svg), [one Where-is request](docs/diagrams/where-is-path.svg),
+[the evaluation loop](docs/diagrams/chalk-eval-loop.svg) and [memory and venue knowledge](docs/diagrams/chalk-context.svg).
+The Chalk integration (gateway, evaluations, features) is documented in [chalk/README.md](chalk/README.md).
 **One-servo motion has been observed; full travel, seven-servo mechanics and sensing accuracy remain unverified.**
 
 ## Run software checks

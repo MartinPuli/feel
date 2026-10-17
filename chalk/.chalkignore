@@ -1,0 +1,7 @@
+.venv/
+data/
+tests/
+evals/
+__pycache__/
+check_connection.py
+feel_chalk/images.py

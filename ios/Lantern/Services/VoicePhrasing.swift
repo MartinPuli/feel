@@ -21,6 +21,19 @@ enum VoicePhrasing {
         guard target.valid(at: now) else { return nil }
         return "The \(label) was \(distanceText(target.distance)) \(side(target.bearingDegrees))."
     }
+    /// The cue for a place recalled from room memory: a past sighting with a rough distance, the pins doing the
+    /// pointing, and the way to check with the camera. Never a present-tense claim.
+    static func remembered(_ label: String, bearingDegrees: Double, distance: Double) -> String {
+        let metres = max(1, Int(distance.rounded()))
+        let side: String
+        switch abs(bearingDegrees) {
+        case ...15: side = "ahead"
+        case ...60: side = bearingDegrees < 0 ? "ahead to your left" : "ahead to your right"
+        case ...120: side = bearingDegrees < 0 ? "to your left" : "to your right"
+        default: side = "behind you"
+        }
+        return "Last time the \(label) was about \(metres) \(metres == 1 ? "meter" : "meters") \(side). Pins point there. Say photo to check again."
+    }
     private static func distanceText(_ distance: Double) -> String {
         let rounded = (distance * 10).rounded() / 10
         let text = rounded == rounded.rounded()

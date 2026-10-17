@@ -1,0 +1,17 @@
+{
+  "absent_count": 4,
+  "dataset_sha256": "fcedfcab877ee76227cb9977c484763e4d0fcacd8cebe904a8e901c2f6394e3a",
+  "execution_mode": "hosted",
+  "execution_status": "NOT_RUN",
+  "hash_scope": "ordered questions, normalized JPEG bytes and expected boxes",
+  "image_encoding": {
+    "jpeg_quality": 60,
+    "max_long_side": 1024
+  },
+  "preflight_status": "PASS",
+  "present_count": 8,
+  "prompt_sha256": "38f6970eb9d5fdb26c002892cd76b7caf77c25a9c09fabad7433f12d4e6aae9d",
+  "quality_note": "Execution completion is not a quality pass.",
+  "quality_status": "NOT_ASSESSED",
+  "row_count": 12
+}

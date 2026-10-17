@@ -4,9 +4,10 @@ import FeelCore
 
 /// Only these commands can cross the model-to-device boundary.
 enum VoiceCommand: Equatable {
-    case startCamera, stop, pauseAssistant, status, scanPucks, listPucks, openSettings
+    case startCamera, stop, pauseAssistant, status, scanPucks, listPucks, openSettings, foundIt
     case find(FinderMode)
-    case whereIs(String)
+    /// `photo` asks for the camera even when room memory remembers the thing.
+    case whereIs(String, photo: Bool = false)
     case venueInfo(String)
     case calibrate(Double)
     case connectPuck(UUID)
@@ -33,8 +34,8 @@ enum VoiceCommand: Equatable {
                   CFGetTypeID(value) == CFBooleanGetTypeID() else { throw InvalidCommand() }
             return value.boolValue
         }
-        func text(_ key: String, limit: Int) throws -> String {
-            guard args.count == 1, let raw = args[key] as? String else { throw InvalidCommand() }
+        func text(_ key: String, limit: Int, others: Int = 0) throws -> String {
+            guard args.count == 1 + others, let raw = args[key] as? String else { throw InvalidCommand() }
             let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             guard (1...limit).contains(value.count),
                   !value.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) || CharacterSet.newlines.contains($0) }) else { throw InvalidCommand() }
@@ -98,7 +99,13 @@ enum VoiceCommand: Equatable {
             guard args.count == 1, let value = args["device_id"] as? String,
                   let id = UUID(uuidString: value) else { throw InvalidCommand() }
             return .connectPuck(id)
-        case "where_is": return .whereIs(try text("thing", limit: 60))
+        case "where_is":
+            let photo = try args["photo"].map { value -> Bool in
+                guard let flag = value as? NSNumber, CFGetTypeID(flag) == CFBooleanGetTypeID() else { throw InvalidCommand() }
+                return flag.boolValue
+            } ?? false
+            return .whereIs(try text("thing", limit: 60, others: args["photo"] == nil ? 0 : 1), photo: photo)
+        case "found_it": return try noArguments(.foundIt)
         case "venue_info": return .venueInfo(try text("question", limit: 200))
         default: throw InvalidCommand()
         }
@@ -127,7 +134,8 @@ enum VoiceCommand: Equatable {
             tool("set_proactive_updates", "Enable or disable unsolicited app status announcements. Disabling them still permits spoken replies to the user's requests.", properties: ["enabled": ["type": "boolean"]]),
             tool("get_status", "Read fresh sensing, calibration, target and connection state. ALWAYS call before describing surroundings. Never reuse old readings."),
             tool("find_target", "Select the target the user asks for. This does not confirm a detection or start the camera.", properties: ["target": ["type": "string", "enum": ["obstacles", "door", "exit", "chair", "person", "teammate"]]]),
-            tool("where_is", "Find one thing the user names that is not in find_target's list, such as the registration desk, a water fountain or the stairs. Takes one camera photo and points the pins at it when found. Confirm once; the result arrives a few seconds later as an observation. Call get_status to check progress.", properties: ["thing": ["type": "string", "minLength": 1, "maxLength": 60]]),
+            tool("where_is", "Find one thing the user names that is not in find_target's list, such as the registration desk, a water fountain or the stairs. When this room's printed FEEL tag has been seen and the thing was found here on an earlier visit, the pins point to that remembered place at once and the result says so (remembered=true): read its status as given. Otherwise it takes one camera photo and points the pins at it when found; confirm once, the result arrives a few seconds later as an observation. photo=true only when the user asks to check again with the camera, for example by saying photo.", properties: ["thing": ["type": "string", "minLength": 1, "maxLength": 60], "photo": ["type": "boolean"]]),
+            tool("found_it", "The user says they found the Where-is target (found it, got it, here it is). Ends the pointing and, when this room's printed FEEL tag has been seen, remembers the place for next time. Report the returned status; never claim it was remembered unless the result says so."),
             tool("venue_info", "Answer a question about this venue, such as an entrance, restroom or accessibility notice, from the reviewed venue pack downloaded on the phone. Works without internet. Read the returned answer as given, including its source date; never add details or call a path clear.", properties: ["question": ["type": "string", "minLength": 1, "maxLength": 200]]),
             tool("calibrate_floor", "Manual override for automatic floor calibration. Use only after the user supplies a measured lens height in meters and confirms the phone is mounted upright with rear camera forward and top edge to their left. Never guess height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
             tool("set_camera_height", "Set the measured camera lens height without calibrating. Ask the user for their measurement in meters; never infer it from their body height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
@@ -161,7 +169,8 @@ enum VoiceCommand: Equatable {
     ## Conversation Flow
     Use the provided tools for actions. Wait for their results before confirming anything.
     Call get_status before describing the scene. You do not receive camera images.
-    For a thing not in find_target's list, call where_is with a short description; it uses one camera photo, and the result comes later as an observation. Without Chalk setup or a connection it uses the phone's own detector, which knows exits, doors, people, chairs and common objects.
+    For a thing not in find_target's list, call where_is with a short description and photo=false; it uses one camera photo, and the result comes later as an observation. Without Chalk setup or a connection it uses the phone's own detector, which knows exits, doors, people, chairs and common objects.
+    If where_is returns remembered=true, the pins already point to a place found on an earlier visit: say its status as given, in the past tense, and nothing about the present. If the user then says photo, call where_is again with the same thing and photo=true. When the user says they found it, call found_it and report its status.
     For questions about the venue itself, such as entrances, restrooms or accessibility notices, call venue_info and read its answer as given. If no pack is downloaded or the answer says it can't be confirmed, say so; never fill the gap yourself.
     Say stop: call stop immediately, then keep listening. Say pause assistant or stop listening: call pause_assistant.
     Say silence yourself, mute, be quiet, or silenciate: call set_spoken_output with enabled=false. Keep listening and executing requested actions while muted.
@@ -175,9 +184,10 @@ enum VoiceCommand: Equatable {
     ## Guardrails & Escalation
     Describe only observations returned by tools. Use spoken_observation when provided; keep its past tense because speech follows the camera sample.
     Unknown, stale and neutral never mean a clear path.
+    open_side in get_status says which side has more room than straight ahead while something is within 1.6 meters ahead. Repeat it as relative room, never as clear or safe.
     Do not give walking directions, promise safe passage, identify unobserved objects or invent distances.
     A rectangle candidate is only a possible door, never a confirmed door or safe opening.
-    A where_is result is a model's reading of one photo, never a confirmed object.
+    A where_is result is a model's reading of one photo, never a confirmed object. A remembered place is where the thing was on an earlier visit, never where it is now.
     Always call synthetic results simulation. Floor calibration starts automatically with the camera and waits for a stable detected floor. Never claim it succeeded without get_status confirming calibrated. Ask for a measured height only when using the manual calibrate_floor override.
     Start the camera, manually override calibration and connect hardware only when requested. Ask which discovered puck to connect.
     Discovering teammate phones never authorizes an invitation. List them, ask the user to choose, then request that exact phone and wait for its owner's consent.

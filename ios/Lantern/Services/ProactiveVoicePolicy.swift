@@ -60,7 +60,8 @@ struct ProactiveVoicePolicy {
         nextKey = sequence
     }
 
-    mutating func propose(target: TargetObservation?, finder: FinderMode, distances: [Double?], now: TimeInterval) -> Notice? {
+    /// `openSide` is the finder's current reading; an obstacle notice ends with which side has more room.
+    mutating func propose(target: TargetObservation?, finder: FinderMode, distances: [Double?], openSide: OpenSide? = nil, now: TimeInterval) -> Notice? {
         lastProposal = nil
         guard now.isFinite else { return nil }
         if let lastTime, now < lastTime { reset() }
@@ -102,7 +103,8 @@ struct ProactiveVoicePolicy {
             guard elapsed(since: candidate.since, now: now, atLeast: 0.8) else { return nil }
             let distance = obstacle.distance < 0.3 ? "less than 0.3" : "about " + String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), obstacle.distance)
             let side = obstacle.side == .ahead ? "ahead" : "to your \(obstacle.side.rawValue)"
-            return remember(Notice(text: "An obstacle was \(distance) meters \(side).", key: candidate.key,
+            let room = openSide.map { " " + $0.spoken } ?? ""
+            return remember(Notice(text: "An obstacle was \(distance) meters \(side).\(room)", key: candidate.key,
                                    kind: .obstacle, side: obstacle.side, distance: obstacle.distance, finder: .none))
         }
         if let candidate = targetCandidate, let currentTarget,

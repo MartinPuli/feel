@@ -1,0 +1,8 @@
+# Chalk project for FEEL's context features (chalk/feel_context). Deploy from this directory:
+#   chalk apply --branch <name>   # try it on a branch first
+#   chalk apply                   # the environment in chalk/.env (CHALK_ENV_ID)
+project: Default   # the Chalk project that owns environment flnyc749e8d9 (chalk/.env CHALK_ENV_ID)
+environments:
+  default:
+    runtime: python312
+    requirements: feel_context/requirements.txt

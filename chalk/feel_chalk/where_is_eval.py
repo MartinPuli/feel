@@ -1,10 +1,13 @@
-"""Validate and optionally run the hosted Where-is evaluation.
+"""Validate and run the Where-is evaluation: offline checks, a local run, or the hosted run.
 
 Offline: python -m feel_chalk.where_is_eval labels.jsonl --preflight --output report.json
+Local:   python -m feel_chalk.where_is_eval labels.jsonl --local --model MODEL --output report.json
 Hosted:  python -m feel_chalk.where_is_eval labels.jsonl --model MODEL --output report.json
 
-Hosted mode uploads photos and deploys task/scorers only after local validation.
-A successful execution is not a quality pass; inspect the persisted scores.
+Local mode runs the same task and scorers on this machine through the Model Gateway: nothing is
+uploaded, and the report has the same shape as a hosted run. Hosted mode uploads photos and deploys
+task/scorers only after local validation. A successful execution is not a quality pass; inspect the
+persisted scores.
 """
 from __future__ import annotations
 import argparse
@@ -21,15 +24,18 @@ from feel_chalk.config import settings
 from feel_chalk.eval_data import DatasetError, prepare
 from feel_chalk.eval_report import summarize_results, usable_reply
 
+COMPLETION = None       # tests replace the one gateway call per row; None means gateway.completion
+MODEL_OVERRIDE = None   # set by run_local for --model; hosted mode passes the model through the environment
+
 
 def where_is_task(question: str, image_b64: str) -> str:
     """One gateway call per row, recorded as JSON: the raw reply the phone would parse, the time taken
     against the shared deadline, the model that answered and its token usage."""
     config = settings()
-    body = where_is.request_body(config.model or os.environ['FEEL_CHALK_MODEL'], question, image_b64)
+    body = where_is.request_body(MODEL_OVERRIDE or config.model or os.environ['FEEL_CHALK_MODEL'], question, image_b64)
     started = time.monotonic()
     try:
-        reply = gateway.completion(config, body, timeout=where_is.DEADLINE_SECONDS)
+        reply = (COMPLETION or gateway.completion)(config, body, timeout=where_is.DEADLINE_SECONDS)
         record = {'status': 'ok', 'reply': reply.content, 'model': reply.model, 'usage': reply.usage}
     except gateway.GatewayError as error:
         record = {'status': 'error', 'reply': None, 'model': None, 'usage': None, 'error': str(error)}
@@ -90,15 +96,52 @@ def _load_sdk():
     return chalkcompute
 
 
+def run_local(args, rows: list[dict], report: dict, persist) -> int:
+    """The hosted pipeline's task and scorers, run here row by row: same prompt, same deadline, same
+    JSON records and the same metrics. Only the gateway sees each photo; nothing is uploaded."""
+    global MODEL_OVERRIDE
+    try:
+        config = settings()
+        model = args.model or config.model
+        if not model or not config.router_api_key or not config.environment_id:
+            raise ValueError('Local evaluation needs configured gateway settings.')
+        MODEL_OVERRIDE = model
+        report.update(model=model, api_host=config.api_host, environment_id=config.environment_id,
+                      execution_mode='local', execution_status='running')
+        persist()
+        records = []
+        for row in rows:
+            output = where_is_task(row['question'], row['image_b64'])
+            records.append({'output': output, 'expected_box': row['expected_box'],
+                            'points_correctly_value': points_correctly(output, row['expected_box']),
+                            'reply_is_well_formed_value': reply_is_well_formed(output),
+                            'false_found_value': false_found(output, row['expected_box'])})
+        summary = summarize_results(records, report['row_count'])
+        report.update(summary)
+        report['execution_status'] = 'succeeded' if summary['rows_complete'] else 'incomplete'
+        persist()
+        print(f"Execution: {report['execution_status']} (local). Quality: NOT_ASSESSED. Scores: {args.output}")
+        return 0 if summary['rows_complete'] else 1
+    except Exception as error:
+        report['execution_status'] = 'failed'
+        report['error_type'] = type(error).__name__  # Provider errors can contain sensitive text.
+        persist()
+        print('Local evaluation failed or is incomplete. See persisted evidence; no quality pass claimed.')
+        return 1
+    finally:
+        MODEL_OVERRIDE = None
+
+
 def main(argv=None, *, sdk_loader=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('labels', type=Path)
     parser.add_argument('--model', help='Gateway model override for hosted mode')
     parser.add_argument('--preflight', action='store_true', help='Validate/hash locally; no SDK, credentials or cloud calls')
+    parser.add_argument('--local', action='store_true', help='Run task and scorers here through the gateway; no upload or hosted run')
     parser.add_argument('--output', type=Path, default=Path('where-is-evaluation-report.json'))
     parser.add_argument('--timeout', type=float, default=600, help='Hosted run wait limit in seconds (default: 600)')
     args = parser.parse_args(argv)
-    report = {'preflight_status': 'NOT_RUN', 'execution_status': 'NOT_RUN',
+    report = {'preflight_status': 'NOT_RUN', 'execution_status': 'NOT_RUN', 'execution_mode': 'hosted',
               'quality_status': 'NOT_ASSESSED', 'quality_note': 'Execution completion is not a quality pass.'}
 
     def persist():
@@ -135,6 +178,8 @@ def main(argv=None, *, sdk_loader=None) -> int:
     if args.preflight:
         print(f"Preflight PASS: {report['row_count']} rows, sha256 {report['dataset_sha256']}. No cloud operations.")
         return 0
+    if args.local:
+        return run_local(args, rows, report, persist)
 
     try:
         config = settings()
