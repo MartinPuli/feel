@@ -12,8 +12,14 @@ PASS — independent read-only review. Two provisioning P2 findings corrected an
 PASS — signed Debug build 1.0.0 (8), installed on paired iPhone 17 Pro.
 Build log: /tmp/feel-voice-provisioning-device.log
 Installation: /tmp/feel-voice-provisioning-install.json
-BLOCKED — provisioning launch: iPhone locked (CoreDevice 10002, underlying Locked).
-Attempts at 01:16 and 01:18 EDT. Endpoint/client-token Keychain setup not yet confirmed on phone.
+PASS — provisioning launch at 01:24:32 EDT after the user unlocked the iPhone.
+Earlier attempts at 01:16 and 01:18 were blocked by its locked screen.
+The Debug launch saved the HTTPS endpoint and separate client token to Keychain.
+Vercel recorded two POST /session requests with HTTP 200 after the device launch.
+The user confirmed: “Sí, me escucha y responde” (it hears me and responds).
+This establishes user-confirmed live phone voice input/output, not a full headset,
+interruption, barge-in or sensing acceptance test. A separate normal relaunch to
+verify persistence was not performed during the user's active conversation.
 
 PASS — Vercel production deployment:
 https://feel-v1-voice.vercel.app/session
@@ -35,7 +41,8 @@ A separate Node WebSocket verification also returned readiness audio.
 An initial disposable Swift probe incorrectly sent binary JSON and timed out; corrected to text frames, matching the production app, and passed.
 Audio fixture: readiness.wav (generated provider greeting, no microphone recording).
 
-NOT VERIFIED — actual iPhone microphone/foreground auto-start, headset route, barge-in, subjective voice quality.
+USER CONFIRMED — live iPhone microphone and spoken response after provisioning.
+NOT VERIFIED — cold relaunch, headset route, barge-in, subjective voice quality.
 No claim of physical sensing/tactile validation from these tests.
 Vercel rate limits are per instance, not a distributed global quota.
 Secrets are absent from source, evidence, app bundle and Git.

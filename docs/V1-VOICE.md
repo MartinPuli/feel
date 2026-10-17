@@ -58,9 +58,10 @@ are stored in Keychain. Audio streams directly to xAI; camera images stay local.
 
 The production token endpoint is `https://feel-v1-voice.vercel.app/session`.
 A Voice-only Grok Inference key is configured in Vercel and expires November 16,
-2026. The server and real Sal readiness audio have been verified. Device
-provisioning is still pending because the installed iPhone is locked; no real
-headset or microphone conversation has been completed.
+2026. The server and real Sal readiness audio have been verified. Build 8 was
+provisioned and launched on the unlocked iPhone at 01:24 EDT on October 17.
+The user confirmed that FEEL hears them and responds. Headset routing,
+interruptions and cold-relaunch persistence still need physical checks.
 
 Debug builds accept an explicit paired developer launch with
 `FEEL_PROVISION_VOICE=1`, `FEEL_VOICE_ENDPOINT` and `FEEL_VOICE_ACCESS_TOKEN`.
@@ -86,9 +87,9 @@ existing sensing/BLE implementation were retained. V2/V3 were not imported.
 
 ## Next physical checks
 
-1. Provision xAI and the HTTPS token service, then enable the assistant once.
-2. On the unlocked iPhone, confirm audible readiness, spoken camera/target/Stop
-   commands, pause, VoiceOver access, and invalid-state recovery.
+1. Reopen FEEL normally and confirm the assistant starts without setup again.
+2. Check spoken camera/target/Stop commands, pause, VoiceOver access and
+   invalid-state recovery on the unlocked iPhone.
 3. Repeat with the intended headphones, including interruptions, disconnect,
    reconnection and locking. Test sensing/tactile behavior separately with supervision.
 

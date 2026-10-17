@@ -19,8 +19,10 @@ Build 8 is signed and installed. The protected Vercel token service is deployed,
 and a real native Grok session returned “I'm here” using Sal at 24 kHz.
 33 native tests and 18 token-service tests passed. Provider credentials remain
 server-side. The Voice-only API key expires November 16, 2026.
-The iPhone is locked, so the provisioning launch and physical microphone/headset
-checks remain pending. [Evidence](evidence/v1-voice-provisioning/validation.txt).
+The unlocked iPhone was provisioned and launched at 01:24 EDT. The user confirmed
+live voice input and spoken responses; server logs show successful token requests.
+Cold relaunch, headset routing and interruption checks remain pending.
+[Evidence](evidence/v1-voice-provisioning/validation.txt).
 
 ## Current iPhone assistant update
 
