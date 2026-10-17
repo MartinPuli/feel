@@ -1,3 +1,12 @@
+## October 17 V1 live voice provisioning
+
+33 native unit/integration tests and 18 service tests passed. Build 8 was signed
+and installed. Vercel authentication and real xAI ephemeral issuance passed.
+Native URLSession/WebSocket received Sal readiness audio, 45600 PCM bytes with
+transcript “I'm here.” Phone provisioning launch remains blocked by its locked
+screen; microphone/headset behavior and subjective voice quality remain
+unverified. [Evidence](evidence/v1-voice-provisioning/validation.txt).
+
 ## October 17 voice refinement
 
 39 distinct native tests passed; 32 unit/integration tests were rerun after the

@@ -28,7 +28,7 @@ export function readConfig(env = process.env) {
   return config;
 }
 
-function reply(res, status, body, headers = {}) {
+export function reply(res, status, body, headers = {}) {
   if (res.destroyed) return;
   res.writeHead(status, {
     'Content-Type': 'application/json',
@@ -60,26 +60,28 @@ async function readBoundedJSON(response) {
   }
 }
 
-// One token/phone per demo service. Limits are global and consume constant memory.
-export function createTokenServer(config, {
+// One token/phone per demo service. Limits are per handler instance, not shared.
+export function createTokenHandler(config, {
   fetchImpl = fetch,
   now = Date.now,
   upstreamTimeoutMs = 8000,
   requestsPerMinute = 6,
+  sessionPaths = ['/session'],
 } = {}) {
+  const allowedPaths = new Set(sessionPaths);
   const expectedAuth = hash(`Bearer ${config.accessToken}`);
   let windowStart = now();
   let requests = 0;
   let inFlight = 0;
 
-  const server = createServer({ maxHeaderSize: 8192 }, async (req, res) => {
+  return async (req, res) => {
     if (config.requireHTTPS && req.headers['x-forwarded-proto'] !== 'https') {
       return reply(res, 426, { error: 'https_required' });
     }
     if (req.url === '/health' && req.method === 'GET') {
       return reply(res, 200, { status: 'ok' });
     }
-    if (req.url !== '/session') return reply(res, 404, { error: 'not_found' });
+    if (!allowedPaths.has(req.url)) return reply(res, 404, { error: 'not_found' });
     if (req.method !== 'POST') {
       return reply(res, 405, { error: 'method_not_allowed' }, { Allow: 'POST' });
     }
@@ -90,6 +92,15 @@ export function createTokenServer(config, {
     // No client-controlled upstream URL, session settings, or expiration.
     if (req.headers['transfer-encoding'] !== undefined
         || (req.headers['content-length'] !== undefined && req.headers['content-length'] !== '0')) {
+      return reply(res, 400, { error: 'body_must_be_empty' });
+    }
+    try {
+      // Vercel may expose a parsed body even when a proxy changed framing headers.
+      const body = req.body;
+      if (body !== undefined && body !== '' && !(Buffer.isBuffer(body) && body.length === 0)) {
+        return reply(res, 400, { error: 'body_must_be_empty' });
+      }
+    } catch {
       return reply(res, 400, { error: 'body_must_be_empty' });
     }
     const time = now();
@@ -145,7 +156,11 @@ export function createTokenServer(config, {
       res.off('close', cancel);
       inFlight -= 1;
     }
-  });
+  };
+}
+
+export function createTokenServer(config, options) {
+  const server = createServer({ maxHeaderSize: 8192 }, createTokenHandler(config, options));
   server.requestTimeout = 10000;
   server.headersTimeout = 10000;
   server.timeout = 15000;

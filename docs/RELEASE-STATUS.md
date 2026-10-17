@@ -13,15 +13,14 @@
 
 # Current V1 release candidate
 
-## Current iPhone voice refinement
+## Current iPhone voice provisioning
 
-Build 7 moves the assistant to a toolbar icon and keeps the camera center clear.
-It configures Sal, concise result-first responses, shorter readiness/recovery,
-and spoken observations with normal units and explicit candidate uncertainty.
-Thirty-nine simulator tests passed, with 32 unit tests rerun after the last
-wording adjustment. The signed update is installed and launched on iPhone.
-[Evidence](evidence/v1-voice-polish/validation.txt). Live xAI provisioning and
-subjective voice/headset evaluation remain blocked on the missing credential.
+Build 8 is signed and installed. The protected Vercel token service is deployed,
+and a real native Grok session returned “I'm here” using Sal at 24 kHz.
+33 native tests and 18 token-service tests passed. Provider credentials remain
+server-side. The Voice-only API key expires November 16, 2026.
+The iPhone is locked, so the provisioning launch and physical microphone/headset
+checks remain pending. [Evidence](evidence/v1-voice-provisioning/validation.txt).
 
 ## Current iPhone assistant update
 

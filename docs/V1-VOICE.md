@@ -56,10 +56,20 @@ service /session URL and that access token in Assistant settings. Neither the
 xAI key nor any usable credential is bundled with the app. Both phone settings
 are stored in Keychain. Audio streams directly to xAI; camera images stay local.
 
-Live activation remains blocked on an available xAI credential and reachable
-HTTPS token endpoint. These were not present in the task environment. The
-installed app explains missing setup aloud rather than pretending to listen.
-No real Grok conversation or headset test has been completed.
+The production token endpoint is `https://feel-v1-voice.vercel.app/session`.
+A Voice-only Grok Inference key is configured in Vercel and expires November 16,
+2026. The server and real Sal readiness audio have been verified. Device
+provisioning is still pending because the installed iPhone is locked; no real
+headset or microphone conversation has been completed.
+
+Debug builds accept an explicit paired developer launch with
+`FEEL_PROVISION_VOICE=1`, `FEEL_VOICE_ENDPOINT` and `FEEL_VOICE_ACCESS_TOKEN`.
+Only the separate service token is supplied; never an xAI key. With devicectl,
+provide these through the caller environment prefixed by `DEVICECTL_CHILD_`,
+not command-line values. Validation and a successful Keychain save are required.
+An invalid explicit setup fails closed instead of using previous settings.
+Release builds ignore this mechanism. UI tests skip provisioning. Relaunch
+normally afterward to verify persistence without the environment.
 
 ## Validation and review
 

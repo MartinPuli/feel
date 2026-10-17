@@ -126,7 +126,7 @@ final class GrokVoiceSession: ObservableObject {
              }
          }) {
         self.tokenClient = tokenClient; self.audio = audio; self.transportFactory = transportFactory
-        self.configuration = configuration ?? (ProcessInfo.processInfo.arguments.contains("--uitesting") ? nil : store.load()); self.requestPermission = requestPermission
+        self.configuration = configuration ?? store.loadForLaunch(); self.requestPermission = requestPermission
         self.speaksLocally = speaksLocally
         for name in [AVAudioSession.interruptionNotification, AVAudioSession.routeChangeNotification,
                      AVAudioSession.mediaServicesWereResetNotification, UIApplication.didEnterBackgroundNotification] {
