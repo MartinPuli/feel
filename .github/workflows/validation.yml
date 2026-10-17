@@ -52,6 +52,8 @@ jobs:
       - run: sh cad/build.sh
       - run: python3 cad/tools/check_stl.py stl/*/*.stl
       - run: python3 cad/tools/cam_sim.py
+      - run: sh firmware/test/run_host_tests.sh
+      - run: python3 validation/check_cam_contract.py
       - run: python3 -m unittest discover -s cad/test -v
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

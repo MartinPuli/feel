@@ -1,3 +1,13 @@
+# Current 120° revision
+
+The user selected nominal FS0307 120° travel on October 16, 2026.
+Current source and executed checks are recorded in [FS0307-120-DESIGN.md](FS0307-120-DESIGN.md).
+The earlier local Mac session installed FEEL and verified actual Bluetooth packet
+reception with the previous PWM-disabled firmware; the 120° revision has not
+been flashed or physically tested. Camera UI response was user-reported.
+
+## Historical foundation evidence (before the 120° revision)
+
 # Executed V1 tests
 
 October 16, 2026; Linux, Swift 6.1.3, OpenSCAD 2021.01, PlatformIO 6.1.18.

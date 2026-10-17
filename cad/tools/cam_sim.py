@@ -21,12 +21,12 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[2]
 
 
-def load_geometry():
+def load_geometry(defines=()):
     executable=shutil.which('openscad')
     if not executable: raise RuntimeError('OpenSCAD is required: simulation must use the actual CAD vertices')
     with tempfile.TemporaryDirectory(prefix='feel-cam-') as tmp:
-        result=subprocess.run([executable,'-o',str(Path(tmp)/'profile.csg'),str(ROOT/'cad/tools/profile.scad')],capture_output=True,text=True,timeout=60)
-    if result.returncode or 'ERROR:' in result.stderr:
+        result=subprocess.run([executable,'-o',str(Path(tmp)/'profile.csg'),*[item for value in defines for item in ('-D',value)],str(ROOT/'cad/tools/profile.scad')],capture_output=True,text=True,timeout=60)
+    if result.returncode or 'ERROR:' in result.stderr or 'WARNING:' in result.stderr:
         raise RuntimeError(result.stderr)
     profiles={}
     params=None
@@ -67,8 +67,10 @@ def run_checks(step=0.5):
         checks.append({'name':name,'pass':bool(passed),'observed':observed})
     def lifts(variant,angle):
         return [max(0,contact_height(profiles[(variant,b)],angle,pin_r,tip_r,half_angle)-base) for b in range(4)]
-    check('protocol bands',bands==[0,58,117,175],bands)
-    check('protocol gaps',gaps==[29,87.5,146],gaps)
+    check('protocol bands',bands==[0,40,80,120],bands)
+    check('protocol gaps',gaps==[20,60,100],gaps)
+    check('full 2mm design stroke',stroke==2,stroke)
+    check('120 degree shaft range',min(bands)==0 and max(bands)==120,bands)
     check('pitch envelope',2*(base+stroke)<pitch,{'cam_d':2*(base+stroke),'pitch':pitch})
     for variant,label in enumerate(('A','H','G')):
         for band,angle in enumerate(bands):
@@ -77,7 +79,7 @@ def run_checks(step=0.5):
             check(f'{label} band {band+1} neighbours down',all(v<0.03 for i,v in enumerate(values) if i!=band),values)
             toward_gap=min(gaps,key=lambda gap:(abs(gap-angle),gap))
             tap_angle=angle+math.copysign(tap,toward_gap-angle)
-            check(f'{label} band {band+1} firmware tap angle',tap_angle==[21,37,138,154][band],tap_angle)
+            check(f'{label} band {band+1} firmware tap angle',tap_angle==[13,27,67,107][band],tap_angle)
             tapped=lifts(variant,tap_angle)
             check(f'{label} band {band+1} tap dip',0.65<=values[band]-tapped[band]<=1.4,{'angle':tap_angle,'lift':tapped[band],'drop':values[band]-tapped[band]})
             check(f'{label} band {band+1} tap no neighbour',all(v<0.03 for i,v in enumerate(tapped) if i!=band),tapped)
@@ -86,7 +88,7 @@ def run_checks(step=0.5):
             check(f'{label} gap {angle} all down',max(values)<0.03,values)
         violations=[]
         max_lift=0
-        angles=[i*step for i in range(int(175/step)+1)]
+        angles=[i*step for i in range(int(120/step)+1)]
         for angle in angles:
             values=lifts(variant,angle)
             curves.append([label,angle,*[round(v,6) for v in values]])

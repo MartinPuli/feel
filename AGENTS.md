@@ -1,3 +1,8 @@
+> October 16 update: the user explicitly selected the FS0307 nominal **120°** design.
+> Current CAD/firmware/protocol supersede historical 175° / 650–2500 µs instructions.
+> Assume 120° for design; do not describe it as a physical measurement. PWM stays off.
+> See `docs/FS0307-120-DESIGN.md` for the new layout and verification.
+
 # Current user directive — October 16, 2026
 
 The latest user request supersedes the historical version labels and source assumptions below.

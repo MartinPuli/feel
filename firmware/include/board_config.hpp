@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include "feel/controller.hpp"
 
 #ifndef FEEL_ENABLE_SERVO_OUTPUT
 #define FEEL_ENABLE_SERVO_OUTPUT 0
@@ -11,9 +12,9 @@
 #ifndef FEEL_VERIFIED_PULSE_MAX_US
 #error "Servo output requires explicit FEEL_VERIFIED_PULSE_MAX_US from the actual unit's measured safe range"
 #endif
-static_assert(FEEL_VERIFIED_PULSE_MIN_US >= 650 && FEEL_VERIFIED_PULSE_MAX_US <= 2500 &&
+static_assert(FEEL_VERIFIED_PULSE_MIN_US >= feel::kMinPulseUs && FEEL_VERIFIED_PULSE_MAX_US <= feel::kMaxPulseUs &&
     FEEL_VERIFIED_PULSE_MIN_US < FEEL_VERIFIED_PULSE_MAX_US,
-    "Measured output guard must be ordered within the controller's 650..2500us service range");
+    "Measured output guard must be ordered within the controller's 900..2100us service range");
 #else
 #define FEEL_VERIFIED_PULSE_MIN_US 0
 #define FEEL_VERIFIED_PULSE_MAX_US 0

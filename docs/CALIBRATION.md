@@ -4,14 +4,16 @@ Start with the hand-cranked single column and complete P1–P5 in
 [HARDWARE-BRINGUP.md](HARDWARE-BRINGUP.md). Record CAD/firmware commits, servo part
 label, supply, printed material, shaft variant and foam configuration.
 
-## Servo travel is unresolved
+## Nominal 120° design; actual travel remains unmeasured
 
-The handoff proposes 175° across 650–2500 µs. The [current manufacturer page](https://www.feetechrc.com/en/6v-06 kg-analog-steering-gear-fs 0307.html)
-lists 120° across 900–2100 µs and a voltage specification that must be reconciled
-with the exact delivered unit. Do not apply either specification to an unidentified
-variant. The four-lobe cam requires the handoff's travel; if your unit cannot
-provide it within its supported range, use a suitable servo or redesign/revalidate
-the cam. An offset does not create missing travel.
+The user selected 120° as the FS0307 design assumption. CAD and firmware now use
+bands 0/40/80/120°, gaps 20/60/100°, a 13° tap toward the nearest gap, and a
+nominal 900–2100 µs mapping. This supersedes the historical 175° design.
+The narrower lobes require new prints and physical force/return/jam tests; do not
+reuse old shafts. The [manufacturer PDF](https://www.feetechrc.com/Data/feetechrc/upload/file/20220608/6379029528194935652722624.pdf)
+supports the nominal range, but actual safe travel and supply compatibility still
+require verification. An offset does not create missing travel. Old saved offsets
+from the 175° layout must not be reused; recalibrate this layout from zero.
 
 Firmware GPIO output is disabled by default. Follow `firmware/README.md` to set
 explicit measured pulse guards before enabling a bench build. Software status and

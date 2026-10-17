@@ -73,7 +73,7 @@ Only medium/high-confidence depth contributes. The app samples every third depth
 
 Choose the intended device under **Puck connection**; the app does not automatically connect to an arbitrary puck. Packets use the UUIDs in `FeelBLE`, matching the firmware. Connection/status notifications do not prove actuation.
 
-Status decoding explicitly distinguishes **Physical PWM DISABLED**, **PWM enabled — unverified physically**, and **OUTPUT FAULT**. The default board build disables servo PWM because the handoff's175°650–2500 µs sweep conflicts with the published FS0307 range. Resolve this hardware discrepancy and complete the firmware's measured-output gates before enabling PWM. Never send a servo sweep based only on virtual pins.
+Status decoding explicitly distinguishes **Physical PWM DISABLED**, **PWM enabled — unverified physically**, and **OUTPUT FAULT**. The current CAD/controller targets the user-selected FS0307 nominal 120° / 900–2100 µs design. Servo PWM remains disabled until actual pulse limits, power and single-column mechanics are verified. The old 175° design is superseded; do not reuse its shafts or saved calibration. Never send a servo sweep based only on virtual pins.
 
 The nine-byte command has no application checksum or timestamp. A valid-looking changed byte/delayed packet cannot always be detected by this protocol. BLE transport behavior and real firmware timeout must be measured; host simulation is not radio validation.
 

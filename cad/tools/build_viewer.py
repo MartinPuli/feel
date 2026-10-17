@@ -29,7 +29,7 @@ def main():
     add('Chassis','puck/chassis.stl',[.2,.25,.32])
     add('Lower guide','puck/guide.stl',[.36,.65,.74],lambda v:(v[0],-v[1],scalar('guide_z')+scalar('guide_t')-v[2]),1)
     add('Domed face','puck/face.stl',[.6,.82,.86],lambda v:(v[0],v[1],v[2]+scalar('body_h')-scalar('face_t')),2)
-    ca,sa=math.cos(math.radians(58)),math.sin(math.radians(58))
+    ca,sa=math.cos(math.radians(40)),math.sin(math.radians(40))
     for c in range(7):
         add('Cam '+str(c),'puck/shaft_A.stl',[.94,.64,.24],lambda v,c=c:(v[0]*ca+v[1]*sa+(c-3)*scalar('pitch'),-v[2]+scalar('shaft_origin_y'),-v[0]*sa+v[1]*ca+scalar('shaft_axis_z')),0)
     add('Pin plate (as printed)','puck/pins.stl',[.3,.33,.38],lambda v:(v[0]-115,v[1],v[2]),0,False)

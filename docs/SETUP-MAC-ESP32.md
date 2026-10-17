@@ -145,10 +145,10 @@ placa; no demuestra que los motores, BLE con el iPhone o la mecánica funcionen.
 
 ## 8. Antes de conectar un servo
 
-Falta confirmar si tenéis los servos y cuál es su variante exacta. Envía una foto
-de su etiqueta, conector y cables. La ficha actual del FS0307 no coincide con el
-recorrido de 175° supuesto por el diseño; también hay una discrepancia entre
-fichas de alimentación. No conectes automáticamente vuestra fuente de 5 V a un
+El usuario identificó el servo como FEETECH FS0307. El diseño se adaptó a un
+recorrido nominal de 120°; los 175° del diseño anterior quedan obsoletos. Falta
+medir el recorrido real y revisar el conector y la fuente; sigue habiendo una
+discrepancia entre fichas de alimentación. No conectes automáticamente vuestra fuente de 5 V a un
 servo sin identificarlo.
 
 El esquema funcional previsto para **una sola columna**, una vez verificados

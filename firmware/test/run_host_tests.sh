@@ -15,3 +15,4 @@ compiler=${CXX:-c++}
 python3 "$firmware_dir/test/test_cli.py" "$firmware_dir/build/feel-sim"
 python3 "$firmware_dir/test/test_board_config.py"
 python3 "$firmware_dir/test/test_compile_only_guard.py"
+python3 "$firmware_dir/test/test_bench_validation.py"

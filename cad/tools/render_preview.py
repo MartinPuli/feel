@@ -29,7 +29,7 @@ def mesh(path): return np.array(read_stl(ROOT/'stl'/path))
 
 def shaft(c):
     v=mesh('puck/shaft_A.stl')
-    ca,sa=math.cos(math.radians(58)),math.sin(math.radians(58))
+    ca,sa=math.cos(math.radians(40)),math.sin(math.radians(40))
     rotation=np.array([[ca,sa,0],[0,0,-1],[-sa,ca,0]])
     return v@rotation.T+np.array([(c-3)*scalar('pitch'),scalar('shaft_origin_y'),scalar('shaft_axis_z')])
 

@@ -1,3 +1,7 @@
+> **FS0307 120° revision:** current CAD and firmware use 0/40/80/120° band positions.
+> See [design and validation](docs/FS0307-120-DESIGN.md). Old 175° shafts/calibration
+> are superseded. Physical servo output remains disabled and untested.
+
 # FEEL
 
 A prototype that translates indoor depth and target direction into a **7-column ×

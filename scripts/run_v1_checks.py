@@ -34,6 +34,7 @@ def main():
     stls=sorted(str(p.relative_to(ROOT)) for p in (ROOT/'stl').glob('*/*.stl'))
     check('cad-meshes',[sys.executable,'cad/tools/check_stl.py',*stls],files=('cad/tools/check_stl.py',))
     check('cam-model',[sys.executable,'cad/tools/cam_sim.py'],files=('cad/tools/cam_sim.py',))
+    check('cad-firmware-contract',[sys.executable,'validation/check_cam_contract.py'],tools=('openscad',),files=('firmware/build/feel-sim',),scope='compiled controller commands against evaluated CAD polygon contact')
     check('cad-tool-tests',[sys.executable,'-m','unittest','discover','-s','cad/test','-v'])
     check('coreml-resource',[sys.executable,'scripts/fetch_model.py'])
     check('ios-platform',['bash','scripts/check_ios.sh'],tools=('xcodegen','xcodebuild','xcrun'),blocked_exit=True,timeout=2400)

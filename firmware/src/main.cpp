@@ -10,6 +10,7 @@
 
 #include "board_config.hpp"
 #include "feel/commands.hpp"
+#include "feel/calibration.hpp"
 #include "feel/output_guard.hpp"
 
 namespace {
@@ -181,15 +182,15 @@ void serialCommand(const char* line, uint32_t now) {
     if (result == feel::Result::SaveRequested) {
         // NVS writes only by explicit request; one versioned blob replaces all
         // offsets atomically within NVS, not seven separate writes.
-        const auto offsets = controller.snapshot().offsets;
+        const auto record = feel::calibrationRecord(controller);
         controller.stop(millis());
         writePWM();
-        const bool saved = preferencesReady && preferences.putBytes("offsets_v1", offsets.data(), sizeof(offsets)) == sizeof(offsets);
+        const bool saved = preferencesReady && preferences.putBytes(feel::kCalibrationKey, &record, sizeof(record)) == sizeof(record);
         Serial.println(saved ? "OK offsets saved; outputs neutral; ARM again for bench" : "ERROR NVS save failed; offsets not persisted");
         return;
     }
     if (command.kind == feel::CommandKind::Help) {
-        Serial.println("ARM (disconnect BLE first; 30s bench lease), B c 0..4, HL c|off, CAL c -5..5, CAL save, US c 650..2500, KEEP, STOP, STATUS");
+        Serial.printf("ARM (disconnect BLE first; 30s bench lease), B c 0..4, HL c|off, CAL c -5..5, CAL save, US c %u..%u, KEEP, STOP, STATUS\n", feel::kMinPulseUs, feel::kMaxPulseUs);
         Serial.println("Motion expires at 500ms. Repeat KEEP every100ms only while supervising bench; ARM does not keep motion alive.");
     } else if (command.kind == feel::CommandKind::Status) sendStatus(true);
     else Serial.printf("%s\n", feel::resultName(result));
@@ -246,16 +247,11 @@ void setup() {
     Serial.begin(115200);
     Serial.printf("FEEL V1 greenfield | %s | physical validation pending\n", kBoardName);
     preferencesReady = preferences.begin("feel", false);
-    if (preferencesReady && preferences.getBytesLength("offsets_v1") == sizeof(std::array<float, feel::kColumns>)) {
-        std::array<float, feel::kColumns> offsets{};
-        if (preferences.getBytes("offsets_v1", offsets.data(), sizeof(offsets)) == sizeof(offsets)) {
-            bool valid = true;
-            feel::Controller verifier;
-            for (std::size_t i = 0; i < feel::kColumns; ++i) {
-                if (verifier.loadOffset(i, offsets[i]) != feel::Result::Ok) valid = false;
-            }
-            if (valid) for (std::size_t i = 0; i < feel::kColumns; ++i) controller.loadOffset(i, offsets[i]);
-            else Serial.println("ERROR stored calibration invalid; all offsets default to0");
+    if (preferencesReady && preferences.getBytesLength(feel::kCalibrationKey) == sizeof(feel::CalibrationRecord)) {
+        feel::CalibrationRecord record;
+        if (preferences.getBytes(feel::kCalibrationKey, &record, sizeof(record)) != sizeof(record) ||
+            !feel::loadCalibration(controller, record)) {
+            Serial.println("ERROR stored 120-degree calibration invalid; all offsets default to0");
         }
     }
     controller.tick(millis());
