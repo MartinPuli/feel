@@ -27,7 +27,9 @@ no simulated hardware movement, and all neutral bands after Stop.
 The shared core and Beacon UI behavior are unchanged; their prior validation
 remains recorded in v1-vercel and v1-simple. No claim of fresh physical testing.
 
-Installation pending: paired iPhone remains unavailable to devicectl. Signed apps:
+Historical build-time state: installation was pending while the iPhone was
+unavailable. The October 17 installation update below supersedes that state.
+Original signed-app paths (temporary, may no longer exist):
 /tmp/feel-vercel-device/Build/Products/Debug-iphoneos/Lantern.app
 /tmp/feel-vercel-device/Build/Products/Debug-iphoneos/Beacon.app
 
@@ -43,3 +45,16 @@ xcodebuild -project ios/Lantern.xcodeproj -scheme <Lantern|Beacon>
   -configuration Debug -destination 'generic/platform=iOS' -derivedDataPath
   /tmp/feel-vercel-device DEVELOPMENT_TEAM=<existing team>
   -allowProvisioningUpdates build
+
+Installation update — 2026-10-17
+PASS: fresh signed Lantern build from main a4c141e, detector model included.
+PASS: devicectl device install app using the connected device hardware UDID.
+PASS: devicectl device process launch org.feel.hackharvard.lantern.
+PASS: device info apps --bundle-id org.feel.hackharvard.lantern confirms
+      FEEL, version 1.0.0, bundle version 4.
+The first install attempt using the stored CoreDevice identifier failed with
+error 1011. Retrying with the hardware UDID established the developer tunnel
+and succeeded. No unpairing or device reset was needed.
+Current local artifact: /tmp/feel-camera-install/Build/Products/Debug-iphoneos/Lantern.app
+Beacon was not installed in this update. Camera image, calibration and physical
+sensing/actuation remain unverified; launch success is not evidence of those.

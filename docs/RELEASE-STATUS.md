@@ -21,8 +21,10 @@ selection, measured-height calibration and simulation. Five integration tests
 and five UI tests passed locally. Both apps build and sign as 1.0.0 (4).
 [Current screenshots and checks](evidence/v1-camera/validation.txt).
 
-Installation of this update is pending: the paired iPhone remains unavailable.
-Earlier installation evidence below refers to the previous app build.
+Lantern 1.0.0 (4) was installed and launched on the paired iPhone 17 Pro on
+October 17. Device app inventory confirms build 4. This confirms installation
+and launch, not physical sensing/actuation performance. Beacon build 4 remains
+prepared locally; it was not installed during this update.
 
 ## V1 consolidation on main
 
