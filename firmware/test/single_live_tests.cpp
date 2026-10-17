@@ -15,18 +15,18 @@ void bandsAndExpiry() {
     assert(feel::singleLivePulse(c.snapshot()) == 0);
     feel::Packet p;
     p.bands[0] = 4; // Center-empty must use the center gap, not a side obstacle.
-    const unsigned expected[] = {957,650,1263,1887,2500};
+    const unsigned expected[] = {883,650,1189,1813,2426};
     for (unsigned band = 0; band <= 4; ++band) {
         p.sequence = band; p.bands[3] = band;
         receive(c,p,10 + band*10);
         assert(feel::singleLivePulse(c.snapshot()) == expected[band]);
-        assert(feel::singleLivePulse(c.snapshot()) == c.snapshot().pulses[3]);
+        assert(c.snapshot().pulses[3] >= feel::singleLivePulse(c.snapshot()));
     }
-    c.tick(549); assert(feel::singleLivePulse(c.snapshot()) == 2500);
+    c.tick(549); assert(feel::singleLivePulse(c.snapshot()) == 2426);
     c.tick(550); assert(feel::singleLivePulse(c.snapshot()) == 0);
     p.sequence = 10; p.bands.fill(0);
     receive(c,p,600);
-    assert(c.snapshot().active && feel::singleLivePulse(c.snapshot()) == 2193);
+    assert(c.snapshot().active && feel::singleLivePulse(c.snapshot()) == 2119);
     p.sequence = 11; p.bands[3] = 4;
     receive(c,p,610);
     const auto bytes = feel::encodePacket(p);
@@ -49,26 +49,26 @@ void productionTapGapCalibration() {
     c.connect(0);
     feel::Packet p; p.bands[0] = 1; p.bands[3] = 2;
     receive(c,p,1);
-    assert(feel::singleLivePulse(c.snapshot()) == 1316); //58deg +5deg offset.
+    assert(feel::singleLivePulse(c.snapshot()) == 1242); //58deg +5deg offset.
     assert(feel::singleDemoPulse(c.snapshot()) == 1483); // Old demo unchanged.
     p.sequence = 1; p.highlight = 3;
     receive(c,p,10);
-    assert(c.snapshot().tapActive && feel::singleLivePulse(c.snapshot()) == 1179);
+    assert(c.snapshot().tapActive && feel::singleLivePulse(c.snapshot()) == 1105);
     c.tick(110);
-    assert(!c.snapshot().tapActive && feel::singleLivePulse(c.snapshot()) == 1316);
+    assert(!c.snapshot().tapActive && feel::singleLivePulse(c.snapshot()) == 1242);
     p.sequence = 2; p.bands[3] = 4; p.highlight = feel::kNoHighlight;
     receive(c,p,200);
-    assert(feel::singleLivePulse(c.snapshot()) == 2500); // Endpoint offset clamp.
+    assert(feel::singleLivePulse(c.snapshot()) == 2426); // Endpoint offset clamp.
     p.sequence = 3; p.bands[3] = 0;
     receive(c,p,210);
-    assert(feel::singleLivePulse(c.snapshot()) == 2246); //146deg gap +5deg offset.
+    assert(feel::singleLivePulse(c.snapshot()) == 2172); //146deg gap +5deg offset.
     p.sequence = 4; p.bands.fill(0);
     receive(c,p,220);
-    assert(c.snapshot().pulses[3] == 2246 && feel::singleLivePulse(c.snapshot()) == 2246);
+    assert(c.snapshot().pulses[3] == 2246 && feel::singleLivePulse(c.snapshot()) == 2172);
     c.stop(221); assert(feel::singleLivePulse(c.snapshot()) == 0);
 }
 void allZeroReturnsEverySelectionToGap() {
-    const unsigned gaps[] = {957,957,2193,2193};
+    const unsigned gaps[] = {883,883,2119,2119};
     for (unsigned band = 1; band <= 4; ++band) {
         feel::Controller c; c.connect(0);
         feel::Packet p; p.bands[3] = band;

@@ -86,3 +86,13 @@ seven-column controller, with center sector3 routed toGPIO32. The older
 `esp32-single-wide-test` remains a compatibility experiment, not the profile
 to deploy for this setup. Seven-servo deployment still uses its measured-record
 profile; a Bluetooth name does not enable additional output pins.
+
+## Connected-unit alignment trim
+
+The user requested7° toward lower commanded angles. The single-live adapter
+applies -74µs once after the shared controller mapping (7° on the175° assumed
+scale), clamped to650–2500µs. Band commands become650/1189/1813/2426µs;
+the first empty gap becomes883µs. Band1 remains at the lower bound; this is
+not a rigid shift of every position and does not establish physical alignment.
+The trim is only for the connected GPIO32 unit, not all seven servos. Stored
+controller calibration still applies before this additional adapter trim.
