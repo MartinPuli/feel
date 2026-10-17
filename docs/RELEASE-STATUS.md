@@ -1,3 +1,10 @@
+> Seven-servo preparation: `esp32-production` and its English setup guide are
+> ready in source. Host/configuration tests, enabled-output compile fixtures and
+> 2,634 cross-layer assertions passed. Real deployment is still gated on the
+> seven units' missing physical measurement records. No board was flashed; the
+> user has only one servo connected. [Evidence](evidence/seven-production/report.json)
+> and [setup](SEVEN-SERVO-PRODUCTION.md). This is not full-device physical acceptance.
+
 > Latest installed profile: `esp32-single-live`, source64fae62, uses nominal120°
 > production center-sector mapping on GPIO32. Compilation, host regressions,
 > upload and idle readback passed; physical full-range motion remains unverified.

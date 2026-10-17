@@ -1,0 +1,14 @@
+{
+  "source_commit": "46e57e1bd30103dba84e366585183dd5549eb95f",
+  "host_regressions": "PASS",
+  "production_validator_tests": 13,
+  "board_configuration_cases": 25,
+  "enabled_output_compile_fixtures": "PASS classic ESP32 and ESP32-S3; fixtures cannot upload",
+  "cross_layer_assertions": 2634,
+  "cross_layer_states": 558,
+  "deployment_profile": "BLOCKED: actual seven-servo measurement records absent; verified correct refusal",
+  "independent_review": "No blocking findings",
+  "hardware_action": "NONE; user confirmed only one servo connected; installed single-live firmware unchanged",
+  "physical_seven_servo_validation": "NOT VERIFIED",
+  "hosted_ci": "Existing account billing blocker; not rerun"
+}
