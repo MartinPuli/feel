@@ -49,7 +49,9 @@ def history_key(id: ObjectHistory.id) -> Features[ObjectHistory.user_id, ObjectH
 
 
 @online
-def finds_of_history(id: ObjectHistory.id) -> ObjectHistory.finds:
+def finds_of_history(id: ObjectHistory.id) -> DataFrame[Find.id, Find.user_id, Find.object_name, Find.place, Find.confidence,
+                                                        Find.found_at, Find.history_id]:
+    """The finds behind ObjectHistory.finds: Chalk matches this DataFrame to the has_many join on history_id."""
     return feel_finds.query_string(FIND_SQL, fields=FIND_FIELDS, args={"history_id": id}).all()
 
 
@@ -68,12 +70,14 @@ def spoken_history(object_name: ObjectHistory.object_name, last_place: ObjectHis
 
 @online
 def venue_row(id: Venue.id) -> Features[Venue.name]:
-    return feel_finds.query_string("select id, name from venues where id = :id",
-                                   fields={"id": Venue.id, "name": Venue.name}, args={"id": id}).one()
+    return feel_finds.query_string("select name from venues where id = :id", fields={"name": Venue.name}, args={"id": id}).one()
 
 
 @online
-def venue_entries(id: Venue.id) -> Venue.entries:
+def venue_entries(id: Venue.id) -> DataFrame[VenueEntry.id, VenueEntry.venue_id, VenueEntry.kind, VenueEntry.name, VenueEntry.aliases,
+                                             VenueEntry.text, VenueEntry.source_url, VenueEntry.retrieved_at, VenueEntry.effective_from,
+                                             VenueEntry.effective_until, VenueEntry.applies_to]:
+    """The entries behind Venue.entries, matched to the has_many join on venue_id."""
     return feel_finds.query_string(ENTRY_SQL, fields=ENTRY_FIELDS, args={"venue_id": id}).all()
 
 
@@ -126,7 +130,9 @@ def room_key(id: RoomMemory.id) -> Features[RoomMemory.venue_id, RoomMemory.tag_
 
 
 @online
-def anchors_of_room(id: RoomMemory.id) -> RoomMemory.anchors:
+def anchors_of_room(id: RoomMemory.id) -> DataFrame[Anchor.id, Anchor.user_id, Anchor.venue_id, Anchor.tag_id, Anchor.label, Anchor.x, Anchor.y,
+                                                     Anchor.z, Anchor.confidence, Anchor.shared, Anchor.seen_at, Anchor.room_id]:
+    """The sightings behind RoomMemory.anchors, matched to the has_many join on room_id (shared rows only)."""
     return feel_finds.query_string(ANCHOR_SQL, fields=ANCHOR_FIELDS, args={"room_id": id}).all()
 
 

@@ -54,16 +54,24 @@ def post(url: str, body: dict, headers: dict, timeout: float) -> dict:
 def query(inputs: dict, outputs: list[str], *, query_name: str | None = None, timeout: float = 20, transport=post) -> dict:
     """One online query. Returns {feature: value}; any per-feature error or missing output raises."""
     config = credentials()
-    token = transport(config['CHALK_API_HOST'] + '/v1/oauth/token',
+    grant = transport(config['CHALK_API_HOST'] + '/v1/oauth/token',
                       {'client_id': config['CHALK_CLIENT_ID'], 'client_secret': config['CHALK_CLIENT_SECRET'],
-                       'grant_type': 'client_credentials'}, {}, timeout).get('access_token')
+                       'grant_type': 'client_credentials'}, {}, timeout)
+    token = grant.get('access_token')
     if not isinstance(token, str) or not token:
         raise ContextError('token exchange returned no access token')
+    # Online queries are answered by the environment's own engine, which the token grant names;
+    # api.chalk.ai only answers its version record to a query.
+    engines = grant.get('engines') if isinstance(grant.get('engines'), dict) else {}
+    engine = engines.get(config['CHALK_ENV_ID'])
+    if not isinstance(engine, str) or not engine.startswith('https://'):
+        raise ContextError(f"no query engine for environment {config['CHALK_ENV_ID']} in the token grant")
     body = {'inputs': inputs, 'outputs': outputs}
     if query_name:
         body['query_name'] = query_name
-    reply = transport(config['CHALK_API_HOST'] + '/v1/query', body,
-                      {'Authorization': f'Bearer {token}', 'X-Chalk-Env-Id': config['CHALK_ENV_ID']}, timeout)
+    reply = transport(engine.rstrip('/') + '/v1/query/online', body,
+                      {'Authorization': f'Bearer {token}', 'X-Chalk-Env-Id': config['CHALK_ENV_ID'],
+                       'X-Chalk-Client-Id': config['CHALK_CLIENT_ID'], 'X-Chalk-Deployment-Type': 'engine'}, timeout)
     errors = reply.get('errors') or []
     if errors:
         first = errors[0] if isinstance(errors[0], dict) else {}

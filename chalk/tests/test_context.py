@@ -22,7 +22,7 @@ class FakeTransport:
     def __call__(self, url, body, headers, timeout):
         self.calls.append((url, body, headers))
         if url.endswith('/v1/oauth/token'):
-            return {'access_token': self.token}
+            return {'access_token': self.token, 'engines': {'env1': 'https://engine.example.test'}}
         reply = {'data': self.data}
         if self.errors is not None:
             reply['errors'] = self.errors
@@ -45,9 +45,17 @@ class ContextTests(unittest.TestCase):
         self.assertEqual(token_body, {'client_id': 'id1', 'client_secret': 'secret1', 'grant_type': 'client_credentials'})
         self.assertNotIn('Authorization', token_headers)
         query_url, query_body, query_headers = transport.calls[1]
-        self.assertEqual(query_url, 'https://api.example.test/v1/query')
+        self.assertEqual(query_url, 'https://engine.example.test/v1/query/online', 'the environment engine answers queries, not api.chalk.ai')
         self.assertEqual(query_body, {'inputs': {'object_history.id': 'user-1:my keys'}, 'outputs': ['object_history.spoken'], 'query_name': 'last_seen'})
-        self.assertEqual(query_headers, {'Authorization': 'Bearer tok', 'X-Chalk-Env-Id': 'env1'})
+        self.assertEqual(query_headers, {'Authorization': 'Bearer tok', 'X-Chalk-Env-Id': 'env1', 'X-Chalk-Client-Id': 'id1', 'X-Chalk-Deployment-Type': 'engine'})
+
+    def test_a_grant_without_an_engine_for_the_environment_is_refused(self):
+        class NoEngine(FakeTransport):
+            def __call__(self, url, body, headers, timeout):
+                reply = super().__call__(url, body, headers, timeout)
+                return {'access_token': 'tok', 'engines': {'other': 'https://x'}} if url.endswith('/v1/oauth/token') else reply
+        with self.assertRaisesRegex(context.ContextError, 'no query engine for environment env1'):
+            context.last_seen('u', 'keys', transport=NoEngine(data=[{'field': 'object_history.spoken', 'value': 'x'}]))
 
     def test_feature_errors_and_missing_outputs_raise_without_a_guess(self):
         with mock.patch.object(context, 'load_env_file', lambda *a, **k: None):
@@ -85,10 +93,10 @@ class ContextTests(unittest.TestCase):
         self.assertEqual(got['spoken'], spoken)
         self.assertEqual([(t.label, t.x, t.y, t.z, t.sightings) for t in got['targets']], [('exit', -4.0, 5.1, 0.05, 4)])
         query_url, query_body, query_headers = transport.calls[1]
-        self.assertEqual(query_url, 'https://api.example.test/v1/query')
+        self.assertEqual(query_url, 'https://engine.example.test/v1/query/online')
         self.assertEqual(query_body, {'inputs': {'room_memory.id': 'harvard-yard:feel-tag-01'},
                                       'outputs': ['room_memory.spoken', 'room_memory.targets'], 'query_name': 'room_anchors'})
-        self.assertEqual(query_headers, {'Authorization': 'Bearer tok', 'X-Chalk-Env-Id': 'env1'})
+        self.assertEqual(query_headers, {'Authorization': 'Bearer tok', 'X-Chalk-Env-Id': 'env1', 'X-Chalk-Client-Id': 'id1', 'X-Chalk-Deployment-Type': 'engine'})
 
     def test_room_anchors_rejects_malformed_targets_instead_of_guessing(self):
         for value, reason in [('nope', 'not JSON'), ('{"label": "exit"}', 'wrong shape'), ('[{"label": "exit"}]', 'wrong shape'), ('', 'empty')]:
