@@ -259,7 +259,32 @@ def room_memory() -> Figure:
     return f
 
 
+def chalk_overview() -> Figure:
+    f = Figure(1040, 420, 'What Chalk does for the app',
+               'Three short stories: a photo question answered through the Chalk Model Gateway and shown on the pins; a confirmed find kept in Chalk memory and answered on the next visit; every model or prompt change scored by Chalk evaluations before it goes live. Obstacles are sensed on the phone alone.')
+    cols = [
+        ('"Where is the water fountain?"', ('one photo from the phone on the chest',),
+         'Chalk Model Gateway', ('a vision model finds it', 'in the photo'),
+         'Pins point the way', ()),
+        ('"Found it"', ('the user confirms',),
+         'Chalk Memory', ('remembers where things were', 'and when'),
+         'Next visit', ('"Last seen here, 2 hours ago."', 'pins point there at once')),
+        ('Every change', ('same photos, same questions',),
+         'Chalk Evals', ('scores each model and prompt', 'misses and false finds first'),
+         'The better one goes live', ()),
+    ]
+    for i, (top, top_lines, mid, mid_lines, bottom, bottom_lines) in enumerate(cols):
+        x = 20 + i * 350
+        f.box(x, 70, 320, 62, top, top_lines)
+        f.arrow(x + 160, 132, x + 160, 180)
+        f.box(x, 180, 320, 76, mid, mid_lines, fill=CHALK, edge=CHALK_EDGE)
+        f.arrow(x + 160, 256, x + 160, 304, color=CHALK_EDGE)
+        f.box(x, 304, 320, 66, bottom, bottom_lines, accent=True)
+    f.note(20, 404, 'Obstacles are sensed on the phone alone; nothing from Chalk ever drives the pins directly.', size=11)
+    return f
+
+
 if __name__ == '__main__':
     for build, name in ((system, 'feel-system.svg'), (where_is, 'where-is-path.svg'), (evaluation, 'chalk-eval-loop.svg'),
-                        (context, 'chalk-context.svg'), (sensing, 'sensing-to-pins.svg'), (room_memory, 'room-memory.svg')):
+                        (context, 'chalk-context.svg'), (sensing, 'sensing-to-pins.svg'), (chalk_overview, 'chalk-overview.svg'), (room_memory, 'room-memory.svg')):
         print(build().save(name))

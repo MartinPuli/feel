@@ -8,6 +8,8 @@ See [implementation status, architecture diagrams and evaluation plan](../docs/C
 
 ## Chalk in FEEL at a glance
 
+![What Chalk does for the app](../docs/diagrams/chalk-overview.svg)
+
 ![FEEL at a glance](../docs/diagrams/feel-system.svg)
 
 | Chalk | Used for | Where |
