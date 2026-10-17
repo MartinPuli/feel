@@ -27,6 +27,10 @@ final class BluetoothPuck: NSObject, ObservableObject, CBCentralManagerDelegate,
         guard central.state == .poweredOn else { status="Enable Bluetooth and allow access"; return }
         central.scanForPeripherals(withServices:[serviceID],options:[CBCentralManagerScanOptionAllowDuplicatesKey:false]); status="Select your FEEL puck"
     }
+    func stopScanning() {
+        wantedScan=false
+        central.stopScan()
+    }
     func connect(_ device: CBPeripheral) {
         guard !selection.accepts(device.identifier) else { return }
         disconnect(); wantedScan=false; central.stopScan()

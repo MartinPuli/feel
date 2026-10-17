@@ -1,5 +1,8 @@
 # V1 Vercel-inspired native refinement
 
+Current Lantern interface: [camera-first build 4](V1-CAMERA-UI.md).
+The descriptions below document the earlier dashboard revisions.
+
 October 16, 2026. Based on canonical V1 `main` at `d18d13e`.
 User direction: make FEEL feel closer to Vercel and install it on the iPhone.
 
