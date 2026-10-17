@@ -91,24 +91,23 @@ profile; a Bluetooth name does not enable additional output pins.
 
 The user explicitly selected pin1=0°, pin2=58°, pin3=116°, pin4=174°.
 This supersedes the earlier0/58/117/175 arrangement and removes the temporary
--7° single-unit trim. No additional adapter offset is applied. At zero stored
-calibration, pulses are650/1263/1876/2489µs on the unchanged0–175° envelope.
+-7° single-unit trim. These are the base positions before the current connected-unit trim below.
+At zero stored calibration and before trim, pulses are650/1263/1876/2489µs on the unchanged0–175° envelope.
 
 Band0 requests the nearest gap:29° after pins1/2,87° after pin3,145° after pin4.
 Ties select the lower gap. Corresponding pulses are957/1570/2183µs. Startup
 neutral is29°. These commanded gaps are chosen between peaks; actual complete
 pin retraction still requires physical cam/return verification.
 
-## Current connected-servo trim: minus15°
+## Current connected-servo trim: plus15°
 
-The user's subsequent alignment request adds -159µs (approximately -15°)
-once in the single-live adapter. It replaces the prior zero trim; adjustments
-are not cumulative. Shared pin centers remain0/58/116/174°. Actual adapter
-band pulses are650/1104/1717/2330µs, approximately0/43/101/159°. Empty-gap
-pulses are798/1411/2024µs (approximately14/72/130°). Band1 clips at650µs.
+The user corrected the direction: add15°, replacing (not accumulating with)
+the previous minus15° adjustment. The adapter adds159µs once and clamps to
+650–2500µs. Band outputs are809/1422/2035/2500µs, approximately15/73/131/175°.
+The fourth position clips at the configured maximum; it cannot reach189°.
+Empty-gap outputs are1116/1729/2342µs (approximately44/102/160°).
 This is one connected unit's alignment, not a seven-servo geometry revision.
-Physical pin return at these shifted positions must be observed.
+Existing off/invalid guards remain; physical pin return needs observation.
 
-With this trim, the13° band1 highlight dip also clips to650µs: band1 has no
-physical highlight pulse movement at zero calibration. This is a known effect
-of the requested offset and lower bound, explicitly covered by a regression.
+At zero calibration, band4 selection and its highlight dip both clip to2500µs,
+so band4 highlighting produces no additional motion. Regression covers this.

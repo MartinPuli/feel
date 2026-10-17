@@ -15,18 +15,18 @@ void bandsAndExpiry() {
     assert(feel::singleLivePulse(c.snapshot()) == 0);
     feel::Packet p;
     p.bands[0] = 4; // Center-empty must use the center gap, not a side obstacle.
-    const unsigned expected[] = {798,650,1104,1717,2330};
+    const unsigned expected[] = {1116,809,1422,2035,2500};
     for (unsigned band = 0; band <= 4; ++band) {
         p.sequence = band; p.bands[3] = band;
         receive(c,p,10 + band*10);
         assert(feel::singleLivePulse(c.snapshot()) == expected[band]);
-        assert(feel::singleLivePulse(c.snapshot()) <= c.snapshot().pulses[3]);
+        assert(feel::singleLivePulse(c.snapshot()) >= c.snapshot().pulses[3]);
     }
-    c.tick(549); assert(feel::singleLivePulse(c.snapshot()) == 2330);
+    c.tick(549); assert(feel::singleLivePulse(c.snapshot()) == 2500);
     c.tick(550); assert(feel::singleLivePulse(c.snapshot()) == 0);
     p.sequence = 10; p.bands.fill(0);
     receive(c,p,600);
-    assert(c.snapshot().active && feel::singleLivePulse(c.snapshot()) == 2024);
+    assert(c.snapshot().active && feel::singleLivePulse(c.snapshot()) == 2342);
     p.sequence = 11; p.bands[3] = 4;
     receive(c,p,610);
     const auto bytes = feel::encodePacket(p);
@@ -49,26 +49,26 @@ void productionTapGapCalibration() {
     c.connect(0);
     feel::Packet p; p.bands[0] = 1; p.bands[3] = 2;
     receive(c,p,1);
-    assert(feel::singleLivePulse(c.snapshot()) == 1157); //58deg +5deg offset.
+    assert(feel::singleLivePulse(c.snapshot()) == 1475); //58deg +5deg offset.
     assert(feel::singleDemoPulse(c.snapshot()) == 1483); // Old demo unchanged.
     p.sequence = 1; p.highlight = 3;
     receive(c,p,10);
-    assert(c.snapshot().tapActive && feel::singleLivePulse(c.snapshot()) == 1020);
+    assert(c.snapshot().tapActive && feel::singleLivePulse(c.snapshot()) == 1338);
     c.tick(110);
-    assert(!c.snapshot().tapActive && feel::singleLivePulse(c.snapshot()) == 1157);
+    assert(!c.snapshot().tapActive && feel::singleLivePulse(c.snapshot()) == 1475);
     p.sequence = 2; p.bands[3] = 4; p.highlight = feel::kNoHighlight;
     receive(c,p,200);
-    assert(feel::singleLivePulse(c.snapshot()) == 2341); // Endpoint offset clamp.
+    assert(feel::singleLivePulse(c.snapshot()) == 2500); // Endpoint offset clamp.
     p.sequence = 3; p.bands[3] = 0;
     receive(c,p,210);
-    assert(feel::singleLivePulse(c.snapshot()) == 2077); //145deg gap +5deg offset.
+    assert(feel::singleLivePulse(c.snapshot()) == 2395); //145deg gap +5deg offset.
     p.sequence = 4; p.bands.fill(0);
     receive(c,p,220);
-    assert(c.snapshot().pulses[3] == 2236 && feel::singleLivePulse(c.snapshot()) == 2077);
+    assert(c.snapshot().pulses[3] == 2236 && feel::singleLivePulse(c.snapshot()) == 2395);
     c.stop(221); assert(feel::singleLivePulse(c.snapshot()) == 0);
 }
 void allZeroReturnsEverySelectionToGap() {
-    const unsigned gaps[] = {798,798,1411,2024};
+    const unsigned gaps[] = {1116,1116,1729,2342};
     for (unsigned band = 1; band <= 4; ++band) {
         feel::Controller c; c.connect(0);
         feel::Packet p; p.bands[3] = band;
@@ -81,15 +81,15 @@ void allZeroReturnsEverySelectionToGap() {
         c.tick(502); assert(feel::singleLivePulse(c.snapshot()) == 0);
     }
 }
-void lowerBoundClipsFirstHighlight() {
+void upperBoundClipsFourthHighlight() {
     feel::Controller c; c.connect(0);
-    feel::Packet p; p.bands[3] = 1; p.highlight = 3;
+    feel::Packet p; p.bands[3] = 4; p.highlight = 3;
     receive(c,p,1);
     assert(c.snapshot().tapActive);
-    assert(feel::singleLivePulse(c.snapshot()) == 650);
+    assert(feel::singleLivePulse(c.snapshot()) == 2500);
     c.tick(101);
     assert(!c.snapshot().tapActive);
-    assert(feel::singleLivePulse(c.snapshot()) == 650);
+    assert(feel::singleLivePulse(c.snapshot()) == 2500);
 }
 void isolationAndInvalid() {
     feel::Controller c;
@@ -97,7 +97,7 @@ void isolationAndInvalid() {
     assert(feel::singleLivePulse(c.snapshot()) == 0);
     feel::Snapshot s;
     s.connected = true; s.active = true; s.bands[3] = 1; s.pulses[3] = 650;
-    assert(feel::singleLivePulse(s) == 650);
+    assert(feel::singleLivePulse(s) == 809);
     s.benchArmed = true; assert(feel::singleLivePulse(s) == 0); s.benchArmed = false;
     s.rawPulse = true; assert(feel::singleLivePulse(s) == 0); s.rawPulse = false;
     s.pulses[3] = 649; assert(feel::singleLivePulse(s) == 0);
@@ -109,11 +109,11 @@ void rollover() {
     c.connect(0xfffffff0u);
     feel::Packet p;p.bands[3] = 1;
     receive(c,p,0xfffffff1u);
-    c.tick(uint32_t(0xfffffff1u + 499u)); assert(feel::singleLivePulse(c.snapshot()) == 650);
+    c.tick(uint32_t(0xfffffff1u + 499u)); assert(feel::singleLivePulse(c.snapshot()) == 809);
     c.tick(uint32_t(0xfffffff1u + 500u)); assert(feel::singleLivePulse(c.snapshot()) == 0);
 }
 }
 int main() {
-    bandsAndExpiry();productionTapGapCalibration();allZeroReturnsEverySelectionToGap();lowerBoundClipsFirstHighlight();isolationAndInvalid();rollover();
+    bandsAndExpiry();productionTapGapCalibration();allZeroReturnsEverySelectionToGap();upperBoundClipsFourthHighlight();isolationAndInvalid();rollover();
     std::puts("PASS single live: production center bands/gaps/taps/calibration, demo isolation, boot/connect off, STOP, freshness, disconnect, bench rejection, invalid bounds, rollover");
 }
