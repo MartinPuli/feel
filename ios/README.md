@@ -119,8 +119,8 @@ Apple-target tests require Xcode and have not been run on the Linux host.
 
 ## V3 advanced branch
 
-The isolated V3 branch adds explicit English/Spanish push-to-talk commands with
-typed fallback and optional spoken readback, one local saved AR world map with
+The isolated V3 branch adds explicit push-to-talk commands in English by default,
+with optional Spanish input, typed fallback and optional spoken readback, one local saved AR world map with
 multiple bookmarks, a guarded relocalization flow, adaptive target highlighting,
 and Vision QR/barcode finding. Read [ADVANCED.md](../docs/ADVANCED.md) for controls,
 supported grammar, archive bounds, lifecycle behavior and replay commands.

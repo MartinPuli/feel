@@ -1,28 +1,28 @@
-# FEEL: preparar la ESP32 desde tu Mac
+# FEEL: set up the ESP32 from your Mac
 
-Esta guía es para vuestra **ESP32-WROOM clásica con USB-C**. No necesitas una
-Raspberry Pi para este montaje. El objetivo de hoy es que el Mac reconozca la
-placa, instalar el firmware y leer su estado. **Deja el servo y la fuente externa
-desconectados durante estos pasos.** El firmware inicial tiene los movimientos
-físicos desactivados.
+This guide is for your **classic ESP32-WROOM with USB-C**. You do not need a
+Raspberry Pi for this setup. Today's goal is to have the Mac recognize the
+board, install the firmware, and read its status. **Keep the servo and external
+power supply disconnected throughout these steps.** Physical movement is
+disabled in the initial firmware.
 
-## 1. Abrir Terminal y comprobar las herramientas
+## 1. Open Terminal and check the tools
 
-Pulsa **⌘ + espacio**, escribe **Terminal** y pulsa Enter. Copia una línea cada vez:
+Press **⌘ + Space**, type **Terminal**, and press Enter. Copy one line at a time:
 
 ```sh
 git --version
 python3 --version
 ```
 
-Si macOS pide instalar las herramientas de desarrollo, acepta la instalación y
-vuelve a abrir Terminal al terminar. Si `python3` no existe, instala Python 3 desde
-[python.org para macOS](https://www.python.org/downloads/macos/) y repite la
-comprobación. No necesitas instalar Xcode completo para este primer paso del ESP32.
+If macOS asks to install developer tools, accept the installation and reopen
+Terminal when it finishes. If `python3` is unavailable, install Python 3 from
+[python.org for macOS](https://www.python.org/downloads/macos/) and repeat the
+check. You do not need the full Xcode installation for this first ESP32 step.
 
-## 2. Clonar la rama que contiene el código
+## 2. Clone the branch containing the code
 
-Copia este bloque en Terminal:
+Copy this block into Terminal:
 
 ```sh
 mkdir -p ~/Projects
@@ -31,13 +31,13 @@ git clone --branch feel/v1-foundation https://github.com/MartinPuli/hackharvard.
 cd feel
 ```
 
-El repositorio es privado: usa tu acceso de GitHub si te lo pide. No pegues claves
-o tokens en el chat. Si aparece `Repository not found`, comprueba que estás
-identificado con una cuenta con acceso. No significa necesariamente que falte el
-repositorio.
+The repository is private: use your GitHub access if prompted. Do not paste keys
+or tokens into the chat. If you see `Repository not found`, check that you are
+signed in with an account that has access. This does not necessarily mean the
+repository is missing.
 
-Si ya tienes una carpeta `~/Projects/feel`, no vuelvas a clonar encima. Entra en
-ella y comprueba primero si tienes cambios propios:
+If you already have a `~/Projects/feel` folder, do not clone over it. Open it and
+first check whether you have local changes:
 
 ```sh
 cd ~/Projects/feel
@@ -47,13 +47,13 @@ git switch feel/v1-foundation
 git pull --ff-only
 ```
 
-Si Git avisa de cambios locales o conflictos, conserva esos archivos y comparte
-el mensaje; no uses `reset --hard`. En esta rama, el código de la placa está en
-`firmware/` y esta guía en `docs/SETUP-MAC-ESP32.md`.
+If Git reports local changes or conflicts, keep those files and share the
+message; do not use `reset --hard`. On this branch, the board's code is in
+`firmware/` and this guide is in `docs/SETUP-MAC-ESP32.md`.
 
-## 3. Instalar PlatformIO en una carpeta aislada
+## 3. Install PlatformIO in an isolated folder
 
-Desde `~/Projects/feel`:
+From `~/Projects/feel`:
 
 ```sh
 python3 -m venv .venv
@@ -62,118 +62,119 @@ python -m pip install platformio==6.1.18
 pio --version
 ```
 
-Debería mostrar PlatformIO Core 6.1.18. En una Terminal nueva, vuelve a ejecutar
-`cd ~/Projects/feel` y `source .venv/bin/activate` antes de usar `pio`.
-La primera compilación descarga las dependencias y necesita internet.
+It should show PlatformIO Core 6.1.18. In a new Terminal window, run
+`cd ~/Projects/feel` and `source .venv/bin/activate` again before using `pio`.
+The first build downloads dependencies and requires internet access.
 
-## 4. Identificar el puerto de vuestra placa
+## 4. Identify your board's port
 
-Conecta **una sola ESP32** al Mac mediante el cable USB-C de datos. Ejecuta:
+Connect **only one ESP32** to the Mac using the USB-C data cable. Run:
 
 ```sh
 ls /dev/cu.*
 pio device list
 ```
 
-Para identificarla, compara la lista antes y después de desenchufar y volver a
-conectar **solo el USB de esa placa**. El puerto que aparece pertenece a esa
-conexión. Puede tener un nombre parecido a `/dev/cu.usbserial-0001` o
-`/dev/cu.SLAB_USBtoUART`; no copies estos ejemplos como si fueran tu puerto real.
+To identify it, compare the list before and after unplugging and reconnecting
+**only that board's USB connection**. The port that appears belongs to that
+connection. Its name may resemble `/dev/cu.usbserial-0001` or
+`/dev/cu.SLAB_USBtoUART`; do not copy these examples as if they were your actual port.
 
-Si no aparece ningún puerto nuevo: prueba el cable de datos y otro puerto USB,
-evita temporalmente un hub y comprueba el chip USB-serie de la placa. Algunas
-variantes requieren su controlador CP210x o CH34x. Instala únicamente el del chip
-identificado, desde su fabricante o la documentación de la placa; una luz de
-encendido no demuestra que la comunicación USB funcione.
+If no new port appears, try the data cable and another USB port, temporarily
+bypass any hub, and check the board's USB-to-serial chip. Some variants require
+a CP210x or CH34x driver. Install only the driver for the identified chip, from
+its manufacturer or the board's documentation; a power light does not prove
+that USB communication works.
 
-## 5. Compilar el firmware, todavía sin cargarlo
+## 5. Build the firmware without uploading it yet
 
 ```sh
 pio run -j 2 --project-dir firmware -e esp32
 ```
 
-Busca `SUCCESS` al final. El entorno correcto para vuestras placas WROOM es
-**`esp32`**. No selecciones `esp32s3` ni los entornos `compilecheck`: estos últimos
-son pruebas de compilación y prohíben la instalación.
+Look for `SUCCESS` at the end. The correct environment for your WROOM boards is
+**`esp32`**. Do not select `esp32s3` or the `compilecheck` environments: the latter
+are build checks and prohibit uploading.
 
-Si falla, copia el primer error y las últimas líneas. No cambies límites de pulsos
-ni opciones de motores para solucionar un error de herramientas.
+If it fails, copy the first error and the last few lines. Do not change pulse
+limits or motor options to fix a toolchain error.
 
-## 6. Cargar el programa en la ESP32
+## 6. Upload the program to the ESP32
 
-Esta operación reemplaza el programa que tenga actualmente la placa. Revisa que
-sea vuestra placa de pruebas y que el servo/fuente externa sigan desconectados.
-Cierra cualquier monitor serie abierto.
+This operation replaces the program currently on the board. Check that it is
+your test board and that the servo/external power supply remain disconnected.
+Close any open serial monitor.
 
-Primero guarda el puerto real identificado. Sustituye el texto entre comillas:
+First save the actual port you identified. Replace the text inside the quotes:
 
 ```sh
-FEEL_PORT='/dev/cu.TU_PUERTO_REAL'
+FEEL_PORT='/dev/cu.YOUR_ACTUAL_PORT'
 ```
 
-Después ejecuta:
+Then run:
 
 ```sh
 pio run -j 2 --project-dir firmware -e esp32 --target upload --upload-port "$FEEL_PORT"
 ```
 
-Espera a que finalice y muestre `SUCCESS`. Si queda intentando conectar, algunas
-placas requieren mantener pulsado **BOOT** mientras empieza la conexión y
-soltarlo cuando comience la escritura. Si no funciona, comparte el error exacto;
-no hagas un borrado completo ni cambies eFuses.
+Wait for it to finish and show `SUCCESS`. If it keeps trying to connect, some
+boards require holding **BOOT** while the connection starts and releasing it
+when writing begins. If this does not work, share the exact error; do not
+perform a full erase or change eFuses.
 
-## 7. Leer el estado de FEEL
+## 7. Read FEEL's status
 
 ```sh
 pio device monitor --port "$FEEL_PORT" --baud 115200 --echo --eol LF
 ```
 
-Si no ves el arranque, pulsa brevemente **EN/RESET**. El firmware debe mostrar
-`FEEL V1 greenfield` y `SERVO OUTPUT DISABLED`. Escribe:
+If you do not see the startup output, briefly press **EN/RESET**. The firmware
+should show `FEEL V1 greenfield` and `SERVO OUTPUT DISABLED`. Type:
 
 ```text
 STATUS
 ```
 
-Pulsa Enter. La respuesta debe incluir `outputState=0`, que significa que la
-salida física PWM está desactivada. `HELP` muestra los comandos disponibles.
-**No uses ARM, B ni US para intentar mover el servo todavía.** Para salir del
-monitor, pulsa **Ctrl+C**. Ciérralo antes de volver a cargar firmware.
+Press Enter. The response should include `outputState=0`, which means physical
+PWM output is disabled. `HELP` shows the available commands.
+**Do not use ARM, B, or US to try to move the servo yet.** To exit the monitor,
+press **Ctrl+C**. Close it before uploading firmware again.
 
-Que el programa arranque y responda confirma esa parte de la conexión con la
-placa; no demuestra que los motores, BLE con el iPhone o la mecánica funcionen.
+The program starting and responding confirms that part of the connection to
+the board; it does not prove that the motors, BLE with the iPhone, or the
+mechanism work.
 
-## 8. Antes de conectar un servo
+## 8. Before connecting a servo
 
-Falta confirmar si tenéis los servos y cuál es su variante exacta. Envía una foto
-de su etiqueta, conector y cables. La ficha actual del FS0307 no coincide con el
-recorrido de 175° supuesto por el diseño; también hay una discrepancia entre
-fichas de alimentación. No conectes automáticamente vuestra fuente de 5 V a un
-servo sin identificarlo.
+We still need to confirm whether you have the servos and their exact variant.
+Send a photo of the label, connector, and wires. The current FS0307 datasheet
+does not match the 175° travel assumed by the design; the power specifications
+also differ between datasheets. Do not automatically connect your 5 V supply
+to a servo without identifying it.
 
-El esquema funcional previsto para **una sola columna**, una vez verificados
-voltaje y cables, es:
+The intended functional wiring for **a single column**, once voltage and wires
+have been verified, is:
 
-| Conexión | Destino previsto |
+| Connection | Intended destination |
 |---|---|
-| Señal del servo | GPIO **32** de la ESP32, identificado por la etiqueta GPIO; no por número de posición física |
-| Masa del servo | Negativo de la fuente externa y GND de la ESP32, unidos |
-| Alimentación del servo | Positivo de una fuente compatible con ese modelo |
-| USB de la ESP32 | Mac, para programación/serie |
+| Servo signal | ESP32 GPIO **32**, identified by its GPIO label, not its physical pin position |
+| Servo ground | External supply negative and ESP32 GND, connected together |
+| Servo power | Positive terminal of a supply compatible with that model |
+| ESP32 USB | Mac, for programming/serial communication |
 
-Los colores del cable no son prueba de su función. Los servos no se alimentan
-desde un GPIO ni desde 3V3. No conectes el positivo de la fuente de motores al
-positivo USB/placa por intuición. Antes del montaje definitivo, sigue
-[HARDWARE-BRINGUP.md](HARDWARE-BRINGUP.md) y [CALIBRATION.md](CALIBRATION.md).
+Wire colors do not prove their function. Do not power servos from a GPIO or
+3V3. Do not connect the motor supply's positive terminal to USB/board positive
+based on intuition. Before final assembly, follow
+[HARDWARE-BRINGUP.md](HARDWARE-BRINGUP.md) and [CALIBRATION.md](CALIBRATION.md).
 
-Primero se comprueba la columna manual, luego un servo descargado con sus límites
-reales, después una columna motorizada y finalmente las siete. Sigue pendiente
-la validación física; el firmware no tiene sensores de posición, fuerza o atasco.
+Check the manual column first, then an unloaded servo with its actual limits,
+then one motorized column, and finally all seven. Physical validation remains
+pending; the firmware has no position, force, or jam sensors.
 
-## Referencias oficiales
+## Official references
 
-- [PlatformIO: instalación](https://docs.platformio.org/en/latest/core/installation/index.html)
-- [PlatformIO: comando run](https://docs.platformio.org/en/latest/core/userguide/cmd_run.html)
-- [PlatformIO: monitor serie](https://docs.platformio.org/en/latest/core/userguide/device/cmd_monitor.html)
-- [Espressif: conexión serie de ESP32](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/establish-serial-connection.html)
+- [PlatformIO: installation](https://docs.platformio.org/en/latest/core/installation/index.html)
+- [PlatformIO: run command](https://docs.platformio.org/en/latest/core/userguide/cmd_run.html)
+- [PlatformIO: serial monitor](https://docs.platformio.org/en/latest/core/userguide/device/cmd_monitor.html)
+- [Espressif: ESP32 serial connection](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/establish-serial-connection.html)
 - [FEETECH: FS0307](https://www.feetechrc.com/en/6v-06kg-analog-steering-gear-fs0307.html)

@@ -58,10 +58,10 @@ public enum VoiceIntentError: Error, Equatable, CustomStringConvertible {
 /// preventing a single grapheme with unbounded combining marks from evading it.
 ///
 /// English: remember NAME | recall NAME | return | stop | list places | find MODE.
-/// Spanish: recuerda NAME | recupera NAME | vuelve | para | lista lugares | busca MODO.
+/// The optional Spanish input mode uses equivalent keywords for these actions.
 /// No polite prefixes, partial matches, sentence punctuation, or multi-command
 /// separators are accepted. Ordinary names such as “Bus stop” and “Bread and Butter”
-/// remain names; an explicit “and stop” / “y para” clause is rejected.
+/// remain names; an explicit “and stop” clause (in either input language) is rejected.
 public enum VoiceIntentParser {
     public static func parse(text: String, language: VoiceLanguage, isFinal: Bool) throws -> VoiceIntent {
         guard isFinal else { throw VoiceIntentError.unfinishedTranscript }

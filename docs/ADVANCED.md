@@ -8,7 +8,7 @@ See the release report for the latest actual build and test evidence.
 
 ## Explicit commands and readback
 
-Open **Voice, saved map and feedback**. Select English or Spanish, then type a command
+Open **Voice, saved map and feedback**. English is selected by default. Type a command
 and choose **Run command**, or choose **Start speaking**, speak one command, and choose
 **Finish speaking**. A speech attempt ends after ten seconds; it waits at most three
 more seconds for a final result. Partial transcripts only appear on screen. **Cancel
@@ -23,17 +23,19 @@ after **Read result**; it does not start listening. Input and readback are limit
 160 Unicode scalars, including combining marks. A longer result remains visible but
 readback rejects it rather than silently speaking a truncated list of places.
 
-| Action | English | Spanish |
-|---|---|---|
-| Remember current position | `remember Desk` | `recuerda Mesa` |
-| Recall named place | `recall Desk` | `recupera Mesa` |
-| Return to explicit return point | `return` | `vuelve` |
-| Stop sensing and neutralize | `stop` | `para` |
-| List current places | `list places` | `lista lugares` |
-| Find a mode | `find barcode` | `busca código` |
+| Action | English command |
+|---|---|
+| Remember current position | `remember Desk` |
+| Recall named place | `recall Desk` |
+| Return to explicit return point | `return` |
+| Stop sensing and neutralize | `stop` |
+| List current places | `list places` |
+| Find a mode | `find barcode` |
 
 English modes: `obstacles`, `door`, `exit`, `chair`, `person`, `teammate`, `barcode`.
-Spanish modes: `obstáculos`, `puerta`, `salida`, `silla`, `persona`, `compañero`, `código`.
+The **Command language** picker also supports Spanish input explicitly; its selected
+mode shows matching command examples. Interface labels and status messages remain
+English. Spanish parser keywords and regression fixtures are retained as language data.
 Keyword case and accents are folded; bookmark names retain their entered spelling.
 Names use the V2 limit of 1–40 characters. The parser accepts a complete single command,
 not arbitrary conversation: polite prefixes, terminal punctuation, command separators,
@@ -168,7 +170,7 @@ Ready memory is inactive until a separate `memoryRecall` or `memoryReturn`. Gate
 are `idle`, `awaitingRelocalization`, `ready`, `failed`.
 
 ```json
-{"op":"voiceParse","text":"recuerda Mesa","language":"es","final":true}
+{"op":"voiceParse","text":"remember Desk","language":"en","final":true}
 {"op":"adaptive","seq":42,"bands":[1,0,0,3,0,0,0],"highlight":3,"profile":"reduced","session":"demo","now":0}
 ```
 

@@ -62,7 +62,7 @@ struct AdvancedPanel:View {
         DisclosureGroup("Voice, saved map and feedback") {
             VStack(alignment:.leading,spacing:14) {
                 Text("Commands are accepted only from this field or an explicit speech attempt. Camera text and barcode labels never execute commands.").font(.footnote)
-                Picker("Command language",selection:$model.commandLanguage) { Text("English").tag(VoiceLanguage.en); Text("Español").tag(VoiceLanguage.es) }.pickerStyle(.segmented)
+                Picker("Command language",selection:$model.commandLanguage) { Text("English").tag(VoiceLanguage.en); Text("Spanish").tag(VoiceLanguage.es) }.pickerStyle(.segmented)
                 HStack {
                     TextField("Command",text:$model.commandText).textFieldStyle(.roundedBorder).focused($editingCommand)
                         .submitLabel(.done).onSubmit { editingCommand=false }.accessibilityIdentifier("commandText")
