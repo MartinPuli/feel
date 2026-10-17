@@ -1,0 +1,16 @@
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [=         ]  11.0% (used 35908 bytes from 327680 bytes)
+Flash: [=====     ]  46.0% (used 602941 bytes from 1310720 bytes)
+Building .pio/build/esp32-single-live/firmware.bin
+esptool.py v4.5.1
+Creating esp32 image...
+Merged 27 ELF sections
+Successfully created esp32 image.
+========================= [SUCCESS] Took 22.20 seconds =========================
+
+Environment        Status    Duration
+-----------------  --------  ------------
+esp32              SUCCESS   00:00:22.807
+esp32-single-demo  SUCCESS   00:00:21.523
+esp32-single-live  SUCCESS   00:00:22.199
+========================= 3 succeeded in 00:01:06.529 =========================

@@ -29,3 +29,22 @@ remove servo power if it jams, heats or buzzes continuously.
 A software build and firmware readback establish installation only. Observe
 travel and stop behavior before mounting a cam. Full120° sweep, load/voltage,
 mechanical fit and seven-column operation remain separate physical gates.
+
+## Installed validation
+
+Source: `64fae62`. Host suite,21 configuration checks and all three classic
+profiles (default, midpoint demo and live120) compiled/passed. Independent review
+found no blocking defects. Upload to the connected classic ESP32 succeeded with
+uploader hash verification. Serial readback showed `LIVE120`, `ready=1`,
+`attached=0`, `pulseUs=0`, `timerHz=50`. No motion command was issued during the
+readback. Serial was closed afterward. The user must reconnect the iPhone.
+No stored120° calibration record was present; offsets therefore use defaults.
+Servo supply disconnection was not newly confirmed; powered reset transients
+were not measured. Full-range physical motion after this update is NOT VERIFIED.
+
+Evidence: [host](evidence/single-live/host.log),
+[build](evidence/single-live/build-excerpt.log),
+[upload](evidence/single-live/upload-excerpt.log),
+[boot/status](evidence/single-live/status.log).
+
+Firmware SHA256: `71fe47155950bc2ab29e76f4f289ec49897c31caf7c7fda841843d4158c75d50`.

@@ -1,0 +1,15 @@
+ets Jul 29 2019 12:21:46
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:1184
+load:0x40078000,len:13232
+load:0x40080400,len:3028
+entry 0x400805e4
+FEEL V1 greenfield | ESP32 classic | physical validation pending
+[    33][E][Preferences.cpp:503] getBytesLength(): nvs_get_blob len fail: offsets_120_v2 NOT_FOUND
+ONE SERVO LIVE120: center sector3 production band/gap/tap/calibration -> GPIO32, nominal900..2100us; NOT measured travel; STATUS or STOP; no serial motion/calibration
+Boot output OFF; production center-column pulse only; other six servo GPIOs remain unattached
+Ready; HELP for bench instructions; PWM positions unverified on real FS0307.
+LIVE120 connected=0 active=0 ready=1 attached=0 gpio=32 sector=3 band=0 pulseUs=0 timerHz=50 accepted=0 rejected=0 timeouts=0

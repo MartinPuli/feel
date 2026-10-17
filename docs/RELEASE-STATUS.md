@@ -1,3 +1,9 @@
+> Latest installed profile: `esp32-single-live`, source64fae62, uses nominal120°
+> production center-sector mapping on GPIO32. Compilation, host regressions,
+> upload and idle readback passed; physical full-range motion remains unverified.
+> [Installation evidence](SINGLE-SERVO-LIVE.md#installed-validation). Earlier
+> references below to the installed midpoint demo describe the prior state.
+
 # Current V1 release candidate
 
 ## V1 consolidation on main
