@@ -8,7 +8,7 @@ See the release report for the latest actual build and test evidence.
 
 ## Explicit commands and readback
 
-Open **Voice, saved map and feedback**. English is selected by default. Type a command
+Open **Settings → Voice, saved map and feedback**. English is selected by default. Type a command
 and choose **Run command**, or choose **Start speaking**, speak one command, and choose
 **Finish speaking**. A speech attempt ends after ten seconds; it waits at most three
 more seconds for a final result. Partial transcripts only appear on screen. **Cancel
@@ -50,7 +50,7 @@ CoreML labels, nearby peer names and QR payloads never enter it.
 
 ## One persistent local map
 
-1. Start **Live sensing** on a LiDAR device. Explore the area until ARKit reports an
+1. Choose **Start camera** on a LiDAR device. Explore the area until ARKit reports an
    extending or mapped world; calibrate the measured camera height. Remember places
    and optionally set a return point.
 2. Choose **Save map**. This captures an ARWorldMap and the bookmark snapshot from the
@@ -89,7 +89,7 @@ delete it when no longer wanted.
 
 Nearby Interaction camera assistance requires an AR configuration without an initial
 world map. Teammate finding is therefore disabled for the entire restored-map session,
-including after successful relocalization. Choose **Live sensing** to start a fresh
+including after successful relocalization. Choose **Stop**, then **Start camera** to start a fresh
 compatible world; this clears current session places. The saved map file is retained
 unless explicitly deleted. No cross-map transform or route planner is implemented.
 

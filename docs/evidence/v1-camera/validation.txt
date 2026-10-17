@@ -1,0 +1,45 @@
+V1 camera-first interface — 2026-10-16, build 1.0.0 (4)
+
+PASS: clean simulator build, Xcode 26.6 / iPhone 17 Pro, iOS 26.5.
+PASS: 5 Lantern integration tests, zero failures, including ARSession and
+      perception delegate identity after attaching the camera preview.
+PASS: 5 Lantern UI tests, zero failures:
+      - camera controls and simulation/neutral Stop;
+      - background/foreground does not restart;
+      - settings/connection dismissal does not restart;
+      - Stop is reachable in both sheets and at largest accessibility text;
+      - unavailable camera/permission recovery remains visible.
+PASS: signed native device builds for Lantern and Beacon, build 4.
+PASS: Lantern signature verified with codesign --verify --deep --strict.
+PASS: independent review. Calibration recovery status was added inside Settings
+      after review found that the main status was hidden behind the sheet.
+PASS: largest-text test repeated after making the fixed footer opaque,
+      preventing scrolling text from showing through behind Stop.
+PASS: default/large-text screenshots inspected. Camera is off in simulation;
+      no synthetic photograph is shown as live video.
+
+The first incremental run invoked the previous UI test entrypoints and failed
+because Simulation had moved into Settings. A clean build then compiled and
+executed the current five UI tests successfully. No assertions were removed to
+hide a runtime failure. The simulation check still verifies explicit labeling,
+no simulated hardware movement, and all neutral bands after Stop.
+
+The shared core and Beacon UI behavior are unchanged; their prior validation
+remains recorded in v1-vercel and v1-simple. No claim of fresh physical testing.
+
+Installation pending: paired iPhone remains unavailable to devicectl. Signed apps:
+/tmp/feel-vercel-device/Build/Products/Debug-iphoneos/Lantern.app
+/tmp/feel-vercel-device/Build/Products/Debug-iphoneos/Beacon.app
+
+Physical checks still needed: actual camera image/mount orientation, calibrated
+live depth, dot/packet correspondence to physical pins, BLE connection, and UWB.
+
+Commands:
+xcodegen generate --spec ios/project.yml
+xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern -destination
+  'platform=iOS Simulator,id=<available simulator>' -derivedDataPath
+  /tmp/feel-v1-design-build CODE_SIGNING_ALLOWED=NO clean test
+xcodebuild -project ios/Lantern.xcodeproj -scheme <Lantern|Beacon>
+  -configuration Debug -destination 'generic/platform=iOS' -derivedDataPath
+  /tmp/feel-vercel-device DEVELOPMENT_TEAM=<existing team>
+  -allowProvisioningUpdates build

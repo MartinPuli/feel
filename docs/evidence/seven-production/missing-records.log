@@ -1,0 +1,16 @@
+/Users/martinezequielpulitano/Projects/feel/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Processing esp32-production (board: esp32dev; platform: espressif32@6.9.0; framework: arduino)
+--------------------------------------------------------------------------------
+/Users/martinezequielpulitano/Projects/feel/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Verbose mode can be enabled via `-v, --verbose` option
+
+*** FEEL PRODUCTION BLOCKED: Missing /Users/martinezequielpulitano/Projects/feel/firmware/production-measurements.local.json. Seven measured servo records are required. See production-measurements.example.json; do not replace null fields with nominal guesses.
+File "/Users/martinezequielpulitano/Projects/feel/firmware/tools/production_setup.py", line 15, in <module>
+========================== [FAILED] Took 0.32 seconds ==========================
+
+Environment       Status    Duration
+----------------  --------  ------------
+esp32-production  FAILED    00:00:00.319
+==================== 1 failed, 0 succeeded in 00:00:00.319 ====================

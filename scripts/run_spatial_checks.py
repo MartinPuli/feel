@@ -30,7 +30,7 @@ def main():
             'platform':platform.platform(),'available_checks':'FAIL' if failed else 'PASS',
             'complete_software_gate':'FAIL' if failed else 'BLOCKED' if incomplete else 'PASS',
             'physical_hardware':'NOT VERIFIED','checks':checks,
-            'foundation_evidence':'docs/evidence/v1/report.json; CAD/firmware source unchanged from V1 milestone'}
+            'foundation_evidence':'docs/evidence/v1-release/report.json and docs/evidence/seven-production/report.json; current V1 main integration documented in docs/V2-MAIN-INTEGRATION.md'}
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     print(f"Available checks: {report['available_checks']}; complete gate: {report['complete_software_gate']}; physical NOT VERIFIED")
     return 1 if failed else 2 if incomplete else 0

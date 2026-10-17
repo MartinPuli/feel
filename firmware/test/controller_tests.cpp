@@ -1,5 +1,6 @@
 #include "feel/commands.hpp"
 #include "feel/output_guard.hpp"
+#include "feel/calibration.hpp"
 
 #include <cmath>
 #include <cstdint>
@@ -38,7 +39,7 @@ TEST(boot_is_neutral_disconnected) {
     Controller c;
     neutral(c);
     CHECK(!c.snapshot().connected);
-    for (float angle : c.snapshot().angles) CLOSE(angle, 29);
+    for (float angle : c.snapshot().angles) CLOSE(angle, 20);
     CHECK(send(c, 0, 1, 0) == Result::Disconnected);
 }
 
@@ -97,7 +98,7 @@ TEST(empty_highlight_is_wire_legal_but_effective_off) {
 TEST(all_bands_map_to_expected_angles) {
     Controller c;
     c.connect(0);
-    const float expected[] = {0, 58, 117, 175};
+    const float expected[] = {0, 40, 80, 120};
     for (uint8_t b = 1; b <= 4; ++b) {
         CHECK(send(c, b, b, b * 10) == Result::Ok);
         for (float angle : c.snapshot().angles) CLOSE(angle, expected[b - 1]);
@@ -105,7 +106,7 @@ TEST(all_bands_map_to_expected_angles) {
 }
 
 TEST(disappearing_pin_uses_nearest_last_band_gap) {
-    const float gaps[] = {29, 29, 146, 146};
+    const float gaps[] = {20, 20, 60, 100};
     for (uint8_t b = 1; b <= 4; ++b) {
         Controller c;
         c.connect(0);
@@ -115,7 +116,11 @@ TEST(disappearing_pin_uses_nearest_last_band_gap) {
         CHECK(send(c, 2, 0, 3) == Result::Ok);
         for (float angle : c.snapshot().angles) CLOSE(angle, gaps[b - 1]);
     }
-    CLOSE(feel::nearestGap(87), 87.5);
+    CLOSE(feel::nearestGap(60), 60);
+    CLOSE(feel::nearestGap(40), 20);
+    CLOSE(feel::nearestGap(80), 60);
+    CLOSE(feel::nearestGap(40.01F), 60);
+    CLOSE(feel::nearestGap(80.01F), 100);
 }
 
 TEST(rejection_does_not_partially_apply_bands_or_highlight) {
@@ -137,7 +142,7 @@ TEST(duplicate_does_not_extend_watchdog) {
     CHECK(send(c, 10, 1, 400) == Result::Duplicate);
     c.tick(501);
     neutral(c);
-    CLOSE(c.snapshot().angles[0], 146);
+    CLOSE(c.snapshot().angles[0], 100);
 }
 
 TEST(stale_and_half_range_sequences_rejected) {
@@ -230,7 +235,7 @@ TEST(millis_rollover_preserves_watchdog_boundary) {
 }
 
 TEST(highlight_taps_toward_gap_for_all_bands) {
-    const float expected[] = {21, 37, 138, 154};
+    const float expected[] = {13, 27, 67, 107};
     for (uint8_t band = 1; band <= 4; ++band) {
         Controller c;
         c.connect(0);
@@ -265,7 +270,7 @@ TEST(changing_highlight_or_its_band_restarts_tap) {
     CHECK(c.snapshot().tapActive);
     CHECK(send(c, 3, 2, 400, 1) == Result::Ok);
     CHECK(c.snapshot().tapActive);
-    CLOSE(c.snapshot().angles[1], 37);
+    CLOSE(c.snapshot().angles[1], 27);
 }
 
 TEST(tap_millis_rollover_works) {
@@ -301,8 +306,8 @@ TEST(calibration_clamps_both_servo_endpoints) {
     CLOSE(c.snapshot().angles[0], 0);
     CLOSE(c.snapshot().angles[1], 5);
     CHECK(send(c, 1, 4, 2) == Result::Ok);
-    CLOSE(c.snapshot().angles[0], 170);
-    CLOSE(c.snapshot().angles[1], 175);
+    CLOSE(c.snapshot().angles[0], 115);
+    CLOSE(c.snapshot().angles[1], 120);
 }
 
 TEST(calibration_does_not_extend_motion_watchdog) {
@@ -312,32 +317,32 @@ TEST(calibration_does_not_extend_motion_watchdog) {
     CHECK(c.calibrate(0, 1, 400) == Result::Ok);
     c.tick(500);
     neutral(c);
-    CLOSE(c.snapshot().angles[0], 147);
+    CLOSE(c.snapshot().angles[0], 101);
 }
 
 TEST(raw_pulse_requires_arm_and_bounds) {
     Controller c;
     CHECK(c.benchPulse(0, 1500, 0) == Result::NotArmed);
     CHECK(c.arm(0) == Result::Ok);
-    CHECK(c.benchPulse(0, 649, 1) == Result::BadPulse);
-    CHECK(c.benchPulse(0, 2501, 2) == Result::BadPulse);
+    CHECK(c.benchPulse(0, 899, 1) == Result::BadPulse);
+    CHECK(c.benchPulse(0, 2101, 2) == Result::BadPulse);
     CHECK(c.benchPulse(7, 1000, 3) == Result::BadColumn);
-    CHECK(c.benchPulse(0, 2500, 4) == Result::Ok);
+    CHECK(c.benchPulse(0, 2100, 4) == Result::Ok);
     CHECK(c.snapshot().rawPulse);
-    CHECK(c.snapshot().pulses[0] == 2500);
+    CHECK(c.snapshot().pulses[0] == 2100);
     c.tick(504);
     neutral(c);
     CHECK(!c.snapshot().rawPulse);
-    CLOSE(c.snapshot().angles[0], 146);
+    CLOSE(c.snapshot().angles[0], 100);
 }
 
 TEST(raw_pulse_is_exclusive_and_stop_clears_it) {
     Controller c;
     CHECK(c.arm(0) == Result::Ok);
     CHECK(c.benchBand(2, 4, 0) == Result::Ok);
-    CHECK(c.benchPulse(0, 650, 10) == Result::Ok);
+    CHECK(c.benchPulse(0, 900, 10) == Result::Ok);
     for (auto band : c.snapshot().bands) CHECK(band == 0);
-    CLOSE(c.snapshot().angles[2], 146);
+    CLOSE(c.snapshot().angles[2], 100);
     c.stop(20);
     neutral(c);
     CHECK(!c.snapshot().benchArmed);
@@ -375,14 +380,15 @@ TEST(bench_arm_expires_even_with_keepalives) {
 }
 
 TEST(pulse_conversion_is_bounded_and_monotonic) {
-    CHECK(feel::angleToPulse(0) == 650);
-    CHECK(feel::angleToPulse(175) == 2500);
-    CHECK(feel::angleToPulse(-10) == 650);
-    CHECK(feel::angleToPulse(1000) == 2500);
+    CHECK(feel::angleToPulse(0) == 900);
+    CHECK(feel::angleToPulse(60) == 1500);
+    CHECK(feel::angleToPulse(120) == 2100);
+    CHECK(feel::angleToPulse(-10) == 900);
+    CHECK(feel::angleToPulse(1000) == 2100);
     uint16_t previous = 0;
-    for (int tenth = 0; tenth <= 1750; ++tenth) {
+    for (int tenth = 0; tenth <= 1200; ++tenth) {
         const auto pulse = feel::angleToPulse(tenth / 10.0F);
-        CHECK(pulse >= previous && pulse >= 650 && pulse <= 2500);
+        CHECK(pulse >= previous && pulse >= 900 && pulse <= 2100);
         previous = pulse;
     }
 }
@@ -397,14 +403,14 @@ TEST(serial_parser_valid_commands) {
     CHECK(feel::parseCommand("CAL 3 -4.5").kind == CommandKind::Calibrate);
     CLOSE(feel::parseCommand("CAL 3 -4.5").offset, -4.5F);
     CHECK(feel::parseCommand("CAL save").kind == CommandKind::Save);
-    CHECK(feel::parseCommand("US 0 650").kind == CommandKind::Pulse);
-    CHECK(feel::parseCommand("US 6 2500").kind == CommandKind::Pulse);
+    CHECK(feel::parseCommand("US 0 900").kind == CommandKind::Pulse);
+    CHECK(feel::parseCommand("US 6 2100").kind == CommandKind::Pulse);
 }
 
 TEST(serial_parser_rejects_unbounded_and_ambiguous_input) {
     const char* invalid[] = {"", "B", "B 0", "B 0 1 junk", "B -1 1", "B 7 1", "B 0 5", "B 0 1x",
         "B 0 999999999999999999999999", "HL 7", "HL -1", "CAL 0 nan", "CAL 0 inf", "CAL 0 5.1",
-        "CAL 0 1e999", "CAL 0 -6", "CAL save junk", "US 0 649", "US 0 2501", "US 0 65536", "ARM extra"};
+        "CAL 0 1e999", "CAL 0 -6", "CAL save junk", "US 0 650", "US 0 2500", "US 0 899", "US 0 2101", "US 0 65536", "ARM extra"};
     for (const char* line : invalid) CHECK(feel::parseCommand(line).kind == feel::CommandKind::Invalid);
     CHECK(feel::parseCommand(nullptr).kind == feel::CommandKind::Invalid);
     CHECK(feel::parseCommand(std::string(1000, 'A').c_str()).kind == feel::CommandKind::Invalid);
@@ -434,11 +440,79 @@ TEST(seed_0xc0ffee_packet_fault_fuzz_preserves_output_bounds) {
         const auto& after = c.snapshot();
         for (std::size_t i = 0; i < 7; ++i) {
             CHECK(after.bands[i] <= 4);
-            CHECK(after.angles[i] >= 0 && after.angles[i] <= 175);
-            CHECK(after.pulses[i] >= 650 && after.pulses[i] <= 2500);
+            CHECK(after.angles[i] >= 0 && after.angles[i] <= 120);
+            CHECK(after.pulses[i] >= 900 && after.pulses[i] <= 2100);
         }
         if (result != Result::Ok && before.active && after.active) CHECK(before.bands == after.bands);
         CHECK(after.highlight < 7 || after.highlight == 255);
+    }
+}
+
+TEST(calibration_records_reject_old_schema_and_corruption_atomically) {
+    Controller original;
+    CHECK(original.loadOffset(0, 4) == Result::Ok);
+    auto record = feel::calibrationRecord(original);
+    CHECK(std::string(feel::kCalibrationKey) == "offsets_120_v2");
+    CHECK(std::string(feel::kCalibrationKey).size() <= 15);
+    Controller restored;
+    record.version = 1;
+    CHECK(!feel::loadCalibration(restored, record));
+    for (auto offset : restored.snapshot().offsets) CLOSE(offset, 0);
+    record.version = feel::kCalibrationVersion;
+    record.offsets[6] = std::numeric_limits<float>::quiet_NaN();
+    CHECK(!feel::loadCalibration(restored, record));
+    for (auto offset : restored.snapshot().offsets) CLOSE(offset, 0);
+    record.offsets[6] = 5.01F;
+    CHECK(!feel::loadCalibration(restored, record));
+    for (auto offset : restored.snapshot().offsets) CLOSE(offset, 0);
+    record.offsets[6] = -5;
+    CHECK(feel::loadCalibration(restored, record));
+    CLOSE(restored.snapshot().offsets[0], 4);
+    CLOSE(restored.snapshot().offsets[6], -5);
+    CHECK(!restored.snapshot().benchArmed && !restored.snapshot().active);
+}
+
+TEST(raw_pulse_roundtrip_and_timeout_cover_entire_120_degree_range) {
+    for (uint16_t pulse = 900; pulse <= 2100; ++pulse) {
+        Controller c;
+        CHECK(c.loadOffset(0, 5) == Result::Ok);
+        CHECK(c.arm(0) == Result::Ok);
+        CHECK(c.benchPulse(0, pulse, 1) == Result::Ok);
+        // Raw pulse bypasses calibration, including at the endpoints.
+        CHECK(c.snapshot().pulses[0] == pulse);
+        CLOSE(c.snapshot().angles[0], (pulse - 900) / 10.0F);
+        CHECK(feel::angleToPulse(c.snapshot().angles[0]) == pulse);
+        c.tick(501);
+        neutral(c);
+        const float angle = (pulse - 900) / 10.0F;
+        const float gap = angle <= 40 ? 20 : angle <= 80 ? 60 : 100;
+        CLOSE(c.snapshot().angles[0], gap + 5);
+        CHECK(c.snapshot().pulses[0] >= 900 && c.snapshot().pulses[0] <= 2100);
+    }
+}
+
+TEST(calibrated_bands_taps_and_failure_paths_never_exceed_design_range) {
+    const float gaps[] = {20, 20, 60, 100};
+    const float taps[] = {13, 27, 67, 107};
+    for (int offset = -5; offset <= 5; ++offset) {
+        for (uint8_t band = 1; band <= 4; ++band) {
+            for (unsigned failure = 0; failure < 3; ++failure) {
+                Controller c;
+                CHECK(c.loadOffset(0, static_cast<float>(offset)) == Result::Ok);
+                c.connect(0);
+                CHECK(send(c, 0, band, 1, 0) == Result::Ok);
+                CLOSE(c.snapshot().angles[0], taps[band - 1] + offset);
+                c.tick(101);
+                CHECK(c.snapshot().angles[0] >= 0 && c.snapshot().angles[0] <= 120);
+                CHECK(c.snapshot().pulses[0] >= 900 && c.snapshot().pulses[0] <= 2100);
+                if (failure == 0) c.tick(501);
+                else if (failure == 1) c.disconnect(102);
+                else c.stop(102);
+                neutral(c);
+                CLOSE(c.snapshot().angles[0], gaps[band - 1] + offset);
+                CHECK(c.snapshot().pulses[0] >= 900 && c.snapshot().pulses[0] <= 2100);
+            }
+        }
     }
 }
 
@@ -456,7 +530,7 @@ TEST(output_guard_latches_fault_for_any_out_of_measured_range_channel) {
     for (std::size_t column = 0; column < 7; ++column) {
         feel::OutputGuard guard(true, 900, 2100);
         CHECK(guard.admit(pulses));
-        pulses[column] = 650; // Handoff endpoint conflicts with manufacturer range.
+        pulses[column] = 899; // Outside this design and the configured measured range.
         CHECK(!guard.admit(pulses));
         CHECK(guard.state() == feel::OutputGuard::State::Fault);
         pulses[column] = 1500;

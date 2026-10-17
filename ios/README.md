@@ -2,6 +2,10 @@
 
 This source recreates the intended system from the handoff. No original Swift project or model weights were recovered. Historical handoff test counts do not apply to this implementation. `Lantern` is the internal app target; the display name is FEEL. `Beacon` is the second-phone app. This V3 branch includes the V1 foundation and V2 Spatial Memory, with each earlier version preserved on its own branch.
 
+# FEEL V2 iOS — Spatial Memory
+
+This source recreates the intended system from the handoff. No original Swift project or model weights were recovered. Historical handoff test counts do not apply to this implementation. `Lantern` is the internal app target; the display name is FEEL. `Beacon` is the second-phone app. This V2 branch adds session-only Spatial Memory to the latest V1 on `main`, including its Geist interface and persistent Stop control.
+
 ## What is implemented
 
 - SwiftUI run screen, accessible labels, visible live/simulation/uncertain states, stop action and a seven-column virtual puck.
@@ -73,7 +77,7 @@ Only medium/high-confidence depth contributes. The app samples every third depth
 
 Choose the intended device under **Puck connection**; the app does not automatically connect to an arbitrary puck. Packets use the UUIDs in `FeelBLE`, matching the firmware. Connection/status notifications do not prove actuation.
 
-Status decoding explicitly distinguishes **Physical PWM DISABLED**, **PWM enabled — unverified physically**, and **OUTPUT FAULT**. The default board build disables servo PWM because the handoff's175°650–2500 µs sweep conflicts with the published FS0307 range. Resolve this hardware discrepancy and complete the firmware's measured-output gates before enabling PWM. Never send a servo sweep based only on virtual pins.
+Status decoding explicitly distinguishes **Physical PWM DISABLED**, **PWM enabled — unverified physically**, and **OUTPUT FAULT**. The current CAD/controller targets the user-selected FS0307 nominal 120° / 900–2100 µs design. Servo PWM remains disabled until actual pulse limits, power and single-column mechanics are verified. The old 175° design is superseded; do not reuse its shafts or saved calibration. Never send a servo sweep based only on virtual pins.
 
 The nine-byte command has no application checksum or timestamp. A valid-looking changed byte/delayed packet cannot always be detected by this protocol. BLE transport behavior and real firmware timeout must be measured; host simulation is not radio validation.
 
@@ -89,7 +93,7 @@ Apple recommends portrait orientation for strongest NI performance; FEEL's fixed
 
 **Simulation** runs a12-second loop through obstacle bands, a moving synthetic target and a2-second tracking-loss interval. It is conspicuously labeled and never transmits simulated movement to BLE. Stop clears state, sends neutral if a puck is connected, pauses AR and stops peer ranging. Backgrounding the app also stops guidance; the board independently neutralizes on its timeout.
 
-On this Linux host, portable sources and app syntax can be checked. Full Apple-framework typechecking, Xcode app/simulator builds, UI execution, signed installs, detector inference and all LiDAR/BLE/UWB hardware behavior need a Mac/devices or a functioning hosted macOS CI run. See root release/test reports for actual results. No physical verification is claimed.
+Current integration checks run on macOS. See [V2 main integration](../docs/V2-MAIN-INTEGRATION.md) for executed results. Simulator and unsigned builds do not establish LiDAR/BLE/UWB or physical performance.
 
 ## Primary references consulted
 
@@ -137,3 +141,5 @@ including Beacon simulator and both unsigned device builds. Actual executed
 results and the simulator barcode revision compatibility policy are recorded in
 [TEST-REPORT.md](../docs/TEST-REPORT.md). Speech recognition, real map alignment,
 camera detection and physical tactile guidance still require device validation.
+
+Apple-target tests require Xcode; current results are recorded in the integration report.

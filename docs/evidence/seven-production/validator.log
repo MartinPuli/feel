@@ -1,0 +1,18 @@
+test_attestations_and_timestamp_required (__main__.ProductionConfigTests) ... ok
+test_duplicate_json_keys_and_nonfinite_values_rejected (__main__.ProductionConfigTests) ... ok
+test_evidence_must_exist_and_not_be_empty (__main__.ProductionConfigTests) ... ok
+test_exact_boundaries_and_column_order (__main__.ProductionConfigTests) ... ok
+test_hook_injects_only_after_synthetic_validation (__main__.ProductionConfigTests) ... ok
+test_hook_refuses_missing_and_invalid_config (__main__.ProductionConfigTests) ... ok
+test_missing_config (__main__.ProductionConfigTests) ... ok
+test_missing_extra_duplicate_or_invalid_columns (__main__.ProductionConfigTests) ... ok
+test_missing_or_wrong_gpio (__main__.ProductionConfigTests) ... ok
+test_ranges_must_cover_entire_service_envelope (__main__.ProductionConfigTests) ... ok
+test_tracked_template_is_unverified (__main__.ProductionConfigTests) ... ok
+test_unique_nonempty_unit_ids (__main__.ProductionConfigTests) ... ok
+test_valid_synthetic_records_use_service_envelope (__main__.ProductionConfigTests) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.025s
+
+OK

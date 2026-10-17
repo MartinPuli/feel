@@ -1,11 +1,20 @@
-# FEEL V3 — Advanced perception and memory
+# FEEL V3 — advanced
 
-This isolated branch adds explicit voice commands, local AR world-map storage,
-adaptive target tapping and barcode/QR finding. It retains V2 Remember, Recall,
-Return and multiple bookmarks. Start with [ADVANCED.md](docs/ADVANCED.md) and
-[SPATIAL-MEMORY.md](docs/SPATIAL-MEMORY.md). V1 and V2 passed their software gates,
-including hosted iOS builds/tests, before this branch was created. V3 results are
-tracked in [release status](docs/RELEASE-STATUS.md); physical validation is separate.
+This branch adds explicit voice commands, a saved local map, adaptive target taps and QR/barcode finding on top of V2. See [ADVANCED.md](docs/ADVANCED.md).
+
+> **FS0307 120° revision:** current CAD and firmware use 0/40/80/120° band positions.
+> See [design and validation](docs/FS0307-120-DESIGN.md). Old 175° shafts/calibration
+> are superseded. Default seven-servo PWM is disabled pending measured limits.
+> The [midpoint demo](docs/SINGLE-SERVO-IPHONE.md) has user-reported motion.
+> The opt-in [single-servo live profile](docs/SINGLE-SERVO-LIVE.md) uses nominal120° production mapping on GPIO32.
+
+V3 includes V2 session memory and current V1 camera-first UI, firmware and CAD from
+`main` (`a4c141e`). See [version guide](docs/VERSIONS.md) and
+[current integration checks](docs/V3-MAIN-INTEGRATION.md).
+
+**V1 is maintained on `main`.** It includes the current firmware and CAD,
+Lantern with its [camera-first interface](docs/V1-CAMERA-UI.md), Beacon, and V1 validation tools.
+Use `main` for all current V1 work. V2 and V3 remain separate development branches.
 
 A prototype that translates indoor depth and target direction into a **7-column ×
 4-pin tactile puck**, using a LiDAR iPhone, BLE, an ESP32 and seven servos.
@@ -17,14 +26,21 @@ verification of this repository. The earlier preparation work is preserved on
 
 | Branch | Purpose |
 |---|---|
-| `feel/v1-foundation` | Swift iOS + perception + BLE, ESP32, CAD, production replay |
+| `main` | Current V1: iOS apps, perception, BLE, ESP32, CAD and production replay |
+| `feel/v1-foundation` | Preserved V1 development history; continue new V1 work on `main` |
 | `feel/v2-spatial-memory` | Remember / Recall / Return, created only after V1 validation |
-| `feel/v3-advanced` | Voice, persistent maps, adaptive tapping and barcode finding |
+| `feel/v3-advanced` | Optional advanced work, only after V1 and V2 |
+
+For the final seven-servo configuration, start with [SEVEN-SERVO-PRODUCTION.md](docs/SEVEN-SERVO-PRODUCTION.md).
+
+To test the current app and single-servo setup, follow [TEST-V1.md](docs/TEST-V1.md).
 
 To set up the board on your Mac, start with [SETUP-MAC-ESP32.md](docs/SETUP-MAC-ESP32.md).
 
 See [release status](docs/RELEASE-STATUS.md) for actual checks and blockers.
-**No real hardware has been tested in this build environment.**
+**One-servo motion has been observed; full travel, seven-servo mechanics and sensing accuracy remain unverified.**
+
+See [version guide](docs/VERSIONS.md) for V1/V2/V3 features and branch selection.
 
 ## Run software checks
 
@@ -43,10 +59,7 @@ sh cad/build.sh
 python3 cad/tools/check_stl.py stl/*/*.stl
 python3 cad/tools/cam_sim.py
 python3 scripts/run_v1_checks.py
-# V2 and V3 production paths, preserving foundation contracts:
-python3 scripts/run_spatial_checks.py
-python3 scripts/run_advanced_checks.py
-# Open .artifacts/v3-checks/advanced/index.html for the V3 recorded replay.
+python3 scripts/run_advanced_checks.py  # V3 plus inherited V1/V2 contracts
 ```
 
 Full runner exits0 for complete pass,1 for failure,2 for blocked/not-run checks.
@@ -72,8 +85,6 @@ BLE, NI, tactile usability or mechanical reliability from the simulator.
 - [`cad/`](cad/README.md): parametric OpenSCAD test rig, puck, cams, pins and forearm pack.
 - [`protocol/`](protocol/vectors.json): exact wire cases; [`docs/PROTOCOL.md`](docs/PROTOCOL.md) gives policy.
 - [`validation/production/`](validation/production/README.md): compiled cross-layer replay.
-- [`validation/spatial/`](validation/spatial/README.md): V2 memory replay.
-- [`validation/advanced/`](validation/advanced/README.md): V3 archive/voice/tactile replay.
 - `validation/feel_model.py`: historical independent reference model, not device code.
 
 ## Build and demonstrate honestly

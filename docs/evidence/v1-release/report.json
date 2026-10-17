@@ -1,0 +1,145 @@
+{
+  "source_commit": "5f3ded98fc5d7a55d3c6a3a25945e5d7b0245fc0",
+  "recorded_utc": "2026-10-17T03:12:59.049650+00:00",
+  "software_gate": "PASS",
+  "physical_device": "Single-servo user-reported motion only; seven-servo production physical validation NOT VERIFIED",
+  "installed_firmware": "Earlier accff1f single-demo build; release hardening has not been flashed",
+  "checks": [
+    {
+      "name": "source",
+      "scope": "production",
+      "command": "python3 scripts/check_sources.py",
+      "timestamp_utc": "2026-10-17T03:10:17.560706+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "source.log"
+    },
+    {
+      "name": "tooling",
+      "scope": "production",
+      "command": "python3 -m unittest discover -s scripts/tests -v",
+      "timestamp_utc": "2026-10-17T03:10:17.910645+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "tooling.log"
+    },
+    {
+      "name": "reference",
+      "scope": "production",
+      "command": "python3 -m unittest discover -s validation/tests -v",
+      "timestamp_utc": "2026-10-17T03:10:19.232581+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "reference.log"
+    },
+    {
+      "name": "swift",
+      "scope": "production",
+      "command": "sh ios/scripts/test_portable.sh",
+      "timestamp_utc": "2026-10-17T03:10:19.421805+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "swift.log"
+    },
+    {
+      "name": "swift-build",
+      "scope": "production",
+      "command": "swift build -j 2 --package-path ios/Shared/FeelCore",
+      "timestamp_utc": "2026-10-17T03:10:49.559979+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "swift-build.log"
+    },
+    {
+      "name": "integration",
+      "scope": "production",
+      "command": "python3 validation/production/run.py",
+      "timestamp_utc": "2026-10-17T03:10:51.377257+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "integration.log"
+    },
+    {
+      "name": "cad-build",
+      "scope": "production",
+      "command": "sh cad/build.sh",
+      "timestamp_utc": "2026-10-17T03:10:51.628833+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "cad-build.log"
+    },
+    {
+      "name": "cam",
+      "scope": "production",
+      "command": "python3 cad/tools/cam_sim.py",
+      "timestamp_utc": "2026-10-17T03:11:02.486279+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "cam.log"
+    },
+    {
+      "name": "contract",
+      "scope": "production",
+      "command": "python3 validation/check_cam_contract.py",
+      "timestamp_utc": "2026-10-17T03:11:03.585131+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "contract.log"
+    },
+    {
+      "name": "cad-regression",
+      "scope": "production",
+      "command": "python3 -m unittest discover -s cad/test -v",
+      "timestamp_utc": "2026-10-17T03:11:03.828083+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "cad-regression.log"
+    },
+    {
+      "name": "model",
+      "scope": "production",
+      "command": "python3 scripts/fetch_model.py",
+      "timestamp_utc": "2026-10-17T03:11:04.555227+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "model.log"
+    },
+    {
+      "name": "meshes",
+      "scope": "production",
+      "command": "python3 cad/tools/check_stl.py stl/test/crank.stl stl/test/foam_template.stl stl/test/dummy_servo.stl stl/test/pitch_coupon.stl stl/test/guide.stl stl/test/pins_tip21.stl stl/test/coupling_C2.stl stl/test/coupling_C3.stl stl/test/coupling_C1.stl stl/test/shaft_H.stl stl/test/pins_tip15.stl stl/test/shaft_G.stl stl/test/hole_coupon.stl stl/test/shaft_A.stl stl/test/frame.stl stl/test/strip.stl stl/puck/foam_template.stl stl/puck/guide.stl stl/puck/face.stl stl/puck/chassis.stl stl/puck/pack_tray.stl stl/puck/pins.stl stl/puck/shaft_A.stl stl/puck/servo_retainer.stl",
+      "timestamp_utc": "2026-10-17T03:11:04.687606+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "meshes.log"
+    },
+    {
+      "name": "firmware-host",
+      "status": "PASS",
+      "log": "firmware-host-excerpt.log",
+      "full_log_sha256": "b771e32df7046686a2050220099b4ed7f0f569c1c130625e680e8cb4ca3b3cbd",
+      "full_local_log": "/tmp/feel-v1-release-host.log"
+    },
+    {
+      "name": "firmware-build",
+      "status": "PASS",
+      "log": "firmware-build-excerpt.log",
+      "full_log_sha256": "39d018a0f2510aba5f7d1c6a95e43c3ea0d0cabe448ed4040a65abf8c63fd583",
+      "full_local_log": "/tmp/feel-firmware-release-build.log"
+    },
+    {
+      "name": "bench-build",
+      "status": "PASS",
+      "log": "bench-build-excerpt.log",
+      "full_log_sha256": "e4b189c5ab7384bffa2123d217b38a67d58642ad3a11ebae601616ef5ad3a049",
+      "full_local_log": "/tmp/feel-v1-release-bench.log"
+    },
+    {
+      "name": "ios",
+      "status": "PASS",
+      "log": "ios-excerpt.log",
+      "full_log_sha256": "b6b322cd53a799bf58de1f4da8ffd0911466a0c84a77756316bc5b5c0e1f580f",
+      "full_local_log": "/tmp/feel-v1-release-ios.log"
+    }
+  ]
+}

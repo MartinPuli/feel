@@ -1,12 +1,18 @@
+> Single-servo app control: the opt-in `esp32-single-live` environment uses the
+> production center-sector mapping on GPIO32 within nominal900–2100 µs. This
+> user-selected120° profile is not measured calibration. See
+> [single-live instructions](../docs/SINGLE-SERVO-LIVE.md). The older midpoint
+> demo and default disabled seven-servo environments remain available.
+
 # FEEL V1 firmware — greenfield implementation
 
 This is newly written code derived from `HANDOFF-v7.md`. It is **not** the missing original firmware. Its portable production controller is exercised on the host; board compilation and physical testing are separate gates. Never infer servo motion, pin return, force, or BLE reliability from a passing host test.
 
 **Selected hardware:** the team confirmed two **ESP32-WROOM boards with USB-C** (one main, one spare), so use the `esp32` environment and the classic GPIO map after checking the actual board's exposed labels. The `esp32s3` environment is a secondary portability build; it does not describe a board in the confirmed inventory. A USB data cable, 400-point breadboards, perfboards/headers, 22-AWG solid wire, a multimeter, soldering tools and an Adafruit 5 V / 4 A supply are available. The supply's availability does **not** establish that 5 V is correct for the unconfirmed servo variant. Check the capacitor's actual value/polarity/rating (target inventory check: 1000 µF / 25 V) and identify every servo label before powering it. Breadboards are for logic prototyping, not an assumed adequate seven-servo current path.
 
-**Physical PWM is disabled by default** (`FEEL_ENABLE_SERVO_OUTPUT=0`). The board still runs BLE, decoding, calibration, status and timeout logic, but GPIOs remain LOW. This is intentional: the [manufacturer's FS0307 page](https://www.feetechrc.com/en/6v-06kg-analog-steering-gear-fs0307.html) lists 120° for 900–2100 µs and a 6–8.4 V variant, which conflicts with the handoff's unmeasured 175° / 650–2500 µs assumption. Confirm the actual unit and resolve the travel requirement before powered cam integration.
+**Physical PWM is disabled by default** (`FEEL_ENABLE_SERVO_OUTPUT=0`). The board still runs BLE, decoding, calibration, status and timeout logic, but GPIOs remain LOW. The current design assumes **120°**, as explicitly requested, using the FS0307 datasheet's nominal **900–2100 µs** range. This supersedes the historical handoff's 175° / 650–2500 µs design. It is a software/mechanical design assumption, **not a measurement or physical validation of the received servo**. See the [manufacturer PDF, running degree row](https://www.feetechrc.com/Data/feetechrc/upload/file/20220608/6379029528194935652722624.pdf). Confirm the actual unit's power requirements separately; the web page and PDF list conflicting voltage ranges.
 
-An explicitly enabled build must set all three build macros: `FEEL_ENABLE_SERVO_OUTPUT=1`, `FEEL_VERIFIED_PULSE_MIN_US=<measured-safe-minimum>`, and `FEEL_VERIFIED_PULSE_MAX_US=<measured-safe-maximum>`. Missing measured limits cause compilation to fail. The guard validates **all seven** commanded pulses before any update; an out-of-range request detaches every PWM output and latches a fault until reboot. It does not stretch 120° into 175° or silently remap the cam. A narrower confirmed range permits only the commands within that range; the full handoff mechanism remains blocked until adequate real travel or a redesigned cam is established. Do not use example/manufacturer values as a substitute for identifying the received servo and verifying unloaded operation.
+An explicitly enabled build must set all three build macros: `FEEL_ENABLE_SERVO_OUTPUT=1`, `FEEL_VERIFIED_PULSE_MIN_US=<measured-safe-minimum>`, and `FEEL_VERIFIED_PULSE_MAX_US=<measured-safe-maximum>`. Missing measured limits cause compilation to fail. Bounds must be ordered within 900–2100 µs. The guard validates **all seven** commanded pulses before any update; an out-of-range request detaches every PWM output and latches a fault until reboot. A narrower confirmed range permits only commands within that range; it does not silently rescale angles. Do not use the nominal values as a substitute for identifying the received servo and verifying unloaded operation. This revision neither enables outputs nor flashes a board.
 
 ## Build and test
 
@@ -30,7 +36,7 @@ python3 -m platformio device monitor -b 115200
 
 `platformio.ini` pins Espressif32 6.9.0 (Arduino-ESP32 2.0.17) and NimBLE-Arduino 2.3.6. Seven independent LEDC channels produce 50 Hz PWM at 14-bit resolution; no ESP32Servo dependency. `main.cpp` includes a guarded Arduino 3 LEDC API path for future upgrades; the default build uses the pinned Arduino 2 API. A build proves compilation, **not** a real servo waveform.
 
-`esp32-compilecheck` and `esp32s3-compilecheck` are software-only compiler fixtures using 650/2500 test bounds so the enabled output path is compiled and linked. Those are **not measured safe bounds**, and their binaries must never be flashed. A pre-build guard rejects `upload`, `uploadfs`, and `program` targets in these environments. Normal default environments remain PWM-disabled. Build scripts cap parallel compilation at two jobs (`FEEL_BUILD_JOBS` can override on an adequately sized machine).
+`esp32-compilecheck` and `esp32s3-compilecheck` are software-only compiler fixtures using 900/2100 test bounds so the enabled output path is compiled and linked. Those are **not measured safe bounds**, and their binaries must never be flashed. A pre-build guard rejects `upload`, `uploadfs`, and `program` targets in these environments. Normal default environments remain PWM-disabled. Build scripts cap parallel compilation at two jobs (`FEEL_BUILD_JOBS` can override on an adequately sized machine).
 
 Arduino IDE alternative: copy `include/feel` and `src/controller.cpp`, `src/commands.cpp`, `src/main.cpp`, `include/board_config.hpp` into a sketch while retaining the `feel/` include hierarchy, and provide an empty sketch-named `.ino`; install the same Espressif core and NimBLE versions. PlatformIO is the reproducible, supported build route.
 
@@ -52,9 +58,9 @@ Do not transfer the classic pin list to an S3. Confirm the actual board, module 
 - Exactly 9 bytes; bands 0–4; highlight 0–6 or 255. Malformed packets apply no motion. Wire-legal highlight on a zero band is normalized to effective highlight 255.
 - First valid sequence is accepted. Subsequent modulo-256 delta 1–127 is accepted; delta 0 is duplicate, 128–255 is stale. Rejections do **not** refresh the watchdog. Disconnect and timeout clear the sequence baseline.
 - At `elapsed >= 500 ms` without an accepted packet or valid bench motion/keepalive, command all bands down into their previous nearest gaps. Unsigned subtraction handles the 32-bit `millis()` rollover.
-- Four band angles: 0°, 58°, 117°, 175°. Gaps: 29°, 87.5°, 146°. Last selected bands 1/2 use 29°, 3/4 use 146°; initially every column uses 29°. Nearest-gap ties choose the lower angle. The 87.5° gap can be used after raw bench positions.
-- Highlight dips 21° toward that band's gap for the first **100 ms of a 600 ms cycle**. These durations are new tunable assumptions, not recovered handoff facts. Repeated 10 Hz packets do not restart a tap; changing the highlighted column/band does.
-- Calibration offsets are finite ±5°, added to every non-raw position and clamped to 0–175°. The nominal pulse conversion is 650–2500 µs across 0–175°, from the handoff's proposed swing test; real endpoints remain **unmeasured**. Raw `US` bypasses the offset.
+- Four band angles: **0°, 40°, 80°, 120°**. Gaps: **20°, 60°, 100°**. Last selected bands 1/2 use 20°, band 3 uses 60°, band 4 uses 100°; initially every column uses 20°. Nearest-gap ties choose the lower angle. Raw bench positions use the same nearest-gap rule.
+- Highlight dips **13° toward that band's gap** (tap positions 13°, 27°, 67°, 107°) for the first **100 ms of a 600 ms cycle**. These durations are new tunable assumptions, not recovered handoff facts. Repeated 10 Hz packets do not restart a tap; changing the highlighted column/band does.
+- Calibration offsets are finite ±5°, added to every non-raw position and clamped to **0–120°**. The nominal pulse conversion is **900–2100 µs across 0–120°**, with **60° = 1500 µs**; real endpoints remain **unmeasured**. Raw `US` bypasses the offset. An endpoint offset may be clipped; it cannot create extra travel.
 - A jump between distant bands necessarily sweeps through intervening cam positions. This controller does **not** promise neighbor-free transient motion. CAD endpoint geometry is insufficient to establish physical P5.
 
 The wire has no checksum, timestamp, session identifier, or authentication. Semantically valid bit corruption and delayed forward-sequence packets can pass. The local 500 ms watchdog bounds receiver silence; it cannot prove the sensor observation was fresh. The iOS sender must enforce its own sensing/tracking freshness. Sequence baseline reset also means a delayed packet after timeout cannot be recognized as belonging to an old session.
@@ -85,7 +91,7 @@ Disconnect the phone first. No servo motion command is accepted until `ARM`. Arm
 | `ARM` | Start a 30-second bench lease, neutral; rejected while BLE connected |
 | `B c b` | Column c 0–6, band b 0–4; `B 0 0` drops column 0 |
 | `HL c` / `HL off` | Tap selected column or disable tap; zero band has no effective tap |
-| `US c pulse` | Exclusive raw bench pulse 650–2500 µs, other columns neutral |
+| `US c pulse` | Exclusive raw bench pulse 900–2100 µs, other columns neutral |
 | `KEEP` | Refresh current active bench motion only; cannot revive timed-out motion |
 | `CAL c offset` | Offset ±5°; does not refresh motion watchdog |
 | `CAL save` | Neutral, stop/disarm, then persist one versioned offset blob in NVS |
@@ -93,13 +99,13 @@ Disconnect the phone first. No servo motion command is accepted until `ARM`. Arm
 | `STATUS` | Print commanded bands, angles, pulses, offsets and flags |
 | `HELP` | Print command syntax |
 
-Malformed/overlong lines, extra arguments, NaN/infinite offsets and out-of-range numbers are rejected. A 96-byte serial budget and one command per loop prevent unbounded serial parsing from starving the watchdog. NVS save uses a single blob and validates all values on load; invalid data keeps all default zero offsets. Saving never writes continuously to flash.
+Malformed/overlong lines, extra arguments, NaN/infinite offsets and out-of-range numbers are rejected. A 96-byte serial budget and one command per loop prevent unbounded serial parsing from starving the watchdog. NVS save uses a version-2 record under `offsets_120_v2`, validates its version and all offset values before applying any, and rejects invalid data atomically. The old `offsets_v1` key is never read or migrated: calibration for the previous geometry cannot be reused, so this revision starts at zero offsets until recalibrated. Invalid data keeps all default zero offsets. Saving never writes continuously to flash.
 
 One-column bring-up:
 
 1. Remove servo power. Confirm board pins, voltage, current limits, polarity, common ground and actual FS0307/horn geometry. Flash only the matching target. The default build holds the signal outputs LOW; verify that no servo PWM is emitted before enabling a measured-range build.
 2. Complete the **unpowered** single-column P1–P5 tests before fitting a servo. Keep the hand clear. Identify the actual servo voltage/travel and establish safe limits with an appropriate unloaded servo tester. The default FEEL build emits no servo pulses.
-3. Configure the three measured-range macros above for deliberate bench use, rebuild and flash. Start with one uncoupled servo and a current-limited supply; the initial neutral pulse can move it immediately. Measure a safe pulse range gradually; **do not blindly send both 650/2500 µs endpoints**. Those values are software limits, not verified safe limits for the received part. Stop at any stall, excess current, heat, or mechanical end stop. If adequate angular travel is unavailable, stop full cam integration and change the servo or redesign the cam; do not assume changing pulse limits creates the missing travel.
+3. Configure the three measured-range macros above for deliberate bench use, rebuild and flash. Start with one uncoupled servo and a current-limited supply; the initial neutral pulse can move it immediately. Measure a safe pulse range gradually; **do not blindly send both 900/2100 µs endpoints**. Those values are nominal design limits, not verified safe limits for the received part. Stop at any stall, excess current, heat, or mechanical end stop. If the received unit cannot provide the assumed 120° within measured safe limits, stop cam integration and revise the design; changing pulse limits does not establish safe travel.
 4. Only after sufficient measured travel and safe endpoints are established, fit the verified coupling at known orientation. Run `ARM`, `B 0 1`, then other bands one at a time, renewing ARM as needed. For a brief supervised hold: `python3 firmware/tools/bench.py --port /dev/ttyUSB0 --band 0 2 --seconds 2`. Default transport opening may reset the ESP32; read the helper's console output. OutputState 0 or 2 means no motion should be expected; disconnect servo power before investigating a fault.
 5. Adjust `CAL 0 offset`, inspect all four bands and gaps, `CAL save`, reboot, and verify `STATUS`. One offset cannot correct a nonlinear/incorrect pulse range; never use offset to hide mechanical misalignment.
 6. Only after one column passes real motion/return/tap tests, repeat per column and expand to seven. Test power under load, disconnect, phone backgrounding, missing packets, and the 500 ms failsafe with measured latency. Log physical findings separately from software evidence.
@@ -128,3 +134,70 @@ Official implementation references consulted 2026-10-16:
 - [PlatformIO ESP32-S3 DevKitC-1 board](https://docs.platformio.org/en/latest/boards/espressif32/esp32-s3-devkitc-1.html) and [unit testing](https://docs.platformio.org/en/latest/advanced/unit-testing/index.html).
 
 Handoff omissions resolved explicitly: UUIDs/status layout, modular sequence policy, gap tie rule, tap period/dip duration, safe command parsing, offset bounds, disconnected bench mode, 30-second ARM lease, raw-pulse exclusivity and proposed S3 GPIO mapping. Physical endpoints, servo polarity, motion timing, current supply, horn alignment, pin return and tactile interpretation remain measurement tasks.
+
+## Opt-in single-servo live120 adapter
+
+`esp32-single-live` is a separate classic-ESP32 environment for the explicitly
+selected **nominal120-degree** design. It advertises **FEEL Center Live** and
+attaches only GPIO32. It reads production controller `pulses[3]` directly: the
+center sector's band positions, adjacent gaps, highlight taps and existing
+calibration offsets all apply within nominal900–2100 microseconds. This is not
+a measured-safe-range build or evidence of full physical120-degree travel.
+
+Boot, connection without a packet, all-zero STOP/tracking-loss packets,
+disconnection and the existing500ms command timeout leave GPIO32 detached/LOW.
+Serial accepts only STATUS, STOP and HELP; calibration and bench motion remain
+unavailable in this mode. Serial STOP is temporary if the phone continues
+sending live packets. The other six servo outputs remain unattached.
+
+```sh
+# Compile only; does not flash or actuate hardware:
+python3 -m platformio run -d firmware -e esp32-single-live -j 2
+```
+
+The existing `esp32-single-demo` keeps its nominal1450–1550us mapping. Default
+seven-servo environments keep PWM disabled and their measured-limit requirement
+is unchanged. The new adapter reuses the same nine-byte BLE protocol and
+quantized50Hz output path; no independent sweep is performed.
+
+## Guarded seven-servo production profile
+
+`esp32-production` uses the existing seven-column controller on classic ESP32
+GPIOs32,33,25,26,27,14,13. It is explicitly gated by the ignored local file
+`firmware/production-measurements.local.json`; the file is intentionally absent.
+The tracked `production-measurements.example.json` contains false/null fields
+and cannot enable output. Fill a local copy only from actual physical records.
+
+The prebuild hook requires schema_version1, board `esp32-classic`, a true global
+verification attestation, verifier name, ISO8601 timestamp with timezone, and a
+nonempty local evidence file. All seven column records must have unique column
+and unit identifiers, the matching GPIO, a true verification attestation, a
+measured integer minimum/maximum pulse range, and a nonempty evidence file.
+Evidence paths are absolute or relative to the measurement JSON directory.
+Every measured range must include the entire nominal900–2100us service range;
+a narrower range blocks this profile instead of silently rescaling the cams.
+Evidence files can live in ignored `firmware/production-evidence/`.
+
+Only after those records validate does the hook inject output enable and the
+900/2100 service limits. These are the bounded operating envelope contained in
+every supplied measured range, not fabricated measurement results. The hook
+prints the configuration SHA256 for build evidence. It checks the supplied
+records and evidence-file presence, **not the truth of the physical tests**.
+
+```sh
+# This deliberately fails while actual local measurement records are absent:
+python3 -m platformio run -d firmware -e esp32-production -j 2
+# Software fixtures exercise the output path without manufacturing records:
+sh firmware/test/build_output_paths.sh
+python3 firmware/test/test_production_config.py
+```
+
+Default and single-servo profiles remain unchanged. Neither this profile nor a
+successful build establishes full travel, electrical safety, mechanical return,
+tactile usability or deployment readiness. Before uploading, review the board,
+wiring/power plan and each servo's measured safe range, and disconnect servo
+power. After uploading, complete the powered integration and end-to-end tests
+in `docs/SEVEN-SERVO-PRODUCTION.md`; those are subsequent release gates, not
+prerequisites for the upload needed to run them. Production starts at its neutral
+gap positions; it is not the single-servo boot-detached adapter. All test records in the validator suite are explicitly synthetic and
+are created only in temporary directories, never as deployment configuration.

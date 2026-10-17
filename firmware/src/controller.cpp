@@ -48,27 +48,25 @@ std::array<uint8_t, kPacketBytes> encodePacket(const Packet& packet) {
 }
 
 float bandAngle(uint8_t band) {
-    constexpr float angles[] = {29.0F, 0.0F, 58.0F, 117.0F, 175.0F};
-    return band <= 4 ? angles[band] : 29.0F;
+    return band >= 1 && band <= 4 ? kBandAnglesDeg[band - 1] : kDefaultNeutralDeg;
 }
 
 float nearestGap(float angle) {
-    constexpr float gaps[] = {29.0F, 87.5F, 146.0F};
-    float best = gaps[0];
-    for (float gap : gaps) {
+    float best = kGapAnglesDeg[0];
+    for (float gap : kGapAnglesDeg) {
         if (std::fabs(gap - angle) < std::fabs(best - angle)) best = gap;
     }
     return best;
 }
 
 uint16_t angleToPulse(float degrees) {
-    const float clamped = std::max(0.0F, std::min(175.0F, degrees));
-    return static_cast<uint16_t>(std::lround(kMinPulseUs + clamped *
-        static_cast<float>(kMaxPulseUs - kMinPulseUs) / 175.0F));
+    const float clamped = std::max(kMinAngleDeg, std::min(kMaxAngleDeg, degrees));
+    return static_cast<uint16_t>(std::lround(kMinPulseUs + (clamped - kMinAngleDeg) *
+        static_cast<float>(kMaxPulseUs - kMinPulseUs) / kAngleSpanDeg));
 }
 
 Controller::Controller() {
-    neutral_.fill(29.0F);
+    neutral_.fill(kDefaultNeutralDeg);
     updateOutput(0);
 }
 
@@ -196,7 +194,7 @@ Result Controller::benchPulse(std::size_t column, uint16_t pulse, uint32_t now) 
     neutralize();
     rawColumn_ = static_cast<uint8_t>(column);
     rawPulseUs_ = pulse;
-    neutral_[column] = nearestGap((pulse - kMinPulseUs) * 175.0F /
+    neutral_[column] = nearestGap(kMinAngleDeg + (pulse - kMinPulseUs) * kAngleSpanDeg /
         static_cast<float>(kMaxPulseUs - kMinPulseUs));
     state_.rawPulse = true;
     state_.active = true;
@@ -215,7 +213,7 @@ Result Controller::keepAlive(uint32_t now) {
 
 Result Controller::loadOffset(std::size_t column, float offset) {
     if (column >= kColumns) return Result::BadColumn;
-    if (!std::isfinite(offset) || offset < -5.0F || offset > 5.0F) return Result::BadOffset;
+    if (!std::isfinite(offset) || offset < -kMaxCalibrationOffsetDeg || offset > kMaxCalibrationOffsetDeg) return Result::BadOffset;
     state_.offsets[column] = offset;
     return Result::Ok;
 }
@@ -234,13 +232,13 @@ void Controller::updateOutput(uint32_t now) {
         static_cast<uint32_t>(now - tapEpochMs_) % kTapPeriodMs < kTapDipMs;
     for (std::size_t i = 0; i < kColumns; ++i) {
         float angle = state_.bands[i] == 0 ? neutral_[i] : bandAngle(state_.bands[i]);
-        if (state_.tapActive && state_.highlight == i) angle += neutral_[i] > angle ? 21.0F : -21.0F;
-        state_.angles[i] = std::max(0.0F, std::min(175.0F, angle + state_.offsets[i]));
+        if (state_.tapActive && state_.highlight == i) angle += neutral_[i] > angle ? kTapAngleDeg : -kTapAngleDeg;
+        state_.angles[i] = std::max(kMinAngleDeg, std::min(kMaxAngleDeg, angle + state_.offsets[i]));
         state_.pulses[i] = angleToPulse(state_.angles[i]);
     }
     if (state_.rawPulse) {
         state_.pulses[rawColumn_] = rawPulseUs_;
-        state_.angles[rawColumn_] = (rawPulseUs_ - kMinPulseUs) * 175.0F /
+        state_.angles[rawColumn_] = kMinAngleDeg + (rawPulseUs_ - kMinPulseUs) * kAngleSpanDeg /
             static_cast<float>(kMaxPulseUs - kMinPulseUs);
     }
 }

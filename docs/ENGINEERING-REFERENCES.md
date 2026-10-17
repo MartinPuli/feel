@@ -11,7 +11,7 @@ Official references consulted October 16, 2026:
 
 The actual source and pinned versions must determine implementation decisions. No unreviewed third-party skills or hooks were installed. Specialized work here consisted of bounded engineering agents and an independent code review; no unavailable `feel-*` skill is claimed to have run.
 
-## Questions the missing protocol/source must settle
+## Historical questions the missing protocol/source had to settle
 
 | Topic | Known from v7 | Still unresolved |
 |---|---|---|
@@ -41,3 +41,9 @@ missing implementation; new decisions are in PROTOCOL.md and BUILD-HANDOFF.md.
   are documented in ios/README.md. Linux pure-Swift tests do not validate Apple APIs.
 - Arduino-ESP32 LEDC: https://docs.espressif.com/projects/arduino-esp32/en/latest/api/ledc.html
   Actual firmware pins framework/platform versions; see firmware/platformio.ini.
+
+## 120° design revision
+
+The user selected nominal 120° FS0307 travel. Current CAD, firmware and protocol
+use 0/40/80/120° bands, 20/60/100° gaps and a 13° tap. Historical 175° values
+above are superseded. See [FS0307-120-DESIGN.md](FS0307-120-DESIGN.md).

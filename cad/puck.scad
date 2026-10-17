@@ -96,7 +96,7 @@ else if(part=="pins") pin_plate(columns,pin_tip_r,true);
 else if(part=="foam_template") foam_template(columns);
 else if(part=="servo_retainer") servo_retainer();
 else if(part=="assembly") {
-    angle=is_undef(angle)?58:angle;
+    angle=is_undef(angle)?band_angles[1]:angle;
     color([0.12,0.13,0.15]) chassis();
     color("lightblue",0.55) guide_assembly();
     color("lightcyan",0.35) translate([0,0,body_h-face_t]) face();

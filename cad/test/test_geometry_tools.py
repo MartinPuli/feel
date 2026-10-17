@@ -55,9 +55,29 @@ class FollowerChecks(unittest.TestCase):
         self.assertEqual(len(profiles),12)
         # All four coincident lobes would pass a naive single-cam test, fail this.
         base=params[3]
-        heights=[contact_height(profiles[(0,b)],58,2.1,.3,30)-base for b in range(4)]
+        heights=[contact_height(profiles[(0,b)],40,2.1,.3,30)-base for b in range(4)]
         self.assertAlmostEqual(heights[1],2,places=4)
         self.assertTrue(all(abs(h)<.02 for b,h in enumerate(heights) if b!=1))
+
+    def test_120_degree_profile_keeps_full_stroke_and_neutral_gaps(self):
+        params,profiles=load_geometry()
+        bands,gaps,tap,base,stroke,pin_r,tip_r,half_angle,*_=params
+        self.assertEqual(bands,[0,40,80,120])
+        self.assertEqual(gaps,[20,60,100])
+        self.assertEqual(stroke,2)
+        for variant in range(3):
+            for band,angle in enumerate(bands):
+                self.assertAlmostEqual(contact_height(profiles[(variant,band)],angle,pin_r,tip_r,half_angle)-base,2,places=4)
+            for angle in gaps:
+                self.assertLess(max(contact_height(profiles[(variant,b)],angle,pin_r,tip_r,half_angle)-base for b in range(4)),.03)
+    def test_old_wide_lobe_fails_120_degree_neutral_gap(self):
+        # Finite cone contact persists beyond the radial lobe: shortening angles
+        # without changing the manufactured polygon raises both adjacent pins.
+        params,profiles=load_geometry(('cam_half_width=24',))
+        base=params[3]
+        for variant in range(3):
+            lifts=[contact_height(profiles[(variant,b)],20,2.1,.3,30)-base for b in range(2)]
+            self.assertTrue(all(lift>.8 for lift in lifts))
 
 
 class NominalFitChecks(unittest.TestCase):

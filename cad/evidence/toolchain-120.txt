@@ -1,0 +1,7 @@
+2026-10-16 — 120-degree CAD validation
+OpenSCAD version 2026.10.15, official native macOS snapshot
+Source: https://files.openscad.org/snapshots/OpenSCAD-2026.10.15.dmg
+SHA256 verified against official .dmg.sha256:
+b6f044d7de994d1b7c91c981d94410e395f404a69473d4c555b14cd36abf3ea1
+Runtime mounted read-only under /tmp, not installed system-wide.
+2021.01 stable Intel build could not run on this Apple Silicon Mac.

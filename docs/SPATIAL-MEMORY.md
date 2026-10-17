@@ -2,7 +2,8 @@
 
 V2 is a greenfield extension of the recreated V1 software, developed on the isolated
 `feel/v2-spatial-memory` branch. It does not reproduce unavailable original source.
-V1 remains preserved separately. This feature stores places only in RAM for one
+V1 is maintained on `main`; this branch integrates its current `a4c141e` baseline.
+The app preserves V1's Geist design and persistent Stop, with My Places in a dedicated sheet from the camera header. This feature stores places only in RAM for one
 continuous AR session. There is no persistent map, cross-session relocalization,
 voice command interface, route planning, or claim of obstacle-free navigation.
 
@@ -10,7 +11,10 @@ voice command interface, route planning, or claim of obstacle-free navigation.
 
 In **Live sensing**, mount the phone in the same fixed native landscape-left
 orientation as V1: rear camera forward, top edge to the user's left, phone upright.
-Wait for normal tracking and calibrate the floor from measured camera height.
+Normal launch requests camera access once; after Stop, use **Start camera**.
+Wait for normal tracking and calibrate the floor from measured camera height in
+**Settings**. Open **My Places** using the location icon in the camera header.
+The sheet keeps a Stop button available.
 
 1. Enter a **Place name** and press **Remember** to save the current phone position.
 2. Move within the same continuous sensing session.
@@ -178,7 +182,7 @@ Memory states: `idle`, `guiding`, `arrived`, `outsideFieldOfView`, `behind`,
 
 ## Verification and remaining work
 
-The portable suite adds 20 memory tests to the 38 V1 core tests: translations,
+The portable suite includes 20 memory tests alongside the V1 core tests: translations,
 90°/180° turns, exact sector/range/arrival boundaries, pitched-camera agreement,
 closer obstacles, tracking loss/recovery, invalid/future/stale poses, reflected
 bases, atomic mutations, names/IDs, capacity, selection/deletion, explicit Return,
@@ -187,12 +191,10 @@ Move → Recall; root integration replays the actual Swift bytes through the fir
 controller. Three additional app coordinator tests and a UI Remember/Move/Recall/
 tracking-loss scenario are included for the Apple-platform test target.
 
-Observed here: the 58-test portable binary passed with zero failures under a PTY;
-non-PTY attempts encountered this container's `/proc` process-monitor SIGILL. Swift
-builds and source parsing are available on Linux. Source parsing does not typecheck
-Apple SDK calls. Xcode app builds, simulator UI execution, and device testing need
-a macOS host and are not claimed as passed here. See the release evidence for the
-final consolidated command results.
+Current macOS integration validation, including the full portable suite, spatial
+replay, iOS simulator tests and unsigned builds, is recorded in
+[V2-MAIN-INTEGRATION.md](V2-MAIN-INTEGRATION.md). Historical Linux/hosted evidence
+remains under `docs/evidence/v2/`; it predates this main integration.
 
 Physical work remains: verify phone-to-user alignment and bearing sign, LiDAR/AR
 drift over movement, tracking recovery, real BLE timing, real servo output, and

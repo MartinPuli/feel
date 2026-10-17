@@ -74,7 +74,7 @@ else if(part=="assembly") {
     color("dimgray") frame();
     color("lightblue",0.7) guide_assembly();
     color("lightblue",0.5) translate([0,0,body_h-face_t]) strip();
-    color("orange") shaft_in_place(3,58,0);
+    color("orange") shaft_in_place(3,band_angles[1],0);
     for(r=[0:rows-1]) color("black") translate([0,row_y(r),shaft_axis_z+cam_base_r+(r==1?stroke:0)]) pin(pin_length(3,r,false));
     color("blue") servo_nominal();
 } else assert(false,str("Unknown test part: ",part));

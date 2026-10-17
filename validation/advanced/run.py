@@ -158,12 +158,12 @@ def run(r):
     for dt in range(0,1300,100):
         dip=dt%600==0
         adaptive_packet(50000+dt,dt/1000,'standard',3,f'Standard cadence {dt} ms',
-                        tap=dip,angle=154 if dip else 175)
+                        tap=dip,angle=107 if dip else 120)
     call('adaptiveReset');r.reset(60000)
     for dt in range(0,4900,100):
         enabled=dt%2400>=1800;dip=dt%2400==1800
         adaptive_packet(60000+dt,dt/1000,'reduced',3 if enabled else 255,
-                        f'Reduced cadence {dt} ms',tap=dip,angle=154 if dip else 175)
+                        f'Reduced cadence {dt} ms',tap=dip,angle=107 if dip else 120)
     r.command('TICK 65300','500 ms watchdog after reduced stream stops',bands=[0]*7,highlight=255,active=False)
     call('adaptiveReset');r.reset(70000)
     for dt in range(0,7100,100):

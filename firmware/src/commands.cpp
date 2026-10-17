@@ -64,7 +64,7 @@ Command parseCommand(const char* line) {
             char* end = nullptr;
             errno = 0;
             const float offset = std::strtof(tokens[2], &end);
-            if (errno == 0 && *end == '\0' && end != tokens[2] && std::isfinite(offset) && offset >= -5 && offset <= 5) {
+            if (errno == 0 && *end == '\0' && end != tokens[2] && std::isfinite(offset) && offset >= -kMaxCalibrationOffsetDeg && offset <= kMaxCalibrationOffsetDeg) {
                 command.kind = CommandKind::Calibrate;
                 command.offset = offset;
             }

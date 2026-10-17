@@ -42,8 +42,8 @@ byte deterministic. The report includes the SHA-256 of the scenario file.
 - Nominal cam command phases: request a gap, request a band, assume a hold after
   a configurable elapsed time. No continuous angular travel is simulated. A servo
   moving between these requested angles could pass through other lobes.
-- Handoff band angles 0° / 58° / 117° / 175°, derived gap midpoints, and a nominal
-  21° highlight dip hint. **Highlight is a tap request only; tap cadence,
+- Revised 120° design band angles 0° / 40° / 80° / 120°, derived gap midpoints, and a nominal
+  13° highlight dip hint. **Highlight is a tap request only; tap cadence,
   actuation, and physical tapping are not simulated.**
 - Already-sectorized synthetic depth, target bearing, tracking and freshness
   inputs. Synthetic pose is retained as **metadata only**. There is no camera
@@ -62,9 +62,9 @@ connections. No command here can flash or move the actual hardware.
 | Sequence | One byte | Default `observe` accepts valid duplicates and backward/large-gap traffic while labeling it; no claimed production ordering policy |
 | Optional ordering | Not specified | `forward_only` accepts modulo delta 1–127; rejects 0 and 128–255; resets history after timeout/disconnect. It cannot prove absolute freshness |
 | Disconnect | Not specified | Immediately clear requests; reconnect waits for a fresh packet |
-| Neutral | Midpoint gaps between adjacent bands | Nearest gap to the former band; tie chooses lower; startup assumes 29°. These are unmeasured model commands, not calibration values |
+| Neutral | Midpoint gaps between adjacent bands | Nearest gap to the former band; tie chooses lower; startup assumes 20°. These are unmeasured model commands, not calibration values |
 | Motion timing | Not specified | `gap_ms=40`, `settle_ms=120`; configurable **unmeasured illustrations**. `hold_assumed` is never a measured position |
-| Highlight | A selected column taps; 21° toward its gap | Display request + nominal dip angle, without a tap scheduler. `hl` on an empty band is wire-legal but does not invent a selected pin |
+| Highlight | A selected column taps; 13° toward its gap | Display request + nominal dip angle, without a tap scheduler. `hl` on an empty band is wire-legal but does not invent a selected pin |
 | Distance bands | 0.3–0.9 / 0.9–1.6 / 1.6–2.5 / 2.5–4 m | Half-open intermediate ranges; 4 m included; positive <0.3 m saturates to band 1 by default (`close_policy="none"` is available) |
 | Missing/invalid depth | Not specified | Null, NaN, infinite, nonpositive or >4 m map to 0; this is not proof of free space |
 | Freshness and tracking | Not specified | Synthetic loss of tracking or depth age >250 ms emits all zeros/no highlight; stale targets >250 ms ignored. Both age limits are configurable |

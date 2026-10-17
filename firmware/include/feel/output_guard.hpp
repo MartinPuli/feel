@@ -3,7 +3,7 @@
 
 namespace feel {
 // Board-side admission policy, also tested on the host. The packet controller
-// keeps handoff geometry; it cannot certify that a particular servo supports it.
+// uses the 120-degree design; it cannot certify physical servo travel.
 // Validate the entire output set before writing any individual channel.
 class OutputGuard {
 public:

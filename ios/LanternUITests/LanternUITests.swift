@@ -1,22 +1,115 @@
 import XCTest
 import CoreGraphics
 
-final class LanternUITests:XCTestCase {
-    override func setUpWithError() throws { continueAfterFailure=false }
-    func testSimulationAndStopAreClearlyLabeled() {
-        let app=XCUIApplication(); app.launchArguments += ["--uitesting"]
-        addUIInterruptionMonitor(withDescription:"System permissions") { alert in
-            if alert.buttons["Don't Allow"].exists { alert.buttons["Don't Allow"].tap(); return true }; return false
-        }
+final class LanternUITests: XCTestCase {
+    private func launch(extraArguments: [String] = []) -> XCUIApplication {
+        continueAfterFailure = false
+        XCUIDevice.shared.orientation = .landscapeLeft
+        let app = XCUIApplication()
+        app.launchArguments += ["--uitesting"] + extraArguments
         app.launch()
-        XCTAssertTrue(app.buttons["Simulation"].waitForExistence(timeout:10)); app.buttons["Simulation"].tap()
-        XCTAssertTrue(app.staticTexts["SIMULATION: Synthetic inputs. No simulated movement sent to hardware."].waitForExistence(timeout:5))
-        XCTAssertTrue(app.otherElements["Virtual puck"].exists)
-        app.buttons["Stop"].firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["STOPPED"].waitForExistence(timeout:5))
+        XCTAssertTrue(app.buttons["startCamera"].waitForExistence(timeout: 10))
+        return app
+    }
+
+    private func simulate(_ app: XCUIApplication) {
+        app.buttons["cameraSettings"].tap()
+        let simulation = app.buttons["Simulation"]
+        XCTAssertTrue(simulation.waitForExistence(timeout: 5))
+        for _ in 0..<4 where !simulation.isHittable {
+            app.scrollViews["cameraSettingsScroll"].swipeUp()
+        }
+        simulation.tap()
+        XCTAssertTrue(app.buttons["stopSession"].waitForExistence(timeout: 5))
+    }
+
+    private func capture(_ name: String) {
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    private func assertStopped(_ app: XCUIApplication) {
+        XCTAssertTrue(app.buttons["startCamera"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["sessionMode"].label, "STOPPED")
+        let value = app.otherElements["Virtual puck"].value as? String ?? ""
+        XCTAssertTrue(value.contains("No target highlight"))
+        for column in 1...7 { XCTAssertTrue(value.contains("Column \(column), band 0")) }
+    }
+
+    func testCameraLayoutSimulationAndStop() {
+        let app = launch()
+        XCTAssertFalse(app.buttons["Simulation"].exists, "Simulation belongs in Settings")
+        capture("camera-stopped")
+        simulate(app)
+        XCTAssertEqual(app.staticTexts["sessionMode"].label, "SIMULATION")
+        XCTAssertTrue(app.staticTexts["simulationNotice"].label.contains("No simulated movement sent to hardware"))
+        XCTAssertFalse(app.buttons["Simulation"].exists)
+        let puck = app.otherElements["Virtual puck"]
+        XCTAssertTrue(puck.exists)
+        XCTAssertFalse(puck.frame.intersects(app.buttons["stopSession"].frame))
+        capture("camera-simulation")
+        app.buttons["stopSession"].tap()
+        assertStopped(app)
+        for panel in ["cameraSettings", "connectPuck", "memoryPlaces"] {
+            app.buttons[panel].tap()
+            XCTAssertTrue(app.buttons["closeCameraPanel"].waitForExistence(timeout: 5))
+            app.buttons["closeCameraPanel"].tap()
+            assertStopped(app)
+        }
+    }
+
+    func testLargestTextKeepsStopReachable() {
+        let app = launch(extraArguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
+        simulate(app)
+        XCTAssertTrue(app.buttons["stopSession"].isHittable)
+        XCTAssertGreaterThan(app.scrollViews["cameraReadingScroll"].frame.height, 100)
+        app.scrollViews["cameraReadingScroll"].swipeUp()
+        XCTAssertTrue(app.buttons["stopSession"].isHittable)
+        capture("camera-accessibility-text")
+        app.buttons["cameraSettings"].tap()
+        XCTAssertTrue(app.buttons["panelStop"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["panelStop"].isHittable)
+        app.buttons["panelStop"].tap()
+        XCTAssertTrue(app.buttons["startCamera"].waitForExistence(timeout: 5))
+    }
+
+    func testStopRemainsAvailableInAllPanels() {
+        let app = launch()
+        for panel in ["cameraSettings", "connectPuck", "memoryPlaces"] {
+            simulate(app)
+            app.buttons[panel].tap()
+            XCTAssertTrue(app.buttons["panelStop"].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.buttons["panelStop"].isHittable)
+            app.buttons["panelStop"].tap()
+            assertStopped(app)
+        }
+    }
+
+    func testBackgroundingDoesNotRestartCamera() {
+        let app = launch()
+        simulate(app)
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        assertStopped(app)
+    }
+
+    func testUnavailableCameraShowsRecovery() {
+        let app = launch()
+        app.buttons["startCamera"].tap()
+        let system = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let deny = system.alerts.buttons["Don't Allow"]
+        if deny.waitForExistence(timeout: 3) { deny.tap() }
+        XCTAssertTrue(app.buttons["startCamera"].waitForExistence(timeout: 5))
+        let status = app.staticTexts["sessionStatus"].label
+        XCTAssertTrue(status.contains("permission denied") || status.contains("LiDAR"), status)
+        XCTAssertEqual(app.staticTexts["sessionMode"].label, "STOPPED")
+        capture("camera-unavailable")
     }
     func testRememberMoveRecallAndTrackingLossInMemorySimulation() {
-        let app=XCUIApplication(); app.launch()
+        let app = launch()
+        app.buttons["memoryPlaces"].tap()
         XCTAssertTrue(app.buttons["memorySimulation"].waitForExistence(timeout:10))
         app.buttons["memorySimulation"].tap()
         let name=app.textFields["placeName"]
@@ -31,24 +124,38 @@ final class LanternUITests:XCTestCase {
         setSwitch(tracking,to:false)
         XCTAssertTrue(app.staticTexts["Place guidance: trackingLost"].waitForExistence(timeout:3))
         let neutral=(1...7).map { "Column \($0), band 0" }.joined(separator:". ") + ". No target highlight"
-        XCTAssertEqual(app.otherElements["Virtual puck"].value as? String,neutral)
+        XCTAssertEqual(app.otherElements["memoryPuck"].value as? String,neutral)
         setSwitch(tracking,to:true)
         XCTAssertTrue(app.staticTexts["Place guidance: guiding"].waitForExistence(timeout:3))
-        XCTAssertTrue((app.otherElements["Virtual puck"].value as? String)?.contains("Target column 4") == true)
+        XCTAssertTrue((app.otherElements["memoryPuck"].value as? String)?.contains("Target column 4") == true)
         tapControl(app.buttons["simResetSession"])
         XCTAssertEqual(app.staticTexts["placesCount"].label,"0 places in this session")
     }
+    func testAdvancedPanelKeepsStopReachableAtLargestText() {
+        let app = launch(extraArguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
+        app.buttons["cameraSettings"].tap()
+        tapControl(app.buttons["Voice, saved map and feedback"])
+        XCTAssertTrue(app.textFields["commandText"].exists)
+        XCTAssertTrue(app.buttons["panelStop"].isHittable)
+        app.buttons["panelStop"].tap()
+        assertStopped(app)
+    }
     func testTypedCommandFallbackRemembersWithoutMicrophone() {
-        let app=XCUIApplication(); app.launch()
+        let app=launch()
+        tapControl(app.buttons["memoryPlaces"])
         tapControl(app.buttons["memorySimulation"])
+        tapControl(app.buttons["closeCameraPanel"])
+        tapControl(app.buttons["cameraSettings"])
         tapControl(app.buttons["Voice, saved map and feedback"])
         let command=app.textFields["commandText"]
         enterText("remember Lab",in:command)
         tapControl(app.buttons["runCommand"])
         XCTAssertEqual(app.staticTexts["commandNotice"].label,"Remembered Lab.")
-        XCTAssertEqual(app.staticTexts["placesCount"].label,"1 places in this session")
         XCTAssertFalse(app.buttons["Finish speaking"].isEnabled)
-        XCTAssertTrue(app.staticTexts["SIMULATION: Synthetic inputs. No simulated movement sent to hardware."].exists)
+        tapControl(app.buttons["closeCameraPanel"])
+        XCTAssertEqual(app.staticTexts["sessionMode"].label,"SIMULATION")
+        tapControl(app.buttons["memoryPlaces"])
+        XCTAssertEqual(app.staticTexts["placesCount"].label,"1 places in this session")
     }
     private func tapControl(_ element:XCUIElement,file:StaticString=#filePath,line:UInt=#line) {
         XCTAssertTrue(element.waitForExistence(timeout:5),file:file,line:line)
