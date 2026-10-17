@@ -1,7 +1,9 @@
 # V1 app design review
 
 October 16, 2026. Base: `feel/v1-foundation` at `cb4bf24`.
-Work branch: `codex/v1-app-design`. Implementation is local; no Actions run was requested.
+Original work branch: `codex/v1-app-design`. The user subsequently designated
+`main` as V1 and requested this redesign be integrated there together with the
+latest foundation. No Actions run was requested for the consolidation.
 
 ## Design read and audit
 

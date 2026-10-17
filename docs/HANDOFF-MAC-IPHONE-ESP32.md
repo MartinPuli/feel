@@ -2,8 +2,13 @@
 
 Date: October 16, 2026 (America/New_York)
 
+> Current branch policy: all V1 development is now on `main`. The branch names,
+> checkout paths and installed commit below record the earlier hardware session;
+> they are historical evidence, not instructions to switch away from `main`.
+
 > Update: the user subsequently selected 120° as the design basis. The working
-> branch is now `codex/fs0307-120-degree`; see [FS0307-120-DESIGN.md](FS0307-120-DESIGN.md).
+> branch at that time was `codex/fs0307-120-degree`; the revision is now integrated
+> into `main`. See [FS0307-120-DESIGN.md](FS0307-120-DESIGN.md).
 > Historical setup/physical evidence below belongs to the prior flashed firmware.
 > No new firmware was flashed as part of the redesign.
 

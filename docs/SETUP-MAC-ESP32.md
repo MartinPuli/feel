@@ -27,7 +27,7 @@ Copy this block into Terminal:
 ```sh
 mkdir -p ~/Projects
 cd ~/Projects
-git clone --branch feel/v1-foundation https://github.com/MartinPuli/hackharvard.git feel
+git clone --branch main https://github.com/MartinPuli/hackharvard.git feel
 cd feel
 ```
 
@@ -43,7 +43,7 @@ first check whether you have local changes:
 cd ~/Projects/feel
 git status
 git fetch origin
-git switch feel/v1-foundation
+git switch main
 git pull --ff-only
 ```
 

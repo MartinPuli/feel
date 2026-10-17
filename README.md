@@ -5,6 +5,10 @@
 
 # FEEL
 
+**V1 is now maintained on `main`.** It includes the current firmware and CAD,
+Lantern and Beacon with the shared app redesign, and V1 validation tools.
+Use `main` for all current V1 work. V2 and V3 remain separate development branches.
+
 A prototype that translates indoor depth and target direction into a **7-column ×
 4-pin tactile puck**, using a LiDAR iPhone, BLE, an ESP32 and seven servos.
 
@@ -15,7 +19,8 @@ verification of this repository. The earlier preparation work is preserved on
 
 | Branch | Purpose |
 |---|---|
-| `feel/v1-foundation` | Swift iOS + perception + BLE, ESP32, CAD, production replay |
+| `main` | Current V1: iOS apps, perception, BLE, ESP32, CAD and production replay |
+| `feel/v1-foundation` | Preserved V1 development history; continue new V1 work on `main` |
 | `feel/v2-spatial-memory` | Remember / Recall / Return, created only after V1 validation |
 | `feel/v3-advanced` | Optional advanced work, only after V1 and V2 |
 
