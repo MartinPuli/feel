@@ -11,18 +11,21 @@ struct WhereIsSetup: View {
     @State private var key = ""
     @State private var modelName = ChalkConfiguration.defaultModel
     @State private var setupError = ""
+    @FocusState private var focused: Field?
+    private enum Field { case host, environment, key, model }
 
     private var configured: Bool { model.chalkConfiguration?.isValid == true }
 
     var body: some View {
         DisclosureGroup(isExpanded: $expanded) {
             VStack(alignment: .leading, spacing: 12) {
-                field("Gateway address", text: $host, identifier: "chalkHost", keyboard: .URL)
-                field("Environment ID", text: $environment, identifier: "chalkEnvironment")
+                field("Gateway address", text: $host, identifier: "chalkHost", focus: .host, keyboard: .URL)
+                field("Environment ID", text: $environment, identifier: "chalkEnvironment", focus: .environment)
                 SecureField(configured ? "Gateway key (saved)" : "Gateway key", text: $key)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    .focused($focused, equals: .key).submitLabel(.done).onSubmit { focused = nil }
                     .feelField().accessibilityIdentifier("chalkKey")
-                field("Model", text: $modelName, identifier: "chalkModel")
+                field("Model", text: $modelName, identifier: "chalkModel", focus: .model)
                 if !setupError.isEmpty {
                     Text(setupError).font(FeelTypography.footnote).accessibilityIdentifier("chalkSetupError")
                 }
@@ -60,9 +63,11 @@ struct WhereIsSetup: View {
         }
     }
 
-    private func field(_ title: String, text: Binding<String>, identifier: String, keyboard: UIKeyboardType = .default) -> some View {
+    /// Done on the keyboard dismisses it, so the next field is reachable on a landscape phone.
+    private func field(_ title: String, text: Binding<String>, identifier: String, focus: Field, keyboard: UIKeyboardType = .default) -> some View {
         TextField(title, text: text)
             .keyboardType(keyboard).textInputAutocapitalization(.never).autocorrectionDisabled()
+            .focused($focused, equals: focus).submitLabel(.done).onSubmit { focused = nil }
             .feelField().accessibilityLabel(title).accessibilityIdentifier(identifier)
     }
 
