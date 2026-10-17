@@ -1,7 +1,8 @@
 # V2 updated from current V1 main
 
 This branch integrates V1 `main` commit `a4c141e` into V2 Spatial Memory. The
-previous V2 tip was `063c07c`. `main` remains V1; V2 is published on
+previous V2 tip was `063c07c`. The later documentation-only main commit `a53cbf1`
+(installation evidence) is also included; validated app source is unchanged. `main` remains V1; V2 is published on
 `feel/v2-spatial-memory`, with V3 advanced work separate.
 
 ## What changed
