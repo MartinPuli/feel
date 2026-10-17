@@ -1,7 +1,7 @@
 # FEEL V3 iOS — advanced
 
 Lantern is the internal target for FEEL; Beacon is the companion phone app.
-This branch includes current V1 camera-first UI, V2 session memory, and V3 explicit
+This branch includes current V1 camera-first UI with collapsible controls and floating panels, V2 session memory, and V3 explicit
 voice commands, one saved local map, adaptive highlighting and QR/barcode finding.
 V1 remains on `main`; V2 remains on `feel/v2-spatial-memory`.
 See [the version guide](../docs/VERSIONS.md) and [V3 details](../docs/ADVANCED.md).

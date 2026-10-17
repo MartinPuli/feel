@@ -15,7 +15,7 @@ and QR/barcode finding. Main remains V1; V2 and V3 stay on their own branches.
   teammate restrictions. Voice commands never execute camera or barcode text.
 - Adapt advanced control rows for large text and use the shared contrasting primary
   button style; update UI tests to use the actual
-  sheets and verify text entry, memory guidance and Stop behavior.
+  floating panels and verify text entry, memory guidance and Stop behavior.
 - Inherit nominal 120-degree firmware/CAD and guarded seven-servo setup unchanged.
   Advanced replay now checks actual 120-degree selection / 107-degree tap, keeping
   its cadence assertions unchanged.
@@ -36,7 +36,7 @@ and QR/barcode finding. Main remains V1; V2 and V3 stay on their own branches.
 | V1 production replay | 2,634 assertions, 558 states PASS |
 | V2 spatial replay | 444 assertions, 43 states PASS |
 | V3 advanced replay | 1,753 assertions, 156 states PASS |
-| Native iOS tests and unsigned device builds | First camera integration PASS; latest drawer integration in progress |
+| Native iOS tests and unsigned device builds | PASS: 24 app + 9 Lantern UI + 2 Beacon UI; both device builds |
 
 Firmware and CAD files are byte-identical to integrated main. Existing firmware
 build and mesh-export evidence is inherited; it is not described as a new build.
@@ -74,3 +74,11 @@ No board was flashed and no phone app was installed. Real speech recognition,
 AR-map restoration, QR camera performance, LiDAR/BLE/tactile behavior and seven
 servos remain physical checks. See [VERSIONS.md](VERSIONS.md) for the user flow and
 [SEVEN-SERVO-PRODUCTION.md](SEVEN-SERVO-PRODUCTION.md) for deployment requirements.
+
+## Final drawer validation
+
+The final native runner exited 0 on source `b188770`, with the completed V2
+evidence merged afterward without runtime changes. Both apps compiled for devices
+without signing. Final screenshots confirm readable typed-command controls and
+Stop access at large text sizes. Main baseline is `b780519`; V2 integration is
+`ae11404`. No later unrelated main changes are claimed by this release.
