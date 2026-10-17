@@ -122,6 +122,8 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private func publishStatus(_ status: String) { DispatchQueue.main.async { self.onStatus?(status) } }
     private func publish(_ frame: PerceptionFrame) { DispatchQueue.main.async { self.onFrame?(frame) } }
     func session(_ session: ARSession,didUpdate frame: ARFrame) {
+        // Camera video for replay runs at its own rate, before the 10 Hz processing gate.
+        if frame.timestamp>=earliestFrame,recorder.isActive { recorder.appendVideo(frame.capturedImage,timestamp:frame.timestamp) }
         guard frame.timestamp>=earliestFrame,frame.timestamp-lastProcessed>=0.095 else { return }; lastProcessed=frame.timestamp
         let pose=Self.pose(frame.camera.transform)
         // Runs even while tracking is limited: a puck held close to the lens may degrade it.

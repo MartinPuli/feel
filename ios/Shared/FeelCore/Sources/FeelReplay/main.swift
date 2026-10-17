@@ -57,13 +57,27 @@ if args.first == "stdio" {
         guard !commands.isEmpty else { throw CommandError.missing("Replay is empty") }
         for command in commands { emit(try execute(command)) }
     } catch { emit(Reply(error:String(describing:error))); exit(1) }
-} else if args.first == "synth",args.count == 3 {
+} else if args.first == "synth",args.count == 3 || (args.count == 5 && args[3] == "--camera") {
     // Scene JSON (or a scenario file with a "scene" key) → deterministic .feelrec recording.
+    // --camera also writes a shaded camera view per frame: "FEELCAM1", u32 width, u32 height,
+    // then per frame a little-endian f64 timestamp and width×height×3 RGB bytes.
     do {
         let object=try JSONSerialization.jsonObject(with:Data(contentsOf:URL(fileURLWithPath:args[1])))
         let sceneObject=(object as? [String:Any])?["scene"] ?? object
         var renderer=try SceneRenderer(JSONDecoder().decode(SceneSpec.self,from:JSONSerialization.data(withJSONObject:sceneObject)))
-        try renderer.render().write(to:URL(fileURLWithPath:args[2]))
+        var camera: Data?
+        let width=480, height=360
+        if args.count == 5 {
+            camera=Data("FEELCAM1".utf8)
+            for value in [UInt32(width),UInt32(height)] { withUnsafeBytes(of:value.littleEndian) { camera!.append(contentsOf:$0) } }
+        }
+        let viewer=renderer
+        let data=try renderer.render(camera: camera == nil ? nil : { t,pose in
+            withUnsafeBytes(of:t.bitPattern.littleEndian) { camera!.append(contentsOf:$0) }
+            camera!.append(contentsOf:viewer.cameraImage(pose:pose,t:t,width:width,height:height))
+        })
+        try data.write(to:URL(fileURLWithPath:args[2]))
+        if let camera { try camera.write(to:URL(fileURLWithPath:args[4])) }
     } catch { FileHandle.standardError.write(Data("synth failed: \(error)\n".utf8)); exit(1) }
 } else if args.first == "session",args.count >= 2 {
     // Recording → one JSON line per 10 Hz tick: the packet the phone would send and why.
@@ -89,5 +103,5 @@ if args.first == "stdio" {
 } else if args.first == "decode",args.count == 2 {
     if !run(try! JSONSerialization.data(withJSONObject:["op":"decode","hex":args[1]])) { exit(1) }
 } else {
-    FileHandle.standardError.write(Data("Usage: feel-replay stdio | replay fixtures.json | decode <18 hex digits> | synth scene.json out.feelrec | session in.feelrec [--tick-offset s] [--latency s] [--tail s]\nJSON ops: encode, decode, perceive. See ios/README.md.\n".utf8)); exit(2)
+    FileHandle.standardError.write(Data("Usage: feel-replay stdio | replay fixtures.json | decode <18 hex digits> | synth scene.json out.feelrec [--camera out.cam] | session in.feelrec [--tick-offset s] [--latency s] [--tail s]\nJSON ops: encode, decode, perceive. See ios/README.md.\n".utf8)); exit(2)
 }

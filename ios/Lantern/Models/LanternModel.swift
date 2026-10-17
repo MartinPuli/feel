@@ -20,8 +20,12 @@ final class LanternModel:ObservableObject {
     @Published var recordingDepth=false {
         didSet {
             guard recordingDepth != oldValue else { return }
-            if recordingDepth { perception.recorder.start(cameraHeight:cameraHeight) } else { perception.recorder.stop() }
+            if recordingDepth { perception.recorder.start(cameraHeight:cameraHeight,video:recordingVideo) } else { perception.recorder.stop() }
         }
+    }
+    /// Also save the camera as video beside the depth recording, for the /replay viewer. Local until shared.
+    @Published var recordingVideo = UserDefaults.standard.object(forKey: "recordingVideo") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(recordingVideo, forKey: "recordingVideo") }
     }
     @Published private(set) var recordingStatus: String?
     @Published var cameraHeight=1.2
@@ -66,6 +70,9 @@ final class LanternModel:ObservableObject {
     /// Two-finger route: when the goal was handed to perception, waiting for its first route hint.
     private var pointingRouteSetAt: TimeInterval?
     private var pointingRouteActive=false
+    /// Two fingers on a column too close to route to: tap that column for a few seconds instead.
+    private var pointingHighlight: (column: Int, band: UInt8, until: TimeInterval)?
+    private let pointingHighlightSeconds=3.0
     private var request=DirectionRequest()
     private lazy var listener: KeywordListener = {
         let listener=KeywordListener(voice:voice)
@@ -138,6 +145,7 @@ final class LanternModel:ObservableObject {
         resetDirections()
         pointing.reset(); targetColumns=nil; pointingSpeech.stopSpeaking(at:.immediate)
         recordingDepth=false
+        pointingHighlight=nil
         perception.stop(); peer.stop(); mode = .stopped; guidanceState = .stopped
         sequence &+= 1; packet = .neutral(sequence:sequence); puck.send(packet)
         status="Stopped. Neutral command sent if connected"; targetDescription="No guidance"
@@ -273,14 +281,34 @@ final class LanternModel:ObservableObject {
             case .armed: text="Pointing"
             case .described(_,let description): text=description
             case .refused(let reason): text=reason
-            case .routeSet(_,let spoken): text=spoken
+            case .routeSet(let route,let spoken):
+                // Too close to route: confirm with a chime only (direction feedback is sounds and pins).
+                if route.highlightOnly || spoken.isEmpty { chime.play(.success); continue }
+                text=spoken
             case .expired: text="Scene expired. Lower the puck and try again."
             case .released(let route):
                 guard let route else { continue }
-                startPointingRoute(route); continue
+                if route.highlightOnly {
+                    pointingHighlight=(route.column,route.band,ProcessInfo.processInfo.systemUptime+pointingHighlightSeconds)
+                } else { startPointingRoute(route) }
+                continue
             }
             speakLocal(text)
         }
+    }
+
+    /// Firmware tap on the two-finger column for a few seconds. Raises the cached band if the live
+    /// pin there is down (a tap needs a raised pin). Steps aside for arrows and for a band-1
+    /// obstacle in another column.
+    private func withPointingHighlight(_ output:EncoderOutput,now:TimeInterval)->EncoderOutput {
+        guard let h=pointingHighlight else { return output }
+        guard now<h.until else { pointingHighlight=nil; return output }
+        var bands=output.packet.bands
+        guard output.state == .live, !cuePlayer.isAnimating, (0..<7).contains(h.column),
+              !bands.indices.contains(where: { $0 != h.column && bands[$0] == 1 }) else { return output }
+        if bands[h.column] == 0 { bands[h.column]=h.band }
+        guard bands[h.column]>0,let packet=try? FeelPacket(sequence:output.packet.sequence,bands:bands,highlight:UInt8(h.column)) else { return output }
+        return EncoderOutput(packet:packet,state:output.state,targetColumns:h.column...h.column)
     }
 
     /// Hand a two-finger goal to the route planner; arrows start once a route to it exists.
@@ -466,7 +494,7 @@ final class LanternModel:ObservableObject {
         // While pointing, the pins hold the scene from before the hand came up; arrows pause.
         let frozen=pointing.frozenOutput(sequence:sequence)
         if frozen != nil { cuePlayer.reset(); pendingSign=false } else { tickRequest(now:now,candidates:frame.candidates,hint:frame.routeHint); tickPointingRoute(now:now,hint:frame.routeHint) }
-        let output=frozen.map { EncoderOutput(packet:$0.packet,state:encoded.state,targetColumns:$0.targetColumns) } ?? withDirections(encoded,hint:frame.routeHint,now:now)
+        let output=frozen.map { EncoderOutput(packet:$0.packet,state:encoded.state,targetColumns:$0.targetColumns) } ?? withPointingHighlight(withDirections(encoded,hint:frame.routeHint,now:now),now:now)
         packet=output.packet; guidanceState=output.state; targetColumns=output.targetColumns; puck.send(packet)
         if pointing.isActive {
             // The arm in front of the camera must not trigger target-lost or sensing announcements.

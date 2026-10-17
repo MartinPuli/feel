@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FEEL Replay</title>
+<meta name="description" content="Replay FEEL sessions: the camera recording beside the commanded 7 × 4 pin grid and the LiDAR depth it came from.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fafafa; --panel: #ffffff; --ink: #0a0a0a; --muted: #666666; --faint: #8f8f8f; --line: #eaeaea; --well: #f2f2f2;
+  --b1: #d93a00; --b2: #f2690d; --b3: #f5a35c; --b4: #f8d3ad; --pin-off: #e9e9e9;
+  --pass: #0f7b3f; --fail: #d1242f; --known: #a35200; --mark: #c4107a; --accent: #0068d6;
+  --sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0a0a0a; --panel: #111111; --ink: #ededed; --muted: #a1a1a1; --faint: #707070; --line: #262626; --well: #1a1a1a;
+  --b1: #ff6a2b; --b2: #f2690d; --b3: #b9561c; --b4: #6b3416; --pin-off: #222222;
+  --pass: #3fcf7f; --fail: #ff5c63; --known: #f5a524; --mark: #ff4fae; --accent: #52a8ff;
+} }
+:root[data-theme="dark"] {
+  --bg: #0a0a0a; --panel: #111111; --ink: #ededed; --muted: #a1a1a1; --faint: #707070; --line: #262626; --well: #1a1a1a;
+  --b1: #ff6a2b; --b2: #f2690d; --b3: #b9561c; --b4: #6b3416; --pin-off: #222222;
+  --pass: #3fcf7f; --fail: #ff5c63; --known: #f5a524; --mark: #ff4fae; --accent: #52a8ff;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px 40px; }
+header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 16px 0; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.brand { font-weight: 600; letter-spacing: -0.01em; text-decoration: none; }
+.brand span { color: var(--muted); font-weight: 400; }
+.picker { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 240px; }
+select { font: 500 14px var(--sans); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 32px 8px 10px; min-width: 0; flex: 1; max-width: 520px;
+  appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 55%, calc(100% - 11px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
+select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip { font: 500 11px/1 var(--mono); letter-spacing: 0.04em; padding: 5px 7px; border-radius: 5px; border: 1px solid currentColor; white-space: nowrap; }
+.PASS { color: var(--pass); } .FAIL { color: var(--fail); } .KNOWN { color: var(--known); } .SKIP { color: var(--muted); }
+.src { color: var(--muted); font: 12px var(--mono); }
+.stage { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.panel > .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.panel > .head h2 { font-size: 13px; font-weight: 500; margin: 0; }
+.panel > .head span { color: var(--muted); font: 12px var(--mono); }
+.media { position: relative; aspect-ratio: 4 / 3; background: #000; }
+.media video, .media canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.media video { object-fit: contain; }
+.media .empty { position: absolute; inset: 0; display: grid; place-items: center; color: #9a9a9a; font-size: 13px; text-align: center; padding: 24px; }
+.badge { position: absolute; left: 12px; top: 12px; font: 500 12px var(--mono); padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,.65); color: #fff; }
+.badge.warn { background: rgba(209,36,47,.85); }
+.right { display: flex; flex-direction: column; gap: 16px; }
+.pins { display: grid; grid-template-columns: 34px repeat(7, 1fr); gap: 8px 10px; padding: 14px; align-items: center; }
+.pins .lab { font: 11px var(--mono); color: var(--faint); text-align: center; }
+.pins .row { font: 11px var(--mono); color: var(--faint); text-align: right; }
+.pin { aspect-ratio: 1; border-radius: 50%; background: var(--pin-off); position: relative; transition: background-color .08s; }
+.pin.up { box-shadow: 0 1px 0 rgba(0,0,0,.15) inset; }
+.pin.want::before { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px dashed var(--ink); opacity: .55; }
+.pin.wrong::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--mark); }
+.pin.tap { animation: tap .6s ease-in-out infinite; }
+@keyframes tap { 0%, 100% { transform: scale(1); } 15% { transform: scale(.72); } }
+@media (prefers-reduced-motion: reduce) { .pin.tap { animation: none; outline: 2px solid var(--accent); outline-offset: 3px; } }
+.ranges { display: grid; grid-template-columns: 34px repeat(7, 1fr); gap: 10px; padding: 0 14px 12px; font: 11px var(--mono); color: var(--muted); text-align: center; }
+.depth { position: relative; aspect-ratio: 4 / 3; background: var(--well); }
+.depth canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.transport { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; flex-wrap: wrap; }
+.transport button { font: 500 13px var(--sans); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+.transport button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); min-width: 76px; }
+.transport input[type=range] { flex: 1; min-width: 140px; accent-color: var(--ink); }
+.clock { font: 13px var(--mono); min-width: 120px; text-align: right; }
+.speed { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.speed button { border: 0; border-radius: 0; padding: 7px 10px; background: var(--panel); }
+.speed button[aria-pressed="true"] { background: var(--well); font-weight: 600; }
+.timeline { position: relative; }
+.timeline canvas { display: block; width: 100%; height: 190px; cursor: pointer; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 8px 14px 12px; font-size: 12px; color: var(--muted); }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border-top: 1px solid var(--line); }
+.metric { padding: 12px 14px; border-right: 1px solid var(--line); }
+.metric b { display: block; font: 500 18px var(--mono); letter-spacing: -0.02em; }
+.metric span { color: var(--muted); font-size: 12px; }
+.info { padding: 14px; }
+.info p { margin: 0 0 8px; color: var(--muted); max-width: 80ch; }
+.known { border-left: 2px solid var(--known); padding-left: 10px; color: var(--ink) !important; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 8px 14px; border-top: 1px solid var(--line); }
+th { font-weight: 500; color: var(--muted); }
+td.num { font-family: var(--mono); }
+.bad { color: var(--fail); }
+.section { margin-top: 16px; }
+.note { color: var(--faint); font-size: 12px; margin-top: 16px; }
+.toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/">FEEL <span>/ replay</span></a>
+    <div class="picker">
+      <label class="sr" for="session">Session</label>
+      <select id="session" aria-label="Session to replay"></select>
+      <span id="status" class="chip"></span>
+      <span id="source" class="src"></span>
+    </div>
+  </header>
+
+  <div id="app" hidden>
+    <div class="stage">
+      <section class="panel" aria-labelledby="camHead">
+        <div class="head"><h2 id="camHead">Recording</h2><span id="camNote"></span></div>
+        <div class="media" id="media">
+          <video id="video" muted playsinline preload="auto"></video>
+          <canvas id="overlay" aria-hidden="true"></canvas>
+          <div class="empty" id="noVideo" hidden>No camera video for this session.<br>Record with “Include camera video” on to see it here.</div>
+          <div class="badge" id="badge" hidden></div>
+        </div>
+      </section>
+      <div class="right">
+        <section class="panel" aria-labelledby="pinHead">
+          <div class="head"><h2 id="pinHead">Pin grid</h2><span id="pinNote">as commanded by the firmware</span></div>
+          <div class="pins" id="pins" role="img"></div>
+          <div class="ranges" id="ranges" aria-hidden="true"></div>
+        </section>
+        <section class="panel" aria-labelledby="depthHead">
+          <div class="head"><h2 id="depthHead">LiDAR depth</h2><span id="depthNote"></span></div>
+          <div class="depth"><canvas id="depth" aria-label="Depth frame behind the current pins"></canvas></div>
+        </section>
+      </div>
+    </div>
+
+    <div class="transport">
+      <button id="play" class="primary" type="button">Play</button>
+      <span class="speed" role="group" aria-label="Playback speed">
+        <button type="button" data-speed="0.5" aria-pressed="false">0.5×</button><button type="button" data-speed="1" aria-pressed="true">1×</button><button type="button" data-speed="2" aria-pressed="false">2×</button>
+      </span>
+      <input id="scrub" type="range" min="0" max="1000" value="0" step="1" aria-label="Time">
+      <span class="clock" id="clock">0.00 s</span>
+      <label class="toggle"><input type="checkbox" id="showCols" checked> column guides</label>
+    </div>
+
+    <section class="panel timeline">
+      <canvas id="timeline" aria-label="Commanded band for every column over time; click to seek"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--b1)"></span>band 1 · under 0.9 m</span>
+        <span><span class="sw" style="background:var(--b2)"></span>2 · under 1.6 m</span>
+        <span><span class="sw" style="background:var(--b3)"></span>3 · under 2.5 m</span>
+        <span><span class="sw" style="background:var(--b4)"></span>4 · up to 4 m</span>
+        <span><span class="sw" style="background:var(--accent)"></span>tapping</span>
+        <span><span class="sw" style="background:var(--mark)"></span>disagrees with label</span>
+        <span>bars below: labelled windows</span>
+      </div>
+      <div class="metrics" id="metrics"></div>
+    </section>
+
+    <section class="panel section">
+      <div class="info" id="info"></div>
+      <table><thead><tr><th>Label</th><th>Window</th><th>Agreement</th><th>First match</th></tr></thead><tbody id="labels"></tbody></table>
+    </section>
+    <p class="note">Pins and packets come from the production Swift encoder and C++ firmware controller replaying the recorded depth. Servo motion and how the pins feel are not simulated. Simulated sessions show a rendered view of an idealised scene.</p>
+  </div>
+  <p id="empty" hidden>No replay sessions yet. Run <code>python3 simulation/run.py</code>, then reload.</p>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const COLUMN_EDGES = Array.from({ length: 8 }, (_, k) => -45 + k * 90 / 7);
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const STATE_TEXT = { live: null, trackingLost: 'TRACKING LOST · pins neutral', staleDepth: 'NO FRESH DEPTH · pins neutral', uncalibrated: 'FLOOR NOT CALIBRATED · pins neutral', invalidFrame: 'INVALID FRAME · pins neutral' };
+
+let index = [], session = null, depthFrames = new Map(), t = 0, playing = false, speed = 1, lastFrameTime = 0, tickIndex = 0;
+const video = $('video');
+
+async function load() {
+  let data;
+  try { data = await (await fetch('data/index.json', { cache: 'no-cache' })).json(); } catch { data = { sessions: [] }; }
+  index = data.sessions || [];
+  if (!index.length) { $('empty').hidden = false; return; }
+  const select = $('session');
+  const groups = [['iphone', 'Phone recordings'], ['synthetic', 'Simulated scenes']];
+  for (const [source, label] of groups) {
+    const items = index.filter(s => s.source === source);
+    if (!items.length) continue;
+    const group = document.createElement('optgroup'); group.label = label;
+    for (const s of items) {
+      const o = document.createElement('option'); o.value = s.name;
+      o.textContent = `${s.title} · ${s.status}${s.hasVideo ? '' : ' · no video'}`;
+      group.appendChild(o);
+    }
+    select.appendChild(group);
+  }
+  const wanted = new URLSearchParams(location.search).get('session');
+  select.value = index.some(s => s.name === wanted) ? wanted : index[0].name;
+  select.onchange = () => open(select.value);
+  $('app').hidden = false;
+  await open(select.value);
+}
+
+async function open(name) {
+  pause();
+  const url = new URL(location.href); url.searchParams.set('session', name); history.replaceState(null, '', url);
+  session = await (await fetch(`data/sessions/${encodeURIComponent(name)}/session.json`, { cache: 'no-cache' })).json();
+  depthFrames = new Map(Object.entries(session.depth?.frames ?? {}));
+  const decoded = new Map();
+  session._depth = key => {
+    if (!decoded.has(key)) { const b = depthFrames.get(key); decoded.set(key, b ? Uint8Array.from(atob(b), c => c.charCodeAt(0)) : null); }
+    return decoded.get(key);
+  };
+  $('status').textContent = session.status; $('status').className = 'chip ' + session.status;
+  $('source').textContent = session.source === 'iphone' ? 'iPhone recording' : 'simulated scene';
+  if (session.media) {
+    video.src = `data/sessions/${encodeURIComponent(name)}/${session.media.url}`; video.hidden = false; $('noVideo').hidden = true;
+    $('camNote').textContent = session.media.kind === 'recorded' ? 'iPhone camera' : 'rendered scene view';
+  } else {
+    video.removeAttribute('src'); video.load(); video.hidden = true; $('noVideo').hidden = false; $('camNote').textContent = '';
+  }
+  $('depthNote').textContent = session.depth ? `${session.depth.w} × ${session.depth.h} · near = warm` : 'no depth';
+  renderInfo(); renderMetrics();
+  seek(session.ticks[0]?.t ?? 0);
+  resize();
+}
+
+const start = () => session.ticks[0].t, end = () => session.ticks[session.ticks.length - 1].t;
+function tickAt(time) {
+  const ticks = session.ticks; let lo = 0, hi = ticks.length - 1;
+  if (time <= ticks[0].t) return 0;
+  while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (ticks[mid].t <= time + 1e-9) lo = mid; else hi = mid - 1; }
+  return lo;
+}
+
+function seek(time) {
+  t = Math.max(start(), Math.min(end(), time));
+  if (session.media && video.src) {
+    const target = t - session.media.start;
+    if (Number.isFinite(video.duration) ? target >= 0 && target <= video.duration : target >= 0) video.currentTime = Math.max(0, target);
+  }
+  draw();
+}
+function play() {
+  if (t >= end() - 1e-6) seek(start());
+  playing = true; $('play').textContent = 'Pause'; lastFrameTime = performance.now();
+  if (session.media && video.src && t - session.media.start >= 0) { video.playbackRate = speed; video.play().catch(() => {}); }
+  requestAnimationFrame(loop);
+}
+function pause() { playing = false; $('play').textContent = 'Play'; video.pause(); }
+function loop(now) {
+  if (!playing) return;
+  const dt = (now - lastFrameTime) / 1000; lastFrameTime = now;
+  const videoTime = session.media && !video.paused && !video.ended ? video.currentTime + session.media.start : null;
+  // The video is the clock while it plays; before it starts or after it ends, keep time ourselves.
+  t = videoTime ?? t + dt * speed;
+  if (session.media && video.paused && !video.ended && t - session.media.start >= 0 && t - session.media.start < (video.duration || 0)) {
+    video.currentTime = t - session.media.start; video.playbackRate = speed; video.play().catch(() => {});
+  }
+  if (t >= end()) { t = end(); draw(); pause(); return; }
+  draw(); requestAnimationFrame(loop);
+}
+
+function draw() {
+  if (!session) return;
+  tickIndex = tickAt(t);
+  const tick = session.ticks[tickIndex];
+  $('clock').textContent = `${(t - session.start).toFixed(2)} / ${(end() - session.start).toFixed(2)} s`;
+  $('scrub').value = Math.round((t - start()) / Math.max(end() - start(), 1e-9) * 1000);
+  drawPins(tick); drawDepth(tick); drawOverlay(tick); drawTimeline();
+}
+
+// Label windows are seconds from the recording's first frame (session.start).
+function expectedAt(time) {
+  const want = Array(7).fill(null); let highlight;
+  const rel = time - session.start;
+  for (const e of session.expect) {
+    if (rel < e.from + (e.grace || 0) || rel > e.to) continue;
+    if ('band' in e || 'bands' in e) {
+      const cols = e.columns === undefined || e.columns === 'all' ? [0, 1, 2, 3, 4, 5, 6] : e.columns;
+      cols.forEach(c => want[c] = 'band' in e ? [e.band] : e.bands);
+    }
+    if ('highlight' in e) highlight = e.highlight;
+  }
+  return { want, highlight };
+}
+
+function drawPins(tick) {
+  const { want } = expectedAt(tick.t);
+  let html = '<div></div>' + ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].map(c => `<div class="lab">${c}</div>`).join('');
+  for (let band = 4; band >= 1; band--) {
+    html += `<div class="row">${band === 4 ? 'far' : band === 1 ? 'near' : ''}</div>`;
+    for (let c = 0; c < 7; c++) {
+      const up = tick.fw[c] === band, labelled = want[c]?.includes(band), wrong = want[c] && !want[c].includes(tick.fw[c]);
+      const color = up ? `background:var(--b${band})` : '';
+      html += `<div class="pin ${up ? 'up' : ''} ${labelled ? 'want' : ''} ${(up || labelled) && wrong ? 'wrong' : ''} ${up && tick.hl === c && tick.tap ? 'tap' : ''}" style="${color}"></div>`;
+    }
+  }
+  $('pins').innerHTML = html;
+  $('pins').setAttribute('aria-label', tick.fw.map((b, c) => `column ${c + 1}: ${b ? 'band ' + b : 'down'}${tick.hl === c ? ', tapping' : ''}`).join('; '));
+  $('ranges').innerHTML = '<div></div>' + tick.dist.map(d => `<div>${d == null ? '–' : d.toFixed(2)}</div>`).join('');
+  $('pinNote').textContent = tick.dropped ? 'packet dropped this tick' : tick.state === 'live' ? 'as commanded by the firmware' : 'neutral: ' + tick.state;
+}
+
+// Perceptual-ish warm→cool ramp for depth (near = warm).
+function ramp(v) {
+  const x = v / 255, stops = [[0, [255, 236, 179]], [0.2, [255, 140, 50]], [0.45, [214, 53, 79]], [0.7, [106, 42, 140]], [1, [20, 24, 60]]];
+  for (let i = 1; i < stops.length; i++) if (x <= stops[i][0]) {
+    const [a, ca] = stops[i - 1], [b, cb] = stops[i], u = (x - a) / (b - a);
+    return ca.map((c, j) => Math.round(c + (cb[j] - c) * u));
+  }
+  return stops[stops.length - 1][1];
+}
+const RAMP = Array.from({ length: 256 }, (_, v) => ramp(v));
+
+function fitCanvas(canvas) {
+  const dpr = devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+  const g = canvas.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); return [g, w, h];
+}
+const columnX = (bearing, fxn, cxn, width) => (cxn + fxn * Math.tan(bearing * Math.PI / 180)) * width;
+
+function drawDepth(tick) {
+  const [g, W, H] = fitCanvas($('depth'));
+  g.clearRect(0, 0, W, H);
+  const d = session.depth, px = d && tick.frame != null ? session._depth(tick.frame.toFixed(3)) : null;
+  if (!px) {
+    g.fillStyle = css('--well'); g.fillRect(0, 0, W, H); g.fillStyle = css('--muted'); g.font = `13px ${css('--sans')}`; g.textAlign = 'center';
+    g.fillText(tick.frame == null ? 'No depth frame yet' : 'No usable depth (tracking lost or phone not upright)', W / 2, H / 2); g.textAlign = 'left'; return;
+  }
+  const img = new ImageData(d.w, d.h);
+  for (let i = 0; i < px.length; i++) {
+    const o = i * 4, v = px[i];
+    if (v === 0) { img.data[o] = 12; img.data[o + 1] = 12; img.data[o + 2] = 14; img.data[o + 3] = 255; continue; }
+    const [r, gg, b] = RAMP[v]; img.data[o] = r; img.data[o + 1] = gg; img.data[o + 2] = b; img.data[o + 3] = 255;
+  }
+  const off = new OffscreenCanvas(d.w, d.h); off.getContext('2d').putImageData(img, 0, 0);
+  g.imageSmoothingEnabled = true; g.drawImage(off, 0, 0, W, H);
+  drawColumns(g, W, H, d.fxn, d.cxn, tick, true);
+}
+
+function drawColumns(g, W, H, fxn, cxn, tick, onDepth) {
+  if (!$('showCols').checked || fxn == null) return;
+  g.lineWidth = 1; g.strokeStyle = 'rgba(255,255,255,.55)'; g.setLineDash([4, 4]);
+  for (const b of COLUMN_EDGES) { const x = columnX(b, fxn, cxn, W); if (x > 0 && x < W) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); } }
+  g.setLineDash([]);
+  g.font = `500 11px ${css('--mono')}`; g.textAlign = 'center';
+  for (let c = 0; c < 7; c++) {
+    const lo = Math.max(columnX(COLUMN_EDGES[c], fxn, cxn, W), 0), hi = Math.min(columnX(COLUMN_EDGES[c + 1], fxn, cxn, W), W);
+    if (hi - lo < 14) continue;
+    const band = tick.fw[c];
+    if (band) { g.fillStyle = css(`--b${band}`); g.globalAlpha = onDepth ? 0.0 : 0.16; g.fillRect(lo, 0, hi - lo, H); g.globalAlpha = 1; }
+    const label = band ? `B${band}` : '·';
+    g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect((lo + hi) / 2 - 15, H - 24, 30, 18);
+    g.fillStyle = band ? '#fff' : 'rgba(255,255,255,.6)'; g.fillText(label, (lo + hi) / 2, H - 11);
+  }
+  g.textAlign = 'left';
+}
+
+function drawOverlay(tick) {
+  const [g, W, H] = fitCanvas($('overlay'));
+  g.clearRect(0, 0, W, H);
+  // The video is letterboxed inside the 4:3 box when its aspect differs; map to the drawn area.
+  const vw = video.videoWidth || 4, vh = video.videoHeight || 3, scale = Math.min(W / vw, H / vh), dw = vw * scale, dh = vh * scale, ox = (W - dw) / 2, oy = (H - dh) / 2;
+  g.save(); g.translate(ox, oy);
+  if (session.depth && !video.hidden) drawColumns(g, dw, dh, session.depth.fxn, session.depth.cxn, tick, false);
+  if (tick.target && session.depth) {
+    const x = columnX(tick.target.bearing, session.depth.fxn, session.depth.cxn, dw);
+    g.strokeStyle = css('--accent'); g.lineWidth = 2; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, dh); g.stroke();
+    g.fillStyle = css('--accent'); g.font = `500 12px ${css('--mono')}`;
+    const text = `${tick.target.label} ${tick.target.distance.toFixed(1)} m`; const tw = g.measureText(text).width;
+    g.fillRect(Math.min(Math.max(x - tw / 2 - 6, 0), dw - tw - 12), 10, tw + 12, 20); g.fillStyle = '#fff'; g.fillText(text, Math.min(Math.max(x - tw / 2, 6), dw - tw - 6), 24);
+  }
+  g.restore();
+  const badge = $('badge'), text = tick.dropped ? 'PACKET DROPPED' : STATE_TEXT[tick.state];
+  badge.hidden = !text; badge.textContent = text || ''; badge.className = 'badge' + (text ? ' warn' : '');
+}
+
+function drawTimeline() {
+  const canvas = $('timeline'), [g, W, H] = fitCanvas(canvas);
+  g.clearRect(0, 0, W, H);
+  const left = 36, right = 12, top = 12, rowH = 18, labelsTop = top + 7 * rowH + 10;
+  const t0 = start(), t1 = end(), x = time => left + (time - t0) / Math.max(t1 - t0, 1e-9) * (W - left - right);
+  const ticks = session.ticks, step = Math.max(1, (W - left - right) / ticks.length + 0.6);
+  g.font = `11px ${css('--mono')}`; g.fillStyle = css('--faint'); g.textBaseline = 'middle';
+  ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].forEach((l, c) => g.fillText(l, 6, top + c * rowH + rowH / 2));
+  g.fillStyle = css('--well'); g.fillRect(left, top, W - left - right, 7 * rowH - 2);
+  const colors = [null, css('--b1'), css('--b2'), css('--b3'), css('--b4')], mark = css('--mark'), accent = css('--accent');
+  for (const tick of ticks) {
+    const xx = x(tick.t);
+    for (let c = 0; c < 7; c++) {
+      if (tick.fw[c]) { g.fillStyle = colors[tick.fw[c]]; g.fillRect(xx, top + c * rowH, step, rowH - 2); }
+      if (tick.mismatch.some(m => m.column === c)) { g.fillStyle = mark; g.fillRect(xx, top + c * rowH + rowH - 5, step, 3); }
+    }
+    if (tick.hl < 7) { g.fillStyle = accent; g.fillRect(xx, top + tick.hl * rowH, step, 3); }
+    if (tick.mismatch.some(m => m.column === null)) { g.fillStyle = mark; g.fillRect(xx, labelsTop - 6, step, 3); }
+  }
+  g.fillStyle = css('--line');
+  session.expect.forEach((e, i) => g.fillRect(x(session.start + e.from), labelsTop + (i % 4) * 7, Math.max(2, x(session.start + e.to) - x(session.start + e.from)), 4));
+  g.fillStyle = css('--faint'); g.textBaseline = 'alphabetic';
+  const span = t1 - session.start, every = span > 120 ? 30 : span > 40 ? 10 : span > 15 ? 2 : 1;
+  for (let s = 0; s <= span; s += every) if (session.start + s >= t0) g.fillText(s + 's', x(session.start + s) - 6, H - 6);
+  const cx = x(t); g.strokeStyle = css('--ink'); g.lineWidth = 1.5; g.beginPath(); g.moveTo(cx, 4); g.lineTo(cx, labelsTop + 28); g.stroke();
+}
+
+function describe(e) {
+  const parts = [];
+  if ('band' in e || 'bands' in e) parts.push(`columns ${e.columns === undefined || e.columns === 'all' ? 'all' : e.columns.join(', ')} → band ${'band' in e ? e.band : e.bands.join('/')}`);
+  if ('highlight' in e) parts.push(`tap ${e.highlight ?? 'none'}`);
+  if ('state' in e) parts.push(e.state);
+  return parts.join(' · ');
+}
+function renderInfo() {
+  $('info').innerHTML = `<p>${esc(session.description) || 'No description.'}</p>` + (session.knownIssue ? `<p class="known"><b>Known issue.</b> ${esc(session.knownIssue)}</p>` : '')
+    + (session.result.reasons.length ? `<p class="bad">${session.result.reasons.map(esc).join('<br>')}</p>` : '');
+  $('labels').innerHTML = session.result.expectations.length ? session.result.expectations.map((e, i) => `<tr><td>${esc(e.label || describe(session.expect[i]))}</td>
+    <td class="num">${e.from}–${e.to} s</td><td class="num ${e.accuracy != null && e.accuracy < 1 ? 'bad' : ''}">${e.accuracy == null ? '–' : (100 * e.accuracy).toFixed(1) + '%'} (${e.passed}/${e.checks})</td>
+    <td class="num">${e.firstMatch == null ? 'never' : '+' + e.firstMatch.toFixed(2) + ' s'}</td></tr>`).join('') : '<tr><td colspan="4">No labels yet: watch the replay, then add labelled windows to the scenario.</td></tr>';
+}
+function renderMetrics() {
+  const r = session.result, age = r.frameAgeMs;
+  const m = (v, l) => `<div class="metric"><b>${esc(v)}</b><span>${esc(l)}</span></div>`;
+  $('metrics').innerHTML = m(r.accuracy == null ? '–' : (100 * r.accuracy).toFixed(1) + '%', `label agreement (${r.checks - r.failedChecks}/${r.checks})`)
+    + m(r.phantomChecks, 'phantom pin checks') + m(r.missedChecks, 'missed obstacle checks')
+    + m(r.bandChangesPerColumnSecond, 'live band changes / column / s') + m(age ? age.mean + ' ms' : '–', 'modelled depth age at send');
+}
+
+function resize() { if (session) draw(); }
+$('play').onclick = () => playing ? pause() : play();
+$('scrub').oninput = e => { pause(); seek(start() + e.target.value / 1000 * (end() - start())); };
+$('showCols').onchange = draw;
+document.querySelectorAll('.speed button').forEach(b => b.onclick = () => {
+  speed = Number(b.dataset.speed); video.playbackRate = speed;
+  document.querySelectorAll('.speed button').forEach(o => o.setAttribute('aria-pressed', o === b));
+});
+$('timeline').onclick = e => {
+  const rect = e.currentTarget.getBoundingClientRect(), left = 36, right = 12;
+  pause(); seek(start() + (e.clientX - rect.left - left) / (rect.width - left - right) * (end() - start()));
+};
+addEventListener('keydown', e => {
+  if (!session || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+  if (e.key === ' ') { e.preventDefault(); playing ? pause() : play(); }
+  if (e.key === 'ArrowRight' && e.target.type !== 'range') { pause(); seek(session.ticks[Math.min(session.ticks.length - 1, tickIndex + 1)].t); }
+  if (e.key === 'ArrowLeft' && e.target.type !== 'range') { pause(); seek(session.ticks[Math.max(0, tickIndex - 1)].t); }
+});
+video.addEventListener('loadedmetadata', draw);
+video.addEventListener('seeked', () => { if (!playing) draw(); });
+addEventListener('resize', resize);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', resize);
+load();
+</script>
+</body>
+</html>

@@ -313,9 +313,16 @@ final class PointingRouterTests: XCTestCase {
     }
     func testNothingMeasuredOrTooCloseRefuses() {
         if case .route=PointingRouter.plan(column:3,scene:scene(Array(repeating:nil,count:7)),targetName:nil) { XCTFail("routed into the unknown") }
-        // 1.7 m reading → goal 1.2 m: not beyond the guide's 1 m arrival + 0.3 m, so no route.
-        if case .route=PointingRouter.plan(column:3,scene:scene([nil,nil,nil,1.7,nil,nil,nil]),targetName:nil) { XCTFail("route would arrive at once") }
-        if case .route=PointingRouter.plan(column:3,scene:scene([nil,nil,nil,1.9,nil,nil,nil]),targetName:nil) {} else { XCTFail("1.4 m goal should route") }
+        // 1.9 m reading → goal 1.4 m: beyond the guide's 1 m arrival + 0.3 m, so a real route.
+        if case .route(let r,_)=PointingRouter.plan(column:3,scene:scene([nil,nil,nil,1.9,nil,nil,nil]),targetName:nil) { XCTAssertFalse(r.highlightOnly) } else { XCTFail("1.4 m goal should route") }
+    }
+    func testTooCloseTapsTheColumnSilently() {
+        // 1.7 m reading → goal 1.2 m would arrive at once: tap column 3 instead, band 3, no speech.
+        guard case .route(let r,let spoken)=PointingRouter.plan(column:3,scene:scene([nil,nil,nil,1.7,nil,nil,nil]),targetName:nil) else { return XCTFail() }
+        XCTAssertTrue(r.highlightOnly); XCTAssertEqual(r.column,3); XCTAssertEqual(r.band,3); XCTAssertEqual(spoken,"")
+        let near=TargetObservation(bearingDegrees:0,distance:1.1,timestamp:10,label:"Chair")
+        guard case .route(let t,let quiet)=PointingRouter.plan(column:3,scene:scene(Array(repeating:nil,count:7),target:near),targetName:nil) else { return XCTFail() }
+        XCTAssertTrue(t.highlightOnly); XCTAssertTrue(t.toTarget); XCTAssertEqual(t.band,2); XCTAssertEqual(quiet,"")
     }
 }
 

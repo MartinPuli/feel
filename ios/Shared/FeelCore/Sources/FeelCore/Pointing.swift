@@ -486,6 +486,9 @@ public struct PointingRoute: Equatable, Sendable {
     public let label: String
     /// True when the goal is the selected target; false when it stops short of an obstacle reading.
     public let toTarget: Bool
+    /// Too close to route to: tap this column instead (silently), raising `band` if its pin is down.
+    public var highlightOnly = false
+    public var band: UInt8 = 0
 }
 public enum PointingRouter {
     public enum Plan: Equatable, Sendable { case route(PointingRoute, String), refused(String) }
@@ -509,15 +512,20 @@ public enum PointingRouter {
         if let t=scene.target, t.valid(at:scene.timestamp), let span=t.columns, span.contains(c),
            let goal=worldPoint(bearing:t.bearingDegrees,distance:t.distance,pose:scene.pose) {
             let name=targetName ?? t.label
-            guard t.distance>minGoal else { return .refused("\(name) is already within reach. No route needed.") }
-            let route=PointingRoute(column:c,goal:goal,distance:t.distance,label:name,toTarget:true)
+            var route=PointingRoute(column:c,goal:goal,distance:t.distance,label:name,toTarget:true)
+            // Too close to route to: tap the column instead, no speech.
+            guard t.distance>minGoal else { route.highlightOnly=true; route.band=TactileGeometry.band(distance:t.distance); return .route(route,"") }
             return .route(route,"Route set to \(name.lowercased()), \(way), \(PointingDescriber.meters(t.distance)). Lower the puck to start.")
         }
         guard let d=scene.distances[c], TactileGeometry.band(distance:d)>0 else {
             return .refused("Nothing measured that way, so there's no destination. Pick a column with a raised pin.")
         }
         let reach=d-standOff
-        guard reach>minGoal else { return .refused("That's already close. No route needed.") }
+        if reach<=minGoal, let at=worldPoint(bearing:bearing(ofColumn:c),distance:d,pose:scene.pose) {
+            var route=PointingRoute(column:c,goal:at,distance:d,label:"\(way) obstacle",toTarget:false)
+            route.highlightOnly=true; route.band=TactileGeometry.band(distance:d)
+            return .route(route,"")
+        }
         guard let goal=worldPoint(bearing:bearing(ofColumn:c),distance:reach,pose:scene.pose) else { return .refused("I can't place that direction.") }
         let route=PointingRoute(column:c,goal:goal,distance:reach,label:"\(way) obstacle",toTarget:false)
         return .route(route,"Route set \(way), about \(PointingDescriber.meters(reach)), stopping short of what's there. Lower the puck to start.")

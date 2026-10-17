@@ -105,7 +105,7 @@ public struct SceneRenderer {
     static func inside(_ t: Double, _ intervals: [[Double]]?) -> Bool { (intervals ?? []).contains { $0.count == 2 && t>=$0[0] && t<$0[1] } }
 
     /// All frames at the scene's frame rate, with the detector modelled as ARPerception runs it.
-    public mutating func render(info: RecordingInfo? = nil) throws -> Data {
+    public mutating func render(info: RecordingInfo? = nil, camera: ((Double, CameraPose) -> Void)? = nil) throws -> Data {
         var data=try SessionRecording.start(info ?? RecordingInfo(source:"synthetic",createdAt:"deterministic",cameraHeight:cameraHeight))
         let dt=1/(spec.frameRate ?? 10)
         var detector=DetectorModel(target:spec.target)
@@ -113,8 +113,10 @@ public struct SceneRenderer {
         while true {
             let t=Double(frameIndex)*dt; frameIndex += 1
             if t>spec.duration+1e-9 { break }
-            if Self.inside(t,spec.frameGaps) { continue }
             let pose=pose(at:t)
+            // The camera keeps rolling through a frame gap; only ARKit's depth frames stop.
+            camera?(t,pose)
+            if Self.inside(t,spec.frameGaps) { continue }
             let tracking = !Self.inside(t,spec.trackingLost)
             var frame=RecordedFrame(timestamp:t,trackingNormal:tracking,pose:pose,floorY:spec.floorCalibrated == false ? nil : 0,depth:nil)
             if tracking {
@@ -151,30 +153,40 @@ public struct SceneRenderer {
     }
 
     enum Shape { case box(Vector3,Vector3), cylinder(Double,Double,Double,Double,Double) }
-    func activeShapes(at t: Double) -> [Shape] {
-        (spec.objects ?? []).compactMap { o in
+    /// Active shapes with their index in `spec.objects` (for colouring the camera view).
+    func activeShapes(at t: Double) -> [(index: Int, shape: Shape)] {
+        (spec.objects ?? []).enumerated().compactMap { index,o in
             if let from=o.from, t<from { return nil }; if let to=o.to, t>to { return nil }
             let v=o.velocity ?? [0,0], s=t-(o.from ?? 0), ox=v[0]*s, oz=v[1]*s
-            if o.kind == "box", let a=o.min, let b=o.max { return .box(Vector3(a[0]+ox,a[1],a[2]+oz),Vector3(b[0]+ox,b[1],b[2]+oz)) }
-            if let c=o.center, let r=o.radius, let height=o.height { let base=o.base ?? 0; return .cylinder(c[0]+ox,c[1]+oz,r,base,base+height) }
+            if o.kind == "box", let a=o.min, let b=o.max { return (index,.box(Vector3(a[0]+ox,a[1],a[2]+oz),Vector3(b[0]+ox,b[1],b[2]+oz))) }
+            if let c=o.center, let r=o.radius, let height=o.height { let base=o.base ?? 0; return (index,.cylinder(c[0]+ox,c[1]+oz,r,base,base+height)) }
             return nil
         }
     }
 
+    struct Hit { let t: Double; let object: Int; let normal: Vector3 }   // object -1 = floor
+
     /// Nearest positive ray parameter over the floor and every shape.
-    static func hit(origin o: Vector3, dir d: Vector3, shapes: [Shape]) -> Double? {
-        var best = Double.infinity
-        if d.y<0, o.y>0 { best = -o.y/d.y }
-        for shape in shapes {
+    static func hit(origin o: Vector3, dir d: Vector3, shapes: [(index: Int, shape: Shape)]) -> Double? { trace(origin:o,dir:d,shapes:shapes)?.t }
+
+    static func trace(origin o: Vector3, dir d: Vector3, shapes: [(index: Int, shape: Shape)]) -> Hit? {
+        var best: Hit?
+        func consider(_ t: Double, _ object: Int, _ normal: Vector3) { if t>0, t<(best?.t ?? .infinity) { best=Hit(t:t,object:object,normal:normal) } }
+        if d.y<0, o.y>0 { consider(-o.y/d.y,-1,Vector3(0,1,0)) }
+        for (index,shape) in shapes {
             switch shape {
             case .box(let lo,let hi):
-                var t0 = -Double.infinity, t1 = Double.infinity, ok=true
-                for (oc,dc,l,h) in [(o.x,d.x,lo.x,hi.x),(o.y,d.y,lo.y,hi.y),(o.z,d.z,lo.z,hi.z)] {
+                var t0 = -Double.infinity, t1 = Double.infinity, ok=true, axis=0, sign=1.0
+                for (i,(oc,dc,l,h)) in [(o.x,d.x,lo.x,hi.x),(o.y,d.y,lo.y,hi.y),(o.z,d.z,lo.z,hi.z)].enumerated() {
                     if abs(dc)<1e-12 { if oc<l || oc>h { ok=false; break }; continue }
                     var a=(l-oc)/dc, b=(h-oc)/dc; if a>b { swap(&a,&b) }
-                    t0=max(t0,a); t1=min(t1,b); if t0>t1 { ok=false; break }
+                    if a>t0 { t0=a; axis=i; sign = dc>0 ? -1 : 1 }
+                    t1=min(t1,b); if t0>t1 { ok=false; break }
                 }
-                if ok, t1>0 { let t=t0>0 ? t0 : t1; best=min(best,t) }
+                if ok, t1>0 {
+                    var n=[0.0,0,0]; n[axis]=sign
+                    consider(t0>0 ? t0 : t1,index,Vector3(n[0],n[1],n[2]))
+                }
             case .cylinder(let cx,let cz,let r,let y0,let y1):
                 let px=o.x-cx, pz=o.z-cz, a=d.x*d.x+d.z*d.z
                 if a>1e-12 {
@@ -182,17 +194,54 @@ public struct SceneRenderer {
                     if disc>=0 {
                         let s=disc.squareRoot()
                         for t in [(-b-s)/(2*a),(-b+s)/(2*a)] where t>0 {
-                            let y=o.y+d.y*t; if y>=y0, y<=y1 { best=min(best,t); break }
+                            let y=o.y+d.y*t
+                            if y>=y0, y<=y1 { consider(t,index,Vector3((px+d.x*t)/r,0,(pz+d.z*t)/r)); break }
                         }
                     }
                 }
-                for capY in [y0,y1] where abs(d.y)>1e-12 {
+                for (capY,ny) in [(y0,-1.0),(y1,1.0)] where abs(d.y)>1e-12 {
                     let t=(capY-o.y)/d.y
-                    if t>0 { let x=o.x+d.x*t-cx, z=o.z+d.z*t-cz; if x*x+z*z<=r*r { best=min(best,t) } }
+                    if t>0 { let x=o.x+d.x*t-cx, z=o.z+d.z*t-cz; if x*x+z*z<=r*r { consider(t,index,Vector3(0,ny,0)) } }
                 }
             }
         }
-        return best.isFinite ? best : nil
+        return best
+    }
+
+    /// A shaded, colour-coded view through the same camera (no sensor noise), for watching a synthetic
+    /// session the way a phone recording is watched. RGB, row-major, origin top-left.
+    public func cameraImage(pose: CameraPose, t: Double, width: Int, height: Int) -> [UInt8] {
+        let k=intrinsics.scaled(x:Double(width)/Double(depthWidth),y:Double(height)/Double(depthHeight))
+        let shapes=activeShapes(at:t), light=Vector3(0.35,0.8,0.45)
+        let palette:[(Double,Double,Double)]=[(0.62,0.66,0.74),(0.85,0.55,0.35),(0.40,0.62,0.80),(0.75,0.45,0.60),(0.55,0.72,0.45),(0.85,0.75,0.40)]
+        var pixels=[UInt8](repeating:0,count:width*height*3)
+        for y in 0..<height {
+            for x in 0..<width {
+                let dx=(Double(x)+0.5-k.cx)/k.fx, dy=(Double(y)+0.5-k.cy)/k.fy
+                let dir=pose.right*dx+pose.up*(-dy)+pose.back*(-1)
+                var rgb:(Double,Double,Double)
+                if let hit=Self.trace(origin:pose.position,dir:dir,shapes:shapes) {
+                    let p=pose.position+dir*hit.t
+                    if hit.object<0 {
+                        let checker=(Int(floor(p.x))+Int(floor(p.z))) & 1 == 0
+                        let g=checker ? 0.80 : 0.70; rgb=(g,g,g*0.97)
+                    } else {
+                        let o=spec.objects![hit.object]
+                        let base=o.kind == "cylinder" ? (0.30,0.42,0.68) : palette[hit.object % palette.count]
+                        let shade=0.45+0.55*abs(hit.normal.dot(light))
+                        rgb=(base.0*shade,base.1*shade,base.2*shade)
+                    }
+                    // Gentle distance haze so depth reads at a glance.
+                    let haze=min(0.55,max(0,hit.t-1.5)/12)
+                    rgb=(rgb.0*(1-haze)+0.86*haze,rgb.1*(1-haze)+0.88*haze,rgb.2*(1-haze)+0.92*haze)
+                } else {
+                    let up=max(0,min(1,0.5-dy)); rgb=(0.78+0.1*up,0.84+0.08*up,0.92+0.06*up)
+                }
+                let i=(y*width+x)*3
+                pixels[i]=UInt8(max(0,min(255,rgb.0*255))); pixels[i+1]=UInt8(max(0,min(255,rgb.1*255))); pixels[i+2]=UInt8(max(0,min(255,rgb.2*255)))
+            }
+        }
+        return pixels
     }
 
     /// Ground-truth visibility for the detector: inside the camera's horizontal view, ≤ 4 m, unoccluded.

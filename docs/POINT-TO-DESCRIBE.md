@@ -29,9 +29,9 @@ Lay two taped fingers **along one column** (wrist to fingers) and hold for 0.6 s
 - **Where the route goes:**
   - If the selected target was in that column, the route goes to the target.
   - Otherwise it goes in that column's direction and stops 0.5 m short of the obstacle reading.
+- **Too close to route to:** if the goal would be inside the guide's 1 m arrival distance (plus 0.3 m), there's no route and no speech. The phone plays a chime, and when you lower the puck it taps that column for 3 s. If the live pin there is down, it raises the cached band so the tap can be felt. The tap gives way to direction arrows and to any band-1 obstacle in another column.
 - **When the phone refuses:**
   - Nothing measured in that column: "Pick a column with a raised pin". It won't route into the unknown.
-  - The goal would be inside the guide's 1 m arrival distance (plus 0.3 m): "No route needed".
   - Arrows are turned off in settings.
 - The goal is a fixed point in the room, saved with where the phone was facing. It stays right after you turn or walk.
 - **Guidance ends when:**

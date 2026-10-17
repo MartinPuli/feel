@@ -16,6 +16,7 @@ import base64
 import hashlib
 import json
 import random
+import shutil
 import struct
 import subprocess
 import sys
@@ -151,13 +152,14 @@ def check_tick(expect, tick):
     return checks, failures
 
 
-def score(scenario, ticks):
+def score(scenario, ticks, base=0.0):
+    """Label times are seconds from the recording's first frame (`base`, 0 for synthetic scenes)."""
     expects = scenario.get('expect', [])
     rules = {'minAccuracy': 0.95, **scenario.get('pass', {})}
     total = passed = phantom = missed = 0
     per_expect = []
     for index, expect in enumerate(expects):
-        lo, hi = expect['from'] + expect.get('grace', 0), expect['to']
+        lo, hi = base + expect['from'] + expect.get('grace', 0), base + expect['to']
         e_total = e_pass = 0
         first_ok = None
         for tick in ticks:
@@ -166,7 +168,7 @@ def score(scenario, ticks):
             checks, failures = check_tick(expect, tick)
             e_total += checks; e_pass += checks - len(failures)
             if not failures and first_ok is None:
-                first_ok = tick['t']
+                first_ok = tick['t'] - base
             for column, allowed, got in failures:
                 tick.setdefault('mismatch', []).append({'expect': index, 'column': column, 'want': allowed, 'got': got})
                 if column is not None:
@@ -206,7 +208,7 @@ def score(scenario, ticks):
 
 # ---------------------------------------------------------------- one scenario
 
-def run_scenario(path: Path, out_dir: Path):
+def run_scenario(path: Path, out_dir: Path, camera: bool = False):
     scenario = json.loads(path.read_text())
     name = path.stem
     work = out_dir / name
@@ -217,7 +219,8 @@ def run_scenario(path: Path, out_dir: Path):
             return {'name': name, 'title': scenario.get('title', name), 'skipped': f'recording not found: {scenario["recording"]}'}
     else:
         recording = work / 'scene.feelrec'
-        subprocess.run([str(REPLAY), 'synth', str(path), str(recording)], check=True)
+        extra = ['--camera', str(work / 'camera.cam')] if camera else []
+        subprocess.run([str(REPLAY), 'synth', str(path), str(recording), *extra], check=True)
     replay = scenario.get('replay', {})
     flags = []
     for key, flag in (('tickOffset', '--tick-offset'), ('latency', '--latency'), ('tail', '--tail')):
@@ -244,19 +247,87 @@ def run_scenario(path: Path, out_dir: Path):
     finally:
         firmware.close()
 
-    result = score(scenario, ticks)
+    info, frames = read_recording(recording)
+    result = score(scenario, ticks, base=frames[0][0]['t'] if frames else 0.0)
     digest = hashlib.sha256(json.dumps([[t['phone']['hex'], t['firmware']['bands'], t['firmware']['highlight']] for t in ticks]).encode()).hexdigest()[:16]
     with (work / 'timeline.jsonl').open('w') as f:
         for tick in ticks:
             f.write(json.dumps(tick, sort_keys=True) + '\n')
-    info, frames = read_recording(recording)
     return {'name': name, 'title': scenario.get('title', name), 'description': scenario.get('description', ''),
             'source': info.get('source'), 'knownIssue': scenario.get('knownIssue'), 'digest': digest,
             'result': result, 'expect': scenario.get('expect', []), 'faults': faults,
             'ticks': [{'t': t['t'], 'fw': t['firmware']['bands'], 'hl': t['firmware']['highlight'], 'tap': t['firmware']['tap_active'],
                        'state': t['phone']['state'], 'frame': t['phone']['frame'], 'dist': t['phone']['distances'],
                        'target': t['phone'].get('target'), 'dropped': t['dropped'], 'mismatch': t.get('mismatch', [])} for t in ticks],
-            'thumbs': thumbnails(frames)}
+            'thumbs': thumbnails(frames),
+            # Not serialised: inputs for the web export.
+            '_assets': {'recording': recording, 'frames': frames, 'camera': work / 'camera.cam' if camera and 'recording' not in scenario else None,
+                        'frameRate': scenario.get('scene', {}).get('frameRate', 10),
+                        'publish': info.get('source') == 'synthetic' or scenario.get('publish') is True}}
+
+
+# ---------------------------------------------------------------- web export (/replay viewer)
+
+def encode_camera(cam: Path, mp4: Path, fps: float):
+    """Synthetic camera frames (FEELCAM1) → H.264 MP4 at the scene frame rate; video time 0 = scene time 0."""
+    data = cam.read_bytes()
+    if data[:8] != b'FEELCAM1':
+        raise ValueError(f'{cam}: not a camera file')
+    w, h = struct.unpack_from('<II', data, 8)
+    size = w * h * 3
+    raw = b''.join(data[16 + i * (8 + size) + 8: 16 + (i + 1) * (8 + size)] for i in range((len(data) - 16) // (8 + size)))
+    subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{w}x{h}', '-r', str(fps), '-i', '-',
+                    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '24', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', str(mp4)],
+                   input=raw, check=True)
+    cam.unlink()
+
+
+def export_web(entry, out_dir: Path):
+    """Write sessions/<name>/{session.json, meta.json, camera.mp4} for the /replay page."""
+    assets = entry['_assets']
+    session_dir = out_dir / 'web' / 'sessions' / entry['name']
+    if session_dir.exists():
+        shutil.rmtree(session_dir)
+    session_dir.mkdir(parents=True)
+    media = None
+    recording = assets['recording']
+    sidecar = recording.with_suffix('.video.json')
+    if assets['camera'] and assets['camera'].exists():
+        if shutil.which('ffmpeg'):
+            encode_camera(assets['camera'], session_dir / 'camera.mp4', assets['frameRate'])
+            media = {'url': 'camera.mp4', 'start': 0.0, 'kind': 'rendered'}
+        else:
+            assets['camera'].unlink()
+    elif sidecar.exists():
+        timing = json.loads(sidecar.read_text())
+        video = recording.parent / timing['video']
+        if video.exists():
+            shutil.copyfile(video, session_dir / 'camera.mp4')
+            media = {'url': 'camera.mp4', 'start': timing['start'], 'kind': 'recorded'}
+    frames = assets['frames']
+    # 128 × 96 depth for short sessions; coarser for long phone walks to keep the page loadable.
+    step = 2 if len(frames) <= 900 else 4
+    thumbs = thumbnails(frames, step=step)
+    first = next(iter(thumbs.values()), None)
+    depth = {'w': first['w'], 'h': first['h'], 'fxn': first['fx'] / first['w'], 'cxn': first['cx'] / first['w'],
+             'frames': {t: v['px'] for t, v in thumbs.items()}} if first else None
+    ticks = entry['ticks']
+    meta = {'name': entry['name'], 'title': entry['title'], 'source': entry['source'], 'status': status(entry),
+            'knownIssue': entry.get('knownIssue'), 'publish': assets['publish'],
+            'duration': round(ticks[-1]['t'] - ticks[0]['t'], 2) if ticks else 0,
+            'accuracy': entry['result']['accuracy'], 'hasVideo': media is not None, 'start': frames[0][0]['t'] if frames else 0}
+    session = {**meta, 'description': entry['description'], 'result': entry['result'], 'expect': entry['expect'],
+               'faults': entry['faults'], 'ticks': ticks, 'depth': depth, 'media': media}
+    (session_dir / 'session.json').write_text(json.dumps(session, separators=(',', ':')))
+    (session_dir / 'meta.json').write_text(json.dumps(meta, indent=1) + '\n')
+
+
+def write_web_index(out_dir: Path):
+    sessions = []
+    for meta in sorted((out_dir / 'web' / 'sessions').glob('*/meta.json')):
+        sessions.append(json.loads(meta.read_text()))
+    sessions.sort(key=lambda m: (m['source'] != 'iphone', m['title'].lower()))
+    (out_dir / 'web' / 'index.json').write_text(json.dumps({'generated': time.strftime('%Y-%m-%d %H:%M:%S'), 'sessions': sessions}, indent=1) + '\n')
 
 
 # ---------------------------------------------------------------- baselines, report, main
@@ -288,7 +359,8 @@ def status(entry):
 
 def write_report(entries, out_dir: Path):
     template = (SIM / 'report.html').read_text()
-    payload = json.dumps({'generated': time.strftime('%Y-%m-%d %H:%M:%S'), 'scenarios': entries}, separators=(',', ':'))
+    public = [{k: v for k, v in e.items() if not k.startswith('_')} for e in entries]
+    payload = json.dumps({'generated': time.strftime('%Y-%m-%d %H:%M:%S'), 'scenarios': public}, separators=(',', ':'))
     (out_dir / 'report.html').write_text(template.replace('/*DATA*/null', payload.replace('</', '<\\/')))
 
 
@@ -302,8 +374,9 @@ def run_all(args):
     for path in paths:
         digests = set()
         entry = None
-        for _ in range(args.repeat):
-            entry = run_scenario(path, out_dir)
+        for attempt in range(args.repeat):
+            # Render the synthetic camera view only once, on the final run.
+            entry = run_scenario(path, out_dir, camera=not args.no_web and attempt == args.repeat - 1)
             if 'skipped' in entry:
                 break
             digests.add(entry['digest'])
@@ -314,6 +387,8 @@ def run_all(args):
                 failed = True
         s = status(entry)
         failed |= s == 'FAIL'
+        if not args.no_web and 'skipped' not in entry:
+            export_web(entry, out_dir)
         if 'skipped' in entry:
             print(f'SKIP   {entry["name"]}: {entry["skipped"]}')
         else:
@@ -331,6 +406,9 @@ def run_all(args):
     (out_dir / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
     write_report(entries, out_dir)
     print(f'Report: {out_dir / "report.html"}')
+    if not args.no_web:
+        write_web_index(out_dir)
+        print('Replay page: cd web && npm run dev, then open http://127.0.0.1:3000/replay')
     return not failed
 
 
@@ -345,6 +423,7 @@ def main():
     parser.add_argument('--no-build', action='store_true', help='use existing feel-replay and feel-sim binaries')
     parser.add_argument('--repeat', type=int, default=1, help='run each scenario N times and require identical output')
     parser.add_argument('--update-baselines', action='store_true', help='store this run as the regression baseline')
+    parser.add_argument('--no-web', action='store_true', help='skip the /replay web bundles (camera video and depth frames)')
     parser.add_argument('--watch', action='store_true', help='rebuild and rerun whenever sources, scenarios or recordings change')
     args = parser.parse_args()
     if args.repeat < 1:

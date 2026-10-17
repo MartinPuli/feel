@@ -36,3 +36,6 @@ firmware/production-evidence/
 # Replay harness: generated output and personal sensor recordings (never commit recordings)
 simulation/out/
 simulation/recordings/*.feelrec
+
+# FEEL site build output (contains replay data)
+web/dist/
