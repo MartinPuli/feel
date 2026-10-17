@@ -11,6 +11,11 @@ final class WhereIsTests: XCTestCase {
         let text=try String(contentsOf:protocolDir.appendingPathComponent("where-is-prompt.txt"),encoding:.utf8)
         XCTAssertEqual(WhereIs.prompt,text.trimmingCharacters(in:.whitespacesAndNewlines))
     }
+    func testDeadlineMatchesSharedFile() throws {
+        let data=try Data(contentsOf:protocolDir.appendingPathComponent("where-is-cases.json"))
+        let shared=try XCTUnwrap((JSONSerialization.jsonObject(with:data) as? [String:Any])?["deadline_seconds"] as? Double)
+        XCTAssertEqual(WhereIs.deadline,shared)
+    }
     func testSharedParserCases() throws {
         let data=try Data(contentsOf:protocolDir.appendingPathComponent("where-is-cases.json"))
         let cases=try XCTUnwrap((JSONSerialization.jsonObject(with:data) as? [String:Any])?["cases"] as? [[String:Any]])

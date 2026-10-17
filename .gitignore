@@ -43,3 +43,6 @@ simulation/recordings/*
 
 # FEEL site build output (contains replay data)
 web/dist/
+
+# Supabase project URL and publishable key for the Lantern build (ios/scripts/supabase_config.sh)
+ios/Config/Supabase.local.xcconfig

@@ -67,7 +67,19 @@ Hosted mode uploads the dataset and deploys task/scorers. A failed run, missing 
 
 Review and authorize the actual dataset before upload. The hosted runner sends normalized photos and questions to Chalk and its configured model provider. Run both models on identical labels, images and prompt; retain dataset hashes, run IDs, complete row results and failures. See the [evaluation plan](../docs/CHALK-IMPLEMENTATION.md#evaluation-design) for denominators and proposed acceptance criteria.
 
-The scorers measure point correctness, valid reply structure and false-found count. Report false-found **over absent rows**, not as the mean over all examples. A completed cloud job alone is not a quality pass. Photo scores do not validate LiDAR, speech delivery, BLE or physical tactile output.
+The scorers measure point correctness, valid reply structure and false-found count. The report's `metrics` give each rate with its numerator and denominator: present-target localization over present rows, absent accuracy and false-found over absent rows, well-formed replies and missing responses over all rows. A completed cloud job alone is not a quality pass. Photo scores do not validate LiDAR, speech delivery, BLE or physical tactile output.
+
+Each task row records its status, elapsed time, the model the gateway resolved and token usage. The phone and the evaluation share one absolute deadline, `deadline_seconds` in `protocol/where-is-cases.json` (12 s). A reply after it is unusable: the phone falls back to its local finder, and the evaluation scores the row as a missing response. Gateway errors leave the run incomplete. The report adds `latency_ms` (p50, p95, max), summed `usage` and `resolved_models`.
+
+## Venue pack
+
+FEEL reads reviewed venue information without internet from a downloaded pack. Build one from a reviewed source file (format: `protocol/venue-pack-source.json`, a fictional test vector):
+
+```sh
+python3 -m feel_chalk.venue_pack data/reviewed-venue.json --days 7 --output data/venue-pack.json
+```
+
+Every entry needs an HTTPS source and its retrieval time; a `restriction` needs the place it applies to and a start time, and overrides that place's usual description while active. The payload travels with its SHA-256, so the phone rejects a corrupted download and keeps its previous pack. After `--days`, the phone says the information can't be confirmed instead of reading it. Host the file at any HTTPS address and enter it under Assistant › Venue on the phone. Entries must come from reviewed sources; the builder checks structure, not truth.
 
 ## Data handling
 

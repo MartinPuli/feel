@@ -81,10 +81,10 @@ The offline assistant needs local spoken results as well as local command recogn
 
 ## Implementation order
 
-1. Correct evaluation reporting and add timing/usage evidence.
+1. Correct evaluation reporting and add timing/usage evidence. **Implemented in software** on `feel/chalk-roadmap`: denominators per metric, per-row status/elapsed time/resolved model/usage, and one absolute 12 s deadline shared by the phone and the evaluation. Not yet exercised against real photos or a hosted run.
 2. Complete local command and spoken-result behavior, then test loss of connectivity.
 3. Resolve hosted evaluation execution and quota enforcement; run the approved comparison dataset.
-4. Add reviewed venue packs and bounded agent context.
+4. Add reviewed venue packs and bounded agent context. **Venue pack implemented in software** on `feel/chalk-roadmap`: Python builder, hashed and validated format, expiry and restriction rules, atomic phone storage, HTTPS download, the `venue_info` voice tool and a VoiceOver list. Not yet done: reviewed real venue content, hosting, a Chalk scheduled query that prepares the source, agent context, and device tests.
 5. Select models from held-out results and validate on the phone before rollout.
 
 ## Detailed evidence

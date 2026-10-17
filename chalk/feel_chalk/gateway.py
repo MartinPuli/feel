@@ -1,6 +1,7 @@
 """Minimal client for Chalk's OpenAI-compatible Model Gateway (standard library only)."""
 from __future__ import annotations
 import json
+from typing import NamedTuple
 import urllib.error
 import urllib.request
 
@@ -11,6 +12,12 @@ class GatewayError(RuntimeError):
     def __init__(self, message: str, status: int | None = None):
         super().__init__(message)
         self.status = status
+
+
+class Completion(NamedTuple):
+    content: str
+    model: str | None
+    usage: dict | None
 
 
 def _request(settings: Settings, method: str, path: str, body: dict | None = None, timeout: float = 30) -> dict:
@@ -32,16 +39,24 @@ def _request(settings: Settings, method: str, path: str, body: dict | None = Non
         raise GatewayError(f'HTTP {error.code} from {path}: {detail}', error.code) from None
     except urllib.error.URLError as error:
         raise GatewayError(f'cannot reach {settings.router_base}: {error.reason}') from None
+    except TimeoutError:
+        raise GatewayError(f'{path} timed out after {timeout} s') from None
 
 
 def list_models(settings: Settings) -> list[str]:
     return [item.get('id', '') for item in _request(settings, 'GET', '/models').get('data', [])]
 
 
-def chat(settings: Settings, body: dict, timeout: float = 60) -> str:
-    """Send one chat completion and return the reply text."""
+def completion(settings: Settings, body: dict, timeout: float = 60) -> Completion:
+    """Send one chat completion; return the reply text with the model that answered and its token usage."""
     reply = _request(settings, 'POST', '/chat/completions', body, timeout)
     try:
-        return reply['choices'][0]['message']['content']
+        content = reply['choices'][0]['message']['content']
     except (KeyError, IndexError, TypeError):
         raise GatewayError(f'unexpected reply shape: {str(reply)[:300]}') from None
+    usage = reply.get('usage')
+    return Completion(content, reply.get('model'), usage if isinstance(usage, dict) else None)
+
+
+def chat(settings: Settings, body: dict, timeout: float = 60) -> str:
+    return completion(settings, body, timeout).content

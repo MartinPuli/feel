@@ -14,6 +14,10 @@ class ContractTests(unittest.TestCase):
     def test_prompt_matches_shared_file(self):
         self.assertEqual(where_is.PROMPT, (PROTOCOL / 'where-is-prompt.txt').read_text().strip())
 
+    def test_deadline_matches_shared_file(self):
+        shared = json.loads((PROTOCOL / 'where-is-cases.json').read_text())['deadline_seconds']
+        self.assertEqual(where_is.DEADLINE_SECONDS, shared)
+
     def test_shared_parser_cases(self):
         cases = json.loads((PROTOCOL / 'where-is-cases.json').read_text())['cases']
         self.assertGreater(len(cases), 0)

@@ -1,0 +1,17 @@
+{
+  "comment": "Test vector only: a fictional venue with example.org sources. Builds protocol/venue-pack-v1.json with generated_at 2026-10-17T12:00:00Z and 7 days of validity.",
+  "venue_id": "example-hall",
+  "venue_name": "Example Hall",
+  "entries": [
+    {"id": "main-entrance", "kind": "place", "name": "Main entrance", "aliases": ["front door", "front entrance"],
+     "text": "Step-free entrance on the north side with an automatic door.",
+     "source_url": "https://example.org/access/example-hall", "retrieved_at": "2026-10-17T10:00:00Z"},
+    {"id": "accessible-restroom", "kind": "place", "name": "Accessible restroom", "aliases": ["restroom", "bathroom"],
+     "text": "Ground floor, past the elevators on the left.",
+     "source_url": "https://example.org/access/example-hall", "retrieved_at": "2026-10-17T10:00:00Z"},
+    {"id": "north-door-repair", "kind": "restriction", "name": "North door repair", "applies_to": "main-entrance",
+     "text": "The north automatic door is out of service. Use the east entrance, which is also step-free.",
+     "source_url": "https://example.org/notices/north-door", "retrieved_at": "2026-10-17T11:00:00Z",
+     "effective_from": "2026-10-17T00:00:00Z", "effective_until": "2026-10-19T00:00:00Z"}
+  ]
+}

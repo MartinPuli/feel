@@ -9,6 +9,9 @@ from dataclasses import dataclass
 import json
 import math
 
+# Kept equal to deadline_seconds in protocol/where-is-cases.json; a later reply is unusable.
+DEADLINE_SECONDS = 12
+
 # Kept identical to protocol/where-is-prompt.txt. Embedded so it ships with
 # this package when Chalk runs the evaluation task remotely.
 PROMPT = """You help a blind person find things using one photo from a chest-mounted phone camera.

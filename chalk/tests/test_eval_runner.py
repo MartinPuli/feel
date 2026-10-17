@@ -64,7 +64,8 @@ class FakeSDK:
 
 
 def good_result():
-    return {'output': '{"found":false,"label":"","box":null,"confidence":0}',
+    return {'output': json.dumps({'status': 'ok', 'reply': '{"found":false,"label":"","box":null,"confidence":0}',
+                                  'elapsed_ms': 800.0, 'model': 'test/model', 'usage': None}),
             'expected_box': 'null', 'output_error': None,
             'points_correctly_value': 1.0, 'reply_is_well_formed_value': 1.0,
             'false_found_value': 0.0}
@@ -158,7 +159,7 @@ class EvaluationRunnerTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(report['execution_status'], 'succeeded')
         self.assertEqual(report['quality_status'], 'NOT_ASSESSED')
-        self.assertEqual(report['scores']['points_correctly'], 1.0)
+        self.assertEqual(report['metrics']['absent_accuracy']['rate'], 1.0)
         self.assertEqual(sdk.functions[0][1]['env'], {'CHALK_API_HOST': 'https://gateway.example.test', 'FEEL_CHALK_MODEL': 'override'})
         self.assertEqual(sdk.secrets, ['CHALK_ROUTER_API_KEY', 'CHALK_ENV_ID'])
         self.assertEqual(sdk.wait_arguments, {'timeout': 25, 'raise_on_failure': False})
@@ -187,7 +188,8 @@ class EvaluationRunnerTests(unittest.TestCase):
         self.assertEqual(report['execution_status'], 'incomplete')
 
     def test_failed_or_missing_rows_and_error_columns_are_incomplete(self):
-        cases = [[], [dict(good_result(), output='GATEWAY ERROR: private detail')],
+        cases = [[], [dict(good_result(), output=json.dumps({'status': 'error', 'reply': None, 'error': 'private detail'}))],
+                 [dict(good_result(), output='private detail')],
                  [dict(good_result(), output_error='private detail')],
                  [dict(good_result(), points_correctly_error='private detail')],
                  [dict(good_result(), points_correctly_value_error='private detail')],
@@ -203,7 +205,7 @@ class EvaluationRunnerTests(unittest.TestCase):
     def test_zero_accuracy_is_completed_execution_not_quality_pass(self):
         code, report, _, _ = self.invoke(FakeSDK(records=[dict(good_result(), points_correctly_value=0.0)]))
         self.assertEqual(code, 0)
-        self.assertEqual(report['scores']['points_correctly'], 0)
+        self.assertEqual(report['metrics']['absent_accuracy']['rate'], 0)
         self.assertEqual(report['quality_status'], 'NOT_ASSESSED')
 
 

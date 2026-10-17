@@ -13,51 +13,60 @@ import json
 import math
 import os
 from pathlib import Path
+import time
 from urllib.parse import urlsplit
 
 from feel_chalk import gateway, where_is
 from feel_chalk.config import settings
 from feel_chalk.eval_data import DatasetError, prepare
+from feel_chalk.eval_report import summarize_results, usable_reply
 
 
 def where_is_task(question: str, image_b64: str) -> str:
-    """One gateway call per row; the raw reply is returned so scorers see exactly what the phone would."""
+    """One gateway call per row, recorded as JSON: the raw reply the phone would parse, the time taken
+    against the shared deadline, the model that answered and its token usage."""
     config = settings()
+    body = where_is.request_body(config.model or os.environ['FEEL_CHALK_MODEL'], question, image_b64)
+    started = time.monotonic()
     try:
-        return gateway.chat(config, where_is.request_body(config.model or os.environ['FEEL_CHALK_MODEL'], question, image_b64))
+        reply = gateway.completion(config, body, timeout=where_is.DEADLINE_SECONDS)
+        record = {'status': 'ok', 'reply': reply.content, 'model': reply.model, 'usage': reply.usage}
     except gateway.GatewayError as error:
-        return f'GATEWAY ERROR: {error}'
+        record = {'status': 'error', 'reply': None, 'model': None, 'usage': None, 'error': str(error)}
+    elapsed = time.monotonic() - started
+    if elapsed > where_is.DEADLINE_SECONDS:
+        record.update(status='late', reply=None)
+    return json.dumps(dict(record, elapsed_ms=round(elapsed * 1000, 1)))
 
 
-# Scorer parameters bind to dataset columns by name, plus `output` (the task's reply).
+def _answer(output: str) -> where_is.Answer | None:
+    reply = usable_reply(output)
+    try:
+        return None if reply is None else where_is.parse(reply)
+    except where_is.AnswerError:
+        return None
+
+
+# Scorer parameters bind to dataset columns by name, plus `output` (the task's JSON record).
 def points_correctly(output: str, expected_box: str) -> float:
     """1 when the reply's box centre lands inside the labeled box, or when the thing is absent and
-    the reply says not found. Malformed replies score 0."""
+    the reply says not found. Malformed, late or failed replies score 0."""
     expected = json.loads(expected_box)
-    try:
-        answer = where_is.parse(output)
-    except where_is.AnswerError:
-        return 0.0
-    return 1.0 if where_is.points_at(answer, tuple(expected) if expected else None) else 0.0
+    answer = _answer(output)
+    return 1.0 if answer and where_is.points_at(answer, tuple(expected) if expected else None) else 0.0
 
 
 def reply_is_well_formed(output: str) -> float:
-    """1 when the reply obeys the JSON contract at all (found or not), 0 otherwise."""
-    try:
-        where_is.parse(output)
-        return 1.0
-    except where_is.AnswerError:
-        return 0.0
+    """1 when an in-time reply obeys the JSON contract at all (found or not), 0 otherwise."""
+    return 1.0 if _answer(output) else 0.0
 
 
 def false_found(output: str, expected_box: str) -> float:
     """1 when the thing is absent but the model claimed to see it: the dangerous error for a blind user."""
     if json.loads(expected_box) is not None:
         return 0.0
-    try:
-        return 1.0 if where_is.parse(output).found else 0.0
-    except where_is.AnswerError:
-        return 0.0
+    answer = _answer(output)
+    return 1.0 if answer and answer.found else 0.0
 
 
 def load_rows(labels: Path) -> list[dict]:
@@ -74,32 +83,6 @@ def deploy_functions(sdk, host: str, model: str):
     scorers = [sdk.function(function) for function in
                (points_correctly, reply_is_well_formed, false_found)]
     return task, scorers
-
-
-def summarize_results(records: list[dict], expected_rows: int) -> dict:
-    """Retain row scores without copying photos, questions or provider error bodies."""
-    names = ('points_correctly', 'reply_is_well_formed', 'false_found')
-    complete = len(records) == expected_rows
-    results = []
-    for index, row in enumerate(records):
-        errors = [name for name, value in row.items() if name.endswith('_error') and value]
-        if errors:
-            complete = False
-        scores = {}
-        for name in names:
-            value = row.get(name + '_value')
-            if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
-                complete = False
-                value = None
-            scores[name] = value
-        output = row.get('output')
-        task_failed = not isinstance(output, str) or output.startswith('GATEWAY ERROR:')
-        if task_failed:
-            complete = False
-        results.append({'row_index': index, 'task_failed': task_failed, 'scores': scores, 'error_columns': errors})
-    means = {name: sum(row['scores'][name] for row in results) / expected_rows
-             if complete and expected_rows else None for name in names}
-    return {'rows_complete': complete, 'result_row_count': len(records), 'scores': means, 'rows': results}
 
 
 def _load_sdk():

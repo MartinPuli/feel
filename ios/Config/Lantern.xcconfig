@@ -1,0 +1,3 @@
+// Lantern build settings. Supabase values come from the git-ignored file below,
+// written by ios/scripts/supabase_config.sh. Without it, the app opens without sign-in.
+#include? "Supabase.local.xcconfig"
