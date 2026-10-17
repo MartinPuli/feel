@@ -28,3 +28,7 @@ cad/viewer/mesh_*.js
 
 # Local Mac setup environment
 .venv/
+
+# Local, per-unit physical measurement records and supporting evidence
+firmware/production-measurements.local.json
+firmware/production-evidence/

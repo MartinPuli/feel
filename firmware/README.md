@@ -159,3 +159,45 @@ The existing `esp32-single-demo` keeps its nominal1450–1550us mapping. Default
 seven-servo environments keep PWM disabled and their measured-limit requirement
 is unchanged. The new adapter reuses the same nine-byte BLE protocol and
 quantized50Hz output path; no independent sweep is performed.
+
+## Guarded seven-servo production profile
+
+`esp32-production` uses the existing seven-column controller on classic ESP32
+GPIOs32,33,25,26,27,14,13. It is explicitly gated by the ignored local file
+`firmware/production-measurements.local.json`; the file is intentionally absent.
+The tracked `production-measurements.example.json` contains false/null fields
+and cannot enable output. Fill a local copy only from actual physical records.
+
+The prebuild hook requires schema_version1, board `esp32-classic`, a true global
+verification attestation, verifier name, ISO8601 timestamp with timezone, and a
+nonempty local evidence file. All seven column records must have unique column
+and unit identifiers, the matching GPIO, a true verification attestation, a
+measured integer minimum/maximum pulse range, and a nonempty evidence file.
+Evidence paths are absolute or relative to the measurement JSON directory.
+Every measured range must include the entire nominal900–2100us service range;
+a narrower range blocks this profile instead of silently rescaling the cams.
+Evidence files can live in ignored `firmware/production-evidence/`.
+
+Only after those records validate does the hook inject output enable and the
+900/2100 service limits. These are the bounded operating envelope contained in
+every supplied measured range, not fabricated measurement results. The hook
+prints the configuration SHA256 for build evidence. It checks the supplied
+records and evidence-file presence, **not the truth of the physical tests**.
+
+```sh
+# This deliberately fails while actual local measurement records are absent:
+python3 -m platformio run -d firmware -e esp32-production -j 2
+# Software fixtures exercise the output path without manufacturing records:
+sh firmware/test/build_output_paths.sh
+python3 firmware/test/test_production_config.py
+```
+
+Default and single-servo profiles remain unchanged. Neither this profile nor a
+successful build establishes full travel, electrical safety, mechanical return,
+tactile usability or deployment readiness. Before uploading, review the board,
+wiring/power plan and each servo's measured safe range, and disconnect servo
+power. After uploading, complete the powered integration and end-to-end tests
+in `docs/SEVEN-SERVO-PRODUCTION.md`; those are subsequent release gates, not
+prerequisites for the upload needed to run them. Production starts at its neutral
+gap positions; it is not the single-servo boot-detached adapter. All test records in the validator suite are explicitly synthetic and
+are created only in temporary directories, never as deployment configuration.

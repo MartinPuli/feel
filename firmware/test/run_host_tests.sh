@@ -37,3 +37,5 @@ python3 "$firmware_dir/test/test_bench_validation.py"
   -I "$firmware_dir/include" "$firmware_dir/src/controller.cpp" \
   "$firmware_dir/test/single_live_tests.cpp" -o "$firmware_dir/build/single-live-tests"
 "$firmware_dir/build/single-live-tests"
+
+python3 "$firmware_dir/test/test_production_config.py"

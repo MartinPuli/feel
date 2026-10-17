@@ -20,6 +20,14 @@
 #if (FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE) && (!defined(FEEL_BOARD_CLASSIC) || defined(FEEL_BOARD_S3) || defined(CONFIG_IDF_TARGET_ESP32S3))
 #error "Single-servo adapters require the explicit classic ESP32 board"
 #endif
+#if defined(FEEL_PRODUCTION_PROFILE) && FEEL_PRODUCTION_PROFILE
+#if !defined(FEEL_PRODUCTION_MEASUREMENTS_LOADED) || FEEL_PRODUCTION_MEASUREMENTS_LOADED != 1
+#error "Production profile requires its validated local seven-servo measurement records"
+#endif
+#if !FEEL_ENABLE_SERVO_OUTPUT || !defined(FEEL_BOARD_CLASSIC) || defined(FEEL_BOARD_S3)
+#error "Production profile requires enabled classic ESP32 seven-servo output"
+#endif
+#endif
 #if FEEL_ENABLE_SERVO_OUTPUT
 #ifndef FEEL_VERIFIED_PULSE_MIN_US
 #error "Servo output requires explicit FEEL_VERIFIED_PULSE_MIN_US from the actual unit's measured safe range"

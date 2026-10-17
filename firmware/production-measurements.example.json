@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "board": "esp32-classic",
+  "verified": false,
+  "verified_by": null,
+  "verified_at": null,
+  "evidence_file": null,
+  "instructions": "UNVERIFIED TEMPLATE. Record actual measurements and evidence for each installed servo. Do not copy nominal design endpoints into measured fields without measuring. This example cannot enable production.",
+  "servos": [
+    {
+      "column": 0,
+      "gpio": 32,
+      "unit_id": null,
+      "verified": false,
+      "measured_min_us": null,
+      "measured_max_us": null,
+      "evidence_file": null
+    },
+    {
+      "column": 1,
+      "gpio": 33,
+      "unit_id": null,
+      "verified": false,
+      "measured_min_us": null,
+      "measured_max_us": null,
+      "evidence_file": null
+    },
+    {
+      "column": 2,
+      "gpio": 25,
+      "unit_id": null,
+      "verified": false,
+      "measured_min_us": null,
+      "measured_max_us": null,
+      "evidence_file": null
+    },
+    {
+      "column": 3,
+      "gpio": 26,
+      "unit_id": null,
+      "verified": false,
+      "measured_min_us": null,
+      "measured_max_us": null,
+      "evidence_file": null
+    },
+    {
+      "column": 4,
+      "gpio": 27,
+      "unit_id": null,
+      "verified": false,
+      "measured_min_us": null,
+      "measured_max_us": null,
+      "evidence_file": null
+    },
+    {
+      "column": 5,
+      "gpio": 14,
+      "unit_id": null,
+      "verified": false,
+      "measured_min_us": null,
+      "measured_max_us": null,
+      "evidence_file": null
+    },
+    {
+      "column": 6,
+      "gpio": 13,
+      "unit_id": null,
+      "verified": false,
+      "measured_min_us": null,
+      "measured_max_us": null,
+      "evidence_file": null
+    }
+  ]
+}

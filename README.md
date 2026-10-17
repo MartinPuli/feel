@@ -25,6 +25,8 @@ verification of this repository. The earlier preparation work is preserved on
 | `feel/v2-spatial-memory` | Remember / Recall / Return, created only after V1 validation |
 | `feel/v3-advanced` | Optional advanced work, only after V1 and V2 |
 
+For the final seven-servo configuration, start with [SEVEN-SERVO-PRODUCTION.md](docs/SEVEN-SERVO-PRODUCTION.md).
+
 To test the current app and single-servo setup, follow [TEST-V1.md](docs/TEST-V1.md).
 
 To set up the board on your Mac, start with [SETUP-MAC-ESP32.md](docs/SETUP-MAC-ESP32.md).

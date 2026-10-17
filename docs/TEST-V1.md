@@ -50,6 +50,8 @@ flash a board or validate real sensors, power or mechanics.
 
 ## Complete physical release
 
+Use [SEVEN-SERVO-PRODUCTION.md](SEVEN-SERVO-PRODUCTION.md) for the final pin map, production profile and ordered seven-servo test.
+
 After the single-servo check, follow [HARDWARE-BRINGUP.md](HARDWARE-BRINGUP.md):
 measure power and travel, test one assembled cam/four-pin column, perform P1–P5,
 then validate all seven columns and real perception. Keep default seven-servo
