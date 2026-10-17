@@ -40,9 +40,15 @@ class Answer:
 
 
 def _number(value, field: str) -> float:
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise AnswerError(f'{field} must be a finite number')
-    return float(value)
+    try:
+        number = float(value)
+    except (OverflowError, ValueError):
+        raise AnswerError(f'{field} must be a finite number') from None
+    if not math.isfinite(number):
+        raise AnswerError(f'{field} must be a finite number')
+    return number
 
 
 def parse(text: str) -> Answer:
@@ -53,7 +59,10 @@ def parse(text: str) -> Answer:
         if body.startswith('json'):
             body = body[4:]
     try:
-        data = json.loads(body)
+        # JSONDecoder rejects non-JSON constants even in otherwise unused fields.
+        def reject_constant(value: str):
+            raise AnswerError(f'reply contains a non-JSON number: {value}')
+        data = json.loads(body, parse_constant=reject_constant)
     except json.JSONDecodeError as error:
         raise AnswerError(f'reply is not JSON: {error}') from None
     if not isinstance(data, dict):
@@ -61,18 +70,27 @@ def parse(text: str) -> Answer:
     found = data.get('found')
     if not isinstance(found, bool):
         raise AnswerError('found must be true or false')
-    label = data.get('label', '')
+    # Match Swift's optional Decodable fields: missing and null use defaults,
+    # but a supplied field of the wrong type is invalid even when found is false.
+    label = data.get('label')
+    if label is None:
+        label = ''
     if not isinstance(label, str):
         raise AnswerError('label must be text')
-    confidence = _number(data.get('confidence', 0), 'confidence')
+    raw_confidence = data.get('confidence')
+    confidence = _number(0 if raw_confidence is None else raw_confidence, 'confidence')
     if not 0 <= confidence <= 1:
         raise AnswerError('confidence must be between 0 and 1')
+    box = data.get('box')
+    if box is not None:
+        if not isinstance(box, list):
+            raise AnswerError('box must be an array of numbers or null')
+        box = tuple(_number(v, 'box') for v in box)
     if not found:
         return Answer(False, label, None, confidence)
-    box = data.get('box')
-    if not isinstance(box, list) or len(box) != 4:
+    if box is None or len(box) != 4:
         raise AnswerError('a found answer needs a box of four numbers')
-    x0, y0, x1, y1 = (_number(v, 'box') for v in box)
+    x0, y0, x1, y1 = box
     if not (0 <= x0 < x1 <= 1 and 0 <= y0 < y1 <= 1):
         raise AnswerError('box must lie inside the image with positive width and height')
     return Answer(True, label, (x0, y0, x1, y1), confidence)

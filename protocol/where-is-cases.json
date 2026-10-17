@@ -13,6 +13,19 @@
     {"name": "box with zero width", "text": "{\"found\": true, \"label\": \"desk\", \"box\": [0.5, 0.4, 0.5, 0.8], \"confidence\": 0.9}", "error": true},
     {"name": "box with three numbers", "text": "{\"found\": true, \"label\": \"desk\", \"box\": [0.1, 0.2, 0.3], \"confidence\": 0.9}", "error": true},
     {"name": "confidence above one", "text": "{\"found\": true, \"label\": \"desk\", \"box\": [0.1, 0.2, 0.3, 0.4], \"confidence\": 1.5}", "error": true},
-    {"name": "found is a string", "text": "{\"found\": \"yes\", \"label\": \"desk\", \"box\": [0.1, 0.2, 0.3, 0.4], \"confidence\": 0.9}", "error": true}
+    {"name": "found is a string", "text": "{\"found\": \"yes\", \"label\": \"desk\", \"box\": [0.1, 0.2, 0.3, 0.4], \"confidence\": 0.9}", "error": true},
+    {"name": "null optional absent fields", "text": "{\"found\":false,\"label\":null,\"box\":null,\"confidence\":null}", "expect": {"found": false, "label": "", "box": null, "confidence": 0}},
+    {"name": "missing optional absent fields", "text": "{\"found\":false}", "expect": {"found": false, "label": "", "box": null, "confidence": 0}},
+    {"name": "null optional found fields", "text": "{\"found\":true,\"label\":null,\"box\":[0.1,0.2,0.3,0.4],\"confidence\":null}", "expect": {"found": true, "label": "", "box": [0.1, 0.2, 0.3, 0.4], "confidence": 0}},
+    {"name": "absent box string rejected", "text": "{\"found\":false,\"box\":\"junk\"}", "error": true},
+    {"name": "absent box object rejected", "text": "{\"found\":false,\"box\":{}}", "error": true},
+    {"name": "absent box boolean member rejected", "text": "{\"found\":false,\"box\":[false,0.2,0.3,0.4]}", "error": true},
+    {"name": "absent box null member rejected", "text": "{\"found\":false,\"box\":[null,0.2,0.3,0.4]}", "error": true},
+    {"name": "absent box string member rejected", "text": "{\"found\":false,\"box\":[\"0.1\",0.2,0.3,0.4]}", "error": true},
+    {"name": "absent numeric box ignored after type validation", "text": "{\"found\":false,\"box\":[2,3,4]}", "expect": {"found": false, "label": "", "box": null, "confidence": 0}},
+    {"name": "absent label boolean rejected", "text": "{\"found\":false,\"label\":false}", "error": true},
+    {"name": "absent confidence boolean rejected", "text": "{\"found\":false,\"confidence\":false}", "error": true},
+    {"name": "non-JSON NaN rejected even in unused field", "text": "{\"found\":false,\"unused\":NaN}", "error": true},
+    {"name": "absent nonfinite box rejected", "text": "{\"found\":false,\"box\":[1e400]}", "error": true}
   ]
 }

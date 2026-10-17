@@ -1,40 +1,25 @@
-"""Chalk Evaluation for Where-is: does the vision model point at the right thing, and does it
-say "not found" when the thing is absent?
+"""Validate and optionally run the hosted Where-is evaluation.
 
-Run from chalk/ as a module so Chalk ships the whole feel_chalk package:
-    python -m feel_chalk.where_is_eval data/labels.jsonl --model openai/gpt-6.1-sol
-    python -m feel_chalk.where_is_eval data/labels.jsonl --model openai/gpt-6-luna
+Offline: python -m feel_chalk.where_is_eval labels.jsonl --preflight --output report.json
+Hosted:  python -m feel_chalk.where_is_eval labels.jsonl --model MODEL --output report.json
 
-Needs: chalk login, chalk environment <id>, Evaluations enabled, and CHALK_ROUTER_API_KEY /
-CHALK_ENV_ID in chalk/.env (uploaded as Chalk secrets at deploy time). Validate the labels
-first: python3 evals/validate_labels.py data/labels.jsonl
-
-Each labels.jsonl row (see evals/labels.example.jsonl):
-    {"image": "photos/hall-01.jpg", "question": "Where is the registration desk?",
-     "box": [x_min, y_min, x_max, y_max] or null when the thing is not in the photo}
-
-Photos are uploaded as the phone would send them (long side at most 1024 px, JPEG quality 0.6,
-feel_chalk/images.py), so the scores describe the app's input. The run output ends with the
-evaluation, suite and run ids: record them in chalk/README.md with the three scores.
+Hosted mode uploads photos and deploys task/scorers only after local validation.
+A successful execution is not a quality pass; inspect the persisted scores.
 """
 from __future__ import annotations
 import argparse
-import base64
+import hashlib
 import json
+import math
 import os
 from pathlib import Path
+from urllib.parse import urlsplit
 
-import chalkcompute
-from chalkcompute import Secret
-
-from feel_chalk import gateway, images, where_is
+from feel_chalk import gateway, where_is
 from feel_chalk.config import settings
-
-SECRETS = [Secret.from_local_env('CHALK_ROUTER_API_KEY'), Secret.from_local_env('CHALK_ENV_ID'),
-           Secret.from_local_env('FEEL_CHALK_MODEL')]
+from feel_chalk.eval_data import DatasetError, prepare
 
 
-@chalkcompute.function(secrets=SECRETS)
 def where_is_task(question: str, image_b64: str) -> str:
     """One gateway call per row; the raw reply is returned so scorers see exactly what the phone would."""
     config = settings()
@@ -45,7 +30,6 @@ def where_is_task(question: str, image_b64: str) -> str:
 
 
 # Scorer parameters bind to dataset columns by name, plus `output` (the task's reply).
-@chalkcompute.function
 def points_correctly(output: str, expected_box: str) -> float:
     """1 when the reply's box centre lands inside the labeled box, or when the thing is absent and
     the reply says not found. Malformed replies score 0."""
@@ -57,7 +41,6 @@ def points_correctly(output: str, expected_box: str) -> float:
     return 1.0 if where_is.points_at(answer, tuple(expected) if expected else None) else 0.0
 
 
-@chalkcompute.function
 def reply_is_well_formed(output: str) -> float:
     """1 when the reply obeys the JSON contract at all (found or not), 0 otherwise."""
     try:
@@ -67,7 +50,6 @@ def reply_is_well_formed(output: str) -> float:
         return 0.0
 
 
-@chalkcompute.function
 def false_found(output: str, expected_box: str) -> float:
     """1 when the thing is absent but the model claimed to see it: the dangerous error for a blind user."""
     if json.loads(expected_box) is not None:
@@ -79,35 +61,147 @@ def false_found(output: str, expected_box: str) -> float:
 
 
 def load_rows(labels: Path) -> list[dict]:
-    rows = []
-    for line in labels.read_text().splitlines():
-        if not line.strip():
-            continue
-        item = json.loads(line)
-        image = images.phone_jpeg((labels.parent / item['image']).read_bytes())
-        rows.append({'question': item['question'], 'image_b64': base64.b64encode(image).decode(),
-                     'expected_box': json.dumps(item['box'])})
-    if not rows:
-        raise SystemExit('No labeled rows; an empty evaluation cannot pass.')
-    return rows
+    """Compatibility entry point; now performs the same mandatory validation."""
+    return prepare(labels)[0]
+
+
+def deploy_functions(sdk, host: str, model: str):
+    # In SDK 2.13.7 applying function() starts deployment. Never decorate at import.
+    task = sdk.function(where_is_task,
+                        env={'CHALK_API_HOST': host, 'FEEL_CHALK_MODEL': model},
+                        secrets=[sdk.Secret.from_local_env('CHALK_ROUTER_API_KEY'),
+                                 sdk.Secret.from_local_env('CHALK_ENV_ID')])
+    scorers = [sdk.function(function) for function in
+               (points_correctly, reply_is_well_formed, false_found)]
+    return task, scorers
+
+
+def summarize_results(records: list[dict], expected_rows: int) -> dict:
+    """Retain row scores without copying photos, questions or provider error bodies."""
+    names = ('points_correctly', 'reply_is_well_formed', 'false_found')
+    complete = len(records) == expected_rows
+    results = []
+    for index, row in enumerate(records):
+        errors = [name for name, value in row.items() if name.endswith('_error') and value]
+        if errors:
+            complete = False
+        scores = {}
+        for name in names:
+            value = row.get(name + '_value')
+            if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1:
+                complete = False
+                value = None
+            scores[name] = value
+        output = row.get('output')
+        task_failed = not isinstance(output, str) or output.startswith('GATEWAY ERROR:')
+        if task_failed:
+            complete = False
+        results.append({'row_index': index, 'task_failed': task_failed, 'scores': scores, 'error_columns': errors})
+    means = {name: sum(row['scores'][name] for row in results) / expected_rows
+             if complete and expected_rows else None for name in names}
+    return {'rows_complete': complete, 'result_row_count': len(records), 'scores': means, 'rows': results}
+
+
+def _load_sdk():
+    import chalkcompute
+    return chalkcompute
+
+
+def main(argv=None, *, sdk_loader=None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('labels', type=Path)
+    parser.add_argument('--model', help='Gateway model override for hosted mode')
+    parser.add_argument('--preflight', action='store_true', help='Validate/hash locally; no SDK, credentials or cloud calls')
+    parser.add_argument('--output', type=Path, default=Path('where-is-evaluation-report.json'))
+    parser.add_argument('--timeout', type=float, default=600, help='Hosted run wait limit in seconds (default: 600)')
+    args = parser.parse_args(argv)
+    report = {'preflight_status': 'NOT_RUN', 'execution_status': 'NOT_RUN',
+              'quality_status': 'NOT_ASSESSED', 'quality_note': 'Execution completion is not a quality pass.'}
+
+    def persist():
+        args.output.write_text(json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + '\n', encoding='utf-8')
+
+    # Exclusively reserve a new report before validation: never replace labels, photos,
+    # an existing report, or a symlink, even on a failed preflight.
+    try:
+        with args.output.open('x', encoding='utf-8') as output:
+            output.write(json.dumps(report) + '\n')
+    except OSError:
+        print('Report path must be new and writable; no cloud operation attempted.')
+        return 2
+
+    try:
+        if not math.isfinite(args.timeout) or args.timeout <= 0:
+            raise ValueError('Timeout must be finite and positive.')
+        rows, manifest = prepare(args.labels)
+        report.update(manifest)
+        report['prompt_sha256'] = hashlib.sha256(where_is.PROMPT.encode('utf-8')).hexdigest()
+        report['preflight_status'] = 'PASS'
+        persist()  # Prove evidence can be written before any upload or deployment.
+    except Exception as error:
+        report['preflight_status'] = 'FAIL'
+        report['error_type'] = type(error).__name__
+        if isinstance(error, (DatasetError, ValueError)):
+            report['validation_error'] = str(error)
+        try:
+            persist()
+        except OSError:
+            pass
+        print('Preflight failed; no cloud operation attempted. See the report when available.')
+        return 2
+    if args.preflight:
+        print(f"Preflight PASS: {report['row_count']} rows, sha256 {report['dataset_sha256']}. No cloud operations.")
+        return 0
+
+    try:
+        config = settings()
+        model = args.model or config.model
+        host = urlsplit(config.api_host)
+        if not model or not config.router_api_key or not config.environment_id:
+            raise ValueError('Hosted evaluation needs configured gateway settings.')
+        if host.scheme != 'https' or not host.netloc or host.username or host.password or host.query or host.fragment:
+            raise ValueError('Gateway host must be HTTPS without embedded credentials.')
+        report.update(model=model, api_host=config.api_host, environment_id=config.environment_id)
+        persist()
+        sdk = (sdk_loader or _load_sdk)()
+        dataset_client = sdk.DatasetClient()
+        dataset = dataset_client.upload('feel-where-is', rows)
+        report.update(dataset_id=dataset.dataset_id, dataset_revision_id=dataset.revision_id)
+        persist()
+        task, scorers = deploy_functions(sdk, config.api_host, model)
+        evaluation = sdk.Evaluation.create(f'feel-where-is-{model.replace("/", "-")}', dataset=dataset,
+                                           task=task, scorers=scorers,
+                                           metadata={'dataset_sha256': report['dataset_sha256'], 'model': model, 'prompt_sha256': report['prompt_sha256']})
+        report.update(evaluation_id=evaluation.id, suite_id=evaluation.suite_id)
+        persist()
+        run = evaluation.run(metadata={'model': model, 'dataset_sha256': report['dataset_sha256'], 'prompt_sha256': report['prompt_sha256']})
+        report.update(run_id=run.id, execution_status=run.status.value)
+        persist()
+        run = run.wait(timeout=args.timeout, raise_on_failure=False)
+        report['execution_status'] = run.status.value
+        report.update(result_dataset_id=run.result_dataset_id, result_dataset_revision_id=run.result_dataset_revision_id)
+        persist()
+        if run.status.value != 'succeeded':
+            print('Hosted evaluation did not succeed. See persisted run evidence.')
+            return 1
+        if run.result_dataset is None:
+            report['execution_status'] = 'incomplete'
+            persist()
+            return 1
+        summary = summarize_results(dataset_client.read(run.result_dataset).to_pylist(), report['row_count'])
+        report.update(summary)
+        if not summary['rows_complete']:
+            report['execution_status'] = 'incomplete'
+        persist()
+        print(f"Execution: {report['execution_status']}. Quality: NOT_ASSESSED. Scores and run IDs: {args.output}")
+        return 0 if summary['rows_complete'] else 1
+    except Exception as error:
+        report['execution_status'] = 'timed_out' if isinstance(error, TimeoutError) else 'failed'
+        report['error_type'] = type(error).__name__  # Provider errors can contain sensitive text.
+        persist()
+        print('Hosted evaluation failed or is incomplete. See persisted evidence; no quality pass claimed.')
+        return 1
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('labels', type=Path)
-    parser.add_argument('--model', help='gateway model id, e.g. openai/gpt-6.1-sol (default: FEEL_CHALK_MODEL from .env)')
-    args = parser.parse_args()
-    if args.model:
-        os.environ['FEEL_CHALK_MODEL'] = args.model
-    model = settings().model or os.environ.get('FEEL_CHALK_MODEL') or 'unset'
-    dataset = chalkcompute.DatasetClient().upload('feel-where-is', load_rows(args.labels))
-    evaluation = chalkcompute.Evaluation.create(f'feel-where-is-{model.replace("/", "-")}', dataset=dataset, task=where_is_task,
-                                                scorers=[points_correctly, reply_is_well_formed, false_found])
-    # The suite groups this evaluation's runs across models in the Chalk dashboard; keep its id with the scores.
-    suite = evaluation.suite_id or 'none'
-    run = evaluation.run(metadata={'model': model, 'suite_id': suite}).wait()
-    print(f'status: {run.status.value}')
-    print(f'model: {model}')
-    print(f'evaluation: {evaluation.id}')
-    print(f'suite: {suite}')
-    print(f'run: {run.id}')
+    raise SystemExit(main())

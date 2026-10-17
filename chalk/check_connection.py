@@ -7,6 +7,8 @@ setup (missing key, CLI login or package). Sends no photos.
 from __future__ import annotations
 import argparse
 import dataclasses
+import os
+from pathlib import Path
 import shutil
 import subprocess
 import sys
@@ -43,14 +45,15 @@ def check_gateway(chat: bool) -> None:
         record('FAIL', 'gateway key', str(error))
         return
     record('PASS', 'gateway key', f'{len(models)} model(s) listed for this key')
-    # The listing is advisory: a connection scoped to one model route can work while
-    # /models returns nothing. The request below is the real test.
+    # Listing a model verifies access, not inference. Only --chat may generate tokens.
     if config.model in models:
         record('PASS', 'model', f'{config.model} is listed')
     else:
         sample = ', '.join(models[:8]) or 'none'
-        record('INFO', 'model', f'{config.model} is not in the listing (listed: {sample}); trying a request')
-    if chat or config.model not in models:
+        record('INFO' if chat else 'BLOCKED', 'model',
+               f'{config.model} is not in the listing (listed: {sample}); '
+               + ('checking with the requested text call' if chat else 'use --chat to explicitly test inference'))
+    if chat:
         body = {'model': config.model, 'max_tokens': 64,
                 'messages': [{'role': 'user', 'content': 'Reply with the single word OK.'}]}
         try:
@@ -67,6 +70,9 @@ def check_evaluations() -> None:
     except ImportError:
         record('BLOCKED', 'chalkcompute', 'run: python -m pip install -r chalk/requirements.txt')
     cli = shutil.which('chalk')
+    default_cli = Path.home() / '.chalk' / 'bin' / 'chalk'
+    if not cli and default_cli.is_file() and os.access(default_cli, os.X_OK):
+        cli = str(default_cli)
     if not cli:
         record('BLOCKED', 'chalk CLI', 'install it, then run chalk login (see chalk/README.md)')
         return
@@ -82,6 +88,7 @@ def check_evaluations() -> None:
 
 
 def main() -> int:
+    results.clear()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--chat', action='store_true', help='also send one short text request (uses tokens)')
     args = parser.parse_args()
