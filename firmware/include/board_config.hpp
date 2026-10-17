@@ -1,8 +1,32 @@
 #pragma once
 #include <cstdint>
+#include "feel/controller.hpp"
 
 #ifndef FEEL_ENABLE_SERVO_OUTPUT
 #define FEEL_ENABLE_SERVO_OUTPUT 0
+#endif
+#ifndef FEEL_SINGLE_SERVO_DEMO
+#define FEEL_SINGLE_SERVO_DEMO 0
+#endif
+#ifndef FEEL_SINGLE_SERVO_LIVE
+#define FEEL_SINGLE_SERVO_LIVE 0
+#endif
+#if FEEL_SINGLE_SERVO_DEMO && FEEL_SINGLE_SERVO_LIVE
+#error "Select either midpoint demo or nominal120 single-live output, never both"
+#endif
+#if (FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE) && FEEL_ENABLE_SERVO_OUTPUT
+#error "Single-servo adapters cannot enable the production seven-servo output"
+#endif
+#if (FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE) && (!defined(FEEL_BOARD_CLASSIC) || defined(FEEL_BOARD_S3) || defined(CONFIG_IDF_TARGET_ESP32S3))
+#error "Single-servo adapters require the explicit classic ESP32 board"
+#endif
+#if defined(FEEL_PRODUCTION_PROFILE) && FEEL_PRODUCTION_PROFILE
+#if !defined(FEEL_PRODUCTION_MEASUREMENTS_LOADED) || FEEL_PRODUCTION_MEASUREMENTS_LOADED != 1
+#error "Production profile requires its validated local seven-servo measurement records"
+#endif
+#if !FEEL_ENABLE_SERVO_OUTPUT || !defined(FEEL_BOARD_CLASSIC) || defined(FEEL_BOARD_S3)
+#error "Production profile requires enabled classic ESP32 seven-servo output"
+#endif
 #endif
 #if FEEL_ENABLE_SERVO_OUTPUT
 #ifndef FEEL_VERIFIED_PULSE_MIN_US
@@ -11,9 +35,9 @@
 #ifndef FEEL_VERIFIED_PULSE_MAX_US
 #error "Servo output requires explicit FEEL_VERIFIED_PULSE_MAX_US from the actual unit's measured safe range"
 #endif
-static_assert(FEEL_VERIFIED_PULSE_MIN_US >= 650 && FEEL_VERIFIED_PULSE_MAX_US <= 2500 &&
+static_assert(FEEL_VERIFIED_PULSE_MIN_US >= feel::kMinPulseUs && FEEL_VERIFIED_PULSE_MAX_US <= feel::kMaxPulseUs &&
     FEEL_VERIFIED_PULSE_MIN_US < FEEL_VERIFIED_PULSE_MAX_US,
-    "Measured output guard must be ordered within the controller's 650..2500us service range");
+    "Measured output guard must be ordered within the controller's 900..2100us service range");
 #else
 #define FEEL_VERIFIED_PULSE_MIN_US 0
 #define FEEL_VERIFIED_PULSE_MAX_US 0

@@ -1,0 +1,90 @@
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/nimble/host/src/ble_store_util.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/nimble/host/src/ble_uuid.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_config.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_config_conf.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_nvs.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/nimble/host/store/ram/src/ble_store_ram.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/nimble/host/util/src/addr.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/nimble/transport/common/hci_h4/src/hci_h4.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/nimble/transport/common/hci_ipc/src/hci_ipc.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/nimble/transport/esp_ipc/src/hci_esp_ipc.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/nimble/transport/esp_ipc_legacy/src/hci_esp_ipc_legacy.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/nimble/transport/nrf5340/src/nrf5340_ble_hci.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/nimble/transport/src/transport.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/porting/nimble/src/endian.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/porting/nimble/src/hal_timer.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/porting/nimble/src/mem.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/porting/nimble/src/nimble_port.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/porting/nimble/src/os_cputime.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/porting/nimble/src/os_cputime_pwr2.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/porting/nimble/src/os_mbuf.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/porting/nimble/src/os_mempool.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/porting/nimble/src/os_msys_init.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/porting/npl/freertos/src/nimble_port_freertos.c.o
+Compiling .pio/build/esp32-single-demo/libef1/NimBLE-Arduino/nimble/porting/npl/freertos/src/npl_os_freertos.c.o
+Compiling .pio/build/esp32-single-demo/lib43e/Preferences/Preferences.cpp.o
+Archiving .pio/build/esp32-single-demo/libef1/libNimBLE-Arduino.a
+Indexing .pio/build/esp32-single-demo/libef1/libNimBLE-Arduino.a
+Archiving .pio/build/esp32-single-demo/lib43e/libPreferences.a
+Indexing .pio/build/esp32-single-demo/lib43e/libPreferences.a
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/Esp.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/FirmwareMSC.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/FunctionalInterrupt.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/HWCDC.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/HardwareSerial.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/IPAddress.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/IPv6Address.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/MD5Builder.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/Print.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/Stream.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/StreamString.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/Tone.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/USB.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/USBCDC.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/USBMSC.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/WMath.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/WString.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/base64.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/cbuf.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-adc.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-bt.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-cpu.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-dac.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-gpio.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-i2c-slave.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-i2c.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-ledc.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-matrix.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-misc.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-psram.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-rgb-led.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-rmt.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-sigmadelta.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-spi.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-time.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-timer.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-tinyusb.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-touch.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/esp32-hal-uart.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/firmware_msc_fat.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/libb64/cdecode.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/libb64/cencode.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/main.cpp.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/stdlib_noniso.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/wiring_pulse.c.o
+Compiling .pio/build/esp32-single-demo/FrameworkArduino/wiring_shift.c.o
+Archiving .pio/build/esp32-single-demo/libFrameworkArduino.a
+Indexing .pio/build/esp32-single-demo/libFrameworkArduino.a
+Linking .pio/build/esp32-single-demo/firmware.elf
+Retrieving maximum program size .pio/build/esp32-single-demo/firmware.elf
+Checking size .pio/build/esp32-single-demo/firmware.elf
+Building .pio/build/esp32-single-demo/firmware.bin
+Creating esp32 image...
+Successfully created esp32 image.
+========================= [SUCCESS] Took 20.51 seconds =========================
+Environment           Status    Duration
+esp32                 SUCCESS   00:00:20.124
+esp32s3               SUCCESS   00:01:35.005
+esp32-compilecheck    SUCCESS   00:00:27.194
+esp32s3-compilecheck  SUCCESS   00:00:21.987
+esp32-single-demo     SUCCESS   00:00:20.512

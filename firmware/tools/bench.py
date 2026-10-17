@@ -19,8 +19,8 @@ def main():
         parser.error("column must be 0..6")
     if args.band and not 0 <= value <= 4:
         parser.error("band must be 0..4")
-    if args.pulse and not 650 <= value <= 2500:
-        parser.error("pulse must be650..2500; establish safe endpoints on your servo first")
+    if args.pulse and not 900 <= value <= 2100:
+        parser.error("pulse must be 900..2100; establish safe endpoints on your servo first")
 
     import serial
 

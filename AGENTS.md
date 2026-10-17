@@ -1,4 +1,19 @@
+> October 16 update: the user explicitly selected the FS0307 nominal **120°** design.
+> Current CAD/firmware/protocol supersede historical 175° / 650–2500 µs instructions.
+> Assume 120° for design; do not describe it as a physical measurement. Default seven-servo PWM stays off; the opt-in GPIO32 midpoint demo has user-reported motion.
+> See `docs/FS0307-120-DESIGN.md` for the new layout and verification.
+
 # Current user directive — October 16, 2026
+
+**This branch is V2 Spatial Memory, updated from current V1 `main`.** Preserve the
+latest V1 app design, firmware guards and all session-only memory behavior. Keep
+V3 features separate. `main` remains V1; never merge memory back into V1 without
+an explicit user request.
+
+**Canonical branch: `main` is V1.** The user requested all current V1 work on
+`main`, including the latest foundation and app redesign. Base new V1 work on
+`main`; preserve the older development branches. V2 and V3 remain isolated and
+must not be included in V1 without a new explicit request.
 
 The latest user request supersedes the historical version labels and source assumptions below.
 The repository was empty of production source. HANDOFF-v7.md is a specification/reference,

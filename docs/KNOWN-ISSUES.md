@@ -2,9 +2,9 @@
 
 | Priority | Issue | Current handling / next action |
 |---|---|---|
-|Hardware gate|FS0307 travel/voltage variant differs from handoff assumptions|Physical output disabled by default; identify units and measure supported travel before enabling. A 120° unit cannot be assumed to drive the 175° cam.|
+|Hardware gate|120° FS0307 redesign has not been physically validated|CAD/firmware now target 120°; narrower lobes increase unverified side force/print sensitivity. Default seven-servo PWM remains disabled; the opt-in single-servo demo uses a limited midpoint range. Measure travel, supply compatibility and manual/powered column behavior before enabling.|
 |Hardware gate|Servo/horn/foam/guide dimensions unmeasured|Print coupon and crank rig first; CAD fit defaults do not establish physical fit.|
-|Device verification|CoreML inference and real AR/BLE/NI behavior not executed|V1 hosted Xcode 16.4 builds and simulator tests passed in run38972250150. Device inference, signing/install and sensing/radio tests remain pending.|
+|Device verification|Perception accuracy, NI and complete tactile assembly unverified|Hosted foundation simulator tests passed. Local signed install, BLE receipt and user-reported small single-servo live motion followed; these do not verify seven actuators, full travel or sensing accuracy.|
 |Perception limitation|Door finder is a rectangle candidate heuristic|UI labels it as a candidate; no door-class weights or accuracy claims.|
 |Perception limitation|LiDAR missing/noisy/outdoor/thin-object depth|Unknown stays unknown; indoors only for demo, real sensing tests pending.|
 |Protocol limitation|No timestamp/checksum/health in nine-byte packet|Reject malformed/old-sequence packets,500 ms watchdog; legal-value corruption/delayed valid packets remain undetectable.|

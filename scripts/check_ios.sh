@@ -43,10 +43,13 @@ xcodebuild -project Lantern.xcodeproj -scheme Lantern \
   -maximum-test-execution-time-allowance 180 \
   -resultBundlePath "$result_directory/Lantern.xcresult" \
   -derivedDataPath ../.artifacts/ios/DerivedData CODE_SIGNING_ALLOWED=NO test
-# Companion compilation is required separately; no claim of NI functionality in a simulator.
+# Companion UI and compilation are checked separately; NI functionality needs real phones.
 xcodebuild -project Lantern.xcodeproj -scheme Beacon \
   -destination "platform=iOS Simulator,id=$destination" \
-  -derivedDataPath ../.artifacts/ios/DerivedData CODE_SIGNING_ALLOWED=NO build
+  -parallel-testing-enabled NO -test-timeouts-enabled YES \
+  -maximum-test-execution-time-allowance 180 \
+  -resultBundlePath "$result_directory/Beacon.xcresult" \
+  -derivedDataPath ../.artifacts/ios/DerivedData CODE_SIGNING_ALLOWED=NO test
 # Compile device-only paths as unsigned builds. This does not run on a phone.
 for scheme in Lantern Beacon; do
   xcodebuild -project Lantern.xcodeproj -scheme "$scheme" \

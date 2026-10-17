@@ -1,3 +1,8 @@
+> Current evidence: one unloaded GPIO32 servo moved during a bounded bench test
+> and the user subsequently reported small live iPhone-driven movement. The
+> complete seven-column device has not passed the physical gates below. See
+> [single-servo validation](SINGLE-SERVO-IPHONE-VALIDATION.md).
+
 # FEEL V1 — from printed parts to one working column
 
 **Physical status: NOT VERIFIED.** These are instructions for the newly created
@@ -80,7 +85,7 @@ USB and boot-strapping pins vary. GPIO numbers are not connector positions.
 |P2 return|Repeated return works sideways and upside down without shaking.|______|
 |P3 thumb contact|Comfortable gentle contact still allows selection/return; no binding or pain.|______|
 |P4 endurance|100 complete four-band cycles, no jam. Record sequence, failures and wear.|______|
-|P5 highlight|21° dip/return at each band; observe neighbors and actual dip travel.|______|
+|P5 highlight|13° dip/return at each band; observe neighbors and actual dip travel.|______|
 
 Also watch *between* band centres: the rotating cam passes intermediate lobes.
 Software does not promise no transient activation. Record shaft variant, foam,
@@ -104,8 +109,8 @@ print settings, CAD commit, observations and video. P2 or P4 failure blocks expa
    Measure actual movement/return latency, supply voltage under load and current.
 7. Save calibration, power-cycle and verify it was retained. Follow [CALIBRATION.md](CALIBRATION.md).
 
-The v7 raw 650–2500 µs envelope is **unverified for your servo**, not an instruction
-to begin at either endpoint. Stop on heat, buzzing, unexpected motion or binding.
+The v7 raw 650–2500 µs envelope is obsolete. The revised controller accepts only
+900–2100 µs; this nominal envelope is not an instruction to begin at either endpoint. Stop on heat, buzzing, unexpected motion or binding.
 
 ## 5. Assemble the full puck only after one column passes
 

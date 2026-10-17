@@ -1,0 +1,10 @@
+swift-core: initial attempt
+<unknown>:0: error: unable to open output file '/private/tmp/feel-v2-update/ios/Shared/FeelCore/.build/arm64-apple-macosx/debug/ModuleCache/205W0CHW4FBC9/Foundation-24LYWIP48SHNP.pcm': 'No space left on device'
+<unknown>:0: error: unable to open output file '/private/tmp/feel-v2-update/ios/Shared/FeelCore/.build/arm64-apple-macosx/debug/ModuleCache/205W0CHW4FBC9/Foundation-24LYWIP48SHNP.pcm': 'No space left on device'
+<unknown>:0: error: unable to open output file '/private/tmp/feel-v2-update/ios/Shared/FeelCore/.build/arm64-apple-macosx/debug/ModuleCache/205W0CHW4FBC9/Foundation-24LYWIP48SHNP.pcm': 'No space left on device'
+<unknown>:0: error: unable to open output file '/private/tmp/feel-v2-update/ios/Shared/FeelCore/.build/arm64-apple-macosx/debug/ModuleCache/205W0CHW4FBC9/Foundation-24LYWIP48SHNP.pcm': 'No space left on device'
+ios-platform: initial attempt
+error: Mkdtemp(/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/FeelCore.build/Debug-iphonesimulator/FeelCore.build/Objects-normal/arm64/swbuild.tmp.J5orLlhc): No space left on device (28) (in target 'FeelCore' from project 'FeelCore')
+<unknown>:0: error: cannot open file '/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/FeelCore.build/Debug-iphonesimulator/FeelCore.build/Objects-normal/arm64/Protocol.dia' for diagnostics emission (No space left on device)
+<unknown>:0: error: writing index record file: failed to write '/tmp/feel-v2-update/.artifacts/ios/DerivedData/Index.noindex/DataStore/v5/records/YV/arm64-apple-ios-simulator.swiftinterface-1PNEE8QGBVPYV-temp-ce174896': No space left on device
+<unknown>:0: error: writing index record file: failed to write '/tmp/feel-v2-update/.artifacts/ios/DerivedData/Index.noindex/DataStore/v5/records/7N/arm64-apple-ios-simulator.swiftinterface-3CXE2QAI40N7N-temp-89474218': No space left on device

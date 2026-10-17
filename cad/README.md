@@ -4,13 +4,13 @@ This is a **new implementation of the v7 specification**, not recovered or repro
 
 ## Build and inspect
 
-Requires Python 3.10+ and OpenSCAD. Validated here with OpenSCAD 2021.01. No third-party Python package is needed for builds, mesh checks or cam checks.
+Requires Python 3.10+ and OpenSCAD. The 120° redesign is validated with official OpenSCAD 2026.10.15 (Apple Silicon); the earlier 175° baseline used 2021.01. No third-party Python package is needed for builds, mesh checks or cam checks.
 
 ```sh
 sh cad/build.sh --fast
 sh cad/build.sh
 python3 cad/tools/check_stl.py stl/test/*.stl stl/puck/*.stl --json cad/evidence/mesh-checks.json
-python3 cad/tools/cam_sim.py --json cad/evidence/cam-simulation.json --csv cad/evidence/cam-lifts.csv
+python3 cad/tools/cam_sim.py --step 0.1 --json cad/evidence/cam-simulation.json --csv cad/evidence/cam-lifts.csv
 python3 -m unittest discover -s cad/test -v
 openscad -o /tmp/feel-fit.csg cad/tools/fit_probe.scad
 ```
@@ -21,7 +21,7 @@ openscad -o /tmp/feel-fit.csg cad/tools/fit_probe.scad
 
 Open `cad/test_column.scad`, `cad/puck.scad`, or `cad/viewer.scad` in OpenSCAD. The default is an **illustrative static assembly** at band 2, not a collision proof or dynamic physical simulation. The STL build selects printable parts instead. Use `cad/tools/render_preview.py` after a full build for an actual-mesh PNG review (optional NumPy and Matplotlib).
 
-`sh cad/viewer/build.sh` packages the actual validated STL triangles for `cad/viewer/index.html`. Open that HTML directly in a WebGL browser: drag to rotate, scroll to zoom, toggle components and explode the plates. No CDN/network service is needed. The pin plate/tray are optional separate printed-layout layers; cams are fixed at band 2. The build validates its mesh inputs; JavaScript syntax is checked separately. Root integration verified WebGL rendering, all 12 layers, explode/reset controls and mobile layout; screenshot: `.artifacts/cad-viewer.png`. That browser check does not establish physical fit or tactile behavior.
+`sh cad/viewer/build.sh` packages the actual validated STL triangles for `cad/viewer/index.html`. Open that HTML directly in a WebGL browser: drag to rotate, scroll to zoom, toggle components and explode the plates. No CDN/network service is needed. The pin plate/tray are optional separate printed-layout layers; cams are fixed at band 2. The build validates its mesh inputs; JavaScript syntax is checked separately. The 120° mesh payload was repackaged and JavaScript syntax checked. The earlier baseline had a browser interaction check; it has not been repeated for this mesh revision. Neither check establishes physical fit or tactile behavior.
 
 ## Geometry and assumptions
 
@@ -31,9 +31,9 @@ Open `cad/test_column.scad`, `cad/puck.scad`, or `cad/viewer.scad` in OpenSCAD. 
 | Actuation | One camshaft and one servo per column; only one of its four pins is selected at a time |
 | Pin indexing | Band 1 wrist → band 4 fingers; rows Y = −8, 4, 16, 28 mm |
 | Shaft axis | Along Y at Z=17.5 mm; positive control rotation matches the specified band angles |
-| Cam angles | Bands 0°, 58°, 117°, 175°; down gaps 29°, 87.5°, 146° |
-| Tap angles | Nearest gap, lower gap on a tie: 21°, 37°, 138°, 154° |
-| Profile | Actual sampled radial polygon; base radius 3.8 mm, peak 5.8 mm, 24° half-width, 1° polygon step |
+| Cam angles | Bands 0°, 40°, 80°, 120°; down gaps 20°, 60°, 100° |
+| Tap angles | Nearest gap, lower gap on a tie: 13°, 27°, 67°, 107° |
+| Profile | Actual sampled radial polygon; base radius 3.8 mm, peak 5.8 mm, 12° half-width, 1° polygon step |
 | Stroke / tips | 2 mm ideal lift; 0.6 mm flat foot; “30° cone” interpreted as half-angle from axis, 60° included |
 | Variants | A exponent 2.2; H 2.5 flatter crest; G 1.6 gentler flank. Names are geometric intent, not measured holding force |
 | Envelope | 88.6 × 88.8 × 35 mm at flat face, spherical crown 38 mm; 101 mm across strap ears |
@@ -43,13 +43,17 @@ Open `cad/test_column.scad`, `cad/puck.scad`, or `cad/viewer.scad` in OpenSCAD. 
 | New layout decisions | Pin grid shifted toward fingers to clear the nominal wrist-side servo bodies; split shaft bearings closed by lower guide; removable servo spacer comb |
 | Inactive options | Finger scallops, lower servo tab, second strap disabled. v7's “off” prose wins over its contradictory `second_strap=true` example |
 
-The contact simulation exports the **same vertices used to make the cams** via OpenSCAD. It computes where the polygon contacts the finite-width conical follower, including points inside polygon edges. It does not just equate radial radius to pin lift. It tests band isolation, all three neutral gaps, the actual firmware tap angles, and a 0.5° sampled sweep. The default A profile gives approximately 2 mm selection and 1 mm tap dip in this ideal model. It contains no friction, elastic deflection, foam, backlash, tolerance, motor torque or sensory model. Sampling is not a continuous collision proof.
+The contact simulation exports the **same vertices used to make the cams** via OpenSCAD. It computes where the polygon contacts the finite-width conical follower, including points inside polygon edges. It does not just equate radial radius to pin lift. It tests band isolation, all three neutral gaps, the actual firmware tap angles, and a 0.1° sampled sweep. The A/H/G profiles retain 2 mm selection and give approximately 1.059 / 0.985 / 1.249 mm tap drops in this ideal model. It contains no friction, elastic deflection, foam, backlash, tolerance, motor torque or sensory model. Sampling is not a continuous collision proof.
 
 `fit_probe.scad` checks selected nominal envelopes (servo case versus floor/inner rounded walls, cone versus lower guide, collar versus guide/face, adjacent cam bounding circles) and emits each pin's length. It is **not** a full assembly collision detector. Current ideal cone-to-guide clearance is **0.282 mm**; verify that the cone never rubs the guide, and adjust `guide_z`, `guide_t` and collar clearance together if needed. The **1.2 mm lower guide** and relocated 0.5 mm collar are greenfield assumptions; guide stiffness and the 0.1 mm collar clearance need physical checking. They provide **4.0 → 2.0 mm** foam space through a stroke. A 3+2 mm stack therefore compresses **20% at rest and 60% at full lift**: it is a material-dependent test candidate, not an approved return spring. A single 2 mm strip leaves a dead zone and cannot provide return to rest upside-down. Foam load/return remains a physical release blocker.
 
-## Servo stop: resolve the 120° / 175° mismatch first
+## 120° FS0307 cam redesign
 
-The [manufacturer FS0307 page](https://www.feetechrc.com/en/6v-06kg-analog-steering-gear-fs0307.html) specifies 120° travel at 900–2100 µs, whereas v7 assumes 175° using 650–2500 µs. The current product page also lists a different voltage range from older manufacturer PDFs. Treat your actual unit/variant and its documentation as authoritative. **Do not automatically sweep v7's extremes.** First inspect the supplied datasheet, measure a safe unloaded range, and stop if the servo stalls, heats or buzzes. If it cannot safely reach 175°, use a verified suitable servo or redesign the cam angles and update firmware, protocol tests and CAD together. Do not pretend a 120° servo has 175° of motion by relabeling software angles.
+This branch uses four band centers at 0°/40°/80°/120°, three neutral gaps at 20°/60°/100°, and a 13° tap toward the nearest gap (lower gap wins a tie). The radial lobe half-width is reduced from 24° to **12°**; base radius 3.8 mm, full 2 mm lift, the 0.6 mm follower foot and 30° cone remain unchanged. The ideal contact model includes the cone and the interiors of polygon edges. Keeping the old 24° lobe with these centers would lift **both** adjacent pins by over 0.8 mm at a nominal neutral gap. A 14° lobe also fails the strict neutral limit for A/H. The narrower 12° profile clears the gaps without reducing stroke. No contact or isolation acceptance threshold was relaxed.
+
+The geometric tradeoff is steeper, narrower flanks: higher side loading, required torque, wear and sensitivity to print finishing are possible. These are unmeasured; repeat manual P1–P5 and unloaded servo characterization before powered integration. A/H/G remain experimental profiles, not ranked force/performance results.
+
+The [manufacturer FS0307 page](https://www.feetechrc.com/en/6v-06kg-analog-steering-gear-fs0307.html) lists 120° at 900–2100 µs. Those are the new nominal firmware mapping, **not measured safe endpoints for the received servo**. The actual unit's voltage variant, usable travel, unloaded safe pulse range and loaded behavior remain unverified. Keep physical PWM disabled until measured limits are recorded; never use the superseded 175° / 650–2500 µs design with these cams. If the received unit cannot provide the required usable travel, revise the design from measured limits before coupling it.
 
 Published 20 × 8.3 × 17.3 mm overall dimensions and 20T spline do not specify every mating surface. The case-only axial depth of 13.3 mm, axis offset, ear and horn values in `params.scad` are **UNMEASURED placeholders**. The nominal body envelope is checked, but the real body can differ.
 
@@ -92,7 +96,7 @@ These are proposed acceptance criteria for the new design, **not historical pass
 | P2 return | Repeat each band → nearest gap upright, on each side, upside down | Every pin returns in each orientation without a finger assisting it, within 0.5 s; log any slow/stuck event |
 | P3 thumb hold | Lightly rest a thumb across the display and hand-turn each selection | Still distinguishable and manually movable without pain, sudden force increase or sticking; **not** a quantified torque test |
 | P4 endurance | 100 full band1→gap→band2→gap→band3→gap→band4→gap cycles | Zero sticks, broken tabs, loose couplings or permanent changes; remeasure stroke |
-| P5 tapping | Peak → 21° toward its nearest gap → peak at each band | About 1 mm dip; no neighboring pin rises above face; test at intended tap timing only after slow motion passes |
+| P5 tapping | Peak → 13° toward its nearest gap → peak at each band | About 1 mm dip; no neighboring pin rises above face; test at intended tap timing only after slow motion passes |
 
 If P2 fails, first remove friction and check alignment, then test foam density/thickness or redesign a positive return mechanism. If P4 fails, stop full-puck printing. Record shaft variant, foam thickness/density, filament, layer height, measured holes, tip choice, a video filename and tester/date. There is no justified full-puck release until these are observed on a physical column.
 
@@ -129,6 +133,6 @@ Only after the manual and powered single-column gates:
 ## References and limits
 
 - [OpenSCAD official documentation](https://openscad.org/documentation.html), including its command-line export manual. This build uses ordinary CSG, polygons, extrusion and binary STL; it does not need nightly-only features.
-- [FEETECH FS0307 current manufacturer page](https://www.feetechrc.com/en/6v-06kg-analog-steering-gear-fs0307.html), consulted during this rebuild. The discrepancy with v7 is an unresolved hardware requirement, not evidence of safe overtravel.
+- [FEETECH FS0307 current manufacturer page](https://www.feetechrc.com/en/6v-06kg-analog-steering-gear-fs0307.html), consulted during this rebuild. The v7 travel mismatch is addressed by this 120° geometry; actual unit travel and safe endpoints remain physical measurements.
 
 Remaining physical unknowns: real servo angle/voltage variant, coupling retention, print tolerance, 0.282 mm cone-guide / 0.1 mm collar-guide nominal margins, thin-guide stiffness, foam load/return at 20–60% compression, side force/jamming, shaft bending, sustained current, skin comfort, hand size and tactile recognition. No software or mesh test clears these.

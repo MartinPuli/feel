@@ -10,8 +10,8 @@ import math
 
 COLUMNS = 7
 NO_HIGHLIGHT = 255
-BAND_ANGLES = (0.0, 58.0, 117.0, 175.0)
-GAP_ANGLES = (29.0, 87.5, 146.0)
+BAND_ANGLES = (0.0, 40.0, 80.0, 120.0)
+GAP_ANGLES = (20.0, 60.0, 100.0)
 
 
 def integer(value, name, minimum=0, maximum=None):
@@ -76,10 +76,10 @@ def gap_for_band(band):
 
 
 def tap_dip_angle(band):
-    """Nominal 21 degree dip toward the reference gap; no tap scheduler."""
+    """Nominal 13 degree dip toward the reference gap; no tap scheduler."""
     integer(band, "band", minimum=1, maximum=4)
     angle = BAND_ANGLES[band - 1]
-    return angle + (21.0 if gap_for_band(band) > angle else -21.0)
+    return angle + (13.0 if gap_for_band(band) > angle else -13.0)
 
 
 @dataclass

@@ -1,0 +1,38 @@
+V1 Vercel-inspired native design — 2026-10-16
+Xcode 26.6; iPhone 17 Pro simulator, iOS 26.5.
+
+PASS: xcodegen generate --spec ios/project.yml
+PASS: swift test --package-path ios/Shared/FeelCore — 38 tests, zero failures.
+PASS: xcodebuild Lantern simulator test — 4 integration + 3 UI tests.
+PASS: xcodebuild Beacon simulator test — 2 UI tests.
+PASS: Lantern and Beacon complete suites repeated in dark appearance, zero failures.
+PASS: Both native device builds with existing Apple team; signing verified
+      using codesign --verify --deep --strict.
+PASS: Installed-resource inspection: official Geist fonts + license; actual
+      detector compiled as FEELDetector.mlmodelc; bundle version 1.0.0 (2).
+PASS: independent bounded source review; no functional/accessibility findings.
+PASS: visual inspection of normal and largest text layouts in simulator.
+
+47 distinct tests total (38 core + 4 integration + 3 Lantern UI + 2 Beacon UI).
+A first light-mode UI run caught the Geist Mono legend wrapping below the
+fixed toolbar. Shortened legend and reduced grid spacing; subsequent tests
+pass with the original visibility assertion retained.
+
+Device install BLOCKED: paired iPhone reports unavailable. Explicit install
+attempt returned CoreDeviceError 1011, device not found. Signed artifacts:
+/tmp/feel-vercel-device/Build/Products/Debug-iphoneos/Lantern.app
+/tmp/feel-vercel-device/Build/Products/Debug-iphoneos/Beacon.app
+Connect/unlock the paired iPhone, install with devicectl, then launch FEEL.
+No claim of installation, launch, or real LiDAR/BLE/UWB/tactile validation.
+
+Simulator command pattern:
+xcodebuild -project ios/Lantern.xcodeproj -scheme <Lantern|Beacon> \
+  -destination 'platform=iOS Simulator,id=<available simulator>' \
+  -derivedDataPath /tmp/feel-v1-design-build CODE_SIGNING_ALLOWED=NO test
+Appearance: xcrun simctl ui <simulator> appearance <light|dark>
+
+Device build pattern (local team override, not stored in project):
+xcodebuild -project ios/Lantern.xcodeproj -scheme <Lantern|Beacon> \
+  -configuration Debug -destination 'generic/platform=iOS' \
+  -derivedDataPath /tmp/feel-vercel-device DEVELOPMENT_TEAM=<existing team> \
+  -allowProvisioningUpdates build

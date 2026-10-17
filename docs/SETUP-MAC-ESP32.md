@@ -22,12 +22,14 @@ check. You do not need the full Xcode installation for this first ESP32 step.
 
 ## 2. Clone the branch containing the code
 
+This guide checks out V2 Spatial Memory. Use `main` instead if you want V1 only.
+
 Copy this block into Terminal:
 
 ```sh
 mkdir -p ~/Projects
 cd ~/Projects
-git clone --branch feel/v1-foundation https://github.com/MartinPuli/hackharvard.git feel
+git clone --branch feel/v2-spatial-memory https://github.com/MartinPuli/hackharvard.git feel
 cd feel
 ```
 
@@ -43,7 +45,7 @@ first check whether you have local changes:
 cd ~/Projects/feel
 git status
 git fetch origin
-git switch feel/v1-foundation
+git switch feel/v2-spatial-memory
 git pull --ff-only
 ```
 
@@ -146,11 +148,11 @@ mechanism work.
 
 ## 8. Before connecting a servo
 
-We still need to confirm whether you have the servos and their exact variant.
-Send a photo of the label, connector, and wires. The current FS0307 datasheet
-does not match the 175° travel assumed by the design; the power specifications
-also differ between datasheets. Do not automatically connect your 5 V supply
-to a servo without identifying it.
+The user identified the servo as a Pololu-supplied FEETECH FS0307. The design now
+uses nominal 120° travel, superseding the historical 175° assumption. Actual
+travel, supply under load and the complete mechanism still require measurement.
+For the tested, limited GPIO32 app demo, see [SINGLE-SERVO-IPHONE.md](SINGLE-SERVO-IPHONE.md).
+The default firmware in this guide leaves physical output disabled.
 
 The intended functional wiring for **a single column**, once voltage and wires
 have been verified, is:

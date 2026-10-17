@@ -1,0 +1,16 @@
+Writing at 0x0008916b... (82 %)
+Writing at 0x00090685... (86 %)
+Writing at 0x00095c0b... (91 %)
+Writing at 0x0009b964... (95 %)
+Writing at 0x000a0f50... (100 %)
+Wrote 609456 bytes (371100 compressed) at 0x00010000 in 10.3 seconds (effective 474.2 kbit/s)...
+Hash of data verified.
+
+Leaving...
+Hard resetting via RTS pin...
+========================= [SUCCESS] Took 20.04 seconds =========================
+
+Environment        Status    Duration
+-----------------  --------  ------------
+esp32-single-live  SUCCESS   00:00:20.041
+========================= 1 succeeded in 00:00:20.041 =========================

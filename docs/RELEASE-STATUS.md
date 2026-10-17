@@ -1,4 +1,81 @@
-# FEEL V2 release status
+# FEEL V2 — current main integration
+
+Integration validation is recorded in [V2-MAIN-INTEGRATION.md](V2-MAIN-INTEGRATION.md).
+The sections below retain prior V1 hardware and V2 software evidence; they do not
+represent new physical testing of this integration.
+
+> Seven-servo preparation: `esp32-production` and its English setup guide are
+> ready in source. Host/configuration tests, enabled-output compile fixtures and
+> 2,634 cross-layer assertions passed. Real deployment is still gated on the
+> seven units' missing physical measurement records. No board was flashed; the
+> user has only one servo connected. [Evidence](evidence/seven-production/report.json)
+> and [setup](SEVEN-SERVO-PRODUCTION.md). This is not full-device physical acceptance.
+
+> Latest installed profile: `esp32-single-live`, source64fae62, uses nominal120°
+> production center-sector mapping on GPIO32. Compilation, host regressions,
+> upload and idle readback passed; physical full-range motion remains unverified.
+> [Installation evidence](SINGLE-SERVO-LIVE.md#installed-validation). Earlier
+> references below to the installed midpoint demo describe the prior state.
+
+## Inherited V1 release evidence (before this V2 integration)
+
+## Current iPhone visual update
+
+Lantern and Beacon now use the [Vercel-inspired Geist design](V1-VERCEL-DESIGN.md).
+All 47 distinct core/integration/UI tests passed locally, including repeated UI
+checks in light/dark appearances. The subsequent simpler revision passes 4 Lantern integration, 3 Lantern UI and
+2 Beacon UI tests. Both apps build and sign as 1.0.0 (3).
+[Current screenshots and checks](evidence/v1-simple/validation.txt).
+Installation of this visual update is pending: the paired iPhone is unavailable
+and the install attempt returned device-not-found. Earlier installation evidence
+below refers to the previous app build. [Validation](evidence/v1-vercel/validation.txt).
+
+## V1 consolidation on main
+
+The user designated `main` as V1 on October 16, 2026. The integration preserves
+the existing `main` planning document, incorporates foundation `2df1c07`, and
+includes app design commit `da12787`. V2 and V3 remain separate.
+The app redesign passed local simulator builds and 46 distinct tests (38 shared
+core, 3 Lantern integration, 3 Lantern UI, 2 Beacon UI). See
+[app design evidence](evidence/v1-design/validation.txt). The integration is
+published with `[skip ci]` because of the existing Actions billing blocker;
+no hosted validation result is claimed for this merge.
+
+Post-merge local checks passed: source presence, 7 tooling tests, 51 reference
+model tests, production firmware host/adapter/demo/bench checks, and 2,634
+cross-layer assertions across 558 firmware states. No board was flashed during
+the consolidation. [Integration log](evidence/v1-main-integration.log).
+
+The design uses nominal FS0307 **120°** travel, not a measured endpoint.
+Default ESP32/ESP32-S3 firmware keeps seven-servo output disabled until measured
+pulse limits are supplied. The separately selected `esp32-single-demo` uses only
+GPIO32 and the center camera sector, within nominal1450–1550 µs. It is the version
+last installed on the user's board; it does not operate the seven-column cam.
+
+A signed iPhone installation and BLE packet receipt were verified locally. The
+user reported successful five-second bench motion and then small live app-driven
+servo motion. Boot readback confirmed the demo timer ready and output detached.
+See [single-servo evidence](SINGLE-SERVO-IPHONE-VALIDATION.md) and
+[bench evidence](../firmware/bench-single/VALIDATION.md). These observations do not
+measure pulse width, angle, power under load, sensing accuracy or stop latency.
+
+Release hardening adds explicit50 Hz APB timer configuration,14-bit duty
+quantization within supplied pulse limits, malformed serial-line rejection, and
+CI coverage for both single-servo builds. Physical validation of full120° travel,
+seven actuators, printed mechanics and tactile use remains **NOT VERIFIED**.
+Current local software checks **PASS** on source `5f3ded9`: five primary firmware
+variants plus the standalone bench build; complete host regressions;38 Swift core
+tests;2,634 cross-layer assertions;104 actual-CAD/controller contract checks;
+24 mesh exports;80 cam checks; model integrity; Xcode26.6 simulator tests
+(3 app tests and1 UI test), companion simulator build and both unsigned device
+builds. [Commands and evidence](evidence/v1-release/report.json) identify each
+check. Published to `feel/v1-foundation` at `57c7e6b`. Hosted CI is **BLOCKED**:
+GitHub refused to start every job because of account billing/spending limits.
+[GitHub evidence](evidence/v1-release/github-actions.json) records the exact
+annotation and run URLs. Resolve account billing and rerun; no hosted test ran. The hardened firmware
+has not been flashed; the board retains the prior tested single-demo build. No claim of production hardware readiness is made.
+
+## Historical V2 validation before the current main integration
 
 **V2 software validation: PASS, including hosted native iOS checks.
 Physical hardware: NOT VERIFIED.** October 16, 2026.

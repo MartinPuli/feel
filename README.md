@@ -1,8 +1,18 @@
+> **FS0307 120° revision:** current CAD and firmware use 0/40/80/120° band positions.
+> See [design and validation](docs/FS0307-120-DESIGN.md). Old 175° shafts/calibration
+> are superseded. Default seven-servo PWM is disabled pending measured limits.
+> The [midpoint demo](docs/SINGLE-SERVO-IPHONE.md) has user-reported motion.
+> The opt-in [single-servo live profile](docs/SINGLE-SERVO-LIVE.md) uses nominal120° production mapping on GPIO32.
+
 # FEEL V2 — Spatial Memory
 
-This isolated branch adds Remember, Recall, an explicit Return point and multiple
-bookmarks. Start with [SPATIAL-MEMORY.md](docs/SPATIAL-MEMORY.md). The available
-V2 software checks pass; Apple-platform and physical validation remain separate.
+This V2 branch integrates the latest V1 foundation from `main` (`7da10f7`) with
+session-only Remember, Recall, Return and multiple bookmarks. Start with
+[Spatial Memory](docs/SPATIAL-MEMORY.md). V3 features remain on their own branch.
+
+**V1 is maintained on `main`.** It includes the current firmware and CAD,
+Lantern and Beacon with the [Geist app redesign](docs/V1-VERCEL-DESIGN.md), and V1 validation tools.
+Use `main` for all current V1 work. V2 and V3 remain separate development branches.
 
 A prototype that translates indoor depth and target direction into a **7-column ×
 4-pin tactile puck**, using a LiDAR iPhone, BLE, an ESP32 and seven servos.
@@ -14,14 +24,19 @@ verification of this repository. The earlier preparation work is preserved on
 
 | Branch | Purpose |
 |---|---|
-| `feel/v1-foundation` | Swift iOS + perception + BLE, ESP32, CAD, production replay |
+| `main` | Current V1: iOS apps, perception, BLE, ESP32, CAD and production replay |
+| `feel/v1-foundation` | Preserved V1 development history; continue new V1 work on `main` |
 | `feel/v2-spatial-memory` | Remember / Recall / Return, created only after V1 validation |
 | `feel/v3-advanced` | Optional advanced work, only after V1 and V2 |
+
+For the final seven-servo configuration, start with [SEVEN-SERVO-PRODUCTION.md](docs/SEVEN-SERVO-PRODUCTION.md).
+
+To test the current app and single-servo setup, follow [TEST-V1.md](docs/TEST-V1.md).
 
 To set up the board on your Mac, start with [SETUP-MAC-ESP32.md](docs/SETUP-MAC-ESP32.md).
 
 See [release status](docs/RELEASE-STATUS.md) for actual checks and blockers.
-**No real hardware has been tested in this build environment.**
+**One-servo motion has been observed; full travel, seven-servo mechanics and sensing accuracy remain unverified.**
 
 ## Run software checks
 
@@ -40,6 +55,7 @@ sh cad/build.sh
 python3 cad/tools/check_stl.py stl/*/*.stl
 python3 cad/tools/cam_sim.py
 python3 scripts/run_v1_checks.py
+python3 scripts/run_spatial_checks.py  # V2 memory and inherited V1 contract
 ```
 
 Full runner exits0 for complete pass,1 for failure,2 for blocked/not-run checks.
