@@ -463,7 +463,7 @@ struct AdvancedPanel:View {
                 VStack(alignment: .leading, spacing: 8) {
                     TextField("Command",text:$model.commandText).textFieldStyle(.roundedBorder).focused($editingCommand)
                         .submitLabel(.done).onSubmit { editingCommand=false }.accessibilityIdentifier("commandText")
-                    Button("Run command") { editingCommand=false; model.submitTypedCommand() }.buttonStyle(.borderedProminent).accessibilityIdentifier("runCommand")
+                    Button("Run command") { editingCommand=false; model.submitTypedCommand() }.buttonStyle(FeelPrimaryButtonStyle()).accessibilityIdentifier("runCommand")
                 }
                 Text(model.commandLanguage == .en ? "remember Desk · recall Desk · return · stop · list places · find barcode" : "recuerda Mesa · recupera Mesa · vuelve · para · lista lugares · busca código").font(.footnote)
                 ViewThatFits(in: .horizontal) {
