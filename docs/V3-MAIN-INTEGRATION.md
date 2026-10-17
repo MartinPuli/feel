@@ -1,6 +1,7 @@
 # V3 integration with current main
 
-V3 incorporates V1 main `a4c141e` through updated V2. It retains session memory,
+V3 incorporates V1 main `a4c141e` through updated V2, plus documentation-only
+installation evidence from `a53cbf1`. It retains session memory,
 explicit on-device voice/typed commands, one saved AR map, adaptive target taps
 and QR/barcode finding. Main remains V1; V2 and V3 stay on their own branches.
 

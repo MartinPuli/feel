@@ -1,0 +1,320 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project Lantern.xcodeproj -scheme Lantern -destination "platform=iOS Simulator,id=59201D1D-43CE-4207-AED8-D536FB4F31FA" -parallel-testing-enabled NO -collect-test-diagnostics never "-only-testing:LanternUITests/LanternUITests/testRememberMoveRecallAndTrackingLossInMemorySimulation" -resultBundlePath ../.artifacts/ios/memory-focused.xcresult -derivedDataPath ../.artifacts/ios/DerivedData CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO test
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = NO
+    COMPILER_INDEX_STORE_ENABLE = NO
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  FeelCore: /tmp/feel-v2-update/ios/Shared/FeelCore
+
+Writing result bundle at path:
+	/private/tmp/feel-v2-update/.artifacts/ios/memory-focused.xcresult
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (5 targets)
+    Target 'LanternUITests' in project 'Lantern'
+        ➜ Explicit dependency on target 'Lantern' in project 'Lantern'
+    Target 'LanternTests' in project 'Lantern'
+        ➜ Explicit dependency on target 'Lantern' in project 'Lantern'
+        ➜ Explicit dependency on target 'FeelCore' in project 'FeelCore'
+    Target 'Lantern' in project 'Lantern'
+        ➜ Explicit dependency on target 'FeelCore' in project 'FeelCore'
+    Target 'FeelCore' in project 'FeelCore'
+        ➜ Explicit dependency on target 'FeelCore' in project 'FeelCore'
+    Target 'FeelCore' in project 'FeelCore' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /usr/bin/what -q /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/coremlc
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/coremlc generate /tmp/feel-v2-update/ios/Lantern/Models/FEELDetector.mlmodel /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/Lantern.build/DerivedSources/CoreMLGenerated/FEELDetector --dry-run yes --deployment-target 16.0 --sdkroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk --platform ios --output-partial-info-plist /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/Lantern.build/FEELDetector-CoreMLPartialInfo.plist --container bundle-resources --language Swift --swift-version 5.0
+
+Build description signature: 747c24ae783f04c8ff4c9f60ed3ac829
+Build description path: /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/XCBuildData/747c24ae783f04c8ff4c9f60ed3ac829.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk /tmp/feel-v2-update/.artifacts/ios/DerivedData/SDKStatCaches.noindex/iphonesimulator26.5-23F81a-6cfe768891a92b912361537c460fe42b.sdkstatcache
+    cd /tmp/feel-v2-update/ios/Lantern.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -o /tmp/feel-v2-update/.artifacts/ios/DerivedData/SDKStatCaches.noindex/iphonesimulator26.5-23F81a-6cfe768891a92b912361537c460fe42b.sdkstatcache
+
+ProcessInfoPlistFile /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/PackageFrameworks/FeelCore_-5E4D4E318B6DA5F3_PackageProduct.framework/Info.plist /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/FeelCore.build/Debug-iphonesimulator/FeelCore\ product.build/empty-FeelCore_-5E4D4E318B6DA5F3_PackageProduct.plist (in target 'FeelCore' from project 'FeelCore')
+    cd /tmp/feel-v2-update/ios/Shared/FeelCore
+    builtin-infoPlistUtility /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/FeelCore.build/Debug-iphonesimulator/FeelCore\ product.build/empty-FeelCore_-5E4D4E318B6DA5F3_PackageProduct.plist -producttype com.apple.product-type.framework -expandbuildsettings -format binary -platform iphonesimulator -o /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/PackageFrameworks/FeelCore_-5E4D4E318B6DA5F3_PackageProduct.framework/Info.plist
+
+ProcessInfoPlistFile /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/Info.plist /tmp/feel-v2-update/ios/Lantern/Info.plist (in target 'Lantern' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    builtin-infoPlistUtility /tmp/feel-v2-update/ios/Lantern/Info.plist -producttype com.apple.product-type.application -genpkginfo /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/PkgInfo -expandbuildsettings -format binary -platform iphonesimulator -additionalcontentfile /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/Lantern.build/FEELDetector-CoreMLPartialInfo.plist -scanforprivacyfile /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/Frameworks/FeelCore_-5E4D4E318B6DA5F3_PackageProduct.framework -o /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/Info.plist
+
+CopySwiftLibs /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app (in target 'Lantern' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/Lantern.debug.dylib --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/Frameworks --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/PlugIns --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/SystemExtensions --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/Extensions --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/PackageFrameworks/FeelCore_-5E4D4E318B6DA5F3_PackageProduct.framework --scan-folder /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk/System/Library/Frameworks/ARKit.framework --scan-folder /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk/System/Library/Frameworks/CoreBluetooth.framework --scan-folder /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk/System/Library/Frameworks/CoreML.framework --scan-folder /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk/System/Library/Frameworks/Vision.framework --scan-folder /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk/System/Library/Frameworks/NearbyInteraction.framework --scan-folder /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk/System/Library/Frameworks/MultipeerConnectivity.framework --platform iphonesimulator --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/Lantern.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+Ignoring --strip-bitcode because --sign was not passed
+
+ProcessInfoPlistFile /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/PlugIns/LanternTests.xctest/Info.plist /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternTests.build/empty-LanternTests.plist (in target 'LanternTests' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    builtin-infoPlistUtility /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternTests.build/empty-LanternTests.plist -producttype com.apple.product-type.bundle.unit-test -expandbuildsettings -format binary -platform iphonesimulator -o /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/PlugIns/LanternTests.xctest/Info.plist
+
+SwiftDriver LanternUITests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'LanternUITests' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LanternUITests -Onone @/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.SwiftFileList -DDEBUG -module-alias Testing\=_Testing_Unavailable -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -target arm64-apple-ios16.0-simulator -g -module-cache-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk/Developer/Library/Frameworks -parse-as-library -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /tmp/feel-v2-update/.artifacts/ios/DerivedData/SDKStatCaches.noindex/iphonesimulator26.5-23F81a-6cfe768891a92b912361537c460fe42b.sdkstatcache -output-file-map /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/ModuleCache.noindex -sdk-module-cache-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/feel-v2-update/.artifacts/ios/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests-generated-files.hmap -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests-own-target-headers.hmap -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/Lantern-11efd98e99430be52b83a7dfbbacb368-VFS-iphonesimulator/all-product-headers.yaml -Xcc -iquote -Xcc /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests-project-headers.hmap -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/include -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/DerivedSources-normal/arm64 -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/DerivedSources/arm64 -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests-Swift.h -working-directory /tmp/feel-v2-update/ios -experimental-emit-module-separately -disable-cmo
+
+CopySwiftLibs /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/PlugIns/LanternTests.xctest (in target 'LanternTests' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/PlugIns/LanternTests.xctest/LanternTests --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/PlugIns/LanternTests.xctest/Frameworks --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/PlugIns/LanternTests.xctest/PlugIns --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/PlugIns/LanternTests.xctest/SystemExtensions --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/PlugIns/LanternTests.xctest/Extensions --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/PackageFrameworks/FeelCore_-5E4D4E318B6DA5F3_PackageProduct.framework --platform iphonesimulator --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app/PlugIns/LanternTests.xctest/Frameworks --strip-bitcode --scan-executable /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libXCTestSwiftSupport.dylib --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternTests.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+Ignoring --strip-bitcode because --sign was not passed
+
+Validate /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app (in target 'Lantern' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    builtin-validationUtility /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/Lantern.app -shallow-bundle -infoplist-subpath Info.plist
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ LanternUITests (in target 'LanternUITests' from project 'Lantern')
+
+SwiftCompile normal arm64 /tmp/feel-v2-update/ios/LanternUITests/LanternUITests.swift (in target 'LanternUITests' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    
+
+SwiftCompile normal arm64 Compiling\ LanternUITests.swift /tmp/feel-v2-update/ios/LanternUITests/LanternUITests.swift (in target 'LanternUITests' from project 'Lantern')
+SwiftCompile normal arm64 /tmp/feel-v2-update/ios/LanternUITests/LanternUITests.swift (in target 'LanternUITests' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling LanternUITests.swift (in target 'LanternUITests' from project 'Lantern')
+
+SwiftDriver\ Compilation LanternUITests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'LanternUITests' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LanternUITests -Onone @/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.SwiftFileList -DDEBUG -module-alias Testing\=_Testing_Unavailable -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -target arm64-apple-ios16.0-simulator -g -module-cache-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk/Developer/Library/Frameworks -parse-as-library -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /tmp/feel-v2-update/.artifacts/ios/DerivedData/SDKStatCaches.noindex/iphonesimulator26.5-23F81a-6cfe768891a92b912361537c460fe42b.sdkstatcache -output-file-map /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/ModuleCache.noindex -sdk-module-cache-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/feel-v2-update/.artifacts/ios/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests-generated-files.hmap -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests-own-target-headers.hmap -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/Lantern-11efd98e99430be52b83a7dfbbacb368-VFS-iphonesimulator/all-product-headers.yaml -Xcc -iquote -Xcc /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests-project-headers.hmap -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/include -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/DerivedSources-normal/arm64 -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/DerivedSources/arm64 -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests-Swift.h -working-directory /tmp/feel-v2-update/ios -experimental-emit-module-separately -disable-cmo
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for LanternUITests (in target 'LanternUITests' from project 'Lantern')
+
+SwiftDriver\ Compilation\ Requirements LanternUITests normal arm64 com.apple.xcode.tools.swift.compiler (in target 'LanternUITests' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LanternUITests -Onone @/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.SwiftFileList -DDEBUG -module-alias Testing\=_Testing_Unavailable -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -target arm64-apple-ios16.0-simulator -g -module-cache-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -F /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk/Developer/Library/Frameworks -parse-as-library -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /tmp/feel-v2-update/.artifacts/ios/DerivedData/SDKStatCaches.noindex/iphonesimulator26.5-23F81a-6cfe768891a92b912361537c460fe42b.sdkstatcache -output-file-map /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/ModuleCache.noindex -sdk-module-cache-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.swiftmodule -validate-clang-modules-once -clang-build-session-file /tmp/feel-v2-update/.artifacts/ios/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests_const_extract_protocols.json -Xcc -iquote -Xcc /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests-generated-files.hmap -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests-own-target-headers.hmap -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/Lantern-11efd98e99430be52b83a7dfbbacb368-VFS-iphonesimulator/all-product-headers.yaml -Xcc -iquote -Xcc /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests-project-headers.hmap -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/include -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/DerivedSources-normal/arm64 -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/DerivedSources/arm64 -Xcc -I/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests-Swift.h -working-directory /tmp/feel-v2-update/ios -experimental-emit-module-separately -disable-cmo
+
+Copy /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.swiftsourceinfo (in target 'LanternUITests' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.swiftsourceinfo /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo
+
+Copy /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests.swiftmodule/arm64-apple-ios-simulator.abi.json /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.abi.json (in target 'LanternUITests' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.abi.json /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests.swiftmodule/arm64-apple-ios-simulator.abi.json
+
+Ld /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests-Runner.app/PlugIns/LanternUITests.xctest/LanternUITests normal (in target 'LanternUITests' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios16.0-simulator -bundle -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk -O0 -L/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -L/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator -L/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib -F/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -F/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator -iframework /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks -iframework /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk/Developer/Library/Frameworks -filelist /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.LinkFileList -Xlinker -rpath -Xlinker /usr/lib/swift -Xlinker -rpath -Xlinker @loader_path/Frameworks -Xlinker -rpath -Xlinker @executable_path/Frameworks -Xlinker -dead_strip -Xlinker -object_path_lto -Xlinker /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests_dependency_info.dat -fobjc-link-runtime -fprofile-instr-generate -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.swiftmodule @/tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests-linker-args.resp -Xlinker -needed_framework -Xlinker XCTest -framework XCTest -Xlinker -needed-lXCTestSwiftSupport -lXCTestSwiftSupport -o /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests-Runner.app/PlugIns/LanternUITests.xctest/LanternUITests
+
+ExtractAppIntentsMetadata (in target 'LanternUITests' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name LanternUITests --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.5.sdk --xcode-version 17F113 --platform-family iOS --deployment-target 16.0 --bundle-identifier org.feel.hackharvard.LanternUITests --output /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests-Runner.app/PlugIns/LanternUITests.xctest --target-triple arm64-apple-ios16.0-simulator --binary-file /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests-Runner.app/PlugIns/LanternUITests.xctest/LanternUITests --dependency-file /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests_dependency_info.dat --stringsdata-file /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.SwiftFileList --metadata-file-list /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests.DependencyMetadataFileList --static-metadata-file-list /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/LanternUITests.DependencyStaticMetadataFileList --swift-const-vals-list /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/Objects-normal/arm64/LanternUITests.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-10-17 00:00:23.904 appintentsmetadataprocessor[10650:861759] Starting appintentsmetadataprocessor export
+2026-10-17 00:00:23.905 appintentsmetadataprocessor[10650:861759] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+ProcessInfoPlistFile /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests-Runner.app/PlugIns/LanternUITests.xctest/Info.plist /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/empty-LanternUITests.plist (in target 'LanternUITests' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    builtin-infoPlistUtility /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/empty-LanternUITests.plist -producttype com.apple.product-type.bundle.ui-testing -expandbuildsettings -format binary -platform iphonesimulator -additionalcontentfile /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/ProductTypeInfoPlistAdditions.plist -o /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests-Runner.app/PlugIns/LanternUITests.xctest/Info.plist
+
+CopySwiftLibs /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests-Runner.app/PlugIns/LanternUITests.xctest (in target 'LanternUITests' from project 'Lantern')
+    cd /tmp/feel-v2-update/ios
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests-Runner.app/PlugIns/LanternUITests.xctest/LanternUITests --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests-Runner.app/PlugIns/LanternUITests.xctest/Frameworks --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests-Runner.app/PlugIns/LanternUITests.xctest/PlugIns --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests-Runner.app/PlugIns/LanternUITests.xctest/SystemExtensions --scan-folder /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests-Runner.app/PlugIns/LanternUITests.xctest/Extensions --platform iphonesimulator --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Products/Debug-iphonesimulator/LanternUITests-Runner.app/PlugIns/LanternUITests.xctest/Frameworks --strip-bitcode --scan-executable /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libXCTestSwiftSupport.dylib --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /tmp/feel-v2-update/.artifacts/ios/DerivedData/Build/Intermediates.noindex/Lantern.build/Debug-iphonesimulator/LanternUITests.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+Ignoring --strip-bitcode because --sign was not passed
+
+2026-10-17 00:00:43.646110-0400 LanternUITests-Runner[10994:864752] [Default] Running tests...
+objc[10994]: Class UIAccessibilityLoaderWebShared is implemented in both /Library/Developer/CoreSimulator/Volumes/iOS_23F77/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.5.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x107b94310) and /Library/Developer/CoreSimulator/Volumes/iOS_23F77/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.5.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x106fe8398). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-17 00:00:47.236.
+Test Suite 'LanternUITests.xctest' started at 2026-10-17 00:00:47.236.
+Test Suite 'LanternUITests' started at 2026-10-17 00:00:47.236.
+Test Case '-[LanternUITests.LanternUITests testRememberMoveRecallAndTrackingLossInMemorySimulation]' started.
+    t =     0.00s Start Test at 2026-10-17 00:00:47.237
+    t =     0.32s Set Up
+    t =     0.32s Setting device orientation to Landscape Left
+    t =     0.32s     Device orientation changed to Landscape Left
+    t =     0.37s     Wait for com.apple.springboard to idle
+    t =     0.41s Open org.feel.hackharvard.lantern
+    t =     0.41s     Launch org.feel.hackharvard.lantern
+2026-10-17 00:00:47.984 xcodebuild[10590:861353] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-17 00:00:47.987 xcodebuild[10590:861353] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     1.78s         Setting up automation session
+    t =     1.90s             Interface orientation changed to Landscape Right
+    t =     2.69s         Wait for org.feel.hackharvard.lantern to idle
+    t =     4.21s Waiting 10.0s for "startCamera" Button to exist
+    t =     5.25s     Checking `Expect predicate `existsNoRetry == 1` for object "startCamera" Button`
+    t =     5.25s         Checking existence of `"startCamera" Button`
+    t =     5.33s Tap "memoryPlaces" Button
+    t =     5.33s     Wait for org.feel.hackharvard.lantern to idle
+    t =     5.34s     Find the "memoryPlaces" Button
+    t =     5.35s     Check for interrupting elements affecting "memoryPlaces" Button
+    t =     5.37s     Synthesize event
+    t =     5.77s     Wait for org.feel.hackharvard.lantern to idle
+    t =     5.81s Waiting 10.0s for "memorySimulation" Button to exist
+    t =     6.85s     Checking `Expect predicate `existsNoRetry == 1` for object "memorySimulation" Button`
+    t =     6.85s         Checking existence of `"memorySimulation" Button`
+    t =     6.96s Tap "memorySimulation" Button
+    t =     6.96s     Wait for org.feel.hackharvard.lantern to idle
+    t =     6.97s     Find the "memorySimulation" Button
+    t =     7.01s     Check for interrupting elements affecting "memorySimulation" Button
+    t =     7.04s     Synthesize event
+    t =     7.34s     Wait for org.feel.hackharvard.lantern to idle
+    t =     7.34s Waiting 5.0s for "placeName" TextField to exist
+    t =     8.38s     Checking `Expect predicate `existsNoRetry == 1` for object "placeName" TextField`
+    t =     8.38s         Checking existence of `"placeName" TextField`
+    t =     8.42s Tap "placeName" TextField
+    t =     8.42s     Wait for org.feel.hackharvard.lantern to idle
+    t =     8.43s     Find the "placeName" TextField
+    t =     8.49s     Check for interrupting elements affecting "placeName" TextField
+    t =     8.53s     Synthesize event
+    t =     8.54s         Scroll element to visible
+    t =     8.55s         Find the "placeName" TextField
+    t =     8.62s         Computed hit point {253, 269} after scrolling to visible
+    t =     8.91s     Wait for org.feel.hackharvard.lantern to idle
+    t =     9.62s Added attachment named 'memory-name-entry'
+    t =     9.62s Type 'Desk
+' into "placeName" TextField
+    t =     9.62s     Wait for org.feel.hackharvard.lantern to idle
+    t =     9.87s     Find the "placeName" TextField
+    t =     9.95s     Check for interrupting elements affecting "placeName" TextField
+    t =    10.02s     Synthesize event
+    t =    10.30s     Wait for org.feel.hackharvard.lantern to idle
+    t =    10.66s Find the "placeName" TextField
+    t =    10.71s Waiting 5.0s for "rememberPlace" Button to exist
+    t =    11.75s     Checking `Expect predicate `existsNoRetry == 1` for object "rememberPlace" Button`
+    t =    11.75s         Checking existence of `"rememberPlace" Button`
+    t =    11.85s Tap "rememberPlace" Button
+    t =    11.85s     Wait for org.feel.hackharvard.lantern to idle
+    t =    11.87s     Find the "rememberPlace" Button
+    t =    11.98s     Check for interrupting elements affecting "rememberPlace" Button
+    t =    12.02s     Synthesize event
+    t =    12.34s     Wait for org.feel.hackharvard.lantern to idle
+    t =    12.37s Find the "rememberPlace" Button
+    t =    12.44s Find the "placesCount" StaticText
+    t =    12.50s Waiting 5.0s for "simBack" Button to exist
+    t =    13.53s     Checking `Expect predicate `existsNoRetry == 1` for object "simBack" Button`
+    t =    13.54s         Checking existence of `"simBack" Button`
+    t =    13.63s Tap "simBack" Button
+    t =    13.63s     Wait for org.feel.hackharvard.lantern to idle
+    t =    13.88s     Find the "simBack" Button
+    t =    13.93s     Check for interrupting elements affecting "simBack" Button
+    t =    14.02s     Synthesize event
+    t =    14.02s         Scroll element to visible
+    t =    14.02s         Find the "simBack" Button
+    t =    14.10s         Computed hit point {263.99998474121094, 362.5} after scrolling to visible
+    t =    14.40s     Wait for org.feel.hackharvard.lantern to idle
+    t =    15.06s Find the "simBack" Button
+    t =    15.17s Waiting 5.0s for "simBack" Button to exist
+    t =    16.20s     Checking `Expect predicate `existsNoRetry == 1` for object "simBack" Button`
+    t =    16.21s         Checking existence of `"simBack" Button`
+    t =    16.27s Tap "simBack" Button
+    t =    16.27s     Wait for org.feel.hackharvard.lantern to idle
+    t =    16.28s     Find the "simBack" Button
+    t =    16.33s     Check for interrupting elements affecting "simBack" Button
+    t =    16.38s     Synthesize event
+    t =    16.69s     Wait for org.feel.hackharvard.lantern to idle
+    t =    16.69s Find the "simBack" Button
+    t =    16.75s Waiting 5.0s for "recallPlace" Button to exist
+    t =    17.78s     Checking `Expect predicate `existsNoRetry == 1` for object "recallPlace" Button`
+    t =    17.78s         Checking existence of `"recallPlace" Button`
+    t =    17.88s Tap "recallPlace" Button
+    t =    17.88s     Wait for org.feel.hackharvard.lantern to idle
+    t =    17.89s     Find the "recallPlace" Button
+    t =    17.98s     Check for interrupting elements affecting "recallPlace" Button
+    t =    18.03s     Synthesize event
+    t =    18.03s         Scroll element to visible
+    t =    18.06s         Find the "recallPlace" Button
+    t =    18.19s         Computed hit point {274, 206.66666666666666} after scrolling to visible
+    t =    18.48s     Wait for org.feel.hackharvard.lantern to idle
+    t =    18.48s Find the "recallPlace" Button
+    t =    18.54s Waiting 3.0s for "Place guidance: guiding" StaticText to exist
+    t =    19.57s     Checking `Expect predicate `existsNoRetry == 1` for object "Place guidance: guiding" StaticText`
+    t =    19.57s         Checking existence of `"Place guidance: guiding" StaticText`
+    t =    19.74s Added attachment named 'memory-guiding'
+    t =    19.74s Find the "simTracking" Switch
+    t =    19.82s Waiting 5.0s for "simTracking" Switch to exist
+    t =    20.86s     Checking `Expect predicate `existsNoRetry == 1` for object "simTracking" Switch`
+    t =    20.86s         Checking existence of `"simTracking" Switch`
+    t =    20.93s Find the "simTracking" Switch
+    t =    21.01s Tap "simTracking" Switch
+    t =    21.01s     Wait for org.feel.hackharvard.lantern to idle
+    t =    21.02s     Find the "simTracking" Switch
+    t =    21.11s     Check for interrupting elements affecting "simTracking" Switch
+    t =    21.21s     Synthesize event
+    t =    21.30s         Scroll element to visible
+    t =    21.31s         Find the "simTracking" Switch
+    t =    21.41s         Computed hit point {250.00000000000011, 794.5} after scrolling to visible
+    t =    21.71s     Wait for org.feel.hackharvard.lantern to idle
+    t =    23.01s Find the "simTracking" Switch
+    t =    23.13s Find the "simTracking" Switch
+    t =    24.26s Checking `Expect predicate `value == "0"` for object "simTracking" Switch`
+    t =    24.26s     Find the "simTracking" Switch
+    t =    24.33s Find the "simTracking" Switch
+    t =    24.40s Waiting 3.0s for "Place guidance: trackingLost" StaticText to exist
+    t =    25.43s     Checking `Expect predicate `existsNoRetry == 1` for object "Place guidance: trackingLost" StaticText`
+    t =    25.43s         Checking existence of `"Place guidance: trackingLost" StaticText`
+    t =    25.53s Find the "memoryPuck" Other
+    t =    25.60s Waiting 5.0s for "simTracking" Switch to exist
+    t =    26.64s     Checking `Expect predicate `existsNoRetry == 1` for object "simTracking" Switch`
+    t =    26.64s         Checking existence of `"simTracking" Switch`
+    t =    26.73s Find the "simTracking" Switch
+    t =    26.82s Tap "simTracking" Switch
+    t =    26.82s     Wait for org.feel.hackharvard.lantern to idle
+    t =    26.82s     Find the "simTracking" Switch
+    t =    26.91s     Check for interrupting elements affecting "simTracking" Switch
+    t =    27.00s     Synthesize event
+    t =    27.31s     Wait for org.feel.hackharvard.lantern to idle
+    t =    28.59s Find the "simTracking" Switch
+    t =    28.70s Find the "simTracking" Switch
+    t =    29.82s Checking `Expect predicate `value == "1"` for object "simTracking" Switch`
+    t =    29.82s     Find the "simTracking" Switch
+    t =    29.91s Find the "simTracking" Switch
+    t =    29.98s Waiting 3.0s for "Place guidance: guiding" StaticText to exist
+    t =    31.01s     Checking `Expect predicate `existsNoRetry == 1` for object "Place guidance: guiding" StaticText`
+    t =    31.01s         Checking existence of `"Place guidance: guiding" StaticText`
+    t =    31.08s Find the "memoryPuck" Other
+    t =    31.21s Waiting 5.0s for "simResetSession" Button to exist
+    t =    32.25s     Checking `Expect predicate `existsNoRetry == 1` for object "simResetSession" Button`
+    t =    32.26s         Checking existence of `"simResetSession" Button`
+    t =    32.34s Tap "simResetSession" Button
+    t =    32.34s     Wait for org.feel.hackharvard.lantern to idle
+    t =    32.36s     Find the "simResetSession" Button
+    t =    32.47s     Check for interrupting elements affecting "simResetSession" Button
+    t =    32.56s     Synthesize event
+    t =    32.88s     Wait for org.feel.hackharvard.lantern to idle
+    t =    32.88s Find the "simResetSession" Button
+    t =    33.01s Find the "placesCount" StaticText
+    t =    33.06s Tear Down
+Test Case '-[LanternUITests.LanternUITests testRememberMoveRecallAndTrackingLossInMemorySimulation]' passed (33.398 seconds).
+Test Suite 'LanternUITests' passed at 2026-10-17 00:01:20.636.
+	 Executed 1 test, with 0 failures (0 unexpected) in 33.398 (33.400) seconds
+Test Suite 'LanternUITests.xctest' passed at 2026-10-17 00:01:20.637.
+	 Executed 1 test, with 0 failures (0 unexpected) in 33.398 (33.400) seconds
+Test Suite 'Selected tests' passed at 2026-10-17 00:01:20.637.
+	 Executed 1 test, with 0 failures (0 unexpected) in 33.398 (33.401) seconds
+2026-10-17 00:01:21.042 xcodebuild[10590:861353] [MT] IDETestOperationsObserverDebug: 57.111 elapsed -- Testing started completed.
+2026-10-17 00:01:21.042 xcodebuild[10590:861353] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-17 00:01:21.042 xcodebuild[10590:861353] [MT] IDETestOperationsObserverDebug: 57.111 sec, +57.111 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/feel-v2-update/.artifacts/ios/memory-focused.xcresult
+
+** TEST SUCCEEDED **
+
+Testing started

@@ -1,0 +1,110 @@
+{
+  "version": "V2 current-main integration",
+  "timestamp_utc": "2026-10-17T04:06:09.014044+00:00",
+  "validated_source": "0daf9148853fe215e65fa8a3a3ca64c31cc201f1",
+  "main_baseline": "a4c141e57d84036563b38452e8f1237d3cc0b0a7",
+  "prior_v2": "063c07c",
+  "status": "PASS",
+  "physical_hardware": "NOT VERIFIED",
+  "toolchain": {
+    "Xcode": "26.6 (17F113)",
+    "Swift": "6.3.3",
+    "XcodeGen": "2.46.0",
+    "simulator": "iPhone Air, iOS 26.5"
+  },
+  "checks": [
+    {
+      "name": "Source presence",
+      "status": "PASS",
+      "command": "python3 scripts/check_sources.py",
+      "evidence": "source.log"
+    },
+    {
+      "name": "Tooling tests",
+      "status": "PASS",
+      "count": 7,
+      "command": "python3 -m unittest discover -s scripts/tests -v",
+      "evidence": "tooling.log"
+    },
+    {
+      "name": "Reference tests",
+      "status": "PASS",
+      "count": 51,
+      "command": "python3 -m unittest discover -s validation/tests -v",
+      "evidence": "reference.log"
+    },
+    {
+      "name": "Portable Swift tests",
+      "status": "PASS",
+      "count": 58,
+      "command": "sh ios/scripts/test_portable.sh",
+      "evidence": "swift-core.log"
+    },
+    {
+      "name": "Swift replay build",
+      "status": "PASS",
+      "command": "swift build -j 2 --package-path ios/Shared/FeelCore",
+      "evidence": "swift-cli.log"
+    },
+    {
+      "name": "Firmware host/configuration/adapter tests",
+      "status": "PASS",
+      "command": "sh firmware/test/run_host_tests.sh",
+      "evidence": "firmware-host.log"
+    },
+    {
+      "name": "Foundation production replay",
+      "status": "PASS",
+      "assertions": 2634,
+      "states": 558,
+      "command": "python3 validation/production/run.py",
+      "evidence": "v1-production-contract.log"
+    },
+    {
+      "name": "Spatial production replay",
+      "status": "PASS",
+      "assertions": 444,
+      "states": 43,
+      "command": "python3 validation/spatial/run.py",
+      "evidence": "spatial-production-contract.log"
+    },
+    {
+      "name": "Spatial CLI fixture",
+      "status": "PASS",
+      "command": "ios/Shared/FeelCore/.build/debug/feel-replay replay ios/Fixtures/spatial-memory.json",
+      "evidence": "spatial-fixture.log"
+    },
+    {
+      "name": "Cached model integrity",
+      "status": "PASS",
+      "command": "python3 scripts/fetch_model.py",
+      "evidence": "model.log"
+    },
+    {
+      "name": "Native simulator suites and unsigned device builds",
+      "status": "PASS",
+      "command": "FEEL_TEST_DIAGNOSTICS=never bash scripts/check_ios.sh",
+      "Lantern_app_tests": 8,
+      "Lantern_UI_tests": 6,
+      "Beacon_UI_tests": 2,
+      "unsigned_device_builds": [
+        "Lantern",
+        "Beacon"
+      ],
+      "evidence": "ios.log"
+    },
+    {
+      "name": "Independent read-only review",
+      "status": "PASS",
+      "scope": "Camera UI/startup, memory lifecycle, unchanged firmware, V3 exclusion; no actionable defects"
+    }
+  ],
+  "scope": "Software integration gate. CAD, protocol and firmware source identical to main; physical tests, uploads and hosted CI not performed.",
+  "failed_attempts": [
+    "Initial core/native compilation ran out of disk space.",
+    "Initial memory UI flow failed post-focus hit test; actual text-entry assertion replaced that precondition and focused/full reruns passed.",
+    "Initial failing xcresult could not finalize due disk exhaustion; unreadable generated bundle removed, text failure log retained."
+  ],
+  "native_results_local": ".artifacts/ios/results.US2k4h/{Lantern,Beacon}.xcresult",
+  "diagnostics": "Verbose sysdiagnose disabled for final local run to fit disk; screenshots, assertions and result bundles retained."
+}
