@@ -6,7 +6,7 @@
 
 # FEEL V2 — Spatial Memory
 
-This V2 branch integrates the latest V1 foundation from `main` (`a4c141e`) with
+This V2 branch integrates the latest V1 foundation from `main` (`b780519`) with
 session-only Remember, Recall, Return and multiple bookmarks. Start with
 [Spatial Memory](docs/SPATIAL-MEMORY.md). V3 features remain on their own branch.
 

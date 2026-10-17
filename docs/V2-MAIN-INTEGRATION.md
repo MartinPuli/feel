@@ -1,16 +1,17 @@
 # V2 updated from current V1 main
 
-This branch integrates V1 `main` commit `a4c141e` into V2 Spatial Memory. The
-previous V2 tip was `063c07c`. The later documentation-only main commit `a53cbf1`
-(installation evidence) is also included; validated app source is unchanged. `main` remains V1; V2 is published on
+This branch integrates V1 `main` commit `b780519` into V2 Spatial Memory.
+The prior published V2 tip was `3abfa5c`; the earlier camera-first integration
+and installation evidence remain in its history. `main` remains V1; V2 is published on
 `feel/v2-spatial-memory`, with V3 advanced work separate.
 
 ## What changed
 
 - The iOS app retains current V1's camera-first screen, Geist fonts, compact tactile
-  display, connection/settings sheets, larger-text layout and Stop controls.
+  display, collapsible controls, floating connection/settings panels, larger-text
+  layout and Stop controls that remain available while active controls are hidden.
   Normal launch requests camera access once; Stop or backgrounding does not restart it.
-- My Places opens from the camera header in its own sheet with a visible Stop. Remember, select, rename, delete, Recall,
+- My Places opens from the camera header in its own floating panel with a visible Stop during sensing or simulation. Remember, select, rename, delete, Recall,
   Set return point, Return and Stop guidance retain their existing behavior.
   Memory simulation retains its movement, tracking-loss and session-reset controls.
 - Places remain session-only. Stops, interruptions, resets and mode changes clear
@@ -20,10 +21,16 @@ previous V2 tip was `063c07c`. The later documentation-only main commit `a53cbf1
   13° tapping offset, 900–2100 µs nominal mapping, single-servo demo/live profiles,
   and seven-servo production preparation. Default outputs remain disabled;
   production still requires actual measurement records for all seven units.
-- App marketing version is 2.0.0, build 4. Setup instructions select V2 and identify
+- App marketing version is 2.0.0, build 5. Setup instructions select V2 and identify
   `main` as V1. CI retains V1 gates and the spatial replay.
 
-## Validation
+## Latest drawer integration validation
+
+Source integration is complete; native validation of the new floating My Places
+panel and all existing camera controls is pending. Core, perception, firmware and
+protocol behavior are unchanged from the previously validated V2 integration.
+
+## Previous camera-first integration validation
 
 **PASS on October 17, 2026**, source `0daf914`, Xcode 26.6 (17F113), Swift 6.3.3,
 XcodeGen 2.46.0 and the iPhone Air / iOS 26.5 simulator.

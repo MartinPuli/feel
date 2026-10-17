@@ -21,16 +21,17 @@ represent new physical testing of this integration.
 
 ## Current iPhone visual update
 
-Lantern now opens into the [camera-first interface](V1-CAMERA-UI.md), with a compact
-7×4 packet display, puck connection and persistent Stop. Settings holds target
-selection, measured-height calibration and simulation. Five integration tests
-and five UI tests passed locally. Both apps build and sign as 1.0.0 (4).
-[Current screenshots and checks](evidence/v1-camera/validation.txt).
+Lantern now uses a chevron drawer in the [camera-first interface](V1-CAMERA-UI.md).
+Tapping or dragging the arrow reveals the 7×4 packet display, status and rounded
+Start camera action. Connection and Settings float over the camera. Stop remains
+available with the drawer closed and inside either modal. Five integration tests
+and six UI tests passed locally; Lantern builds and signs as 1.0.0 (5).
+[Current screenshots and checks](evidence/v1-drawer/validation.txt).
 
-Lantern 1.0.0 (4) was installed and launched on the paired iPhone 17 Pro on
-October 17. Device app inventory confirms build 4. This confirms installation
-and launch, not physical sensing/actuation performance. Beacon build 4 remains
-prepared locally; it was not installed during this update.
+Lantern 1.0.0 (5) was installed and launched on the paired iPhone 17 Pro on
+October 17. Device app inventory confirms build 5. This confirms installation
+and launch, not physical sensing/actuation performance. Beacon's interface is
+unchanged; it was not rebuilt or installed during this update.
 
 ## V1 consolidation on main
 
