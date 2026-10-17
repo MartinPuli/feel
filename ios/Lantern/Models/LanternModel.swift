@@ -20,7 +20,7 @@ final class LanternModel:ObservableObject {
     @Published var finder:FinderMode = .none { didSet { voice.invalidateSceneSpeech(); finderEpoch += 1; perception.setFinder(finder,epoch:finderEpoch); frame=nil; targetDescription="Searching: \(finder.rawValue)" } }
     enum VoicePanel: String { case settings, connection }
     @Published var voicePanel: VoicePanel?
-    let voice: GrokVoiceSession
+    let voice: RealtimeVoiceSession
     private var voiceSawTarget = false
     private var voiceTargetAvailable = false
     private var voiceTargetPhrase: String?
@@ -38,7 +38,7 @@ final class LanternModel:ObservableObject {
     private var simulatedAt:TimeInterval=0
     private var startGeneration=0
     private var finderEpoch=0
-    init(voice: GrokVoiceSession = GrokVoiceSession()) {
+    init(voice: RealtimeVoiceSession = RealtimeVoiceSession()) {
         self.voice = voice
         voice.onCommand = { [weak self] command in self?.performVoiceCommand(command) ?? ["error": "App unavailable"] }
         voice.onEnded = { [weak self] in

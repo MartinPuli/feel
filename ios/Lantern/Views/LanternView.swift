@@ -4,7 +4,7 @@ import FeelCore
 
 struct LanternView: View {
     @ObservedObject var model: LanternModel
-    @ObservedObject private var voice: GrokVoiceSession
+    @ObservedObject private var voice: RealtimeVoiceSession
     init(model: LanternModel) {
         self.model = model
         self.voice = model.voice
@@ -231,6 +231,11 @@ struct LanternView: View {
             HStack(spacing: 12) {
                 if !dynamicTypeSize.isAccessibilitySize {
                     Text("FEEL").font(FeelTypography.headline).accessibilityAddTraits(.isHeader)
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 48)
+                        .foregroundStyle(FeelTheme.accent)
+                        .background(FeelTheme.inset, in: Capsule())
+                        .overlay(Capsule().strokeBorder(FeelTheme.border, lineWidth: 1))
                         .accessibilityIdentifier("feelWordmark")
                 }
                 if model.mode == .simulation {

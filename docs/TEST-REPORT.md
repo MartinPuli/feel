@@ -1,3 +1,15 @@
+## October 17 OpenAI migration and audio recovery
+
+The native OpenAI client and protected token service are implemented. Build 13
+is signed. All 40 native tests, 7 UI tests and 18 service tests passed. A live Cedar probe completed two readiness responses around 40 seconds
+of streamed silent PCM with no provider or send errors. This probe is synthetic
+input, not evidence of physical microphone or headphone performance.
+
+An iPhone diagnostic captured `engine_not_running` on first playback. Guarded
+engine restart and request-specific cancellation were independently reviewed.
+The iPhone became unavailable before the final updated installation; real-device
+recovery remains pending. [Current evidence](evidence/v1-openai-voice/validation.txt).
+
 ## October 17 V1 live voice provisioning
 
 33 native unit/integration tests and 18 service tests passed. Build 8 was signed

@@ -13,32 +13,32 @@
 
 # Current V1 release candidate
 
-## Current iPhone voice provisioning
+## Current OpenAI voice update — October 17
 
-Build 8 is signed and installed. The protected Vercel token service is deployed,
-and a real native Grok session returned “I'm here” using Sal at 24 kHz.
-33 native tests and 18 token-service tests passed. Provider credentials remain
-server-side. The Voice-only API key expires November 16, 2026.
-The unlocked iPhone was provisioned and launched at 01:24 EDT. The user confirmed
-live voice input and spoken responses; server logs show successful token requests.
-Cold relaunch, headset routing and interruption checks remain pending.
-[Evidence](evidence/v1-voice-provisioning/validation.txt).
+Build 13 is signed and ready for installation. All 40 native tests, 7 UI tests
+and 18 service tests passed. The production token service now
+uses OpenAI Realtime (`gpt-realtime-2.1`, Cedar), with provider credentials kept
+on Vercel. Unauthorized requests return 401; authenticated requests issue only
+an ephemeral value and expiration. The FEEL wordmark now matches the background
+and border of the adjacent controls.
 
-## Current iPhone assistant update
+A phone diagnostic identified a stopped audio engine at first playback. The app
+now attempts a guarded restart and tolerates short microphone send stalls.
+Unique request identifiers prevent stale announcements from overriding a newer
+spoken command. Independent review found no remaining P0/P1 issue in these fixes.
 
-V1 build 6 adds the [personal voice assistant](V1-VOICE.md). After provisioning,
-it listens automatically on app foreground entry and reports readiness aloud.
-Stop preserves listening; Pause assistant ends the microphone. The FEEL wordmark
-has no background or LIVE label. Native sensing and V2/V3 branches are preserved.
+The iPhone became unavailable after build 12 installation. Build 13 installation
+and real microphone/headset verification remain pending reconnection. The server
+now speaks the OpenAI protocol, so the older Grok app must be updated before use.
+[Current evidence](evidence/v1-openai-voice/validation.txt).
 
-Signed build 1.0.0 (6) is installed and launched on the paired iPhone 17 Pro.
-The first launch attempt was blocked by the locked phone; retry succeeded at
-00:49:08 EDT. Thirty-six native tests and ten token-service tests passed locally. [Voice validation](evidence/v1-voice/validation.txt).
+## Prior iPhone voice provisioning
 
-**Live Grok activation is BLOCKED** on an xAI key and reachable HTTPS token
-service. No real conversation, headset routing or physical voice latency result
-is claimed. Camera images remain local. Audio is sent to xAI only during an
-active assistant session. The app pauses streaming when backgrounded/locked.
+Build 8 used Grok/Sal. The user confirmed live voice input and spoken responses,
+then reported disconnections. Its historical activation evidence is preserved
+in [the provisioning record](evidence/v1-voice-provisioning/validation.txt).
+Build 6 introduced foreground listening and accessible Assistant controls.
+Backgrounding or locking pauses microphone capture; camera images remain local.
 
 ## Current iPhone visual update
 

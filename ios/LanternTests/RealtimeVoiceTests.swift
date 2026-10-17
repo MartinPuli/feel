@@ -3,7 +3,7 @@ import AVFoundation
 import UIKit
 @testable import Lantern
 
-final class GrokVoiceTests: XCTestCase {
+final class RealtimeVoiceTests: XCTestCase {
     private let config = VoiceConfiguration(endpoint: "https://voice.example/session", accessToken: String(repeating: "a", count: 32))
 
     func testCommandAllowlistRejectsMalformedAndUnsafeArguments() throws {
@@ -39,7 +39,7 @@ final class GrokVoiceTests: XCTestCase {
         saved = nil
         XCTAssertNil(try VoiceConfigurationStore.provision(environment: environment, arguments: ["--uitesting"], save: { saved = $0 }))
         XCTAssertNil(saved)
-        for invalid in ["short", "grok_" + String(repeating: "x", count: 40), "xai-" + String(repeating: "x", count: 40),
+        for invalid in ["short", "grok_" + String(repeating: "x", count: 40), "xai-" + String(repeating: "x", count: 40), "sk-proj-" + String(repeating: "x", count: 40),
                         String(repeating: "x", count: 32) + "\u{01}", String(repeating: "x", count: 4097)] {
             environment["FEEL_VOICE_ACCESS_TOKEN"] = invalid
             XCTAssertThrowsError(try VoiceConfigurationStore.provision(environment: environment, arguments: [], save: { saved = $0 }))
@@ -84,8 +84,18 @@ final class GrokVoiceTests: XCTestCase {
         transport.emit(["type": "session.created"])
         XCTAssertEqual(audio.startCount, 0)
         XCTAssertEqual(transport.sent.last?["type"] as? String, "session.update")
+        let session = transport.sent.last?["session"] as? [String: Any]
+        XCTAssertEqual(session?["type"] as? String, "realtime")
+        XCTAssertNil(session?["voice"])
+        XCTAssertNil(session?["turn_detection"])
+        let configurationAudio = session?["audio"] as? [String: Any]
+        XCTAssertEqual((configurationAudio?["output"] as? [String: Any])?["voice"] as? String, "cedar")
         transport.emit(["type": "session.updated"])
         XCTAssertEqual(audio.startCount, 1)
+        XCTAssertEqual(transport.sent.last?["type"] as? String, "response.create")
+        let announcement = transport.sent.last?["response"] as? [String: Any]
+        XCTAssertEqual(announcement?["conversation"] as? String, "none")
+        XCTAssertEqual((announcement?["tools"] as? [Any])?.count, 0)
         transport.emit(["type": "session.updated"])
         XCTAssertEqual(audio.startCount, 1)
         audio.onInput?(Data([1, 0]))
@@ -113,11 +123,12 @@ final class GrokVoiceTests: XCTestCase {
     }
 
     func testSpeechBeforeResponseIDRejectsDelayedAudioAndActions() {
-        let (voice, transport, audio) = ready()
+        let (voice, transport, audio) = ready(finishGreeting: false)
+        let greeting = manualResponseCreated(transport, id: "late-greeting")
         var actions = 0
         voice.onCommand = { _ in actions += 1; return [:] }
         transport.emit(["type": "input_audio_buffer.speech_started"])
-        transport.emit(["type": "response.created", "response": ["id": "late-greeting"]])
+        transport.emit(greeting)
         transport.emit(audioEvent("late-greeting"))
         transport.emit(toolEvent("late-greeting", id: "late-action", name: "start_camera"))
         XCTAssertEqual(audio.playCount, 0)
@@ -129,6 +140,70 @@ final class GrokVoiceTests: XCTestCase {
         voice.disconnect()
     }
 
+    func testInterruptedAnnouncementNeverDiscardsUserStopInEitherArrivalOrder() {
+        for noticeArrivesFirst in [true, false] {
+            let (voice, transport, audio) = ready(finishGreeting: false)
+            let notice = manualResponseCreated(transport, id: "late-notice")
+            var actions: [VoiceCommand] = []
+            voice.onCommand = { actions.append($0); return ["status": "Camera stopped"] }
+            transport.emit(["type": "input_audio_buffer.speech_started"])
+            transport.emit(["type": "input_audio_buffer.speech_stopped"])
+            if noticeArrivesFirst { transport.emit(notice) }
+            transport.emit(["type": "response.created", "response": ["id": "user-stop"]])
+            if !noticeArrivesFirst { transport.emit(notice) }
+            transport.emit(audioEvent("late-notice"))
+            transport.emit(toolEvent("late-notice", id: "stale-action", name: "start_camera"))
+            transport.emit(toolEvent("user-stop", id: "stop-command", name: "stop"))
+            transport.emit(audioEvent("user-stop"))
+            XCTAssertEqual(actions, [.stop])
+            XCTAssertEqual(audio.playCount, 1)
+            XCTAssertTrue(audio.pendingPlayback)
+            XCTAssertTrue(voice.isActive)
+            XCTAssertTrue(transport.sent.contains { $0["type"] as? String == "response.cancel" && $0["response_id"] as? String == "late-notice" })
+            XCTAssertFalse(transport.sent.contains { $0["type"] as? String == "response.cancel" && $0["response_id"] as? String == "user-stop" })
+            voice.disconnect()
+        }
+    }
+
+    func testUnannouncedUserResponsePreemptsPendingNoticeWithoutBeingOverwritten() {
+        let (voice, transport, audio) = ready(finishGreeting: false)
+        let notice = manualResponseCreated(transport, id: "late-notice")
+        var actions: [VoiceCommand] = []
+        voice.onCommand = { actions.append($0); return [:] }
+        transport.emit(["type": "response.created", "response": ["id": "user-stop"]])
+        transport.emit(notice)
+        transport.emit(toolEvent("user-stop", id: "stop-command", name: "stop"))
+        transport.emit(audioEvent("late-notice"))
+        XCTAssertEqual(actions, [.stop])
+        XCTAssertEqual(audio.playCount, 0)
+        voice.disconnect()
+    }
+
+    func testInterruptedToolContinuationCannotReplaceNewUserResponse() {
+        let (voice, transport, audio) = ready()
+        var actions: [VoiceCommand] = []
+        voice.onCommand = { actions.append($0); return ["status": "Current state"] }
+        transport.emit(["type": "response.created", "response": ["id": "status"]])
+        transport.emit(toolEvent("status", id: "status-command", name: "get_status"))
+        transport.emit(["type": "response.done", "response": ["id": "status"]])
+        let continuation = manualResponseCreated(transport, id: "late-continuation")
+        let requests = transport.sent.filter { $0["type"] as? String == "response.create" }
+        let requestIDs = requests.compactMap { (($0["response"] as? [String: Any])?["metadata"] as? [String: String])?["feel_request_id"] }
+        XCTAssertEqual(requestIDs.count, 2)
+        XCTAssertEqual(Set(requestIDs).count, 2)
+        transport.emit(["type": "input_audio_buffer.speech_started"])
+        transport.emit(["type": "input_audio_buffer.speech_stopped"])
+        transport.emit(["type": "response.created", "response": ["id": "user-stop"]])
+        transport.emit(continuation)
+        transport.emit(toolEvent("late-continuation", id: "stale-command", name: "start_camera"))
+        transport.emit(toolEvent("user-stop", id: "stop-command", name: "stop"))
+        transport.emit(audioEvent("late-continuation"))
+        XCTAssertEqual(actions, [.status, .stop])
+        XCTAssertEqual(audio.playCount, 0)
+        XCTAssertTrue(voice.isActive)
+        voice.disconnect()
+    }
+
     func testSceneInvalidationDiscardsPendingAndPlayingObservation() {
         for invalidateBeforeResponse in [true, false] {
             let (voice, transport, audio) = ready()
@@ -137,8 +212,9 @@ final class GrokVoiceTests: XCTestCase {
             transport.emit(["type": "response.created", "response": ["id": "status"]])
             transport.emit(toolEvent("status", id: "status-call", name: "get_status"))
             transport.emit(["type": "response.done", "response": ["id": "status"]])
+            let observation = manualResponseCreated(transport, id: "observation")
             if invalidateBeforeResponse { voice.invalidateSceneSpeech() }
-            transport.emit(["type": "response.created", "response": ["id": "observation"]])
+            transport.emit(observation)
             transport.emit(audioEvent("observation"))
             if !invalidateBeforeResponse { voice.invalidateSceneSpeech() }
             let playedBeforeLatePacket = audio.playCount
@@ -151,19 +227,69 @@ final class GrokVoiceTests: XCTestCase {
         }
     }
 
-    func testQueueFailureDuringSceneCancellationRemainsFailed() {
+    func testInputQueueOverflowStopsCaptureRatherThanSendingStaleAudio() {
         let (voice, transport, audio) = ready()
-        voice.onCommand = { _ in ["target": "Door, 1.2 m", "scene_observation": true] }
-        transport.emit(["type": "response.created", "response": ["id": "status"]])
-        transport.emit(toolEvent("status", id: "status-call", name: "get_status"))
-        transport.emit(["type": "response.done", "response": ["id": "status"]])
-        transport.emit(["type": "response.created", "response": ["id": "observation"]])
         transport.holdSends = true
-        for _ in 0..<9 { audio.onInput?(Data([0, 0])) }
+        audio.onInput?(Data([0, 0])) // In flight.
+        audio.onInput?(Data(repeating: 0, count: 48_000))
         XCTAssertTrue(voice.isActive)
-        voice.invalidateSceneSpeech()
+        audio.onInput?(Data([0, 0]))
         XCTAssertEqual(voice.phase, .failed)
         XCTAssertFalse(voice.isActive)
+        XCTAssertFalse(audio.running)
+    }
+
+    func testBriefSendStallCoalescesInputWithoutLosingAudioOrControls() {
+        let (voice, transport, audio) = ready()
+        transport.emit(["type": "response.created", "response": ["id": "greeting"]])
+        transport.emit(audioEvent("greeting"))
+        transport.holdSends = true
+        audio.onInput?(Data([0, 0]))
+        for _ in 0..<20 { audio.onInput?(Data(repeating: 1, count: 960)) }
+        transport.emit(["type": "input_audio_buffer.speech_started"])
+        XCTAssertTrue(voice.isActive)
+        XCTAssertTrue(audio.running)
+        transport.holdSends = false
+        transport.heldCompletion?(true)
+        let packets = transport.sent.filter { $0["type"] as? String == "input_audio_buffer.append" }
+        XCTAssertEqual(packets.count, 2)
+        XCTAssertEqual(Data(base64Encoded: packets[1]["audio"] as! String)?.count, 19_200)
+        XCTAssertEqual(transport.sent.last?["type"] as? String, "conversation.item.truncate")
+        voice.disconnect()
+    }
+
+    func testNextUserTurnDoesNotTruncateFullyPlayedResponse() {
+        let (voice, transport, audio) = ready()
+        transport.emit(["type": "response.created", "response": ["id": "greeting"]])
+        transport.emit(audioEvent("greeting"))
+        transport.emit(["type": "response.done", "response": ["id": "greeting"]])
+        audio.drain()
+        transport.emit(["type": "input_audio_buffer.speech_started"])
+        XCTAssertFalse(transport.sent.contains { $0["type"] as? String == "conversation.item.truncate" })
+        XCTAssertTrue(voice.isActive)
+        voice.disconnect()
+    }
+
+    func testAnnouncementCannotRunToolsOrTruncateMissingConversationItem() {
+        let (voice, transport, audio) = ready(finishGreeting: false)
+        var actions = 0
+        voice.onCommand = { _ in actions += 1; return [:] }
+        transport.emit(manualResponseCreated(transport, id: "notice"))
+        transport.emit(audioEvent("notice"))
+        transport.emit(toolEvent("notice", id: "unexpected", name: "start_camera"))
+        XCTAssertEqual(actions, 0)
+        transport.emit(["type": "input_audio_buffer.speech_started"])
+        XCTAssertFalse(audio.pendingPlayback)
+        XCTAssertFalse(transport.sent.contains { $0["type"] as? String == "conversation.item.truncate" })
+        XCTAssertTrue(voice.isActive)
+        voice.disconnect()
+    }
+
+    func testFailedProviderResponseDoesNotPretendToListen() {
+        let (voice, transport, audio) = ready()
+        transport.emit(["type": "response.created", "response": ["id": "failed"]])
+        transport.emit(["type": "response.done", "response": ["id": "failed", "status": "failed"]])
+        XCTAssertEqual(voice.phase, .failed)
         XCTAssertFalse(audio.running)
     }
 
@@ -174,7 +300,7 @@ final class GrokVoiceTests: XCTestCase {
         transport.emit(toolEvent("status", id: "status-call", name: "get_status"))
         transport.emit(["type": "response.done", "response": ["id": "status"]])
         _ = model.voiceSnapshot()
-        transport.emit(["type": "response.created", "response": ["id": "recovery"]])
+        transport.emit(manualResponseCreated(transport, id: "recovery"))
         transport.emit(audioEvent("recovery"))
         XCTAssertEqual(audio.playCount, 1)
         XCTAssertTrue(audio.pendingPlayback)
@@ -187,7 +313,7 @@ final class GrokVoiceTests: XCTestCase {
         transport.emit(["type": "response.created", "response": ["id": "status"]])
         transport.emit(toolEvent("status", id: "status-call", name: "get_status"))
         transport.emit(["type": "response.done", "response": ["id": "status"]])
-        transport.emit(["type": "response.created", "response": ["id": "observation"]])
+        transport.emit(manualResponseCreated(transport, id: "observation"))
         transport.emit(audioEvent("observation"))
         let expired = expectation(description: "Observation expired")
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.2) { expired.fulfill() }
@@ -200,6 +326,7 @@ final class GrokVoiceTests: XCTestCase {
 
     func testToolDeduplicationAndContinuationWaitsForPlayedAudio() {
         let (voice, transport, audio) = ready()
+        let responseRequestsAfterGreeting = transport.sent.filter { $0["type"] as? String == "response.create" }.count
         var actions = 0
         voice.onCommand = { _ in actions += 1; return ["status": "actual result"] }
         transport.emit(["type": "response.created", "response": ["id": "response-1"]])
@@ -208,11 +335,11 @@ final class GrokVoiceTests: XCTestCase {
         transport.emit(event); transport.emit(event)
         XCTAssertEqual(actions, 1)
         transport.emit(["type": "response.done", "response": ["id": "response-1"]])
-        XCTAssertEqual(transport.sent.filter { $0["type"] as? String == "response.create" }.count, 0)
+        XCTAssertEqual(transport.sent.filter { $0["type"] as? String == "response.create" }.count, responseRequestsAfterGreeting)
         audio.drain()
-        XCTAssertEqual(transport.sent.filter { $0["type"] as? String == "response.create" }.count, 1)
+        XCTAssertEqual(transport.sent.filter { $0["type"] as? String == "response.create" }.count, responseRequestsAfterGreeting + 1)
         audio.drain()
-        XCTAssertEqual(transport.sent.filter { $0["type"] as? String == "response.create" }.count, 1)
+        XCTAssertEqual(transport.sent.filter { $0["type"] as? String == "response.create" }.count, responseRequestsAfterGreeting + 1)
         voice.disconnect()
     }
 
@@ -325,21 +452,31 @@ final class GrokVoiceTests: XCTestCase {
     }
 
     private func makeVoice(_ token: FakeVoiceToken, _ transport: FakeVoiceTransport, _ audio: FakeVoiceAudio,
-                           permission: @escaping (@escaping (Bool) -> Void) -> Void = { $0(true) }) -> GrokVoiceSession {
-        GrokVoiceSession(tokenClient: token, audio: audio, transportFactory: { transport },
+                           permission: @escaping (@escaping (Bool) -> Void) -> Void = { $0(true) }) -> RealtimeVoiceSession {
+        RealtimeVoiceSession(tokenClient: token, audio: audio, transportFactory: { transport },
                          configuration: config, speaksLocally: false, requestPermission: permission)
     }
-    private func connected() -> (GrokVoiceSession, FakeVoiceTransport, FakeVoiceAudio) {
+    private func connected() -> (RealtimeVoiceSession, FakeVoiceTransport, FakeVoiceAudio) {
         let token = FakeVoiceToken(), transport = FakeVoiceTransport(), audio = FakeVoiceAudio()
         let voice = makeVoice(token, transport, audio)
         voice.start(); token.complete(.success("ephemeral-test-token"))
         return (voice, transport, audio)
     }
-    private func ready() -> (GrokVoiceSession, FakeVoiceTransport, FakeVoiceAudio) {
+    private func ready(finishGreeting: Bool = true) -> (RealtimeVoiceSession, FakeVoiceTransport, FakeVoiceAudio) {
         let (voice, transport, audio) = connected()
         transport.emit(["type": "session.created"])
         transport.emit(["type": "session.updated"])
+        if finishGreeting {
+            transport.emit(manualResponseCreated(transport, id: "initial-greeting"))
+            transport.emit(["type": "response.done", "response": ["id": "initial-greeting", "status": "completed"]])
+        }
         return (voice, transport, audio)
+    }
+    private func manualResponseCreated(_ transport: FakeVoiceTransport, id: String) -> [String: Any] {
+        let request = transport.sent.last { $0["type"] as? String == "response.create" }?["response"] as? [String: Any]
+        let metadata = request?["metadata"] as? [String: String] ?? [:]
+        XCTAssertNotNil(metadata["feel_request_id"])
+        return ["type": "response.created", "response": ["id": id, "metadata": metadata]]
     }
     private func audioEvent(_ response: String) -> [String: Any] {
         ["type": "response.output_audio.delta", "response_id": response, "item_id": "item-1", "delta": Data([1, 0]).base64EncodedString()]
@@ -362,8 +499,12 @@ private final class FakeVoiceTransport: VoiceTransport {
     var openCount = 0
     var sent: [[String: Any]] = []
     var holdSends = false
+    var heldCompletion: ((Bool) -> Void)?
     func open(token: String) { openCount += 1 }
-    func send(_ event: [String: Any], completion: @escaping (Bool) -> Void) { sent.append(event); if !holdSends { completion(true) } }
+    func send(_ event: [String: Any], completion: @escaping (Bool) -> Void) {
+        sent.append(event)
+        if holdSends { heldCompletion = completion } else { completion(true) }
+    }
     func close() {}
     func emit(_ event: [String: Any]) { onEvent?(event) }
 }

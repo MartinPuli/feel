@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct VoiceControl: View {
-    @ObservedObject var voice: GrokVoiceSession
+    @ObservedObject var voice: RealtimeVoiceSession
     let openSetup: () -> Void
 
     var body: some View {
@@ -24,7 +24,7 @@ struct VoiceControl: View {
 }
 
 struct VoiceSetup: View {
-    @ObservedObject var voice: GrokVoiceSession
+    @ObservedObject var voice: RealtimeVoiceSession
     let close: () -> Void
     @State private var endpoint = ""
     @State private var accessToken = ""
@@ -67,7 +67,7 @@ struct VoiceSetup: View {
             } else {
                 Text("One-time assistant setup")
                     .font(FeelTypography.headline).accessibilityAddTraits(.isHeader)
-                Text("Enter your FEEL voice service address and access code. Your xAI API key stays on the server.")
+                Text("Enter your FEEL voice service address and access code. Your OpenAI API key stays on the server.")
                     .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
                 TextField("https://your-service/session", text: $endpoint)
                     .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
@@ -92,7 +92,7 @@ struct VoiceSetup: View {
                     }.frame(minHeight: 44)
                 }
             }
-            Text("Grok receives microphone audio and the app status needed to answer while FEEL is open. Camera images stay on your phone. Listening pauses in the background and resumes when you return, unless you pause the assistant.")
+            Text("OpenAI receives microphone audio and the app status needed to answer while FEEL is open. Camera images stay on your phone. Listening pauses in the background and resumes when you return, unless you pause the assistant.")
                 .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
         }
         .onAppear { endpoint = voice.configuration?.endpoint ?? "" }
