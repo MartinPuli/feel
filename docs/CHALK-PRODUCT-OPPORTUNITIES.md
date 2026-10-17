@@ -2,6 +2,8 @@
 
 Research date: October 17, 2026. These are proposed additions, not deployed features. Current account evidence and release blockers live in [CHALK-PRODUCTION.md](CHALK-PRODUCTION.md).
 
+Follow-up: [evaluation, model selection and real-data research](CHALK-EVAL-RESEARCH.md) records source-backed options and gaps found in the actual runners.
+
 Start with agent context and repeatable evaluations. FEEL already has a working voice path; keep its audio connection and immediate controls on the phone while adding bounded context tools behind the authenticated service.
 
 ## Product opportunities
