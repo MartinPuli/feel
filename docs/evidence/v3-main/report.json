@@ -1,6 +1,6 @@
 {
   "source_commit": "80375f85a3a9d5e4367b7bbbe83704e3faa8ef8f",
-  "main_integrated": "a4c141e",
+  "main_integrated": "a53cbf1994e5191ddf7fffcd282cee291e06c533",
   "timestamp_utc": "2026-10-17T04:02:04.445338+00:00",
   "checks": [
     {
@@ -54,7 +54,24 @@
       "completion": "PASS: 1753"
     }
   ],
-  "native_ios": "PENDING",
+  "native_ios": {
+    "status": "PASS",
+    "command": "FEEL_TEST_DIAGNOSTICS=never bash scripts/check_ios.sh",
+    "evidence": "ios-final.log",
+    "app_tests": 24,
+    "Lantern_UI_tests": 8,
+    "Beacon_UI_tests": 2,
+    "unsigned_device_builds": [
+      "Lantern",
+      "Beacon"
+    ],
+    "runtime_source": "f658742",
+    "final_device_build_source": "78df330",
+    "contrast_only_followup": "PENDING"
+  },
   "physical_hardware": "NOT VERIFIED",
-  "firmware_and_cad": "Identical to integrated main; existing builds/mesh evidence inherited, current host and CAD regression checks rerun."
+  "firmware_and_cad": "Identical to integrated main; existing builds/mesh evidence inherited, current host and CAD regression checks rerun.",
+  "main_runtime_baseline": "a4c141e57d84036563b38452e8f1237d3cc0b0a7",
+  "v2_integrated": "3abfa5c3ad6b4a14e7da513eb0f9d5efff7bfa4d",
+  "hosted_ci": "NOT RUN; repository billing/spending limit previously blocks execution"
 }

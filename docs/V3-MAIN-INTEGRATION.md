@@ -12,7 +12,8 @@ and QR/barcode finding. Main remains V1; V2 and V3 stay on their own branches.
   Voice, saved map and feedback panel. Every sheet retains Stop outside its scroll.
 - Preserve V3 cancellation, map identity/relocalization checks and restored-map
   teammate restrictions. Voice commands never execute camera or barcode text.
-- Adapt advanced control rows for large text; update UI tests to use the actual
+- Adapt advanced control rows for large text and use the shared contrasting primary
+  button style; update UI tests to use the actual
   sheets and verify text entry, memory guidance and Stop behavior.
 - Inherit nominal 120-degree firmware/CAD and guarded seven-servo setup unchanged.
   Advanced replay now checks actual 120-degree selection / 107-degree tap, keeping
@@ -46,6 +47,25 @@ The first sandbox-only portable/CAD attempts could not access compiler caches or
 CPU capabilities. They were rerun with the installed tools outside that sandbox;
 the retained successful logs are the actual completed checks. Disk capacity also
 required deleting completed, regenerable build caches while retaining evidence.
+
+## Native regression repairs
+
+The first native run found two failures, retained in the evidence directory:
+
+1. Vision revision 2 failed to create its inference context on iOS 26.5 simulator.
+   A diagnostic matrix decoded the same generated QR through the actual pixel
+   buffer with CPU execution at confidence 1.0. Only the simulator request now
+   selects CPU execution. The original detector assertion then passed; physical
+   device defaults, image orientation and confidence/bounds checks are unchanged.
+2. The typed-command test checked navigation buttons after their sheet covered
+   them, then tried focusing an offscreen command field under the persistent Stop
+   bar. It now follows the resulting screen and makes bounded, short scrolls until
+   the actual field is visible above Stop. It types the command and verifies both
+   the confirmation and the stored place. Its focused run passed.
+
+Screenshot inspection also found a white-on-white Run command label inherited
+from the old generic button style. It now uses the current shared primary style.
+No microphone or speech result is mocked into a physical acceptance claim.
 
 ## Physical scope
 

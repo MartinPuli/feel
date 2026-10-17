@@ -46,7 +46,7 @@ def main():
               'platform':platform.platform(), 'available_checks':'FAIL' if failed else 'PASS',
               'complete_software_gate':'FAIL' if failed else 'BLOCKED' if incomplete else 'PASS',
               'physical_hardware':'NOT VERIFIED', 'checks':checks,
-              'prerequisite_evidence':['docs/evidence/v1/github-actions.json','docs/evidence/v2/github-actions.json']}
+              'prerequisite_evidence':['docs/evidence/v1-release/report.json','docs/evidence/v2-main/report.json']}
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     print(f"Available checks: {report['available_checks']}; complete gate: {report['complete_software_gate']}; physical NOT VERIFIED")
     return 1 if failed else 2 if incomplete else 0
