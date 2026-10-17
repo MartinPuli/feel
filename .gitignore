@@ -17,6 +17,8 @@ firmware/build/
 stl/
 *.xcodeproj/
 *.xcworkspace/
+ios/Lantern/Info.plist
+ios/Beacon/Info.plist
 .swiftpm/
 cad/viewer/mesh_*.js
 

@@ -1,0 +1,60 @@
+V1 app design local validation, October 16, 2026
+Xcode 26.6 / iOS 26.5 / iPhone 17 Pro
+No GitHub Actions workflow dispatched.
+
+Core tests
+Executed 3 tests, with 0 failures (0 unexpected) in 0.004 (0.004) seconds
+Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Executed 8 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Executed 15 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Executed 9 tests, with 0 failures (0 unexpected) in 0.005 (0.006) seconds
+Executed 38 tests, with 0 failures (0 unexpected) in 0.014 (0.016) seconds
+Executed 38 tests, with 0 failures (0 unexpected) in 0.014 (0.019) seconds
+
+Lantern dark tests
+Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.004) seconds
+Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.004) seconds
+Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.005) seconds
+Executed 3 tests, with 0 failures (0 unexpected) in 21.597 (21.604) seconds
+Executed 3 tests, with 0 failures (0 unexpected) in 21.597 (21.605) seconds
+Executed 3 tests, with 0 failures (0 unexpected) in 21.597 (21.606) seconds
+** TEST SUCCEEDED **
+
+Beacon dark tests
+Executed 2 tests, with 0 failures (0 unexpected) in 11.698 (11.709) seconds
+Executed 2 tests, with 0 failures (0 unexpected) in 11.698 (11.710) seconds
+Executed 2 tests, with 0 failures (0 unexpected) in 11.698 (11.711) seconds
+** TEST SUCCEEDED **
+
+Commands:
+xcodegen generate --spec ios/project.yml
+sh ios/scripts/test_portable.sh
+xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern -destination 'platform=iOS Simulator,id=2CEF5AB6-CC8C-4F3F-898F-AB4A7335DFFD' -derivedDataPath /tmp/feel-v1-design-build CODE_SIGNING_ALLOWED=NO test
+Same xcodebuild test command with -scheme Beacon.
+Both schemes also passed generic iOS Simulator builds.
+git diff --check: PASS
+
+Physical LiDAR/BLE/UWB/servo validation: NOT VERIFIED.
+Real invitation consent flow and on-device VoiceOver: NOT RUN.
+
+Final light appearance runs (same commands):
+/tmp/feel-v1-light-verified.log
+Executed 3 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Executed 3 tests, with 0 failures (0 unexpected) in 0.003 (0.005) seconds
+Executed 3 tests, with 0 failures (0 unexpected) in 0.003 (0.005) seconds
+Executed 3 tests, with 0 failures (0 unexpected) in 21.903 (21.907) seconds
+Executed 3 tests, with 0 failures (0 unexpected) in 21.903 (21.908) seconds
+Executed 3 tests, with 0 failures (0 unexpected) in 21.903 (21.909) seconds
+** TEST SUCCEEDED **
+/tmp/feel-v1-beacon-light-verified.log
+Executed 2 tests, with 0 failures (0 unexpected) in 10.109 (10.112) seconds
+Executed 2 tests, with 0 failures (0 unexpected) in 10.109 (10.114) seconds
+Executed 2 tests, with 0 failures (0 unexpected) in 10.109 (10.116) seconds
+** TEST SUCCEEDED **
+
+Final dark composition check:
+Executed 1 test, with 0 failures (0 unexpected) in 10.268 (10.270) seconds
+Executed 1 test, with 0 failures (0 unexpected) in 10.268 (10.272) seconds
+Executed 1 test, with 0 failures (0 unexpected) in 10.268 (10.273) seconds
+** TEST SUCCEEDED **
+Independent code review: no remaining blockers.
