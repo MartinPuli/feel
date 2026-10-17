@@ -12,6 +12,10 @@
 #include "feel/commands.hpp"
 #include "feel/calibration.hpp"
 #include "feel/output_guard.hpp"
+#if FEEL_SINGLE_SERVO_DEMO
+#include <driver/ledc.h>
+#include "feel/single_demo.hpp"
+#endif
 
 namespace {
 feel::Controller controller;
@@ -37,6 +41,68 @@ struct Event {
     uint8_t bytes[feel::kPacketBytes];
 };
 QueueHandle_t events = nullptr;
+
+#if FEEL_SINGLE_SERVO_DEMO
+constexpr uint8_t kDemoPin = 32;
+constexpr const char* kAdvertisedName = "FEEL Center Demo";
+bool demoReady = false;
+bool demoAttached = false;
+uint16_t demoPulse = 0;
+uint32_t demoTimerHz = 0;
+void detachDemo() {
+    if (demoAttached) {
+        ledcWrite(0, 0);
+        ledcDetachPin(kDemoPin);
+    }
+    pinMode(kDemoPin, OUTPUT);
+    digitalWrite(kDemoPin, LOW);
+    demoAttached = false;
+    demoPulse = 0;
+}
+void setupDemo() {
+    detachDemo();
+    const bool initialized = ledcSetup(0, kPwmFrequency, kPwmBits) != 0;
+    ledc_timer_config_t timer = {};
+    timer.speed_mode = LEDC_HIGH_SPEED_MODE;
+    timer.duty_resolution = LEDC_TIMER_14_BIT;
+    timer.timer_num = LEDC_TIMER_0;
+    timer.freq_hz = kPwmFrequency;
+    timer.clk_cfg = LEDC_USE_APB_CLK;
+    const bool configured = initialized && ledc_timer_config(&timer) == ESP_OK;
+    demoTimerHz = configured ? ledc_get_freq(LEDC_HIGH_SPEED_MODE, LEDC_TIMER_0) : 0;
+    demoReady = configured && demoTimerHz == kPwmFrequency;
+    ledcWrite(0, 0);
+    Serial.println("ONE SERVO DEMO: center sector3 -> GPIO32, nominal1450..1550us; boot output OFF; cam mapping NOT enabled");
+}
+void writeDemo() {
+    const uint16_t pulse = feel::singleDemoPulse(controller.snapshot());
+    if (!demoReady || pulse == 0) { detachDemo(); return; }
+    if (pulse < 1450 || pulse > 1550) {
+        demoReady = false;
+        detachDemo();
+        return;
+    }
+    if (!demoAttached) {
+        ledcWrite(0, 0);
+        ledcAttachPin(kDemoPin, 0);
+        demoAttached = true;
+    }
+    if (demoPulse != pulse) {
+        const uint32_t duty = (static_cast<uint32_t>(pulse) * (1UL << kPwmBits) + 10000UL) / 20000UL;
+        ledcWrite(0, duty);
+        demoPulse = pulse;
+    }
+}
+#else
+constexpr const char* kAdvertisedName = "FEEL Puck";
+#endif
+uint8_t reportedOutputState() {
+#if FEEL_SINGLE_SERVO_DEMO
+    return demoReady ? 1 : 2;
+#else
+    return static_cast<uint8_t>(outputGuard.state());
+#endif
+}
 
 void enqueue(const Event& event) {
     if (xQueueSend(events, &event, 0) != pdTRUE) queueFault.store(true);
@@ -85,6 +151,11 @@ ServerCallbacks serverCallbacks;
 CommandCallbacks commandCallbacks;
 
 void disablePWM() {
+#if FEEL_SINGLE_SERVO_DEMO
+    demoReady = false;
+    detachDemo();
+    return;
+#endif
     pwmReady = false;
     outputGuard.fault();
     // Leaving a failed channel's previous waveform running would bypass the
@@ -102,6 +173,10 @@ void disablePWM() {
 }
 
 void writePWM() {
+#if FEEL_SINGLE_SERVO_DEMO
+    writeDemo();
+    return;
+#endif
     if (!pwmReady) return;
     const auto& state = controller.snapshot();
     if (!outputGuard.admit(state.pulses)) {
@@ -128,6 +203,10 @@ void writePWM() {
 }
 
 void setupPWM() {
+#if FEEL_SINGLE_SERVO_DEMO
+    setupDemo();
+    return;
+#endif
     if (outputGuard.state() == feel::OutputGuard::State::Disabled) {
         for (uint8_t pin : kServoPins) { pinMode(pin, OUTPUT); digitalWrite(pin, LOW); }
         Serial.println("SERVO OUTPUT DISABLED: FEEL_ENABLE_SERVO_OUTPUT=0; BLE/controller runs without physical PWM");
@@ -160,13 +239,20 @@ void sendStatus(bool serial) {
     // Versioned auxiliary status; command characteristic remains exactly 9 bytes.
     uint8_t status[15] = {1, static_cast<uint8_t>(s.connected), static_cast<uint8_t>(s.active),
         static_cast<uint8_t>(s.sequenceValid), s.lastSequence, s.highlight,
-        static_cast<uint8_t>(s.benchArmed), static_cast<uint8_t>(outputGuard.state())};
+        static_cast<uint8_t>(s.benchArmed), reportedOutputState()};
     for (std::size_t i = 0; i < feel::kColumns; ++i) status[8 + i] = s.bands[i];
     if (statusCharacteristic) {
         statusCharacteristic->setValue(status, sizeof(status));
         if (s.connected) statusCharacteristic->notify();
     }
     if (serial) {
+#if FEEL_SINGLE_SERVO_DEMO
+        Serial.printf("DEMO connected=%u active=%u ready=%u attached=%u gpio=32 sector=3 band=%u pulseUs=%u timerHz=%lu accepted=%lu rejected=%lu timeouts=%lu\n",
+            s.connected, s.active, demoReady, demoAttached, s.bands[feel::kDemoSector], demoPulse,
+            static_cast<unsigned long>(demoTimerHz), static_cast<unsigned long>(s.accepted),
+            static_cast<unsigned long>(s.rejected), static_cast<unsigned long>(s.timeouts));
+        return;
+#endif
         Serial.printf("STATUS active=%d connected=%d armed=%d outputState=%u(0disabled/1ready/2fault) seq=%u accepted=%lu rejected=%lu timeouts=%lu\n",
             s.active, s.connected, s.benchArmed, static_cast<unsigned>(outputGuard.state()), s.lastSequence,
             static_cast<unsigned long>(s.accepted), static_cast<unsigned long>(s.rejected), static_cast<unsigned long>(s.timeouts));
@@ -177,6 +263,18 @@ void sendStatus(bool serial) {
 
 void serialCommand(const char* line, uint32_t now) {
     const auto command = feel::parseCommand(line);
+#if FEEL_SINGLE_SERVO_DEMO
+    if (command.kind != feel::CommandKind::Status && command.kind != feel::CommandKind::Stop && command.kind != feel::CommandKind::Help) {
+        controller.stop(now);
+        writePWM();
+        Serial.println("ERROR demo accepts only STATUS, STOP, HELP; motion comes from live BLE");
+        return;
+    }
+    if (command.kind == feel::CommandKind::Help) {
+        Serial.println("ONE SERVO: live iPhone center sector3 -> GPIO32,1450..1550us; STATUS or STOP; no bench or calibration commands");
+        return;
+    }
+#endif
     auto result = feel::executeCommand(controller, command, now);
     writePWM();
     if (result == feel::Result::SaveRequested) {
@@ -261,7 +359,7 @@ void setup() {
         Serial.println("ERROR event queue allocation; BLE disabled, remove servo power");
         return;
     }
-    NimBLEDevice::init("FEEL Puck");
+    NimBLEDevice::init(kAdvertisedName);
     server = NimBLEDevice::createServer();
     server->setCallbacks(&serverCallbacks, false);
     NimBLEService* service = server->createService(kServiceUUID);
@@ -271,7 +369,7 @@ void setup() {
     service->start();
     auto* advertising = NimBLEDevice::getAdvertising();
     advertising->addServiceUUID(kServiceUUID);
-    advertising->setName("FEEL Puck");
+    advertising->setName(kAdvertisedName);
     advertising->enableScanResponse(true);
     advertising->start();
     sendStatus(false);

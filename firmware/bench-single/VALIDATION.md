@@ -236,3 +236,7 @@ ok
 > STATUS
 SINGLE_BENCH ready=1 armed=0 active=0 attached=0 gpio=32 pulseUs=0 timerHz=50
 ```
+
+## User observation after TEST5
+
+The user reported that the five-second test worked very well. This supports successful visible movement of the connected single servo during the small midpoint sequence. The observation is user-reported, not instrumented; full120-degree travel, supply voltage/current and seven-servo or iPhone-controlled operation remain unverified.

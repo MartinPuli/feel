@@ -5,6 +5,15 @@
 #ifndef FEEL_ENABLE_SERVO_OUTPUT
 #define FEEL_ENABLE_SERVO_OUTPUT 0
 #endif
+#ifndef FEEL_SINGLE_SERVO_DEMO
+#define FEEL_SINGLE_SERVO_DEMO 0
+#endif
+#if FEEL_SINGLE_SERVO_DEMO && FEEL_ENABLE_SERVO_OUTPUT
+#error "Single-servo demo cannot enable the production seven-servo output"
+#endif
+#if FEEL_SINGLE_SERVO_DEMO && (!defined(FEEL_BOARD_CLASSIC) || defined(FEEL_BOARD_S3))
+#error "Single-servo demo requires the explicit classic ESP32 board"
+#endif
 #if FEEL_ENABLE_SERVO_OUTPUT
 #ifndef FEEL_VERIFIED_PULSE_MIN_US
 #error "Servo output requires explicit FEEL_VERIFIED_PULSE_MIN_US from the actual unit's measured safe range"
