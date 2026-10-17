@@ -86,7 +86,7 @@ final class VoiceControlTests: XCTestCase {
 
     @MainActor
     func testConstructionAndCancelDoNotStartListeningOrDeliverACommand() {
-        let voice = VoiceControl()
+        let voice = LocalVoiceControl()
         var delivered = false
         voice.onFinalTranscript = { _ in delivered = true }
         XCTAssertFalse(voice.isListening)

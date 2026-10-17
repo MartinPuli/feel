@@ -1,3 +1,8 @@
+# Current voice synchronization
+
+See [VERSION-VOICE-SYNC.md](VERSION-VOICE-SYNC.md) for the current integration.
+The records below describe earlier revisions. No V4 phone installation is claimed.
+
 # FEEL V4 — Chalk integration
 
 See [current V4 evidence](V4-CHALK-STATUS.md) and

@@ -42,6 +42,29 @@ final class LanternUITests: XCTestCase {
         for column in 1...7 { XCTAssertTrue(value.contains("Column \(column), band 0")) }
     }
 
+    func testVoiceSetupKeepsCameraAndMicrophoneUnderUserControl() {
+        let app = launch(expandControls: false)
+        let voice = app.buttons["voiceControl"]
+        XCTAssertTrue(voice.exists)
+        XCTAssertTrue(voice.isHittable)
+        XCTAssertLessThan(voice.frame.maxY, app.frame.midY, "Assistant belongs in the header, outside the central camera area")
+        XCTAssertFalse(voice.frame.intersects(app.buttons["cameraSettings"].frame))
+        XCTAssertEqual(voice.value as? String, "Microphone off")
+        voice.tap()
+        XCTAssertTrue(app.textFields["voiceEndpoint"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["controlsToggle"].exists)
+        let save = app.buttons["saveVoiceSetup"]
+        for _ in 0..<4 where !save.isHittable { app.scrollViews["cameraSettingsScroll"].swipeUp() }
+        save.tap()
+        XCTAssertTrue(app.staticTexts["voiceSetupError"].exists)
+        capture("voice-setup")
+        app.buttons["closeCameraPanel"].tap()
+        XCTAssertEqual(app.buttons["voiceControl"].value as? String, "Microphone off")
+        XCTAssertTrue(app.staticTexts["feelWordmark"].exists)
+        XCTAssertFalse(app.staticTexts["sessionMode"].exists)
+        capture("voice-camera")
+    }
+
     func testDrawerAndFloatingPanels() {
         let app = launch(expandControls: false)
         XCTAssertFalse(app.buttons["startCamera"].exists)
@@ -192,15 +215,10 @@ final class LanternUITests: XCTestCase {
         app.buttons["cameraSettings"].tap()
         tapControl(app.buttons["Voice, saved map and feedback"])
         let command=app.textFields["commandText"]
-        // Keep the field above the persistent Stop bar before focusing it.
+        // Native element targeting scrolls the field into view before focusing it.
+        // Fixed swipes can overshoot in the short landscape scroll container.
+        command.tap()
         let scroll = app.scrollViews["cameraSettingsScroll"]
-        for _ in 0..<10 {
-            if command.isHittable && command.frame.maxY < app.buttons["panelStop"].frame.minY { break }
-            let upward = command.frame.minY >= scroll.frame.minY
-            let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.65 : 0.35))
-            let end = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.35 : 0.65))
-            start.press(forDuration: 0.05, thenDragTo: end)
-        }
         capture("advanced-field-position")
         print("Command frame: \(command.frame); scroll: \(scroll.frame); Stop: \(app.buttons["panelStop"].frame)")
         XCTAssertTrue(command.isHittable)

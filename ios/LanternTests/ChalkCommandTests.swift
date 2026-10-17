@@ -78,6 +78,19 @@ final class ChalkCommandTests:XCTestCase {
         XCTAssertNil(model.spatialMemory.activeID); XCTAssertEqual(model.packet.bands,[0,0,0,0,0,0,0])
         XCTAssertEqual(model.commandNotice,"Stopped. Guidance is neutral.")
     }
+    func testRealtimeCommandCancelsPendingChalkRecall() async {
+        let model=makeModel(); defer { model.stop() }
+        let id=model.spatialMemory.bookmarks[0].id
+        ChalkStub.handler={ try Self.reply($0,id:id,delay:0.2) }
+        send(model)
+        try? await Task.sleep(nanoseconds:30_000_000)
+        XCTAssertTrue(model.cloudPending)
+        _ = model.performVoiceCommand(.setSpokenOutput(false))
+        XCTAssertFalse(model.cloudPending)
+        try? await Task.sleep(nanoseconds:300_000_000)
+        XCTAssertNil(model.spatialMemory.activeID)
+        XCTAssertFalse(model.voice.spokenOutputEnabled)
+    }
     func testSessionReplacementAndManualSelectionCancelReply() async {
         let model=makeModel(); defer { model.stop() }; let id=model.spatialMemory.bookmarks[0].id
         ChalkStub.handler={ try Self.reply($0,id:id,delay:0.2) }

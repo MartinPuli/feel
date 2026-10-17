@@ -12,7 +12,7 @@ settings:
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ''
     ENABLE_USER_SCRIPT_SANDBOXING: YES
-    CURRENT_PROJECT_VERSION: '1'
+    CURRENT_PROJECT_VERSION: '14'
     MARKETING_VERSION: '4.0.0'
 packages:
   FeelCore:
@@ -35,8 +35,8 @@ targets:
         CFBundleShortVersionString: '$(MARKETING_VERSION)'
         CFBundleDisplayName: FEEL
         NSCameraUsageDescription: FEEL uses the camera and LiDAR to estimate nearby obstacles and find selected targets.
-        NSMicrophoneUsageDescription: FEEL records only when you explicitly start an on-device voice command.
-        NSSpeechRecognitionUsageDescription: FEEL recognizes explicit commands on this device when supported; typed commands remain available.
+        NSMicrophoneUsageDescription: FEEL listens while the app is open so you can control it hands-free. Your voice is sent to OpenAI. You can pause listening anytime.
+        NSSpeechRecognitionUsageDescription: FEEL recognizes explicit local commands on this device when supported; typed commands remain available.
         NSBluetoothAlwaysUsageDescription: FEEL sends tactile commands to your chosen palm puck.
         NSLocalNetworkUsageDescription: FEEL finds a teammate's Beacon phone and exchanges Nearby Interaction tokens after both people agree.
         NSNearbyInteractionUsageDescription: FEEL measures the relative direction and distance of your chosen teammate's phone.

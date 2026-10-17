@@ -1,0 +1,58 @@
+V1 voice assistant validation — October 17, 2026 (America/New_York)
+
+PASS — 36 native simulator tests, zero failures
+  20 GrokVoiceTests: commands/arguments, permissions, setup validation, cancelled
+  callbacks, audio setup acknowledgement, interruption ownership, late responses,
+  scene invalidation before/after playback, 3-second expiry, status recovery,
+  duplicate tools, continuation ordering, queue overflow, headphones, background,
+  automatic foreground start/resume, explicit pause and Stop preserving listening.
+  5 existing Lantern integration tests.
+  4 PCM conversion/bounds tests.
+  7 UI tests: camera/simulation, drawer/modals, large type, reachable Stop,
+  background camera behavior, camera failure, assistant setup/microphone state.
+Command:
+  xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern \
+    -destination 'platform=iOS Simulator,id=2CEF5AB6-CC8C-4F3F-898F-AB4A7335DFFD' \
+    -derivedDataPath /tmp/feel-drawer-sim \
+    -resultBundlePath /tmp/feel-assistant-tests.xcresult \
+    -parallel-testing-enabled NO -collect-test-diagnostics never \
+    CODE_SIGNING_ALLOWED=NO test
+Observed: ** TEST SUCCEEDED **, completed 00:48:01 EDT.
+Local log: /tmp/feel-assistant-tests.log
+
+PASS — token service 10/10 tests, mocked xAI, actual localhost HTTP.
+Command: cd services/voice-token && npm test
+Covers authentication, fixed upstream contract, rejected bodies/methods, HTTPS
+proxy marker, quotas, bounded concurrency, timeout and sanitized provider errors.
+No usable key was supplied and no paid provider call was made.
+
+PASS — signed iPhone build 1.0.0 (6)
+Command:
+  xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern \
+    -configuration Debug -destination 'generic/platform=iOS' \
+    -derivedDataPath /tmp/feel-camera-install DEVELOPMENT_TEAM=39D23XHM5Z \
+    -allowProvisioningUpdates build
+Observed: ** BUILD SUCCEEDED **
+Local log: /tmp/feel-assistant-device-build.log
+PASS — codesign --verify --deep --strict <derived>/Lantern.app
+PASS — devicectl device install app on paired iPhone 17 Pro, 00:47:08 EDT.
+PASS — device app inventory confirms version 1.0.0, bundleVersion 6.
+PASS — devicectl process launch retry at 00:49:08 EDT, installed app opened.
+Initial launch was blocked by phone lock (CoreDevice 10002, underlying
+FBSOpenApplicationErrorDomain 7); retry after unlock succeeded.
+Local launch evidence: /tmp/feel-assistant-launch-retry.json
+
+PASS — independent read-only code review, no remaining P0/P1 findings.
+PASS — visual inspection of exported camera, setup and largest-type screenshots.
+PASS — git diff --check.
+
+Earlier run /tmp/feel-voice-tests.xcresult FAILED due AXSpeech/TextToSpeech
+invalid-free crash, despite individual assertions passing. Optional on-demand
+local synthesizer construction fixed its trigger. Subsequent full runs passed.
+
+BLOCKED — live Grok session: no xAI key/reachable HTTPS token service configured.
+NOT VERIFIED — physical headset/speaker echo, routing, barge-in latency,
+permission dialogs with VoiceOver, interruptions, lock/unlock and spoken controls.
+Unchanged sensing/firmware physical acceptance is not established by these tests.
+UI tests skip automatic startup and use synthetic sensing, never a fake live feed.
+V2/V3 untouched. No hosted Actions triggered; release commit uses [skip ci].

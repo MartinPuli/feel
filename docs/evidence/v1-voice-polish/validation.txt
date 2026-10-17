@@ -1,0 +1,36 @@
+V1 voice polish — October 17, 2026 (America/New_York)
+
+PASS — full simulator suite, 39 distinct tests (32 unit/integration + 7 UI).
+  xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern \
+    -destination 'platform=iOS Simulator,id=2CEF5AB6-CC8C-4F3F-898F-AB4A7335DFFD' \
+    -derivedDataPath /tmp/feel-drawer-sim \
+    -resultBundlePath /tmp/feel-voice-polish-tests.xcresult \
+    -parallel-testing-enabled NO -collect-test-diagnostics never CODE_SIGNING_ALLOWED=NO test
+  Result: TEST SUCCEEDED, 00:55:37 EDT.
+PASS — final 32 unit/integration tests rerun after past-tense wording refinement.
+  Same command with -only-testing:LanternTests and result bundle
+  /tmp/feel-voice-polish-final-unit.xcresult. TEST SUCCEEDED.
+  Three new cases cover spoken units, bearing direction, candidate uncertainty,
+  stale/invalid observations and absence of target selection.
+PASS — signed generic iOS build, version 1.0.0 (7).
+  xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern -configuration Debug \
+    -destination 'generic/platform=iOS' -derivedDataPath /tmp/feel-camera-install \
+    DEVELOPMENT_TEAM=39D23XHM5Z -allowProvisioningUpdates build
+  Log: /tmp/feel-voice-polish-device-final.log. BUILD SUCCEEDED.
+PASS — codesign --verify --deep --strict on the signed app.
+PASS — devicectl install on paired iPhone 17 Pro, then process launch at 00:56:18 EDT.
+  Local evidence: /tmp/feel-voice-polish-install.json and /tmp/feel-voice-polish-launch.json.
+PASS — header placement screenshot inspected; assistant control has 48pt target.
+PASS — independent read-only review, no P0/P1 findings. Past tense adopted to
+  preserve observation timing rather than imply instantaneous location.
+PASS — git diff --check.
+
+BLOCKED — paid/live Grok verification and provisioning: no xAI credential or
+reachable HTTPS service supplied. Environment and project-local .env files
+checked for presence only; no credentials printed or searched outside task scope.
+NOT VERIFIED — perceived naturalness, pronunciation, real headphone routing and
+end-to-end voice latency. Provider voice Sal and concise wording are configured
+in source; unit tests do not establish subjective audio quality.
+
+No server code changed; its prior 10/10 tests remain the latest server evidence.
+V2/V3 untouched. Commit includes [skip ci] to avoid hosted Actions charges.
