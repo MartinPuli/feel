@@ -12,6 +12,13 @@ not evidence of implemented code. Recreate missing functionality; never wait for
 
 The engineering, bounded-agent, independent-review and physical-safety procedures below still apply.
 
+## Repository language
+
+Write source identifiers, comments, documentation, interface text, logs and new
+commit messages in English. English is the default interface and voice-command
+language. Keep protocol tokens and intentional multilingual input grammar or
+Unicode test fixtures unchanged when they are required for existing behavior.
+
 ---
 
 # AGENTS.md — FEEL Engineering Agent

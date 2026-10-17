@@ -14,7 +14,7 @@ verification of this repository. The earlier preparation work is preserved on
 | `feel/v2-spatial-memory` | Remember / Recall / Return, created only after V1 validation |
 | `feel/v3-advanced` | Optional advanced work, only after V1 and V2 |
 
-Para preparar la placa en tu Mac, empieza por [SETUP-MAC-ESP32.md](docs/SETUP-MAC-ESP32.md).
+To set up the board on your Mac, start with [SETUP-MAC-ESP32.md](docs/SETUP-MAC-ESP32.md).
 
 See [release status](docs/RELEASE-STATUS.md) for actual checks and blockers.
 **No real hardware has been tested in this build environment.**
