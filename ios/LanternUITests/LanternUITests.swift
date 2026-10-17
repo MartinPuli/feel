@@ -1,13 +1,17 @@
 import XCTest
 
 final class LanternUITests: XCTestCase {
-    private func launch(extraArguments: [String] = []) -> XCUIApplication {
+    private func launch(extraArguments: [String] = [], expandControls: Bool = true) -> XCUIApplication {
         continueAfterFailure = false
         XCUIDevice.shared.orientation = .landscapeLeft
         let app = XCUIApplication()
         app.launchArguments += ["--uitesting"] + extraArguments
         app.launch()
-        XCTAssertTrue(app.buttons["startCamera"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["controlsToggle"].waitForExistence(timeout: 10))
+        if expandControls {
+            app.buttons["controlsToggle"].tap()
+            XCTAssertTrue(app.buttons["startCamera"].waitForExistence(timeout: 5))
+        }
         return app
     }
 
@@ -35,6 +39,32 @@ final class LanternUITests: XCTestCase {
         let value = app.otherElements["Virtual puck"].value as? String ?? ""
         XCTAssertTrue(value.contains("No target highlight"))
         for column in 1...7 { XCTAssertTrue(value.contains("Column \(column), band 0")) }
+    }
+
+    func testDrawerAndFloatingPanels() {
+        let app = launch(expandControls: false)
+        XCTAssertFalse(app.buttons["startCamera"].exists)
+        XCTAssertFalse(app.otherElements["Virtual puck"].exists)
+        capture("drawer-collapsed")
+        app.buttons["controlsToggle"].tap()
+        XCTAssertTrue(app.buttons["startCamera"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.otherElements["Virtual puck"].exists)
+        capture("drawer-expanded")
+        app.buttons["controlsToggle"].tap()
+        XCTAssertFalse(app.buttons["startCamera"].exists)
+        simulate(app)
+        app.buttons["controlsToggle"].tap()
+        XCTAssertFalse(app.otherElements["Virtual puck"].exists)
+        XCTAssertTrue(app.buttons["stopSession"].isHittable)
+        capture("drawer-collapsed-active")
+        app.buttons["cameraSettings"].tap()
+        let panel = app.descendants(matching: .any)["cameraFloatingPanel"]
+        XCTAssertTrue(panel.waitForExistence(timeout: 5))
+        XCTAssertLessThan(panel.frame.width, app.frame.width - 100, "The panel must float over the camera in landscape")
+        XCTAssertFalse(app.buttons["controlsToggle"].exists, "Background controls must be hidden from accessibility while a modal is open")
+        capture("drawer-settings-modal")
+        app.buttons["panelStop"].tap()
+        assertStopped(app)
     }
 
     func testCameraLayoutSimulationAndStop() {
