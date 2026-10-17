@@ -29,6 +29,6 @@ enum VoicePhrasing {
         return "\(text) \(rounded == 1 ? "meter" : "meters")"
     }
     private static func side(_ bearing: Double) -> String {
-        abs(bearing) <= 10 ? "ahead" : bearing < 0 ? "to your left" : "to your right"
+        abs(bearing) <= 15 ? "ahead" : bearing < 0 ? "to your left" : "to your right"
     }
 }

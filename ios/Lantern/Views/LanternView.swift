@@ -4,7 +4,7 @@ import FeelCore
 
 struct LanternView: View {
     @ObservedObject var model: LanternModel
-    @ObservedObject private var voice: GrokVoiceSession
+    @ObservedObject private var voice: RealtimeVoiceSession
     init(model: LanternModel) {
         self.model = model
         self.voice = model.voice
@@ -51,8 +51,17 @@ struct LanternView: View {
         .onChange(of: presentedPanel) { panel in modalFocused = panel != nil }
         .onChange(of: model.voicePanel) { panel in
             guard let panel else { return }
-            presentedPanel = panel == .settings ? .settings : .connection
+            switch panel {
+            case .settings: presentedPanel = .settings
+            case .connection: presentedPanel = .connection
+            case .assistant: presentedPanel = .voice
+            case .closed: closePanel()
+            }
             model.voicePanel = nil
+        }
+        .onChange(of: model.voiceControlsExpanded) { expanded in
+            guard let expanded else { return }
+            setControlsExpanded(expanded); model.voiceControlsExpanded = nil
         }
         .onChange(of: model.status) { _ in
             // Denied permission and unsupported hardware must not disappear in a closed drawer.
@@ -231,10 +240,12 @@ struct LanternView: View {
         HStack(spacing: 12) {
             HStack(spacing: 10) {
                 if !dynamicTypeSize.isAccessibilitySize {
-                    Text("FEEL").font(FeelTypography.title3).foregroundStyle(FeelTheme.ink)
-                        .padding(.horizontal, 12).frame(minHeight: 48)
-                        .feelBlock(shadow: 4)
-                        .accessibilityAddTraits(.isHeader)
+                    Text("FEEL").font(FeelTypography.headline).accessibilityAddTraits(.isHeader)
+                        .padding(.horizontal, 12)
+                        .frame(minHeight: 48)
+                        .foregroundStyle(FeelTheme.accent)
+                        .background(FeelTheme.inset, in: Capsule())
+                        .overlay(Capsule().strokeBorder(FeelTheme.border, lineWidth: 1))
                         .accessibilityIdentifier("feelWordmark")
                 }
                 if model.mode == .simulation {

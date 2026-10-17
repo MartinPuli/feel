@@ -3,6 +3,7 @@ import Combine
 import AVFoundation
 import UIKit
 import FeelCore
+import MultipeerConnectivity
 
 /// UI and 10Hz transmission coordinator. All state is confined to the main queue.
 final class LanternModel:ObservableObject {
@@ -17,21 +18,25 @@ final class LanternModel:ObservableObject {
     @Published private(set) var targetDescription="No target selected"
     @Published private(set) var calibrated=false
     @Published var cameraHeight=1.2
-    @Published var finder:FinderMode = .none { didSet { voice.invalidateSceneSpeech(); heldTarget = nil; finderEpoch += 1; perception.setFinder(finder,epoch:finderEpoch); frame=nil; targetDescription="Searching: \(finder.rawValue)" } }
-    enum VoicePanel: String { case settings, connection }
+    @Published var finder:FinderMode = .none { didSet { voice.invalidateSceneSpeech(); proactiveVoice.reset(); voiceNotice = nil; voiceSawTarget = false; heldTarget = nil; finderEpoch += 1; perception.setFinder(finder,epoch:finderEpoch); frame=nil; targetDescription="Searching: \(finder.rawValue)" } }
+    enum VoicePanel: String { case settings, connection, assistant, closed }
     @Published var voicePanel: VoicePanel?
-    let voice: GrokVoiceSession
+    @Published var voiceControlsExpanded: Bool?
+    private var voiceTeammates: [String: MCPeerID] = [:]
+    let voice: RealtimeVoiceSession
     @Published private(set) var chalkConfiguration: ChalkConfiguration?
     @Published private(set) var heldTarget: HeldTarget?
     @Published private(set) var whereIsNotice: String?
+    @Published private(set) var whereIsSelfTest = "Not run yet."
+    @Published private(set) var whereIsSelfTestRunning = false
     private let chalkStore: ChalkConfigurationStoring
     private let gatewayFactory: (ChalkConfiguration) -> ChatGateway
     private var whereIsService: WhereIsService?
     private var selfTestService: WhereIsService?
-    @Published private(set) var whereIsSelfTest = "Not run yet."
-    @Published private(set) var whereIsSelfTestRunning = false
     private var lastDirectionSpokenAt: TimeInterval = -.infinity
     var whereIsAvailable: Bool { chalkConfiguration?.isValid == true && mode == .live && guidanceState == .live }
+    private var proactiveVoice = ProactiveVoicePolicy()
+    private var voiceNotice: ProactiveVoicePolicy.Notice?
     private var voiceSawTarget = false
     private var voiceTargetAvailable = false
     private var voiceTargetPhrase: String?
@@ -49,7 +54,7 @@ final class LanternModel:ObservableObject {
     private var simulatedAt:TimeInterval=0
     private var startGeneration=0
     private var finderEpoch=0
-    init(voice: GrokVoiceSession = GrokVoiceSession(), chalkStore: ChalkConfigurationStoring = ChalkConfigurationStore(),
+    init(voice: RealtimeVoiceSession = RealtimeVoiceSession(), chalkStore: ChalkConfigurationStoring = ChalkConfigurationStore(),
          gatewayFactory: @escaping (ChalkConfiguration) -> ChatGateway = { ChalkGateway(configuration: $0) }) {
         self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory
         chalkConfiguration = chalkStore.loadForLaunch()
@@ -104,6 +109,7 @@ final class LanternModel:ObservableObject {
         status="Stopped. Neutral command sent if connected"; targetDescription="No guidance"
         UIApplication.shared.isIdleTimerDisabled=voice.isActive
         voiceSawTarget = false; voiceTargetLostAt = nil; voiceLastGuidance = nil
+        proactiveVoice.reset(); voiceNotice = nil
     }
     private func beginTimer() {
         UIApplication.shared.isIdleTimerDisabled=true
@@ -111,6 +117,7 @@ final class LanternModel:ObservableObject {
         self.timer=timer; RunLoop.main.add(timer,forMode:.common); tick()
     }
     func performVoiceCommand(_ command: VoiceCommand) -> [String: Any] {
+        voiceNotice = nil
         switch command {
         case .stop:
             stop()
@@ -150,6 +157,61 @@ final class LanternModel:ObservableObject {
             guard let device = puck.devices.first(where: { $0.identifier == id }) else { return ["error": "That device is not in the current discovery results. Scan again."] }
             puck.connect(device); voiceOwnsScan = false
             return ["status": "Connection requested. Call get_status to confirm; it is not connected yet."]
+        case .setSpokenOutput(let enabled):
+            voice.setSpokenOutput(enabled)
+            return ["status": enabled ? "Spoken replies enabled." : "Spoken replies muted. Microphone remains on; say speak again to unmute."]
+        case .setProactiveUpdates(let enabled):
+            voice.proactiveEnabled = enabled
+            return ["status": enabled ? "Useful updates enabled." : "Useful updates paused. Replies to your questions remain available."]
+        case .startSimulation:
+            startSimulation()
+            return ["status": "Simulation started. Synthetic scene only; no simulated movement sent to hardware.", "simulation": true]
+        case .disconnectPuck:
+            puck.disconnect(); voiceHadConnection = false
+            return ["status": "Puck disconnect requested. Tactile feedback is unavailable."]
+        case .setCameraHeight(let height):
+            guard height.isFinite, (0.6...2.1).contains(height) else { return ["error": "Measured camera height must be between 0.6 and 2.1 meters."] }
+            cameraHeight = height
+            return ["status": "Measured height saved. Floor calibration has not been performed."]
+        case .openPanel(let panel):
+            guard let selected = VoicePanel(rawValue: panel), selected != .closed else { return ["error": "Unknown panel."] }
+            voicePanel = selected
+            return ["status": "Panel opening requested."]
+        case .closePanel:
+            voicePanel = .closed
+            return ["status": "Panel closing requested."]
+        case .setControlsExpanded(let expanded):
+            voicePanel = .closed; voiceControlsExpanded = expanded
+            return ["status": expanded ? "Camera controls opening requested." : "Camera controls closing requested."]
+        case .scanTeammates:
+            guard mode == .live else { return ["error": "Start the live camera before finding a teammate."] }
+            voiceTeammates = [:]; peer.start()
+            return ["status": peer.status, "note": "Ask which Beacon phone to invite after listing results. The teammate must accept."]
+        case .listTeammates:
+            voiceTeammates = voiceTeammates.filter { peer.peers.contains($0.value) }
+            for person in peer.peers where !voiceTeammates.values.contains(person) {
+                voiceTeammates[UUID().uuidString] = person
+            }
+            return ["status": peer.status, "devices": voiceTeammates.keys.sorted().map {
+                ["device_id": $0, "name": voiceTeammates[$0]!.displayName]
+            }]
+        case .findTeammate(let id):
+            guard mode == .live, peer.running, let selected = voiceTeammates[id], peer.peers.contains(selected) else {
+                return ["error": "That Beacon phone is unavailable. Scan and list phones again."]
+            }
+            finder = .teammate; peer.invite(selected)
+            return ["status": peer.status, "note": "Invitation is pending until the teammate accepts. This does not confirm ranging."]
+        case .stopFindingTeammate:
+            peer.stop(); voiceTeammates = [:]
+            if finder == .teammate { finder = .none }
+            return ["status": "Teammate finding stopped."]
+        case .openSystemSettings:
+            guard let url = URL(string: UIApplication.openSettingsURLString) else { return ["error": "iPhone Settings is unavailable."] }
+            UIApplication.shared.open(url)
+            return ["status": "Opening iPhone Settings. Permissions still require your approval there."]
+        case .forgetVoiceConnection:
+            voice.forgetConfiguration()
+            return ["status": "Voice connection removed. Setup is required to listen again."]
         case .openSettings:
             voicePanel = .settings
             return ["status": "Settings opened."]
@@ -250,46 +312,68 @@ final class LanternModel:ObservableObject {
                 "selected_target": finder.rawValue, "puck_connected": puck.isConnected,
                 "where_is_available": whereIsAvailable, "held_target": heldTarget?.label ?? "none", "where_is": whereIsNotice ?? "none",
                 "connection": puck.status, "simulation": mode == .simulation,
+                "spoken_replies": voice.spokenOutputEnabled, "useful_updates": voice.proactiveEnabled,
                 "notice": "Neutral pins do not mean a clear path. No safe-route claim is available."]
     }
 
-    private func updateVoiceAwareness(targetAvailable: Bool) {
+    private func updateVoiceAwareness(targetAvailable: Bool, target: TargetObservation? = nil,
+                                      distances: [Double?] = [], now: TimeInterval = ProcessInfo.processInfo.systemUptime) {
         voiceTargetAvailable = targetAvailable
         guard voice.isActive else {
             voiceSawTarget = false; voiceLastGuidance = nil; voiceHadConnection = puck.isConnected
+            proactiveVoice.reset(); voiceNotice = nil
             return
         }
-        if !targetAvailable || guidanceState != .live { voice.invalidateSceneSpeech() }
+        if guidanceState != .live || (voiceNotice.map {
+            !$0.isSupported(target: target, finder: finder, distances: distances, now: now)
+        } ?? !targetAvailable) {
+            voice.invalidateSceneSpeech(); voiceNotice = nil
+        }
         if voiceHadConnection && !puck.isConnected {
             if voice.announce("The puck disconnected. Tactile feedback is unavailable.") { voiceHadConnection = false }
             return
         }
         voiceHadConnection = puck.isConnected
-        guard mode == .live else { voiceSawTarget = false; voiceLastGuidance = nil; return }
+        guard mode == .live else {
+            voiceSawTarget = false; voiceLastGuidance = nil; proactiveVoice.reset(); voiceNotice = nil
+            return
+        }
         if guidanceState != .live {
-            voiceSawTarget = false
+            voiceSawTarget = false; voiceTargetLostAt = nil; proactiveVoice.reset()
             if voiceLastGuidance != guidanceState {
-                let message = calibrated ? "Sensing stopped. Pins are neutral." : "What's the measured camera height? I need it to calibrate."
+                let message: String
+                switch guidanceState {
+                case .uncalibrated: message = "What's the measured camera height? I need it to calibrate."
+                case .trackingLost: message = "Tracking lost. Sensing is unavailable."
+                default: message = "Sensing is unavailable. Pins are neutral."
+                }
                 if voice.announce(message) { voiceLastGuidance = guidanceState }
             }
             return
         }
+        // A successful recovery is worth hearing without asking for status again.
+        if let previous = voiceLastGuidance, previous != .live {
+            if voice.announce("Sensing is back.") { voiceLastGuidance = .live }
+            return
+        }
         voiceLastGuidance = .live
+        let notice = proactiveVoice.propose(target: target, finder: finder, distances: distances, now: now)
+        if let notice, notice.kind == .obstacle,
+           voice.announce(notice.text, sceneBound: true) {
+            proactiveVoice.acknowledge(notice, now: now); voiceNotice = notice
+            return
+        }
         if !targetAvailable {
             if voiceSawTarget {
-                let now = ProcessInfo.processInfo.systemUptime
                 if voiceTargetLostAt == nil { voiceTargetLostAt = now }
                 if now - (voiceTargetLostAt ?? now) >= 0.6,
-                   voice.announce("I no longer see your target.") {
-                    voiceSawTarget = false
-                }
+                   voice.announce("I no longer see your target.") { voiceSawTarget = false }
             }
-        } else {
-            voiceTargetLostAt = nil
-            if !voiceSawTarget, let voiceTargetPhrase,
-               voice.announce(voiceTargetPhrase, sceneBound: true) {
-                voiceSawTarget = true
-            }
+        } else { voiceTargetLostAt = nil }
+        if let notice, voice.announce(notice.text, sceneBound: true) {
+            proactiveVoice.acknowledge(notice, now: now)
+            voiceNotice = notice
+            if notice.kind == .target { voiceSawTarget = true }
         }
     }
 
@@ -320,7 +404,8 @@ final class LanternModel:ObservableObject {
             voiceTargetPhrase = nil
             targetDescription=heldTarget != nil ? "Where-is target outside the pins' field" : finder == .none ? "Obstacle sensing" : "Target unavailable. No directional highlight"
         }
-        updateVoiceAwareness(targetAvailable: target?.valid(at: now) == true && output.state == .live)
+        updateVoiceAwareness(targetAvailable: target?.valid(at: now) == true && output.state == .live,
+                             target: target, distances: frame.distances, now: now)
         if let heldTarget {
             if heldTarget.worldEpoch != frame.worldEpoch { clearHeldTarget(spokenLine: "Lost tracking. Say it again.") }
             else if heldTarget.reached(pose: frame.pose) { clearHeldTarget(spokenLine: "You're at the \(heldTarget.label).") }

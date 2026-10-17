@@ -1,5 +1,6 @@
-> **V4 on `feel/v4-chalk` (2026-10-17 02:30): Where-is through Chalk's Model Gateway and a second
-> voice service (OpenAI Realtime). Software checks PASS on this Mac and in the iOS Simulator.
+> **V4 on `feel/v4-chalk` (2026-10-17 02:45): Where-is through Chalk's Model Gateway, typed requests,
+> sessions that survive missing sound output, and a minimalist-neobrutalist restyle, on top of
+> main's OpenAI voice stack. Software checks PASS on this Mac and in the iOS Simulator.
 > Physical camera, LiDAR, puck and live speech: NOT RUN here.** Details at the end of this file.
 
 > Seven-servo preparation: `esp32-production` and its English setup guide are
@@ -17,32 +18,33 @@
 
 # Current V1 release candidate
 
-## Current iPhone voice provisioning
+## Current proactive voice update — October 17
 
-Build 8 is signed and installed. The protected Vercel token service is deployed,
-and a real native Grok session returned “I'm here” using Sal at 24 kHz.
-33 native tests and 18 token-service tests passed. Provider credentials remain
-server-side. The Voice-only API key expires November 16, 2026.
-The unlocked iPhone was provisioned and launched at 01:24 EDT. The user confirmed
-live voice input and spoken responses; server logs show successful token requests.
-Cold relaunch, headset routing and interruption checks remain pending.
-[Evidence](evidence/v1-voice-provisioning/validation.txt).
+Build 14 is signed, installed and launched on the paired iPhone at 01:48 EDT.
+OpenAI accepted the expanded voice tool set; phone diagnostics show readiness
+and successful audio-engine recovery. Spoken action checks with the user and
+headset behavior remain pending. The production token service retains provider
+credentials on Vercel. The FEEL wordmark has a matching control background.
 
-## Current iPhone assistant update
+V1 adds event-driven nearby-obstacle and target-movement notices, sensing
+recovery, and spoken access to the app's operational controls. “Silence yourself”
+mutes speech while preserving microphone capture and commands; “speak again”
+unmutes. “Stop listening” ends capture and requires touch to resume. iOS permission
+choices and credential entry remain manual. The phone still pauses capture when
+backgrounded or locked. [Evidence](evidence/v1-proactive-voice/validation.txt).
 
-V1 build 6 adds the [personal voice assistant](V1-VOICE.md). After provisioning,
-it listens automatically on app foreground entry and reports readiness aloud.
-Stop preserves listening; Pause assistant ends the microphone. The FEEL wordmark
-has no background or LIVE label. Native sensing and V2/V3 branches are preserved.
+All 60 native unit/integration tests and 7 UI tests passed.
+Independent review identified a sub-0.3 m filtering issue, fixed with regression
+coverage. Earlier [OpenAI migration evidence](evidence/v1-openai-voice/validation.txt)
+records the prior 40 native tests, 7 UI tests and 18 service tests.
 
-Signed build 1.0.0 (6) is installed and launched on the paired iPhone 17 Pro.
-The first launch attempt was blocked by the locked phone; retry succeeded at
-00:49:08 EDT. Thirty-six native tests and ten token-service tests passed locally. [Voice validation](evidence/v1-voice/validation.txt).
+## Prior iPhone voice provisioning
 
-**Live Grok activation is BLOCKED** on an xAI key and reachable HTTPS token
-service. No real conversation, headset routing or physical voice latency result
-is claimed. Camera images remain local. Audio is sent to xAI only during an
-active assistant session. The app pauses streaming when backgrounded/locked.
+Build 8 used Grok/Sal. The user confirmed live voice input and spoken responses,
+then reported disconnections. Its historical activation evidence is preserved
+in [the provisioning record](evidence/v1-voice-provisioning/validation.txt).
+Build 6 introduced foreground listening and accessible Assistant controls.
+Backgrounding or locking pauses microphone capture; camera images remain local.
 
 ## Current iPhone visual update
 
@@ -148,7 +150,7 @@ Published FS0307 travel/voltage differs from the handoff's 175°/650–2500 µs
 assumption. Identify and measure the actual units before enabling output. Nominal
 CAD clearances, horn fit, thin-guide stiffness and foam return are unverified.
 
-## V4: Where-is through Chalk, two voice services (2026-10-17)
+## V4: Where-is through Chalk, typed requests, no-audio resilience (2026-10-17)
 
 | Check | Result | How |
 |---|---|---|

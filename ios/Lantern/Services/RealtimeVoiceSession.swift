@@ -6,18 +6,18 @@ import UIKit
 protocol VoiceTransport: AnyObject {
     var onEvent: (([String: Any]) -> Void)? { get set }
     var onFailure: (() -> Void)? { get set }
-    func open(url: URL, token: String)
+    func open(token: String)
     func send(_ event: [String: Any], completion: @escaping (Bool) -> Void)
     func close()
 }
 
-final class GrokWebSocket: VoiceTransport {
+final class OpenAIVoiceWebSocket: VoiceTransport {
     var onEvent: (([String: Any]) -> Void)?
     var onFailure: (() -> Void)?
     private var socket: URLSessionWebSocketTask?
     private let session = URLSession(configuration: .ephemeral)
-    func open(url: URL, token: String) {
-        var request = URLRequest(url: url)
+    func open(token: String) {
+        var request = URLRequest(url: URL(string: "wss://api.openai.com/v1/realtime?model=gpt-realtime-2.1")!)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         let socket = session.webSocketTask(with: request)
         socket.maximumMessageSize = 1_048_576
@@ -30,7 +30,10 @@ final class GrokWebSocket: VoiceTransport {
             DispatchQueue.main.async {
                 guard let self, let connection, self.socket === connection else { return }
                 switch result {
-                case .failure: self.onFailure?()
+                case .failure(let error):
+                    let failure = error as NSError
+                    VoiceDiagnostics.record("transport_failure", detail: "code=\(failure.code), close=\(connection.closeCode.rawValue)")
+                    self.onFailure?()
                 case .success(let message):
                     let data: Data?
                     switch message {
@@ -56,13 +59,14 @@ final class GrokWebSocket: VoiceTransport {
 
 /// All session state and callbacks run on the main queue. Generations invalidate
 /// permission, token, socket, audio and tool callbacks after every Stop.
-final class GrokVoiceSession: ObservableObject {
+final class RealtimeVoiceSession: ObservableObject {
     enum Phase: String { case idle, connecting, listening, thinking, speaking, failed }
     @Published private(set) var phase: Phase = .idle
     @Published private(set) var caption = ""
     @Published private(set) var errorMessage = ""
     @Published private(set) var needsMicrophoneSettings = false
     @Published private(set) var configuration: VoiceConfiguration?
+    @Published private(set) var spokenOutputEnabled = true
     @Published var proactiveEnabled = UserDefaults.standard.object(forKey: "voice.proactive") as? Bool ?? true {
         didSet { UserDefaults.standard.set(proactiveEnabled, forKey: "voice.proactive") }
     }
@@ -98,13 +102,14 @@ final class GrokVoiceSession: ObservableObject {
     private var interruptedResponses = Set<String>()
     private var responseID: String?
     private var responseRunning = false
+    private var responseIsAnnouncement = false
     private var continuationPending = false
     private var assistantItemID: String?
     private var lastAnnouncement = Date.distantPast
     private var sceneExpiry: DispatchWorkItem?
     private var sceneBound = false
-    private var awaitingResponse = false
-    private var discardNextResponse = false
+    private var pendingRequestID: String?
+    private var invalidatedRequestIDs = Set<String>()
     private let speaksLocally: Bool
 
     var isActive: Bool { phase != .idle && phase != .failed }
@@ -113,7 +118,7 @@ final class GrokVoiceSession: ObservableObject {
         switch phase {
         case .idle: return isPausedByUser ? "Assistant paused" : "Assistant unavailable"
         case .connecting: return "Connecting"
-        case .listening: return "Listening"
+        case .listening: return spokenOutputEnabled ? "Listening" : "Listening quietly"
         case .thinking: return "Thinking"
         case .speaking: return "FEEL is speaking"
         case .failed: return "Assistant unavailable"
@@ -121,7 +126,7 @@ final class GrokVoiceSession: ObservableObject {
     }
 
     init(tokenClient: VoiceTokenFetching = VoiceTokenClient(), audio: VoiceAudioIO = DeviceVoiceAudio(),
-         transportFactory: @escaping () -> VoiceTransport = { GrokWebSocket() },
+         transportFactory: @escaping () -> VoiceTransport = { OpenAIVoiceWebSocket() },
          configuration: VoiceConfiguration? = nil, speaksLocally: Bool = true,
          requestPermission: @escaping (@escaping (Bool) -> Void) -> Void = { completion in
              AVAudioSession.sharedInstance().requestRecordPermission { allowed in
@@ -175,8 +180,8 @@ final class GrokVoiceSession: ObservableObject {
     }
     deinit { observers.forEach(NotificationCenter.default.removeObserver) }
 
-    func saveConfiguration(provider: VoiceProvider = .grok, endpoint: String, accessToken: String) throws {
-        let config = VoiceConfiguration(provider: provider, endpoint: endpoint.trimmingCharacters(in: .whitespacesAndNewlines),
+    func saveConfiguration(endpoint: String, accessToken: String) throws {
+        let config = VoiceConfiguration(endpoint: endpoint.trimmingCharacters(in: .whitespacesAndNewlines),
                                         accessToken: accessToken.trimmingCharacters(in: .whitespacesAndNewlines))
         try store.save(config)
         disconnect(); configuration = config; errorMessage = ""
@@ -216,11 +221,23 @@ final class GrokVoiceSession: ObservableObject {
         start()
     }
 
+    /// Silence output without disconnecting the microphone, tools or transport.
+    func setSpokenOutput(_ enabled: Bool) {
+        guard spokenOutputEnabled != enabled else { return }
+        spokenOutputEnabled = enabled
+        if !enabled {
+            audio.interruptPlayback()
+            speaker?.stopSpeaking(at: .immediate)
+            if phase == .speaking { phase = responseRunning ? .thinking : .listening }
+            finishTurnIfReady()
+        }
+    }
+
     func start() {
         guard !isActive else { return }
         disconnect()
         guard let configuration, configuration.isValid else {
-            errorMessage = "Set up the voice service in Assistant settings first."; phase = .failed; return
+            errorMessage = "Set up voice in Settings first."; phase = .failed; return
         }
         lastAnnouncement = .distantPast
         phase = .connecting; caption = "Opening voice"; errorMessage = ""; needsMicrophoneSettings = false
@@ -233,22 +250,18 @@ final class GrokVoiceSession: ObservableObject {
                 self.speak("Microphone access is off. Enable it in iPhone Settings.")
                 return
             }
-            self.caption = "Connecting to \(configuration.provider.displayName)"
+            self.caption = "Connecting to OpenAI"
             self.armTimeout(id)
-            if configuration.usesDirectKey {
-                self.openTransport(url: configuration.provider.realtimeURL, token: configuration.accessToken, generation: id)
-                return
-            }
             self.tokenClient.fetch(configuration) { [weak self] result in
                 guard let self, self.generation == id, self.isActive else { return }
                 switch result {
                 case .failure: self.fail("Voice couldn't connect. Check your connection and voice setup, then retry.")
-                case .success(let token): self.openTransport(url: configuration.provider.realtimeURL, token: token, generation: id)
+                case .success(let token): self.openTransport(token: token, generation: id)
                 }
             }
         }
     }
-    private func openTransport(url: URL, token: String, generation id: UUID) {
+    private func openTransport(token: String, generation id: UUID) {
         let connection = transportFactory()
         transport = connection
         connection.onEvent = { [weak self] event in
@@ -259,7 +272,7 @@ final class GrokVoiceSession: ObservableObject {
             guard let self, self.generation == id, self.isActive else { return }
             self.fail("Voice disconnected. Tap to reconnect.")
         }
-        connection.open(url: url, token: token)
+        connection.open(token: token)
     }
 
     /// A typed request takes the same path as speech: a user item, then a response.
@@ -267,10 +280,10 @@ final class GrokVoiceSession: ObservableObject {
     @discardableResult func sendText(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard isActive, receivedConfiguration, !userSpeaking, (1...160).contains(trimmed.unicodeScalars.count) else { return false }
-        awaitingResponse = true; phase = .thinking; caption = String(trimmed.prefix(400))
+        phase = .thinking; caption = String(trimmed.prefix(400))
         enqueue(["type": "conversation.item.create", "item": ["type": "message", "role": "user",
                  "content": [["type": "input_text", "text": trimmed]]]])
-        enqueue(["type": "response.create"])
+        requestResponse([:])
         return true
     }
 
@@ -282,9 +295,9 @@ final class GrokVoiceSession: ObservableObject {
         tokenClient.cancel(); transport?.close(); transport = nil
         audio.stop(); speaker?.stopSpeaking(at: .immediate)
         sceneExpiry?.cancel(); sceneExpiry = nil; sceneBound = false
-        awaitingResponse = false; discardNextResponse = false
+        pendingRequestID = nil; invalidatedRequestIDs = []
         outgoing = []; sending = false; configured = false; receivedConfiguration = false
-        handledCalls = []; interruptedResponses = []; responseID = nil; responseRunning = false
+        handledCalls = []; interruptedResponses = []; responseID = nil; responseRunning = false; responseIsAnnouncement = false
         continuationPending = false; assistantItemID = nil
         userSpeaking = false; audioUnavailable = false
         phase = .idle; caption = ""; onEnded?()
@@ -292,13 +305,17 @@ final class GrokVoiceSession: ObservableObject {
 
     /// Only exact, freshly produced app text may be announced without a user turn.
     @discardableResult func announce(_ text: String, automatic: Bool = true, sceneBound: Bool = false) -> Bool {
-        guard let provider = configuration?.provider, (!automatic || proactiveEnabled), !userSpeaking, phase == .listening, !responseRunning,
-              !awaitingResponse, !discardNextResponse, !audio.pendingPlayback, Date().timeIntervalSince(lastAnnouncement) > 5 else { return false }
+        guard spokenOutputEnabled, (!automatic || proactiveEnabled), !userSpeaking, phase == .listening, !responseRunning, pendingRequestID == nil, !audio.pendingPlayback,
+              Date().timeIntervalSince(lastAnnouncement) > 5 else { return false }
         lastAnnouncement = Date()
-        awaitingResponse = true
         if sceneBound { bindSceneSpeech() }
         phase = .thinking
-        enqueue(provider.announcement(String(text.prefix(240))))
+        // OpenAI has no force_message event. Request a tool-free, isolated spoken
+        // announcement without adding a synthetic user request to conversation history.
+        requestResponse(["conversation": "none", "input": [],
+                 "tools": [], "output_modalities": ["audio"], "max_output_tokens": 160,
+                 "metadata": ["feel_announcement": "true"],
+                 "instructions": "Speak only the following app status, naturally and briefly. Do not add advice or call tools: " + String(text.prefix(240))])
         return isActive
     }
 
@@ -315,7 +332,7 @@ final class GrokVoiceSession: ObservableObject {
         guard sceneBound else { return }
         let generationBeforeCancel = generation
         sceneExpiry?.cancel(); sceneExpiry = nil; sceneBound = false
-        if awaitingResponse { discardNextResponse = true }
+        guard invalidatePendingRequest() else { return }
         if let responseID {
             rejectResponse(responseID, cancel: responseRunning)
             if let assistantItemID {
@@ -330,6 +347,27 @@ final class GrokVoiceSession: ObservableObject {
         phase = .listening
     }
 
+    private func requestResponse(_ parameters: [String: Any]) {
+        let requestID = UUID().uuidString
+        pendingRequestID = requestID
+        var parameters = parameters
+        var metadata = parameters["metadata"] as? [String: String] ?? [:]
+        metadata["feel_request_id"] = requestID
+        parameters["metadata"] = metadata
+        enqueue(["type": "response.create", "response": parameters])
+    }
+
+    @discardableResult private func invalidatePendingRequest() -> Bool {
+        guard let requestID = pendingRequestID else { return true }
+        pendingRequestID = nil
+        invalidatedRequestIDs.insert(requestID)
+        guard invalidatedRequestIDs.count <= 128 else {
+            fail("Voice session ended. Tap to reconnect.")
+            return false
+        }
+        return true
+    }
+
     private func rejectResponse(_ id: String, cancel: Bool) {
         interruptedResponses.insert(id)
         guard interruptedResponses.count <= 128 else { fail("Voice session ended. Tap to reconnect."); return }
@@ -337,9 +375,13 @@ final class GrokVoiceSession: ObservableObject {
     }
 
     private func fail(_ message: String, speak shouldSpeak: Bool = true) {
+        VoiceDiagnostics.record("failure", detail: message)
         disconnect(); errorMessage = message; phase = .failed
-        if shouldSpeak { speak("Voice disconnected. The camera still works.") }
-        guard shouldSpeak, automaticListening, foreground, !isPausedByUser, !waitingForHeadphones, retryCount < 3 else { return }
+        let willRetry = shouldSpeak && automaticListening && foreground && !isPausedByUser && !waitingForHeadphones && retryCount < 3
+        if shouldSpeak && (retryCount == 0 || !willRetry) {
+            speak(willRetry ? "Voice paused. Reconnecting." : "Voice paused. Open Assistant to retry.")
+        }
+        guard willRetry else { return }
         retryCount += 1
         let id = generation
         let retry = DispatchWorkItem { [weak self] in
@@ -350,7 +392,7 @@ final class GrokVoiceSession: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + Double(retryCount * 2), execute: retry)
     }
     private func speak(_ text: String) {
-        guard speaksLocally, !ProcessInfo.processInfo.arguments.contains("--uitesting") else { return }
+        guard spokenOutputEnabled, speaksLocally, !ProcessInfo.processInfo.arguments.contains("--uitesting") else { return }
         // Local fallback feedback remains audible when the voice network fails.
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
         let utterance = AVSpeechUtterance(string: text)
@@ -377,7 +419,7 @@ final class GrokVoiceSession: ObservableObject {
     private func scheduleSessionRenewal(_ id: UUID, after delay: TimeInterval) {
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.generation == id else { return }
-            if self.userSpeaking || self.responseRunning || self.audio.pendingPlayback || self.awaitingResponse {
+            if self.userSpeaking || self.responseRunning || self.audio.pendingPlayback || self.pendingRequestID != nil {
                 self.scheduleSessionRenewal(id, after: 30)
             } else if self.automaticListening && self.foreground && !self.isPausedByUser {
                 self.disconnect(); self.start()
@@ -391,7 +433,26 @@ final class GrokVoiceSession: ObservableObject {
 
     private func enqueue(_ event: [String: Any]) {
         guard isActive else { return }
-        guard outgoing.count < 8 else { fail("Voice connection is too slow. Tap to retry."); return }
+        if event["type"] as? String == "input_audio_buffer.append",
+           let encoded = event["audio"] as? String, let input = Data(base64Encoded: encoded) {
+            // Native taps arrive every ~20 ms. A brief send delay must not exhaust
+            // a message-count limit; retain at most one second of queued PCM.
+            let queuedBytes = outgoing.reduce(0) { total, pending in
+                total + ((pending["audio"] as? String).flatMap { Data(base64Encoded: $0)?.count } ?? 0)
+            }
+            guard input.count <= 48_000 - queuedBytes else {
+                fail("Voice connection is too slow. Tap to retry."); return
+            }
+            if let last = outgoing.last, last["type"] as? String == "input_audio_buffer.append",
+               let previous = last["audio"] as? String, var combined = Data(base64Encoded: previous) {
+                combined.append(input)
+                outgoing[outgoing.count - 1]["audio"] = combined.base64EncodedString()
+                return
+            }
+        } else {
+            let controls = outgoing.filter { $0["type"] as? String != "input_audio_buffer.append" }.count
+            guard controls < 8 else { fail("Voice connection is too slow. Tap to retry."); return }
+        }
         outgoing.append(event); sendNext()
     }
     private func sendNext() {
@@ -410,8 +471,12 @@ final class GrokVoiceSession: ObservableObject {
         switch type {
         case "session.created":
             guard !configured else { return }; configured = true
-            let provider = configuration?.provider ?? .grok
-            enqueue(["type": "session.update", "session": provider.sessionUpdate(instructions: VoiceCommand.instructions, tools: VoiceCommand.tools)])
+            enqueue(["type": "session.update", "session": [
+                "type": "realtime", "instructions": VoiceCommand.instructions,
+                "output_modalities": ["audio"], "max_output_tokens": 320, "tools": VoiceCommand.tools,
+                "audio": ["input": ["format": ["type": "audio/pcm", "rate": 24000],
+                                    "turn_detection": ["type": "server_vad", "create_response": true, "interrupt_response": true]],
+                          "output": ["voice": "cedar", "format": ["type": "audio/pcm", "rate": 24000]]]]])
         case "session.updated":
             guard configured, !receivedConfiguration else { return }
             receivedConfiguration = true
@@ -426,6 +491,7 @@ final class GrokVoiceSession: ObservableObject {
                     self.finishTurnIfReady()
                 })
                 phase = .listening; caption = "Ask me to find something"
+                VoiceDiagnostics.record("session_ready")
                 scheduleSessionRenewal(id, after: 900)
                 announce("I'm here.", automatic: false)
             } catch { fail("The microphone couldn't start. Check your audio device and retry.") }
@@ -433,10 +499,13 @@ final class GrokVoiceSession: ObservableObject {
             let generationBeforeInterrupt = generation
             userSpeaking = true
             sceneExpiry?.cancel(); sceneExpiry = nil; sceneBound = false
-            if awaitingResponse { discardNextResponse = true }
+            guard invalidatePendingRequest() else { return }
             if let responseID {
                 interruptedResponses.insert(responseID)
                 if interruptedResponses.count > 128 { fail("Voice session ended. Tap to reconnect."); return }
+                if responseIsAnnouncement && responseRunning {
+                    enqueue(["type": "response.cancel", "response_id": responseID])
+                }
             }
             if let assistantItemID {
                 enqueue(["type": "conversation.item.truncate", "item_id": assistantItemID,
@@ -452,27 +521,67 @@ final class GrokVoiceSession: ObservableObject {
         case "response.created":
             guard let response = event["response"] as? [String: Any], let id = response["id"] as? String,
                   !interruptedResponses.contains(id) else { return }
-            awaitingResponse = false
-            if userSpeaking || discardNextResponse {
-                discardNextResponse = false
+            guard id != responseID else { return }
+            let metadata = response["metadata"] as? [String: String] ?? [:]
+            let requestID = metadata["feel_request_id"]
+            let isAnnouncement = metadata["feel_announcement"] == "true"
+            // Manual responses may arrive after the user's newer VAD response.
+            // Reject by request identity without touching that newer response.
+            if let requestID, invalidatedRequestIDs.contains(requestID) || requestID != pendingRequestID {
                 rejectResponse(id, cancel: true)
                 return
             }
+            if isAnnouncement && requestID == nil {
+                rejectResponse(id, cancel: true)
+                return
+            }
+            if userSpeaking || (isAnnouncement && (responseID != nil || audio.pendingPlayback)) {
+                if requestID == pendingRequestID { guard invalidatePendingRequest() else { return } }
+                rejectResponse(id, cancel: true)
+                return
+            }
+            let generationBeforeReplacement = generation
+            if requestID != nil {
+                pendingRequestID = nil
+            } else {
+                // A user response takes priority over any pending app request.
+                guard invalidatePendingRequest() else { return }
+                sceneExpiry?.cancel(); sceneExpiry = nil; sceneBound = false
+            }
+            if let previousID = responseID { rejectResponse(previousID, cancel: responseRunning) }
+            guard generation == generationBeforeReplacement, isActive else { return }
             audio.interruptPlayback()
             responseID = id; responseRunning = true; assistantItemID = nil; caption = ""
+            responseIsAnnouncement = isAnnouncement
             phase = .thinking
         case "response.output_audio.delta", "response.audio.delta":
             guard accepts(event), let delta = event["delta"] as? String, delta.count < 1_000_000,
                   let data = Data(base64Encoded: delta) else { return }
-            assistantItemID = event["item_id"] as? String
+            guard spokenOutputEnabled else { return }
+            // Out-of-band announcements do not have a default-history item to truncate.
+            assistantItemID = responseIsAnnouncement ? nil : event["item_id"] as? String
             do { try audio.play(data); phase = .speaking }
-            catch VoiceAudioError.notRunning { audioUnavailable = true; phase = .speaking }
-            catch { fail("Voice playback stopped: \(error.localizedDescription) Tap to retry.") }
+            catch VoiceAudioError.notRunning {
+                // No sound output (simulator, dead route): keep the conversation going through captions and tools.
+                VoiceDiagnostics.record("playback_failure", detail: "engine_not_running")
+                audioUnavailable = true; phase = .speaking
+            }
+            catch {
+                let code: String
+                switch error {
+                case VoiceAudioError.notRunning: code = "engine_not_running"
+                case VoiceAudioError.invalidPCM: code = "invalid_pcm"
+                case VoiceAudioError.playbackOverflow: code = "playback_overflow"
+                default: code = "audio_error"
+                }
+                VoiceDiagnostics.record("playback_failure", detail: code)
+                fail("Voice playback stopped. Tap to retry.")
+            }
         case "response.output_audio_transcript.delta", "response.audio_transcript.delta":
             guard accepts(event), let delta = event["delta"] as? String else { return }
             caption = String((caption + delta).prefix(400))
         case "response.function_call_arguments.done":
-            guard accepts(event), let callID = event["call_id"] as? String, callID.count < 256,
+            guard !responseIsAnnouncement, accepts(event), let callID = event["call_id"] as? String, callID.count < 256,
                   !handledCalls.contains(callID), let name = event["name"] as? String,
                   let arguments = event["arguments"] as? String else { return }
             guard handledCalls.count < 256 else { fail("Voice session ended. Tap to reconnect."); return }
@@ -494,9 +603,17 @@ final class GrokVoiceSession: ObservableObject {
             finishTurnIfReady()
         case "response.done":
             guard let response = event["response"] as? [String: Any], let id = response["id"] as? String, id == responseID else { return }
+            if response["status"] as? String == "failed" {
+                fail("OpenAI couldn't complete the response. Check voice service access and retry."); return
+            }
             responseRunning = false
             finishTurnIfReady()
-        case "error": fail("Grok couldn't complete the voice session. Check setup and retry.")
+        case "error":
+            let code = VoiceDiagnostics.providerCode(event)
+            VoiceDiagnostics.record("provider_error", detail: code)
+            // Cancellation can race server VAD or completion; the socket remains usable.
+            if code == "response_cancel_not_active" { return }
+            fail("OpenAI couldn't complete the voice session. Check setup and retry.")
         default: break
         }
     }
@@ -506,12 +623,14 @@ final class GrokVoiceSession: ObservableObject {
         return true
     }
     private func finishTurnIfReady() {
-        guard !responseRunning, !awaitingResponse, !discardNextResponse, !audio.pendingPlayback, isActive, receivedConfiguration else { return }
+        guard !userSpeaking, !responseRunning, pendingRequestID == nil, !audio.pendingPlayback, isActive, receivedConfiguration else { return }
         if continuationPending {
-            continuationPending = false; phase = .thinking; awaitingResponse = true
-            enqueue(["type": "response.create"])
+            continuationPending = false; phase = .thinking
+            requestResponse([:])
         } else {
             sceneExpiry?.cancel(); sceneExpiry = nil; sceneBound = false
+            // Completed audio no longer needs a truncation when the user next speaks.
+            assistantItemID = nil; responseID = nil
             phase = .listening
         }
     }

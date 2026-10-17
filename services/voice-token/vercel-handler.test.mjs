@@ -50,8 +50,13 @@ test('Vercel direct and rewritten paths use the same authenticated token contrac
     assert.equal(res.headers['Cache-Control'], 'no-store');
   }
   assert.equal(calls.length, 2);
-  assert.equal(calls[0][0], 'https://api.x.ai/v1/realtime/client_secrets');
-  assert.deepEqual(JSON.parse(calls[0][1].body), { expires_after: { seconds: 300 } });
+  assert.equal(calls[0][0], 'https://api.openai.com/v1/realtime/client_secrets');
+  assert.deepEqual(JSON.parse(calls[0][1].body), {
+    expires_after: { anchor: 'created_at', seconds: 300 },
+    session: {
+      type: 'realtime', model: 'gpt-realtime-2.1', audio: { output: { voice: 'cedar' } },
+    },
+  });
 });
 
 test('Vercel adapter cannot disable HTTPS through local environment settings', async () => {

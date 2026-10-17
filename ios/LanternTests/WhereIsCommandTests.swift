@@ -18,7 +18,7 @@ final class WhereIsCommandTests: XCTestCase {
         if configured {
             store.stored = ChalkConfiguration(apiHost: ChalkConfiguration.defaultHost, routerApiKey: String(repeating: "k", count: 16), environmentId: "env", model: "m")
         }
-        let voice = GrokVoiceSession(configuration: nil, speaksLocally: false)
+        let voice = RealtimeVoiceSession(configuration: nil, speaksLocally: false)
         let model = LanternModel(voice: voice, chalkStore: store, gatewayFactory: { _ in gateway })
         return (model, gateway)
     }
