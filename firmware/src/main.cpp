@@ -73,16 +73,16 @@ constexpr uint8_t kDemoPin = 32;
 constexpr const char* kAdvertisedName = "FEEL Wide TEST";
 constexpr const char* kSingleMode = "WIDE_UNVERIFIED";
 constexpr uint16_t kSingleMinimumUs = 650;
-constexpr uint16_t kSingleMaximumUs = 2500;
+constexpr uint16_t kSingleMaximumUs = feel::kSingleLiveMaximumUs;
 constexpr std::size_t kSingleSector = feel::kSingleLiveSector;
-constexpr const char* kSingleHelp = "EXPERIMENTAL ONE UNLOADED SERVO GPIO32:650..2500us; NOT verified travel or production; app may command endpoints; zero bands -> gap; serial STOP/disconnect detaches";
+constexpr const char* kSingleHelp = "EXPERIMENTAL ONE UNLOADED SERVO GPIO32:650..2648us; NOT verified travel or production; app may command endpoints; zero bands -> gap; serial STOP/disconnect detaches";
 #else
 constexpr const char* kAdvertisedName = "FEEL Puck";
-constexpr const char* kSingleMode = "LIVE175";
+constexpr const char* kSingleMode = "LIVE189_UNVERIFIED";
 constexpr uint16_t kSingleMinimumUs = feel::kMinPulseUs;
-constexpr uint16_t kSingleMaximumUs = feel::kMaxPulseUs;
+constexpr uint16_t kSingleMaximumUs = feel::kSingleLiveMaximumUs;
 constexpr std::size_t kSingleSector = feel::kSingleLiveSector;
-constexpr const char* kSingleHelp = "ONE SERVO LIVE175: center sector3 production band/gap/tap/calibration -> GPIO32, assumed650..2500us; NOT measured travel; STATUS or STOP; no serial motion/calibration";
+constexpr const char* kSingleHelp = "ONE SERVO189 EXPERIMENT: center sector3 production band/gap/tap/calibration -> GPIO32, assumed650..2648us; NOT measured travel; STATUS or STOP; no serial motion/calibration";
 #endif
 #else
 constexpr const char* kAdvertisedName = "FEEL Center Demo";

@@ -15,14 +15,14 @@ void bandsAndExpiry() {
     assert(feel::singleLivePulse(c.snapshot()) == 0);
     feel::Packet p;
     p.bands[0] = 4; // Center-empty must use the center gap, not a side obstacle.
-    const unsigned expected[] = {1116,809,1422,2035,2500};
+    const unsigned expected[] = {1116,809,1422,2035,2648};
     for (unsigned band = 0; band <= 4; ++band) {
         p.sequence = band; p.bands[3] = band;
         receive(c,p,10 + band*10);
         assert(feel::singleLivePulse(c.snapshot()) == expected[band]);
         assert(feel::singleLivePulse(c.snapshot()) >= c.snapshot().pulses[3]);
     }
-    c.tick(549); assert(feel::singleLivePulse(c.snapshot()) == 2500);
+    c.tick(549); assert(feel::singleLivePulse(c.snapshot()) == 2648);
     c.tick(550); assert(feel::singleLivePulse(c.snapshot()) == 0);
     p.sequence = 10; p.bands.fill(0);
     receive(c,p,600);
@@ -58,7 +58,7 @@ void productionTapGapCalibration() {
     assert(!c.snapshot().tapActive && feel::singleLivePulse(c.snapshot()) == 1475);
     p.sequence = 2; p.bands[3] = 4; p.highlight = feel::kNoHighlight;
     receive(c,p,200);
-    assert(feel::singleLivePulse(c.snapshot()) == 2500); // Endpoint offset clamp.
+    assert(feel::singleLivePulse(c.snapshot()) == 2648); // Endpoint offset clamp.
     p.sequence = 3; p.bands[3] = 0;
     receive(c,p,210);
     assert(feel::singleLivePulse(c.snapshot()) == 2395); //145deg gap +5deg offset.
@@ -81,15 +81,15 @@ void allZeroReturnsEverySelectionToGap() {
         c.tick(502); assert(feel::singleLivePulse(c.snapshot()) == 0);
     }
 }
-void upperBoundClipsFourthHighlight() {
+void fourthHighlightWithinExtendedBound() {
     feel::Controller c; c.connect(0);
     feel::Packet p; p.bands[3] = 4; p.highlight = 3;
     receive(c,p,1);
     assert(c.snapshot().tapActive);
-    assert(feel::singleLivePulse(c.snapshot()) == 2500);
+    assert(feel::singleLivePulse(c.snapshot()) == 2511);
     c.tick(101);
     assert(!c.snapshot().tapActive);
-    assert(feel::singleLivePulse(c.snapshot()) == 2500);
+    assert(feel::singleLivePulse(c.snapshot()) == 2648);
 }
 void isolationAndInvalid() {
     feel::Controller c;
@@ -114,6 +114,6 @@ void rollover() {
 }
 }
 int main() {
-    bandsAndExpiry();productionTapGapCalibration();allZeroReturnsEverySelectionToGap();upperBoundClipsFourthHighlight();isolationAndInvalid();rollover();
+    bandsAndExpiry();productionTapGapCalibration();allZeroReturnsEverySelectionToGap();fourthHighlightWithinExtendedBound();isolationAndInvalid();rollover();
     std::puts("PASS single live: production center bands/gaps/taps/calibration, demo isolation, boot/connect off, STOP, freshness, disconnect, bench rejection, invalid bounds, rollover");
 }

@@ -99,15 +99,18 @@ Ties select the lower gap. Corresponding pulses are957/1570/2183µs. Startup
 neutral is29°. These commanded gaps are chosen between peaks; actual complete
 pin retraction still requires physical cam/return verification.
 
-## Current connected-servo trim: plus15°
+## Current connected-servo189° command experiment
 
-The user corrected the direction: add15°, replacing (not accumulating with)
-the previous minus15° adjustment. The adapter adds159µs once and clamps to
-650–2500µs. Band outputs are809/1422/2035/2500µs, approximately15/73/131/175°.
-The fourth position clips at the configured maximum; it cannot reach189°.
-Empty-gap outputs are1116/1729/2342µs (approximately44/102/160°).
-This is one connected unit's alignment, not a seven-servo geometry revision.
-Existing off/invalid guards remain; physical pin return needs observation.
+User explicitly requested pin4's174° base plus15°, allowing189° instead of
+clipping at175°. Single-live output adds159µs and now caps at2648µs. Band
+outputs are809/1422/2035/2648µs (approximately15/73/131/189° on the assumed
+mapping). Empty gaps remain1116/1729/2342µs, approximately44/102/160°.
+Band4 highlighting now dips to2511µs rather than clipping both positions.
 
-At zero calibration, band4 selection and its highlight dip both clip to2500µs,
-so band4 highlighting produces no additional motion. Regression covers this.
+This exceeds the previously exercised2500µs endpoint. No actual189° rotation,
+mechanical clearance or safe endpoint is established. The user must observe
+for strain/stall and disconnect servo power if it occurs. Live packets can hold
+an endpoint continuously; this is not a timed sweep. Existing500ms timeout,
+disconnect and serialSTOP detach; app zero packets command the nearest gap.
+Only GPIO32 is enabled. Default seven-servo and production gates are unchanged.
+The BLE name remains FEEL Puck; the serial mode says LIVE189_UNVERIFIED.

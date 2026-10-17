@@ -17,7 +17,7 @@ void pwmTests() {
     assert(feel::servoDuty(1500, 900, 2100, duty) && duty == 1229);
     assert(feel::servoDuty(900, 900, 2100, duty) && duty == 738);
     assert(feel::servoDuty(2100, 900, 2100, duty) && duty == 1720);
-    const unsigned intervals[][2] = {{650,2500},{900,2100},{1000,2000},{1450,1550}};
+    const unsigned intervals[][2] = {{650,2648},{650,2500},{900,2100},{1000,2000},{1450,1550}};
     for (const auto& interval : intervals) {
         uint32_t previous = 0;
         for (unsigned pulse = interval[0]; pulse <= interval[1]; ++pulse) {

@@ -13,14 +13,14 @@ int main() {
     for(unsigned us=650;us<=2500;++us) {
         s.pulses[3]=us;
         unsigned wide=feel::singleWidePulse(s);
-        assert(wide>=650 && wide<=2500 && wide>=previous);
-        assert(wide == (us > 2341 ? 2500 : us+159));
+        assert(wide>=650 && wide<=2648 && wide>=previous);
+        assert(wide == (us > 2489 ? 2648 : us+159));
         assert(feel::singleLivePulse(s)==wide); // Positive trim once; bounded at upper end.
         previous=wide;
     }
     s.pulses[3]=650; assert(feel::singleWidePulse(s)==809);
     s.pulses[3]=1500; assert(feel::singleWidePulse(s)==1659);
-    s.pulses[3]=2500; assert(feel::singleWidePulse(s)==2500);
+    s.pulses[3]=2500; assert(feel::singleWidePulse(s)==2648);
     s.pulses[3]=2501; assert(feel::singleWidePulse(s)==0);
     s.pulses[3]=649; assert(feel::singleWidePulse(s)==0);
     p.sequence=1; p.bands.fill(0); bytes=feel::encodePacket(p);
