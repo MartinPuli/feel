@@ -96,7 +96,8 @@ def thumbnails(frames, step=4, max_range=5.0):
                 pixels.append(0 if confidence[i] == 0 or not d > 0 else max(1, min(255, round(d / max_range * 255))))
         k = header['intrinsics']
         out[f"{header['t']:.3f}"] = {'w': (w + step - 1) // step, 'h': (h + step - 1) // step,
-                                     'fx': k['fx'] / step, 'cx': k['cx'] / step, 'px': base64.b64encode(bytes(pixels)).decode()}
+                                     'fx': k['fx'] / step, 'cx': k['cx'] / step, 'fy': k['fy'] / step, 'cy': k['cy'] / step,
+                                     'px': base64.b64encode(bytes(pixels)).decode()}
     return out
 
 
@@ -188,7 +189,7 @@ def score(scenario, ticks, base=0.0):
     accuracy = passed / total if total else None
     flicker = changes / 7 / live_seconds if live else 0.0
     reasons = []
-    if total == 0:
+    if total == 0 and expects:
         reasons.append('no labelled checks fell inside the timeline')
     # Every labelled window must agree on its own; a short tap dropout must not hide behind many wall checks.
     for e in per_expect:
@@ -261,7 +262,7 @@ def run_scenario(path: Path, out_dir: Path, camera: bool = False):
                        'target': t['phone'].get('target'), 'dropped': t['dropped'], 'mismatch': t.get('mismatch', [])} for t in ticks],
             'thumbs': thumbnails(frames),
             # Not serialised: inputs for the web export.
-            '_assets': {'recording': recording, 'frames': frames, 'camera': work / 'camera.cam' if camera and 'recording' not in scenario else None,
+            '_assets': {'recording': recording, 'frames': frames, 'scenario': path, 'camera': work / 'camera.cam' if camera and 'recording' not in scenario else None,
                         'frameRate': scenario.get('scene', {}).get('frameRate', 10),
                         'publish': info.get('source') == 'synthetic' or scenario.get('publish') is True}}
 
@@ -304,20 +305,32 @@ def export_web(entry, out_dir: Path):
         if video.exists():
             shutil.copyfile(video, session_dir / 'camera.mp4')
             media = {'url': 'camera.mp4', 'start': timing['start'], 'kind': 'recorded'}
+    events_file = recording.with_suffix('.events.json')
+    events = json.loads(events_file.read_text()).get('events', []) if events_file.exists() else []
     frames = assets['frames']
     # 128 × 96 depth for short sessions; coarser for long phone walks to keep the page loadable.
     step = 2 if len(frames) <= 900 else 4
     thumbs = thumbnails(frames, step=step)
     first = next(iter(thumbs.values()), None)
     depth = {'w': first['w'], 'h': first['h'], 'fxn': first['fx'] / first['w'], 'cxn': first['cx'] / first['w'],
+             'fx': first['fx'], 'fy': first['fy'], 'cx': first['cx'], 'cy': first['cy'], 'maxRange': 5.0,
              'frames': {t: v['px'] for t, v in thumbs.items()}} if first else None
+    # Camera pose per frame for the top-down view: position, right, up, back (world, metres), floor height.
+    def vec(v):
+        return [round(v['x'], 4), round(v['y'], 4), round(v['z'], 4)]
+    poses = {f"{h['t']:.3f}": vec(h['pose']['position']) + vec(h['pose']['right']) + vec(h['pose']['up']) + vec(h['pose']['back'])
+             + [h.get('floorY')] for h, _, _ in frames}
+    scenario = json.loads(entry['_assets']['scenario'].read_text())
+    scene = {k: scenario['scene'][k] for k in ('objects', 'target') if k in scenario['scene']} if 'scene' in scenario else None
     ticks = entry['ticks']
     meta = {'name': entry['name'], 'title': entry['title'], 'source': entry['source'], 'status': status(entry),
             'knownIssue': entry.get('knownIssue'), 'publish': assets['publish'],
             'duration': round(ticks[-1]['t'] - ticks[0]['t'], 2) if ticks else 0,
-            'accuracy': entry['result']['accuracy'], 'hasVideo': media is not None, 'start': frames[0][0]['t'] if frames else 0}
+            'accuracy': entry['result']['accuracy'], 'hasVideo': media is not None, 'start': frames[0][0]['t'] if frames else 0,
+            'bumps': sum(1 for e in events if e.get('kind') == 'bump'),
+            'outcome': next((e['kind'] for e in reversed(events) if e.get('kind') in ('arrived', 'ended', 'stopped')), None)}
     session = {**meta, 'description': entry['description'], 'result': entry['result'], 'expect': entry['expect'],
-               'faults': entry['faults'], 'ticks': ticks, 'depth': depth, 'media': media}
+               'faults': entry['faults'], 'ticks': ticks, 'depth': depth, 'media': media, 'poses': poses, 'scene': scene, 'events': events}
     (session_dir / 'session.json').write_text(json.dumps(session, separators=(',', ':')))
     (session_dir / 'meta.json').write_text(json.dumps(meta, indent=1) + '\n')
 
@@ -352,6 +365,8 @@ def compare_baseline(entry, baselines: Path, update: bool):
 def status(entry):
     if 'skipped' in entry:
         return 'SKIP'
+    if not entry.get('expect'):
+        return 'UNLABELLED'
     if entry['result']['passed']:
         return 'PASS'
     return 'KNOWN' if entry.get('knownIssue') else 'FAIL'
@@ -364,10 +379,33 @@ def write_report(entries, out_dir: Path):
     (out_dir / 'report.html').write_text(template.replace('/*DATA*/null', payload.replace('</', '<\\/')))
 
 
+def auto_scenarios(out_dir: Path):
+    """An unlabelled scenario for every phone recording in simulation/recordings/ that no scenario names yet."""
+    named = set()
+    for path in (SIM / 'scenarios').glob('*.json'):
+        scenario = json.loads(path.read_text())
+        if 'recording' in scenario:
+            named.add((path.parent / scenario['recording']).resolve())
+    auto_dir = out_dir / 'auto-scenarios'
+    if auto_dir.exists():
+        shutil.rmtree(auto_dir)
+    auto_dir.mkdir(parents=True)
+    paths = []
+    for recording in sorted((SIM / 'recordings').glob('*.feelrec')):
+        if recording.resolve() in named:
+            continue
+        stamp = recording.stem.removeprefix('feel-').replace('T', ' ').rstrip('Z')
+        path = auto_dir / f'{recording.stem}.json'
+        path.write_text(json.dumps({'title': f'Walk {stamp}', 'recording': str(recording.resolve()),
+                                    'description': 'Phone recording, not labelled yet. Add a scenario in simulation/scenarios/ to label it.'}))
+        paths.append(path)
+    return paths
+
+
 def run_all(args):
-    paths = [Path(p).resolve() for p in args.scenarios] if args.scenarios else sorted((SIM / 'scenarios').glob('*.json'))
     out_dir = Path(args.out).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
+    paths = [Path(p).resolve() for p in args.scenarios] if args.scenarios else sorted((SIM / 'scenarios').glob('*.json')) + auto_scenarios(out_dir)
     baselines = SIM / 'baselines'
     baselines.mkdir(exist_ok=True)
     entries, failed = [], False
