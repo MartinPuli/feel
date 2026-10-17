@@ -1,0 +1,81 @@
+name: FEEL greenfield software validation
+on:
+  push:
+    branches: [main, 'feel/**', 'codex/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: feel-checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  portable:
+    name: Swift, firmware, and production replay
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {persist-credentials: false}
+      - run: python3 scripts/check_sources.py
+      - run: python3 -m unittest discover -s scripts/tests -v
+      - run: python3 -m unittest discover -s validation/tests -v
+      - run: swift --version && sh ios/scripts/test_portable.sh
+      - run: swift build --package-path ios/Shared/FeelCore
+      - run: sh firmware/test/run_host_tests.sh
+      - name: Standalone single-servo bench state tests
+        run: |
+          mkdir -p firmware/build
+          c++ -std=c++11 -Wall -Wextra -Werror -Wpedantic -O2 -I firmware/bench-single/include firmware/bench-single/test/state_test.cpp -o firmware/build/single-bench-tests
+          firmware/build/single-bench-tests
+      - run: python3 validation/production/run.py
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: production-replay
+          path: .artifacts/production/
+  firmware:
+    name: ESP32 and ESP32-S3 compile
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {persist-credentials: false}
+      - run: python3 -m pip install platformio==6.1.18
+      - run: pio run -j 2 --project-dir firmware
+      - name: Single-servo BLE demo compile (no upload)
+        run: pio run -j 2 --project-dir firmware -e esp32-single-demo
+      - name: Standalone single-servo bench compile (no upload)
+        run: pio run -j 2 --project-dir firmware/bench-single -e esp32-single-center
+      - run: sh firmware/test/build_output_paths.sh
+      - run: sh firmware/test/run_host_tests.sh
+  cad:
+    name: CAD export and geometric checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env: {QT_QPA_PLATFORM: offscreen}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {persist-credentials: false}
+      - run: sudo apt-get update && sudo apt-get install -y openscad
+      - run: sh cad/build.sh
+      - run: python3 cad/tools/check_stl.py stl/*/*.stl
+      - run: python3 cad/tools/cam_sim.py
+      - run: sh firmware/test/run_host_tests.sh
+      - run: python3 validation/check_cam_contract.py
+      - run: python3 -m unittest discover -s cad/test -v
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nominal-cad-measure-before-print
+          path: stl/
+  ios:
+    name: iOS simulator tests and unsigned device builds
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {persist-credentials: false}
+      - run: brew install xcodegen
+      - run: xcodegen --version && xcodebuild -version
+      - run: python3 scripts/fetch_model.py
+      - run: bash scripts/check_ios.sh

@@ -1,0 +1,151 @@
+{
+  "version": "V1 greenfield",
+  "timestamp_utc": "2026-10-16T21:34:58.618560+00:00",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+  "source_commit": "97d6d2631b9e37ab7dbb5d3059453bd41855e046",
+  "working_tree_dirty": true,
+  "available_checks": "PASS",
+  "complete_software_gate": "BLOCKED",
+  "physical_hardware": "NOT VERIFIED",
+  "checks": [
+    {
+      "name": "source-presence",
+      "scope": "production",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 scripts/check_sources.py",
+      "timestamp_utc": "2026-10-16T21:32:11.384965+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/source-presence.log"
+    },
+    {
+      "name": "tooling-regressions",
+      "scope": "production",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest discover -s scripts/tests -v",
+      "timestamp_utc": "2026-10-16T21:32:11.549597+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/tooling-regressions.log"
+    },
+    {
+      "name": "historical-reference-model",
+      "scope": "historical specification model only",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest discover -s validation/tests -v",
+      "timestamp_utc": "2026-10-16T21:32:12.817828+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/historical-reference-model.log"
+    },
+    {
+      "name": "firmware-host",
+      "scope": "production",
+      "command": "sh firmware/test/run_host_tests.sh",
+      "timestamp_utc": "2026-10-16T21:32:12.932273+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/firmware-host.log"
+    },
+    {
+      "name": "swift-core",
+      "scope": "production",
+      "command": "sh ios/scripts/test_portable.sh",
+      "timestamp_utc": "2026-10-16T21:32:15.556645+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/swift-core.log"
+    },
+    {
+      "name": "swift-cli",
+      "scope": "production",
+      "command": "swift build -j 2 --package-path ios/Shared/FeelCore",
+      "timestamp_utc": "2026-10-16T21:32:17.777012+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/swift-cli.log"
+    },
+    {
+      "name": "production-integration",
+      "scope": "compiled production Swift and C++ with synthetic inputs",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 validation/production/run.py --output /workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/simulation",
+      "timestamp_utc": "2026-10-16T21:32:18.593593+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/production-integration.log"
+    },
+    {
+      "name": "firmware-build",
+      "scope": "production",
+      "command": "pio run -j 2 --project-dir firmware",
+      "timestamp_utc": "2026-10-16T21:32:18.758250+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/firmware-build.log"
+    },
+    {
+      "name": "firmware-enabled-compile",
+      "scope": "production",
+      "command": "sh firmware/test/build_output_paths.sh",
+      "timestamp_utc": "2026-10-16T21:32:24.342191+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/firmware-enabled-compile.log"
+    },
+    {
+      "name": "cad-build",
+      "scope": "production",
+      "command": "sh cad/build.sh",
+      "timestamp_utc": "2026-10-16T21:32:30.130487+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/cad-build.log"
+    },
+    {
+      "name": "cad-meshes",
+      "scope": "production",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 cad/tools/check_stl.py stl/puck/chassis.stl stl/puck/face.stl stl/puck/foam_template.stl stl/puck/guide.stl stl/puck/pack_tray.stl stl/puck/pins.stl stl/puck/servo_retainer.stl stl/puck/shaft_A.stl stl/test/coupling_C1.stl stl/test/coupling_C2.stl stl/test/coupling_C3.stl stl/test/crank.stl stl/test/dummy_servo.stl stl/test/foam_template.stl stl/test/frame.stl stl/test/guide.stl stl/test/hole_coupon.stl stl/test/pins_tip15.stl stl/test/pins_tip21.stl stl/test/pitch_coupon.stl stl/test/shaft_A.stl stl/test/shaft_G.stl stl/test/shaft_H.stl stl/test/strip.stl",
+      "timestamp_utc": "2026-10-16T21:34:54.548642+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/cad-meshes.log"
+    },
+    {
+      "name": "cam-model",
+      "scope": "production",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 cad/tools/cam_sim.py",
+      "timestamp_utc": "2026-10-16T21:34:57.221274+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/cam-model.log"
+    },
+    {
+      "name": "cad-tool-tests",
+      "scope": "production",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest discover -s cad/test -v",
+      "timestamp_utc": "2026-10-16T21:34:58.238403+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/cad-tool-tests.log"
+    },
+    {
+      "name": "coreml-resource",
+      "scope": "production",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 scripts/fetch_model.py",
+      "timestamp_utc": "2026-10-16T21:34:58.503620+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v1-validated/coreml-resource.log"
+    },
+    {
+      "name": "ios-platform",
+      "scope": "production",
+      "command": "bash scripts/check_ios.sh",
+      "timestamp_utc": "2026-10-16T21:34:58.618325+00:00",
+      "status": "BLOCKED",
+      "missing": [
+        "tool:xcodegen",
+        "tool:xcodebuild",
+        "tool:xcrun"
+      ],
+      "next_action": "Install the toolchain or implement the missing component; rerun. Original source is not required."
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+Processing esp32-compilecheck (board: esp32dev; platform: espressif32@6.9.0; framework: arduino)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+FEEL SOFTWARE COMPILE CHECK ONLY: output path enabled using UNMEASURED test constants; no upload permitted
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+PLATFORM: Espressif 32 (6.9.0) > Espressif ESP32 Dev Module
+HARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+DEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+ - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 34 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- NimBLE-Arduino @ 2.3.6
+|-- Preferences @ 2.0.0
+Building in release mode
+Retrieving maximum program size .pio/build/esp32-compilecheck/firmware.elf
+Checking size .pio/build/esp32-compilecheck/firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [=         ]  11.0% (used 35916 bytes from 327680 bytes)
+Flash: [=====     ]  46.0% (used 602465 bytes from 1310720 bytes)
+========================= [SUCCESS] Took 2.74 seconds =========================
+
+Processing esp32s3-compilecheck (board: esp32-s3-devkitc-1; platform: espressif32@6.9.0; framework: arduino)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+FEEL SOFTWARE COMPILE CHECK ONLY: output path enabled using UNMEASURED test constants; no upload permitted
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32-s3-devkitc-1.html
+PLATFORM: Espressif 32 (6.9.0) > Espressif ESP32-S3-DevKitC-1-N8 (8 MB QD, No PSRAM)
+HARDWARE: ESP32S3 240MHz, 320KB RAM, 8MB Flash
+DEBUG: Current (esp-builtin) On-board (esp-builtin) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+ - toolchain-riscv32-esp @ 8.4.0+2021r2-patch5 
+ - toolchain-xtensa-esp32s3 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 34 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- NimBLE-Arduino @ 2.3.6
+|-- Preferences @ 2.0.0
+Building in release mode
+Retrieving maximum program size .pio/build/esp32s3-compilecheck/firmware.elf
+Checking size .pio/build/esp32s3-compilecheck/firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [=         ]   9.0% (used 29512 bytes from 327680 bytes)
+Flash: [==        ]  15.0% (used 502473 bytes from 3342336 bytes)
+========================= [SUCCESS] Took 2.60 seconds =========================
+
+Environment           Status    Duration
+--------------------  --------  ------------
+esp32-compilecheck    SUCCESS   00:00:02.737
+esp32s3-compilecheck  SUCCESS   00:00:02.601
+========================= 2 succeeded in 00:00:05.338 =========================

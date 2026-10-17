@@ -1,0 +1,112 @@
+{
+  "mode": "SIMULATION \u2014 specification model, not production software",
+  "schema_version": 1,
+  "fixture_sha256": "5679074778c01ffe97cd4344cc61643bb8c021260286f7ea2bb2855bf3e1be23",
+  "seed": 20261016,
+  "fixture_provenance": "Hand-authored expected packet/state fixtures. Seeded drop choices frozen on 2026-10-16. No sensor recordings or production code supplied.",
+  "limitations": [
+    "This is a new specification model. The supplied remote repository had no production source; there is no shared encoder/decoder implementation or Swift/C++ parity evidence yet.",
+    "The packet is exactly nine bytes with no checksum, timestamp, sender boot ID, or sensor-health field. Valid-byte corruption and old packets after 256 sequence values are not detectable from these bytes alone.",
+    "Band 0 means no pin request. It cannot distinguish free space, unknown depth, lost tracking, stopped input, or a model timeout. Highlight on a zero band cannot raise a target pin.",
+    "Sequence observe/forward_only, exact timeout boundary, disconnect behavior, freshness thresholds, field of view, edge rounding, conflict resolution, neutral choices and timing are reference policies pending recovery of docs/PROTOCOL.md and production code.",
+    "Nominal gap angles derive from the handoff; 40 ms gap / 120 ms settling are configurable unmeasured illustrations. These phases do not demonstrate collision freedom, physical pin return, no neighboring-pin activation, torque, or timing.",
+    "Synthetic inputs are already grouped into seven sectors. Pose is metadata only. No ARKit projection, camera orientation, CoreML, UWB, BLE radio, mechanical model, servo output, or physical control is present.",
+    "No live sensor data appears anywhere in this replay. Every view is SIMULATION. Future production adapters must pass the golden vectors and their own device/build tests."
+  ],
+  "scenario_count": 18,
+  "event_count": 77,
+  "passed": true,
+  "scenarios": [
+    {
+      "id": "startup_and_band_selection",
+      "passed": true,
+      "steps": 3
+    },
+    {
+      "id": "timeout_boundary",
+      "passed": true,
+      "steps": 5
+    },
+    {
+      "id": "nominal_gap_transition",
+      "passed": true,
+      "steps": 6
+    },
+    {
+      "id": "invalid_packets_do_not_refresh",
+      "passed": true,
+      "steps": 7
+    },
+    {
+      "id": "sequence_wrap",
+      "passed": true,
+      "steps": 4
+    },
+    {
+      "id": "forward_gap",
+      "passed": true,
+      "steps": 4
+    },
+    {
+      "id": "observe_duplicate_and_reorder",
+      "passed": true,
+      "steps": 3
+    },
+    {
+      "id": "optional_forward_only_policy",
+      "passed": true,
+      "steps": 5
+    },
+    {
+      "id": "disconnect_and_reconnect",
+      "passed": true,
+      "steps": 5
+    },
+    {
+      "id": "synthetic_tracking_loss",
+      "passed": true,
+      "steps": 3
+    },
+    {
+      "id": "synthetic_depth_freshness",
+      "passed": true,
+      "steps": 4
+    },
+    {
+      "id": "target_lost_and_conflict",
+      "passed": true,
+      "steps": 3
+    },
+    {
+      "id": "delayed_detection_result",
+      "passed": true,
+      "steps": 3
+    },
+    {
+      "id": "distance_edges_reference_policy",
+      "passed": true,
+      "steps": 2
+    },
+    {
+      "id": "legal_byte_corruption_is_undetectable",
+      "passed": true,
+      "steps": 2
+    },
+    {
+      "id": "seeded_packet_loss",
+      "passed": true,
+      "steps": 14
+    },
+    {
+      "id": "unknown_depth_pose_metadata",
+      "passed": true,
+      "steps": 2
+    },
+    {
+      "id": "empty_highlight_is_not_a_pin",
+      "passed": true,
+      "steps": 2
+    }
+  ],
+  "html_sha256": "dd3818f61d061dda837c790c5a9ec30efbe80bf1e73af70fe1aed30cef32de68"
+}

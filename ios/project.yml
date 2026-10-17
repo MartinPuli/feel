@@ -1,0 +1,111 @@
+name: Lantern
+options:
+  bundleIdPrefix: org.feel.hackharvard
+  deploymentTarget:
+    iOS: '16.0'
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    SWIFT_STRICT_CONCURRENCY: minimal
+    IPHONEOS_DEPLOYMENT_TARGET: '16.0'
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ''
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    CURRENT_PROJECT_VERSION: '1'
+    MARKETING_VERSION: '1.0.0'
+packages:
+  FeelCore:
+    path: Shared/FeelCore
+targets:
+  Lantern:
+    type: application
+    platform: iOS
+    sources:
+      - path: Lantern
+        excludes: ['Models/README.md']
+      - path: Shared/Apple
+    info:
+      path: Lantern/Info.plist
+      properties:
+        CFBundleDisplayName: FEEL
+        NSCameraUsageDescription: FEEL uses the camera and LiDAR to estimate nearby obstacles and find selected targets.
+        NSBluetoothAlwaysUsageDescription: FEEL sends tactile commands to your chosen palm puck.
+        NSLocalNetworkUsageDescription: FEEL finds a teammate's Beacon phone and exchanges Nearby Interaction tokens after both people agree.
+        NSNearbyInteractionUsageDescription: FEEL measures the relative direction and distance of your chosen teammate's phone.
+        NSBonjourServices: ['_feel-beacon._tcp', '_feel-beacon._udp']
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationLandscapeRight]
+        UIRequiresFullScreen: true
+        ITSAppUsesNonExemptEncryption: false
+    dependencies:
+      - package: FeelCore
+      - sdk: ARKit.framework
+      - sdk: CoreBluetooth.framework
+      - sdk: CoreML.framework
+      - sdk: Vision.framework
+      - sdk: NearbyInteraction.framework
+      - sdk: MultipeerConnectivity.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.feel.hackharvard.lantern
+        TARGETED_DEVICE_FAMILY: '1,2'
+        GENERATE_INFOPLIST_FILE: NO
+  Beacon:
+    type: application
+    platform: iOS
+    sources: [Beacon, Shared/Apple]
+    info:
+      path: Beacon/Info.plist
+      properties:
+        CFBundleDisplayName: FEEL Beacon
+        NSCameraUsageDescription: Camera assistance may improve Nearby Interaction direction estimates.
+        NSLocalNetworkUsageDescription: Beacon accepts your chosen teammate's connection and exchanges Nearby Interaction tokens.
+        NSNearbyInteractionUsageDescription: Beacon lets a teammate measure the relative direction and distance to this phone while both apps are open.
+        NSBonjourServices: ['_feel-beacon._tcp', '_feel-beacon._udp']
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        ITSAppUsesNonExemptEncryption: false
+    dependencies:
+      - package: FeelCore
+      - sdk: ARKit.framework
+      - sdk: NearbyInteraction.framework
+      - sdk: MultipeerConnectivity.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.feel.hackharvard.beacon
+        TARGETED_DEVICE_FAMILY: '1'
+        GENERATE_INFOPLIST_FILE: NO
+  LanternTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [LanternTests]
+    dependencies:
+      - target: Lantern
+      - package: FeelCore
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+  LanternUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [LanternUITests]
+    dependencies:
+      - target: Lantern
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Lantern:
+    build:
+      targets:
+        Lantern: all
+        LanternTests: [test]
+        LanternUITests: [test]
+    test:
+      gatherCoverageData: true
+      targets: [LanternTests, LanternUITests]
+  Beacon:
+    build:
+      targets:
+        Beacon: all

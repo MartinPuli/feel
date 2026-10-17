@@ -1,0 +1,117 @@
+{
+  "timestamp_utc": "2026-10-16T20:47:42.515733+00:00",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+  "v2_gate": "BLOCKED",
+  "physical_hardware": "NOT VERIFIED",
+  "v3": "NOT STARTED",
+  "checks": [
+    {
+      "name": "source-presence",
+      "scope": "production",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 scripts/check_sources.py",
+      "timestamp_utc": "2026-10-16T20:47:42.170809+00:00",
+      "status": "BLOCKED",
+      "exit_code": 2,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v2-checks/source-presence.log"
+    },
+    {
+      "name": "reference-model-tests",
+      "scope": "specification model",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest discover -s validation/tests -v",
+      "timestamp_utc": "2026-10-16T20:47:42.235341+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v2-checks/reference-model-tests.log"
+    },
+    {
+      "name": "reference-scenarios",
+      "scope": "specification model",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 validation/run_scenarios.py --output /workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v2-checks/simulation",
+      "timestamp_utc": "2026-10-16T20:47:42.400291+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v2-checks/reference-scenarios.log"
+    },
+    {
+      "name": "firmware-host",
+      "scope": "production",
+      "command": "sh firmware/test/run_host_tests.sh",
+      "timestamp_utc": "2026-10-16T20:47:42.515006+00:00",
+      "status": "BLOCKED",
+      "missing": [
+        "firmware/test/run_host_tests.sh"
+      ],
+      "next_action": "Import original sources or provide the listed toolchain; rerun."
+    },
+    {
+      "name": "firmware-build",
+      "scope": "production",
+      "command": "pio run --project-dir firmware",
+      "timestamp_utc": "2026-10-16T20:47:42.515189+00:00",
+      "status": "BLOCKED",
+      "missing": [
+        "firmware/platformio.ini",
+        "tool:pio"
+      ],
+      "next_action": "Import original sources or provide the listed toolchain; rerun."
+    },
+    {
+      "name": "cad-build",
+      "scope": "production",
+      "command": "sh cad/build.sh",
+      "timestamp_utc": "2026-10-16T20:47:42.515260+00:00",
+      "status": "BLOCKED",
+      "missing": [
+        "cad/build.sh",
+        "cad/params.scad"
+      ],
+      "next_action": "Import original sources or provide the listed toolchain; rerun."
+    },
+    {
+      "name": "cad-meshes",
+      "scope": "production",
+      "timestamp_utc": "2026-10-16T20:47:42.515524+00:00",
+      "status": "BLOCKED",
+      "command": "python3 cad/tools/check_stl.py stl/*/*.stl",
+      "missing": [
+        "stl/*/*.stl"
+      ]
+    },
+    {
+      "name": "cam-model",
+      "scope": "production",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 cad/tools/cam_sim.py",
+      "timestamp_utc": "2026-10-16T20:47:42.515535+00:00",
+      "status": "BLOCKED",
+      "missing": [
+        "cad/tools/cam_sim.py"
+      ],
+      "next_action": "Import original sources or provide the listed toolchain; rerun."
+    },
+    {
+      "name": "ios-simulator",
+      "scope": "production",
+      "command": "bash scripts/check_ios.sh",
+      "timestamp_utc": "2026-10-16T20:47:42.515565+00:00",
+      "status": "BLOCKED",
+      "missing": [
+        "ios/project.yml",
+        "tool:xcodegen",
+        "tool:xcodebuild",
+        "tool:xcrun"
+      ],
+      "next_action": "Import original sources or provide the listed toolchain; rerun."
+    },
+    {
+      "name": "production-contract",
+      "scope": "cross-layer production contract",
+      "command": "sh validation/adapters/run_contract_tests.sh",
+      "timestamp_utc": "2026-10-16T20:47:42.515705+00:00",
+      "status": "BLOCKED",
+      "missing": [
+        "validation/adapters/run_contract_tests.sh"
+      ],
+      "next_action": "Import original sources or provide the listed toolchain; rerun."
+    }
+  ]
+}

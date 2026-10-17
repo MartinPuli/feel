@@ -1,15 +1,83 @@
-# FEEL — HackHarvard 2026
+> **FS0307 120° revision:** current CAD and firmware use 0/40/80/120° band positions.
+> See [design and validation](docs/FS0307-120-DESIGN.md). Old 175° shafts/calibration
+> are superseded. Default seven-servo PWM is disabled pending measured limits.
+> The opt-in [single-servo iPhone demo](docs/SINGLE-SERVO-IPHONE.md) has user-reported live motion.
 
-**V2: BLOCKED — original application, firmware, CAD, and tests have not been supplied. Physical hardware: NOT VERIFIED. V3: NOT STARTED.**
+# FEEL
 
-FEEL is the team's proposed iPhone-to-tactile-puck perception prototype: seven servo-driven columns, four selectable pins per column, and nine-byte Bluetooth commands. One pin per column can be selected; this is not a 28-actuator display.
+A prototype that translates indoor depth and target direction into a **7-column ×
+4-pin tactile puck**, using a LiDAR iPhone, BLE, an ESP32 and seven servos.
 
-On October 16, the connected GitHub API reported this repository empty (no commits or branches). The three supplied documents describe substantial prior work on another machine. Those claims are retained as handoff history, not reproduced test results. The preparation work is on [`feel/v2-preparation`](https://github.com/MartinPuli/hackharvard/tree/feel/v2-preparation).
+**Greenfield recreation from HANDOFF-v7.md.** No original iOS, firmware or CAD
+source was available. Historical “as built” statements in that document are not
+verification of this repository. The earlier preparation work is preserved on
+`feel/v2-preparation`; it uses the old version numbering.
 
-## Team action needed
+| Branch | Purpose |
+|---|---|
+| `feel/v1-foundation` | Swift iOS + perception + BLE, ESP32, CAD, production replay |
+| `feel/v2-spatial-memory` | Remember / Recall / Return, created only after V1 validation |
+| `feel/v3-advanced` | Optional advanced work, only after V1 and V2 |
 
-Upload the **original project folder including uncommitted source and tests**, or give the original repository URL. Keep CAD, firmware, iOS, models and earlier handoffs; exclude credentials, signing keys, personal recordings, caches and build products. Preserve original Git history where available. Do not force-push or replace another teammate's work.
+To set up the board on your Mac, start with [SETUP-MAC-ESP32.md](docs/SETUP-MAC-ESP32.md).
 
-Read `docs/RELEASE-STATUS.md` on the preparation branch for verified results and the exact blockers. The simulator on that branch is a new, explicitly labeled specification model. It cannot prove the missing software or physical mechanism works.
+See [release status](docs/RELEASE-STATUS.md) for actual checks and blockers.
+**One-servo motion has been observed; full travel, seven-servo mechanics and sensing accuracy remain unverified.**
 
-V3 Spatial Memory must remain separate and may start only after the actual V2 software gates pass. Eligibility for pre-event code/CAD needs organizer confirmation; do not hide prior work.
+## Run software checks
+
+Requirements: Swift5.9+ (Swift6.1.3 used locally), C++11 compiler, Python3.10+,
+OpenSCAD2021.01+, PlatformIO6.1.18. macOS/Xcode and XcodeGen are needed for the iOS
+platform apps. Linux tests compile the same Swift core and C++ controller used by
+the device adapters; Linux cannot compile Apple frameworks.
+
+```sh
+sh ios/scripts/test_portable.sh
+sh firmware/test/run_host_tests.sh
+sh validation/adapters/run_contract_tests.sh
+# Open .artifacts/production/index.html for the recorded offline replay.
+pio run -j 2 --project-dir firmware
+sh cad/build.sh
+python3 cad/tools/check_stl.py stl/*/*.stl
+python3 cad/tools/cam_sim.py
+python3 scripts/run_v1_checks.py
+```
+
+Full runner exits0 for complete pass,1 for failure,2 for blocked/not-run checks.
+The report separates available checks from the complete software gate.
+
+On a Mac:
+
+```sh
+python3 scripts/fetch_model.py  # Apple CoreML model; pinned revision + SHA-256
+bash scripts/check_ios.sh      # simulator tests + unsigned device builds
+cd ios
+xcodegen generate
+open Lantern.xcodeproj
+```
+
+Then select your signing team and physical device in Xcode. Do not infer LiDAR,
+BLE, NI, tactile usability or mechanical reliability from the simulator.
+
+## Source map
+
+- [`ios/`](ios/README.md): Lantern/FEEL app, Beacon companion, pure Swift core/tests.
+- [`firmware/`](firmware/README.md): shared C++ controller, ESP32 adapters, host CLI/tests.
+- [`cad/`](cad/README.md): parametric OpenSCAD test rig, puck, cams, pins and forearm pack.
+- [`protocol/`](protocol/vectors.json): exact wire cases; [`docs/PROTOCOL.md`](docs/PROTOCOL.md) gives policy.
+- [`validation/production/`](validation/production/README.md): compiled cross-layer replay.
+- `validation/feel_model.py`: historical independent reference model, not device code.
+
+## Build and demonstrate honestly
+
+Use [hardware bring-up](docs/HARDWARE-BRINGUP.md), [calibration](docs/CALIBRATION.md),
+[demo](docs/DEMO.md), [Devpost draft](docs/DEVPOST.md), and [eligibility disclosure](docs/ELIGIBILITY.md).
+
+Only one pin per column can be selected. Neutral is not proof of clear space.
+Servo commands are not position measurements. The handoff's servo/horn dimensions
+and supply/pulse endpoints require physical confirmation before final printing or
+powered integration. Door candidates are heuristics; trained object detection is
+provided through a separate model with its own limitations.
+
+FEEL is an experimental perception interface, not a certified mobility aid or a
+route planner. Test indoors with a spotter after the bench checklist passes.

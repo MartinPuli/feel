@@ -1,0 +1,11 @@
+BLOCKED  source-presence: /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 scripts/check_sources.py
+PASS     reference-model-tests: /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m unittest discover -s validation/tests -v
+PASS     reference-scenarios: /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 validation/run_scenarios.py --output /workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v2-checks/simulation
+BLOCKED  firmware-host: sh firmware/test/run_host_tests.sh
+BLOCKED  firmware-build: pio run --project-dir firmware
+BLOCKED  cad-build: sh cad/build.sh
+BLOCKED  cam-model: /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 cad/tools/cam_sim.py
+BLOCKED  ios-simulator: bash scripts/check_ios.sh
+BLOCKED  production-contract: sh validation/adapters/run_contract_tests.sh
+V2 gate: BLOCKED; physical hardware: NOT VERIFIED
+Evidence: /workspace/scratch/47edcf5d6ea3/hackharvard/.artifacts/v2-checks/report.json

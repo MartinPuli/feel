@@ -1,0 +1,3 @@
+PASS production replay viewer: 28 pins, next, slider, play/pause, desktop/mobile, no JS errors or horizontal overflow.
+PASS actual-STL viewer: 12 layers, WebGL rendering, layer toggle, explode changes pixels, reset, mobile width, no JS errors.
+Headless Chrome 155.0.8059.84, Playwright. Screenshots visually inspected. No real sensor or hardware input.

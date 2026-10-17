@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "label": "SIMULATION \u2014 compiled production logic, synthetic sensors and motors",
+  "physical_hardware": "NOT VERIFIED",
+  "seed": 20261016,
+  "assertions": 1518,
+  "status": "PASS",
+  "vectors_sha256": "563212f59a2d9cf8cc80c62de475cfdb48f9816da1823c23cd2dd0c1dd7b320a",
+  "motor_model": {
+    "speed_deg_s": 300,
+    "measured": false,
+    "jam_feedback": false
+  },
+  "firmware_states": 558
+}

@@ -1,0 +1,3 @@
+# Preserve generated evidence exactly; compiler logs can contain trailing spaces.
+*.log -whitespace
+cad/evidence/*.csv whitespace=cr-at-eol

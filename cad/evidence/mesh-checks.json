@@ -1,0 +1,485 @@
+{
+  "scope": "mesh topology only; physical fit/strength NOT VERIFIED",
+  "files": [
+    {
+      "path": "stl/test/coupling_C1.stl",
+      "pass": true,
+      "triangles": 1140,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.0,
+          -5.0,
+          0.0
+        ],
+        [
+          5.0,
+          5.0,
+          7.0
+        ]
+      ],
+      "volume_mm3": 447.534,
+      "errors": []
+    },
+    {
+      "path": "stl/test/coupling_C2.stl",
+      "pass": true,
+      "triangles": 1148,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.0,
+          -5.0,
+          0.0
+        ],
+        [
+          5.0,
+          5.0,
+          7.0
+        ]
+      ],
+      "volume_mm3": 439.451,
+      "errors": []
+    },
+    {
+      "path": "stl/test/coupling_C3.stl",
+      "pass": true,
+      "triangles": 724,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.0,
+          -5.0,
+          0.0
+        ],
+        [
+          5.0,
+          5.0,
+          7.0
+        ]
+      ],
+      "volume_mm3": 483.422,
+      "errors": []
+    },
+    {
+      "path": "stl/test/crank.stl",
+      "pass": true,
+      "triangles": 734,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.0,
+          -5.0,
+          0.0
+        ],
+        [
+          26.0,
+          5.0,
+          14.899999618530273
+        ]
+      ],
+      "volume_mm3": 1225.003,
+      "errors": []
+    },
+    {
+      "path": "stl/test/dummy_servo.stl",
+      "pass": true,
+      "triangles": 220,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -4.150000095367432,
+          -38.29999923706055,
+          0.0
+        ],
+        [
+          4.150000095367432,
+          -22.489999771118164,
+          23.0
+        ]
+      ],
+      "volume_mm3": 2273.535,
+      "errors": []
+    },
+    {
+      "path": "stl/test/foam_template.stl",
+      "pass": true,
+      "triangles": 988,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -4.5,
+          -14.5,
+          0.0
+        ],
+        [
+          4.5,
+          34.5,
+          1.2000000476837158
+        ]
+      ],
+      "volume_mm3": 455.201,
+      "errors": []
+    },
+    {
+      "path": "stl/test/frame.stl",
+      "pass": true,
+      "triangles": 2060,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -11.0,
+          -44.400001525878906,
+          0.0
+        ],
+        [
+          11.0,
+          44.400001525878906,
+          32.5
+        ]
+      ],
+      "volume_mm3": 8550.188,
+      "errors": []
+    },
+    {
+      "path": "stl/test/guide.stl",
+      "pass": true,
+      "triangles": 2004,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -11.0,
+          -40.0,
+          0.0
+        ],
+        [
+          11.0,
+          20.0,
+          10.399999618530273
+        ]
+      ],
+      "volume_mm3": 1804.959,
+      "errors": []
+    },
+    {
+      "path": "stl/test/hole_coupon.stl",
+      "pass": true,
+      "triangles": 4620,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -30.5,
+          -8.5,
+          0.0
+        ],
+        [
+          30.5,
+          8.5,
+          5.0
+        ]
+      ],
+      "volume_mm3": 4694.791,
+      "errors": []
+    },
+    {
+      "path": "stl/test/pins_tip15.stl",
+      "pass": true,
+      "triangles": 10518,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.0,
+          -17.0,
+          0.0
+        ],
+        [
+          5.0,
+          37.0,
+          12.196788787841797
+        ]
+      ],
+      "volume_mm3": 733.391,
+      "errors": []
+    },
+    {
+      "path": "stl/test/pins_tip21.stl",
+      "pass": true,
+      "triangles": 10374,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.0,
+          -17.0,
+          0.0
+        ],
+        [
+          5.0,
+          37.0,
+          12.195504188537598
+        ]
+      ],
+      "volume_mm3": 757.789,
+      "errors": []
+    },
+    {
+      "path": "stl/test/pitch_coupon.stl",
+      "pass": true,
+      "triangles": 1740,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -25.0,
+          -15.0,
+          0.0
+        ],
+        [
+          25.0,
+          15.0,
+          4.0
+        ]
+      ],
+      "volume_mm3": 3205.426,
+      "errors": []
+    },
+    {
+      "path": "stl/test/shaft_A.stl",
+      "pass": true,
+      "triangles": 6794,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.7202467918396,
+          -3.799999952316284,
+          0.0
+        ],
+        [
+          3.799999952316284,
+          5.800000190734863,
+          58.0
+        ]
+      ],
+      "volume_mm3": 897.294,
+      "errors": []
+    },
+    {
+      "path": "stl/test/shaft_G.stl",
+      "pass": true,
+      "triangles": 6794,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.71188497543335,
+          -3.799999952316284,
+          0.0
+        ],
+        [
+          3.799999952316284,
+          5.800000190734863,
+          58.0
+        ]
+      ],
+      "volume_mm3": 893.645,
+      "errors": []
+    },
+    {
+      "path": "stl/test/shaft_H.stl",
+      "pass": true,
+      "triangles": 6794,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.724632263183594,
+          -3.799999952316284,
+          0.0
+        ],
+        [
+          3.799999952316284,
+          5.800000190734863,
+          58.0
+        ]
+      ],
+      "volume_mm3": 898.658,
+      "errors": []
+    },
+    {
+      "path": "stl/test/strip.stl",
+      "pass": true,
+      "triangles": 1772,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -11.0,
+          -20.0,
+          0.0
+        ],
+        [
+          11.0,
+          40.0,
+          2.5
+        ]
+      ],
+      "volume_mm3": 3045.913,
+      "errors": []
+    },
+    {
+      "path": "stl/puck/chassis.stl",
+      "pass": true,
+      "triangles": 7668,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -50.5,
+          -44.400001525878906,
+          0.0
+        ],
+        [
+          50.5,
+          44.400001525878906,
+          32.5
+        ]
+      ],
+      "volume_mm3": 54274.832,
+      "errors": []
+    },
+    {
+      "path": "stl/puck/face.stl",
+      "pass": true,
+      "triangles": 24412,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -44.29999923706055,
+          -44.400001525878906,
+          0.0
+        ],
+        [
+          44.29999923706055,
+          44.35803985595703,
+          5.5
+        ]
+      ],
+      "volume_mm3": 26342.052,
+      "errors": []
+    },
+    {
+      "path": "stl/puck/foam_template.stl",
+      "pass": true,
+      "triangles": 5810,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -40.5,
+          -14.5,
+          0.0
+        ],
+        [
+          40.5,
+          34.5,
+          1.2000000476837158
+        ]
+      ],
+      "volume_mm3": 4183.26,
+      "errors": []
+    },
+    {
+      "path": "stl/puck/guide.stl",
+      "pass": true,
+      "triangles": 8356,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -41.5,
+          -39.0,
+          0.0
+        ],
+        [
+          41.5,
+          19.0,
+          10.399999618530273
+        ]
+      ],
+      "volume_mm3": 8176.366,
+      "errors": []
+    },
+    {
+      "path": "stl/puck/pack_tray.stl",
+      "pass": true,
+      "triangles": 1960,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -40.5,
+          -56.0,
+          0.0
+        ],
+        [
+          40.5,
+          56.0,
+          13.0
+        ]
+      ],
+      "volume_mm3": 34529.96,
+      "errors": []
+    },
+    {
+      "path": "stl/puck/pins.stl",
+      "pass": true,
+      "triangles": 68996,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -41.0,
+          -17.0,
+          0.0
+        ],
+        [
+          41.0,
+          37.0,
+          15.170256614685059
+        ]
+      ],
+      "volume_mm3": 5418.898,
+      "errors": []
+    },
+    {
+      "path": "stl/puck/servo_retainer.stl",
+      "pass": true,
+      "triangles": 204,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -40.150001525878906,
+          -2.0,
+          0.0
+        ],
+        [
+          40.150001525878906,
+          2.0,
+          7.0
+        ]
+      ],
+      "volume_mm3": 2242.328,
+      "errors": []
+    },
+    {
+      "path": "stl/puck/shaft_A.stl",
+      "pass": true,
+      "triangles": 6794,
+      "components": 1,
+      "bounds_mm": [
+        [
+          -5.7202467918396,
+          -3.799999952316284,
+          0.0
+        ],
+        [
+          3.799999952316284,
+          5.800000190734863,
+          58.0
+        ]
+      ],
+      "volume_mm3": 897.294,
+      "errors": []
+    }
+  ]
+}
