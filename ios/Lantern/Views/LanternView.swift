@@ -203,6 +203,7 @@ struct LanternView: View {
                     } else if panel == .voice {
                         VoiceSetup(voice: voice) { closePanel() }
                         WhereIsSetup(model: model)
+                        VenuePackSetup(venue: model.venueInfo)
                     } else {
                         settings
                     }

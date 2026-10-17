@@ -49,6 +49,7 @@ final class LanternModel:ObservableObject {
     @Published var voiceControlsExpanded: Bool?
     private var voiceTeammates: [String: MCPeerID] = [:]
     let voice: RealtimeVoiceSession
+    let venueInfo = VenueInfo()
     @Published private(set) var chalkConfiguration: ChalkConfiguration?
     @Published private(set) var heldTarget: HeldTarget?
     @Published private(set) var whereIsNotice: String?
@@ -212,6 +213,7 @@ final class LanternModel:ObservableObject {
             beginWhereIs(thing)
             return ["status": "Looking for the \(thing) with one camera photo. The result arrives as an observation in a few seconds; call get_status to check.",
                     "pending": true]
+        case .venueInfo(let question): return venueInfo.answer(question)
         case .find(let target):
             cancelWhereIs()
             guard mode == .live else { return ["error": "Camera is not live. Ask the user whether to start it."] }
