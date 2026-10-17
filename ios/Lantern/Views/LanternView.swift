@@ -308,13 +308,10 @@ struct LanternView: View {
 
     private var settings: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Button("Assistant settings") { presentedPanel = .voice }
-                .buttonStyle(FeelSecondaryButtonStyle())
-                .accessibilityIdentifier("voiceSettings")
             if model.mode == .live {
                 LiveSetup(model: model)
             } else {
-                Text("Start the camera to calibrate and choose a target.")
+                Text("Start the camera to calibrate.")
                     .foregroundStyle(FeelTheme.secondary)
             }
             Button("Simulation") {
@@ -324,13 +321,9 @@ struct LanternView: View {
             }
             .buttonStyle(FeelSecondaryButtonStyle())
             .disabled(model.mode == .simulation)
-            Text("Synthetic inputs. No simulated movement is sent to hardware.")
-                .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
             DisclosureGroup("Details") {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(model.packet.hex).font(FeelTypography.mono).textSelection(.enabled)
-                    Text("The dots show the puck, not positions in the camera image. Columns run left to right; rows run from near (wrist) to far (fingers). Filled dots show depth; a ring marks target bearing.")
-                    Text("Neutral pins do not mean the area is clear. Unknown depth and lost tracking produce neutral pins. Indoor supervised prototype; use your usual mobility aid.")
                 }.font(FeelTypography.footnote).padding(.top, 12)
             }
         }
@@ -449,7 +442,7 @@ private struct LiveSetup: View {
             FeelSection(title: "Floor calibration", systemImage: "viewfinder") {
                 Label(model.calibrated ? "Floor calibrated" : "Calibration required", systemImage: model.calibrated ? "checkmark.circle" : "exclamationmark.circle")
                     .font(FeelTypography.label)
-                Text("Mount landscape-left: rear camera forward, top edge to your left; keep the phone upright. Measure lens height above the floor.")
+                Text("Phone landscape-left, rear camera forward.")
                     .font(FeelTypography.subheadline)
                 Stepper(value: $model.cameraHeight, in: 0.6...2.1, step: 0.05) {
                     VStack(alignment: .leading, spacing: 4) {
@@ -473,9 +466,6 @@ private struct LiveSetup: View {
                     }
                 }.pickerStyle(.menu)
                 Text(model.detectorStatus).font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
-                if model.finder == .door {
-                    Text("Door candidate uses rectangle shape. It cannot confirm a door or a safe opening.").font(FeelTypography.footnote)
-                }
                 if model.finder == .teammate { PeerPanel(peer: model.peer) }
             }
         }
@@ -509,10 +499,6 @@ struct PuckConnectionPanel: View {
             }
             Button("Disconnect") { puck.disconnect() }.buttonStyle(FeelSecondaryButtonStyle())
                 .accessibilityHint("Also cancels a pending connection.")
-            if puck.devices.isEmpty && !puck.isConnected {
-                Text("Turn on your puck. Choose it when it appears.")
-                    .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
-            }
         }
         .onAppear { if !puck.isConnected { puck.scan() } }
         .onDisappear { puck.stopScanning() }
@@ -527,14 +513,9 @@ struct PeerPanel: View {
             Button("Find Beacon phones") { peer.start() }
                 .buttonStyle(FeelSecondaryButtonStyle()).disabled(peer.running)
             Button("Stop finding") { peer.stop() }.buttonStyle(FeelSecondaryButtonStyle())
-            if peer.running {
-                Text("If no phones appear or the connection fails, stop finding and try again.")
-                    .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
-            }
             ForEach(peer.peers, id: \.self) { person in
                 Button("Find \(person.displayName)") { peer.invite(person) }.buttonStyle(FeelSecondaryButtonStyle())
             }
-            Text("The teammate accepts on Beacon. Keep both apps foreground. Direction can be unavailable; no tactile target is sent without a current AR direction.").font(FeelTypography.footnote)
         }
     }
 }
