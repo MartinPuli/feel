@@ -2,7 +2,7 @@
 pinned in the deployment rather than chosen by each caller."""
 from chalk import NamedQuery
 
-from .features import ObjectHistory, Venue
+from .features import ObjectHistory, RoomMemory, Venue
 
 last_seen = NamedQuery(
     name="last_seen",
@@ -17,5 +17,13 @@ venue_pack = NamedQuery(
     input=[Venue.id],
     output=[Venue.pack, Venue.pack_sha256],
     description="The downloadable venue pack built from reviewed entries, valid seven days.",
+    owner="feel",
+)
+
+room_anchors = NamedQuery(
+    name="room_anchors",
+    input=[RoomMemory.id],
+    output=[RoomMemory.spoken, RoomMemory.targets, RoomMemory.targets_count, RoomMemory.last_seen_at],
+    description="What is remembered at one printed FEEL tag, from shared sightings; id is '<venue_id>:<tag_id>'.",
     owner="feel",
 )

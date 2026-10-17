@@ -1,3 +1,14 @@
+> **Room memory on `feel/chalk-track` (2026-10-17, night):** a printed FEEL tag (`ios/Lantern/Resources/feel-tag-01.png`,
+> printed 20 cm wide) recognized by ARKit image detection gives the room a frame; targets confirmed with "found it" or by
+> arriving at a Where-is target are stored in that frame on the phone (`RoomMemoryStore`) and, when the user shares them,
+> aggregated by Chalk (`Anchor` → `RoomMemory`, named query `room_anchors`, the `anchors` table with an opt-in `shared`
+> flag). A later "where is the exit" with the tag seen points the pins at once and answers "Last time the exit was about
+> 2 meters ahead to your left. Pins point there. Say photo to check again."; `get_status` reports `room_memory` hits and
+> misses. Software checks on this Mac: chalk 78 tests (5 skip without chalkpy, pass with it), FeelCore 224, Lantern 154
+> unit tests on the simulator. NOT RUN on a device: ARKit's recognition of the printed tag and the frame it returns, the
+> accuracy of a remembered position after relocalization, and the spoken cue behaviour. Still pending: the Chalk
+> deployment, the SQL against a live Postgres, and the phone's write of anchors to Supabase.
+
 > **`feel/chalk-track` (2026-10-17 evening):** Chalk context features (`chalk/feel_context`: Find, ObjectHistory, VenueEntry,
 > Venue with named queries `last_seen` and `venue_pack`), Postgres schema and seed, a standard-library query client, a `--local`
 > evaluation mode with a synthetic dataset (12-row run recorded in `docs/evidence/chalk-synthetic/`), the open-side finder

@@ -223,7 +223,43 @@ def sensing() -> Figure:
     return f
 
 
+def room_memory() -> Figure:
+    f = Figure(1100, 560, 'Room memory: a printed tag gives the room a frame, so a remembered target answers before any photo',
+               'A printed FEEL tag recognized by ARKit image detection gives the room a coordinate frame; targets the user confirmed earlier are stored in that frame on the phone and, when shared, aggregated by Chalk, so a later where-is question points the pins at once while the photo path stays one word away.')
+    f.group(20, 70, 680, 460, 'Phone')
+    f.box(40, 90, 200, 86, 'Printed FEEL tag', ('feel-tag-01, printed 20 cm wide', 'ARKit image detection', 'frame within about a second'))
+    f.box(270, 90, 200, 86, 'Tag frame', ('x right · y out · z down', 'world ↔ tag coordinates', 'bound to one world epoch'))
+    f.box(500, 90, 180, 86, 'Local anchors', ('JSON per tag id', 'Application Support', 'newest 200 kept'))
+    f.arrow(240, 133, 270, 133)
+    f.arrow(470, 133, 500, 133)
+    f.box(40, 220, 200, 70, '"Where is the exit?"', ('tag seen this session?', 'label remembered here?'), accent=True)
+    f.box(270, 212, 200, 86, 'Remembered place', ('median of the last 20', 'sightings for that label,', 'in this world only'))
+    f.arrow(240, 255, 270, 255)
+    f.arrow(590, 176, 590, 212, label='anchors for this tag', label_dx=68, label_dy=4)
+    f.box(500, 212, 180, 100, 'Held target from memory', ('pins point there at once', '"Last time the exit was about', '2 meters ahead to your left.', 'Say photo to check again."'), accent=True)
+    f.arrow(470, 255, 500, 255, label='hit', label_dy=-8)
+    f.box(500, 340, 180, 86, 'Where-is photo path', ('no memory, or "photo"', 'gateway or on-device, 2–12 s', 'same held-target code'), fill=PAPER, edge=MUTED)
+    f.arrow(370, 298, 500, 383, color=MUTED, via=[(370, 383)], label='miss · "photo"', label_dx=0, label_dy=-6)
+    f.box(40, 430, 200, 70, 'Confirmed find', ('"found it" · arrival at the target', 'target → tag frame → anchor'))
+    f.arrow(240, 465, 590, 176, color=MUTED, via=[(690, 465), (690, 140)], label='append', label_dx=-28, label_dy=-6)
+    f.box(270, 430, 200, 70, 'get_status: room_memory', ('tag · remembered labels', 'hits · misses'), small=True)
+
+    f.group(740, 70, 340, 460, 'Chalk: shared memory')
+    f.box(760, 90, 300, 70, 'anchors table', ('Supabase Postgres, shared = true only', 'user · venue · tag · label · x y z · seen_at'), fill=CLOUD, edge=CLOUD_EDGE, small=True)
+    f.box(760, 190, 300, 100, 'Anchor → RoomMemory', ('key "<venue>:<tag>"', 'per label: median of the last 20,', 'sighting count, last seen', 'feel_chalk/anchors.py, as on the phone'), fill=CHALK, edge=CHALK_EDGE, small=True)
+    f.box(760, 320, 300, 54, 'Named query room_anchors', ('spoken · targets · count · last_seen_at',), fill=CHALK, edge=CHALK_EDGE, small=True)
+    f.box(760, 404, 300, 86, 'Assistant says', ('"Remembered here: exit about 6 meters', 'ahead-right, seen 4 times, last 2 hours ago."', 'directions as seen from the tag'), accent=True, small=True)
+    f.arrow(910, 160, 910, 190, color=CHALK_EDGE)
+    f.arrow(910, 290, 910, 320, color=CHALK_EDGE)
+    f.arrow(910, 374, 910, 404, color=CHALK_EDGE)
+    f.arrow(680, 112, 760, 112, color=MUTED, dashed=True, label='REST insert, user JWT,\nopt-in sharing (planned)', label_dx=0, label_dy=-22)
+    f.arrow(760, 347, 720, 347, color=MUTED, dashed=True)
+    f.arrow(720, 347, 680, 160, color=MUTED, dashed=True, via=[(720, 160)], label='download (planned)', label_dx=-50, label_dy=-6)
+    f.note(20, 548, 'The pins always come from live depth: memory replaces the photo round trip, never the rows. A tracking reset drops the tag frame and the held target together.', color=ACCENT, size=10.5)
+    return f
+
+
 if __name__ == '__main__':
     for build, name in ((system, 'feel-system.svg'), (where_is, 'where-is-path.svg'), (evaluation, 'chalk-eval-loop.svg'),
-                        (context, 'chalk-context.svg'), (sensing, 'sensing-to-pins.svg')):
+                        (context, 'chalk-context.svg'), (sensing, 'sensing-to-pins.svg'), (room_memory, 'room-memory.svg')):
         print(build().save(name))

@@ -54,6 +54,8 @@ final class LanternModel:ObservableObject {
     private var voiceTeammates: [String: MCPeerID] = [:]
     let voice: RealtimeVoiceSession
     let venueInfo = VenueInfo()
+    /// Targets confirmed on earlier visits, in the frame of the printed room tag; answers Where-is before any photo.
+    let roomMemory: RoomMemory
     @Published private(set) var chalkConfiguration: ChalkConfiguration?
     @Published private(set) var heldTarget: HeldTarget?
     @Published private(set) var whereIsNotice: String?
@@ -121,8 +123,8 @@ final class LanternModel:ObservableObject {
     private let chime=Chime()
     init(voice: RealtimeVoiceSession = RealtimeVoiceSession(), chalkStore: ChalkConfigurationStoring = ChalkConfigurationStore(),
          gatewayFactory: @escaping (ChalkConfiguration) -> ChatGateway = { ChalkGateway(configuration: $0) },
-         localFinder: LocalWhereIsFinding? = nil) {
-        self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory
+         localFinder: LocalWhereIsFinding? = nil, roomMemory: RoomMemory = RoomMemory()) {
+        self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory; self.roomMemory = roomMemory
         if let localFinder { self.localFinder = localFinder }
         chalkConfiguration = chalkStore.loadForLaunch()
         voice.onCommand = { [weak self] command in self?.performVoiceCommand(command) ?? ["error": "App unavailable"] }
@@ -145,7 +147,8 @@ final class LanternModel:ObservableObject {
             if let status, status.hasPrefix("Recording stopped") || status.hasPrefix("Recording failed") { self.recordingDepth=false }
         }
         perception.onFrame={ [weak self] frame in guard let self,self.mode == .live,frame.epoch==self.startGeneration,frame.finderEpoch==self.finderEpoch else { return }; self.frame=frame; self.calibrated=frame.floorY != nil }
-        perception.onInvalidated={ [weak self] epoch in guard let self,epoch==self.startGeneration else { return }; self.frame=nil; self.calibrated=false; self.clearHeldTarget(spokenLine: "Lost tracking. Say it again."); self.resetDirections(); self.pointing.reset(); self.pointingHighlight=nil; self.tick() }
+        perception.onInvalidated={ [weak self] epoch in guard let self,epoch==self.startGeneration else { return }; self.frame=nil; self.calibrated=false; self.roomMemory.forgetTag(); self.clearHeldTarget(spokenLine: "Lost tracking. Say it again."); self.resetDirections(); self.pointing.reset(); self.pointingHighlight=nil; self.tick() }
+        perception.onTag={ [weak self] epoch,sighting in guard let self,self.mode == .live,epoch==self.startGeneration else { return }; self.roomMemory.sawTag(sighting) }
         perception.onStatus={ [weak self] text in guard let self,self.mode == .live else { return }; self.status=text }
         perception.onModelStatus={ [weak self] text,available in self?.detectorStatus=text; self?.detectorAvailable=available }
         perception.onPointing={ [weak self] epoch,observation in self?.handlePointing(observation,epoch:epoch) }
@@ -187,6 +190,7 @@ final class LanternModel:ObservableObject {
         pointing.reset(); targetColumns=nil; pointingSpeech.stopSpeaking(at:.immediate)
         recordingDepth=false
         pointingHighlight=nil
+        roomMemory.forgetTag()
         perception.stop(); peer.stop(); mode = .stopped; guidanceState = .stopped
         sequence &+= 1; packet = .neutral(sequence:sequence); puck.send(packet)
         status="Stopped. Neutral command sent if connected"; targetDescription="No guidance"
@@ -212,11 +216,20 @@ final class LanternModel:ObservableObject {
             startLive()
             return voiceSnapshot()
         case .status: return voiceSnapshot()
-        case .whereIs(let thing):
+        case .whereIs(let thing, let photo):
             if let refusal = Self.whereIsRefusal(mode: mode, guidance: guidanceState) { return ["error": refusal] }
-            beginWhereIs(thing)
+            if let remembered = beginWhereIs(thing, photo: photo, frame: frame) {
+                return ["status": remembered, "remembered": true,
+                        "note": "Say this as given: a place confirmed on an earlier visit, not a camera reading. The pins already point there; photo=true checks with the camera."]
+            }
             return ["status": "Looking for the \(thing) with one camera photo. The result arrives as an observation in a few seconds; call get_status to check.",
                     "pending": true]
+        case .foundIt:
+            guard let target = heldTarget else { return ["error": "No Where-is target is held right now."] }
+            let kept = roomMemory.confirm(target, confidence: 0.9) != nil
+            clearHeldTarget(spokenLine: nil)
+            return ["status": kept ? "Noted. The \(target.label) is remembered for this room." : "Noted. This room has no tag in view, so the place is not remembered.",
+                    "remembered": kept]
         case .venueInfo(let question): return venueInfo.answer(question)
         case .find(let target):
             cancelWhereIs()
@@ -377,12 +390,34 @@ final class LanternModel:ObservableObject {
         return nil
     }
     /// A new ask replaces everything from the previous one: the held target, a lookup in flight, a finder target.
-    func beginWhereIs(_ thing: String) {
+    /// Returns the remembered-place line when room memory answered (the pins already point there and no photo is
+    /// taken); nil when the camera is looking instead, because a photo was asked for or memory had nothing.
+    @discardableResult
+    func beginWhereIs(_ thing: String, photo: Bool = false, frame: PerceptionFrame? = nil) -> String? {
         cancelWhereIs()
         resetDirections()
         pointing.reset(); pointingHighlight = nil
         if finder != .none { finder = .none }
+        if !photo, let line = recallWhereIs(thing, frame: frame) { return line }
         startWhereIs(thing)
+        return nil
+    }
+    /// Memory answers only with a live frame, a tag frame from that same world and a remembered place for the label.
+    /// The line goes back through the tool result for the assistant to say, and stays in `whereIsNotice` for get_status.
+    func recallWhereIs(_ thing: String, frame: PerceptionFrame?) -> String? {
+        let now = ProcessInfo.processInfo.systemUptime
+        guard let target = roomMemory.recall(thing, worldEpoch: frame?.worldEpoch, now: now), let frame,
+              let relative = target.relative(pose: frame.pose) else { return nil }
+        hold(target)
+        lastDirectionSpokenAt = now   // the line says where it was; out-of-field direction repeats start five seconds later
+        let line = VoicePhrasing.remembered(target.label, bearingDegrees: relative.bearingDegrees, distance: relative.horizontalDistance)
+        whereIsNotice = line
+        return line
+    }
+    /// The one way a target starts driving the pins, whether it came from a photo or from memory.
+    private func hold(_ target: HeldTarget) {
+        heldTarget = target; voiceSawTarget = false; lastDirectionSpokenAt = -.infinity
+        startHeldRoute(target)
     }
     private func startWhereIs(_ thing: String) {
         let service = whereIsService ?? WhereIsService(gateway: chalkConfiguration.map(gatewayFactory), model: chalkConfiguration?.model ?? "", local: localFinder)
@@ -404,8 +439,7 @@ final class LanternModel:ObservableObject {
         case .placed(let target):
             // The photo's world must still be the current one; after a tracking reset the point means nothing.
             if let frame, frame.worldEpoch != target.worldEpoch { say("Lost tracking. Say it again."); return }
-            heldTarget = target; voiceSawTarget = false; lastDirectionSpokenAt = -.infinity
-            startHeldRoute(target)
+            hold(target)
             let now = ProcessInfo.processInfo.systemUptime
             if let pose = frame?.pose, let observation = target.observation(pose: pose, now: now, worldEpoch: target.worldEpoch),
                let phrase = VoicePhrasing.observation(observation, named: target.label, now: now) {
@@ -429,6 +463,16 @@ final class LanternModel:ObservableObject {
         voiceTargetAvailable = false; voiceTargetPhrase = nil
         clearPointingRoute()
         voice.invalidateSceneSpeech()
+    }
+    /// What a held target does on one frame. Arrival also feeds room memory before the target is released: the
+    /// user walked to the place the pins pointed at, which is weaker evidence than their own "found it".
+    func handleHeldEvent(_ event: HeldTargetGuidance.Event, target: HeldTarget, now: TimeInterval) {
+        switch event {
+        case .lostTracking: clearHeldTarget(spokenLine: "Lost tracking. Say it again.")
+        case .reached: roomMemory.confirm(target, confidence: 0.7); clearHeldTarget(spokenLine: "You're at the \(target.label).")
+        case .speak(let direction): if voice.announce(direction, sceneBound: true) { lastDirectionSpokenAt = now; whereIsNotice = direction }
+        case .keep: break
+        }
     }
     func clearHeldTarget(spokenLine: String?) {
         let wasHolding = heldTarget != nil
@@ -464,7 +508,8 @@ final class LanternModel:ObservableObject {
                 "recording_status": recordingStatus ?? "Recording is off.",
                 "spoken_replies": voice.spokenOutputEnabled, "useful_updates": voice.proactiveEnabled,
                 "notice": "Neutral pins do not mean a clear path. No safe-route claim is available.",
-                "open_side": openSide?.spoken ?? "Nothing within 1.6 meters ahead, or unknown."]
+                "open_side": openSide?.spoken ?? "Nothing within 1.6 meters ahead, or unknown.",
+                "room_memory": roomMemory.status]
     }
 
     private func updateVoiceAwareness(targetAvailable: Bool, target: TargetObservation? = nil,
@@ -870,12 +915,7 @@ final class LanternModel:ObservableObject {
         updateVoiceAwareness(targetAvailable: target?.valid(at: now) == true && output.state == .live,
                              target: target, distances: frame.distances, openSide: open, now: now)
         if let heldTarget {
-            switch HeldTargetGuidance.event(target: heldTarget, pose: frame.pose, worldEpoch: frame.worldEpoch, now: now, live: output.state == .live, inField: held != nil, lastSpokenAt: lastDirectionSpokenAt) {
-            case .lostTracking: clearHeldTarget(spokenLine: "Lost tracking. Say it again.")
-            case .reached: clearHeldTarget(spokenLine: "You're at the \(heldTarget.label).")
-            case .speak(let direction): if voice.announce(direction, sceneBound: true) { lastDirectionSpokenAt = now; whereIsNotice = direction }
-            case .keep: break
-            }
+            handleHeldEvent(HeldTargetGuidance.event(target: heldTarget, pose: frame.pose, worldEpoch: frame.worldEpoch, now: now, live: output.state == .live, inField: held != nil, lastSpokenAt: lastDirectionSpokenAt), target: heldTarget, now: now)
         }
     }
 }

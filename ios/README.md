@@ -71,6 +71,18 @@ Seven equal horizontal sectors span −45°...+45°, including the endpoints; ex
 
 Only medium/high-confidence depth contributes. The app samples every third depth pixel; thin objects may be missed. A fresh normal frame is required, and depth older than250 ms neutralizes all output. Target detections expire after500 ms. Detection image/depth/pose are captured together, stored in world coordinates and reprojected after camera motion. Session and finder epochs discard queued results from old sessions/selections. A closer obstacle remains encoded when a target shares its column. A tapping target indicates direction only.
 
+## Room tag and room memory
+
+Print `Lantern/Resources/feel-tag-01.png` **20 cm wide** on plain paper and hang it flat at about chest height
+near the room's entrance. `ARPerception` registers it as an ARKit reference image of that width, so a tag printed
+at another size places every remembered target at the wrong distance. Once the tag is recognized (about a second
+with it in view), targets the user confirms with "found it" or by arriving at a Where-is target are stored in the
+tag's frame under `Application Support/RoomMemory/<tag id>.json`, and a later "where is the exit" with the tag
+seen points the pins at once with "Last time the exit was about 2 meters ahead to your left. Pins point there.
+Say photo to check again." Saying photo runs the normal Where-is photo path. The pins keep showing live depth
+throughout; memory only replaces the photo round trip. `ios/scripts/make_room_tag.py` redraws the tag. The tag
+recognition, the placement accuracy after relocalization and the cue have not been tested on a device yet.
+
 ## BLE and physical-output status
 
 Choose the intended device under **Puck connection**; the app does not automatically connect to an arbitrary puck. Packets use the UUIDs in `FeelBLE`, matching the firmware. Connection/status notifications do not prove actuation.

@@ -1,9 +1,11 @@
-"""Ask Chalk what FEEL knows: the last confirmed find of an object, or a venue's downloadable pack.
+"""Ask Chalk what FEEL knows: the last confirmed find of an object, a venue's downloadable pack, or
+what is remembered at a printed room tag.
 
 python -m feel_chalk.context last-seen --user <user id> --object keys
 python -m feel_chalk.context venue-pack --venue harvard-yard --output pack.json
+python -m feel_chalk.context room-anchors --venue harvard-yard --tag feel-tag-01
 
-Both run Chalk online queries over the features in chalk/feel_context, authenticated with the
+All run Chalk online queries over the features in chalk/feel_context, authenticated with the
 service token in chalk/.env (CHALK_CLIENT_ID and CHALK_CLIENT_SECRET, scoped to CHALK_ENV_ID).
 Standard library only, like gateway.py. No photo, audio or location ever travels this path.
 """
@@ -16,7 +18,7 @@ from pathlib import Path
 import urllib.error
 import urllib.request
 
-from . import history
+from . import anchors, history
 from .config import DEFAULT_API_HOST, load_env_file
 
 NAMES = ('CHALK_ENV_ID', 'CHALK_CLIENT_ID', 'CHALK_CLIENT_SECRET')
@@ -103,6 +105,23 @@ def venue_pack(venue_id: str, *, transport=post) -> dict:
     return pack
 
 
+def room_anchors(venue_id: str, tag_id: str, *, transport=post) -> dict:
+    """The spoken summary and the remembered targets (feel_chalk.anchors.Remembered) at one printed tag."""
+    key = f'{venue_id.strip().lower()}:{tag_id.strip().lower()}'
+    values = query({'room_memory.id': key}, ['room_memory.spoken', 'room_memory.targets'], query_name='room_anchors', transport=transport)
+    spoken, raw = values['room_memory.spoken'], values['room_memory.targets']
+    if not isinstance(spoken, str) or not spoken or not isinstance(raw, str) or not raw:
+        raise ContextError('room_memory.spoken or room_memory.targets is empty')
+    try:
+        items = json.loads(raw)
+    except ValueError:
+        raise ContextError('room_memory.targets is not JSON') from None
+    targets = anchors.from_json(raw)
+    if not isinstance(items, list) or len(targets) != len(items):
+        raise ContextError('room_memory.targets has the wrong shape')
+    return {'spoken': spoken, 'targets': targets}
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = parser.add_subparsers(dest='command', required=True)
@@ -112,10 +131,20 @@ def main(argv=None) -> int:
     pack = commands.add_parser('venue-pack', help='download a venue pack built by Chalk')
     pack.add_argument('--venue', required=True)
     pack.add_argument('--output', type=Path, required=True)
+    room = commands.add_parser('room-anchors', help='what is remembered at a printed room tag')
+    room.add_argument('--venue', required=True)
+    room.add_argument('--tag', required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == 'last-seen':
             print(last_seen(args.user, args.object))
+            return 0
+        if args.command == 'room-anchors':
+            result = room_anchors(args.venue, args.tag)
+            print(result['spoken'])
+            for target in result['targets']:
+                print(f"  {target.label}: x {target.x:+.2f} y {target.y:+.2f} z {target.z:+.2f} m in the tag frame, "
+                      f"{target.sightings} sighting{'s' if target.sightings != 1 else ''}, last {target.last_seen_at.isoformat()}")
             return 0
         built = venue_pack(args.venue)
         try:

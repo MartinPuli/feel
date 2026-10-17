@@ -1,5 +1,6 @@
--- Demo rows for chalk/feel_context: the reviewed Harvard Yard entries (protocol/harvard-yard-source.json)
--- and three confirmed finds for one demo user. Run after schema.sql; safe to run twice.
+-- Demo rows for chalk/feel_context: the reviewed Harvard Yard entries (protocol/harvard-yard-source.json),
+-- three confirmed finds for one demo user, and that user's shared room memory at the printed tag feel-tag-01.
+-- Run after schema.sql; safe to run twice.
 
 insert into public.venues (id, name) values ('harvard-yard', 'Harvard Yard')
 on conflict (id) do update set name = excluded.name;
@@ -28,4 +29,17 @@ insert into public.confirmed_finds (id, user_id, object_name, place, confidence,
 ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'keys', 'kitchen table', 0.9, now() - interval '2 hours'),
 ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'keys', 'front door hook', 0.7, now() - interval '2 days'),
 ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 'water bottle', 'lab bench by the window', 0.8, now() - interval '30 minutes')
+on conflict (id) do nothing;
+
+-- Room memory at the Harvard Yard demo tag (the printed FEEL tag feel-tag-01, 20 cm wide), shared by the demo user.
+-- Positions are in the tag's frame: x right along the tag, y out into the room, z down; metres. Chalk answers
+-- "Remembered here: exit about 6 meters ahead-right, seen 4 times, last 2 hours ago; water fountain about 3 meters
+-- ahead-left, seen twice, last yesterday." (directions for someone standing at the tag with their back to it).
+insert into public.anchors (id, user_id, venue_id, tag_id, label, x, y, z, confidence, shared, seen_at) values
+('20000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'harvard-yard', 'feel-tag-01', 'exit', -3.9, 5.2, 0.0, 0.9, true, now() - interval '4 hours'),
+('20000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'harvard-yard', 'feel-tag-01', 'exit', -4.1, 4.8, 0.1, 0.8, true, now() - interval '3 hours'),
+('20000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 'harvard-yard', 'feel-tag-01', 'exit', -4.3, 5.0, -0.1, 0.7, true, now() - interval '1 day'),
+('20000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001', 'harvard-yard', 'feel-tag-01', 'exit', -3.7, 5.6, 0.2, 0.95, true, now() - interval '2 hours'),
+('20000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000001', 'harvard-yard', 'feel-tag-01', 'water fountain', 2.0, 2.5, 0.3, 0.9, true, now() - interval '1 day'),
+('20000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000001', 'harvard-yard', 'feel-tag-01', 'water fountain', 2.2, 2.3, 0.3, 0.6, true, now() - interval '1 day')
 on conflict (id) do nothing;

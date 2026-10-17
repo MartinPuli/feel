@@ -2,7 +2,7 @@
 
 Figures: [FEEL at a glance](diagrams/feel-system.svg) · [one Where-is request](diagrams/where-is-path.svg) ·
 [the evaluation loop](diagrams/chalk-eval-loop.svg) · [memory and venue knowledge](diagrams/chalk-context.svg) ·
-[sensing to pins](diagrams/sensing-to-pins.svg).
+[sensing to pins](diagrams/sensing-to-pins.svg) · [room memory](diagrams/room-memory.svg).
 
 ## Product direction
 
@@ -37,6 +37,7 @@ No production model winner has been established. Physical sensing, headphone del
 | Next | Agent context | Speak when relevant information changes without repeating cues | Authenticated context queries, timestamps and phone-side validity checks. **Chalk side implemented** on `feel/chalk-track` (`chalk/feel_context`: features, resolvers, named queries, `feel_chalk/context.py`); waits for the Postgres data source |
 | Next | Downloadable venue information | Read previously downloaded accessibility information without internet | Reviewed sources, local storage, expiry and update handling |
 | Later | Consented object history | Explain where and when an object was last seen | Ownership, retention, deletion and uncertainty handling. **`ObjectHistory` implemented** (latest confirmed find, relative-time sentence); the phone write path and the `last_seen` tool are pending |
+| Later | Room memory | Point the pins at a place found on an earlier visit as soon as the room's printed tag is recognized, instead of a 2–12 s photo round trip | A printed tag as the room frame, local and shared storage, honest past-tense wording. **Implemented in software** on `feel/chalk-track`: FeelCore `RoomFrame` and `RememberedTarget`, a per-tag anchor store, `where_is` answering from memory with "say photo", `found_it`, Chalk `Anchor`/`RoomMemory` with the `room_anchors` query (shared rows only). Not yet: the phone's write to Supabase, a download of the shared memory, and any device test of the tag recognition or the cue |
 | Later | External services | Extend the personal assistant through selected tools | Per-user authorization and independent action checks |
 
 ## Evaluations and model selection

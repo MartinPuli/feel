@@ -77,6 +77,26 @@ class ContextTests(unittest.TestCase):
             with self.assertRaisesRegex(context.ContextError, 'wrong shape'):
                 context.venue_pack('harvard-yard', transport=FakeTransport(data=[{'field': 'venue.pack', 'value': '{"payload": 1}'}]))
 
+    def test_room_anchors_runs_the_named_query_and_returns_the_remembered_targets(self):
+        targets = '[{"label": "exit", "x": -4.0, "y": 5.1, "z": 0.05, "sightings": 4, "last_seen_at": "2026-10-17T20:00:00+00:00"}]'
+        spoken = 'Remembered here: exit about 6 meters ahead-right, seen 4 times, last 2 hours ago.'
+        transport = FakeTransport(data=[{'field': 'room_memory.spoken', 'value': spoken}, {'field': 'room_memory.targets', 'value': targets}])
+        got = context.room_anchors(' Harvard-Yard ', 'FEEL-TAG-01 ', transport=transport)
+        self.assertEqual(got['spoken'], spoken)
+        self.assertEqual([(t.label, t.x, t.y, t.z, t.sightings) for t in got['targets']], [('exit', -4.0, 5.1, 0.05, 4)])
+        query_url, query_body, query_headers = transport.calls[1]
+        self.assertEqual(query_url, 'https://api.example.test/v1/query')
+        self.assertEqual(query_body, {'inputs': {'room_memory.id': 'harvard-yard:feel-tag-01'},
+                                      'outputs': ['room_memory.spoken', 'room_memory.targets'], 'query_name': 'room_anchors'})
+        self.assertEqual(query_headers, {'Authorization': 'Bearer tok', 'X-Chalk-Env-Id': 'env1'})
+
+    def test_room_anchors_rejects_malformed_targets_instead_of_guessing(self):
+        for value, reason in [('nope', 'not JSON'), ('{"label": "exit"}', 'wrong shape'), ('[{"label": "exit"}]', 'wrong shape'), ('', 'empty')]:
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(context.ContextError, reason):
+                    context.room_anchors('v', 't', transport=FakeTransport(data=[{'field': 'room_memory.spoken', 'value': 'x'},
+                                                                                   {'field': 'room_memory.targets', 'value': value}]))
+
 
 if __name__ == '__main__':
     unittest.main()

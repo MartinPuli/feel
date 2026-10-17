@@ -1,5 +1,6 @@
 """Feature classes. Keys are strings the phone can build without a lookup:
-ObjectHistory.id is "<user_id>:<object name>", Venue.id is the venue slug the pack carries."""
+ObjectHistory.id is "<user_id>:<object name>", Venue.id is the venue slug the pack carries, and
+RoomMemory.id is "<venue_id>:<tag_id>", the printed FEEL tag the phone has just recognized."""
 from __future__ import annotations
 from datetime import datetime
 
@@ -58,3 +59,39 @@ class Venue:
     # The downloadable pack (schema, sha256, payload) exactly as the phone validates it.
     pack: str
     pack_sha256: str
+
+
+@features
+class Anchor:
+    """One remembered sighting of a target, in the frame of the printed room tag that was in view when the
+    user confirmed it: x right along the tag, y out of the tag into the room, z down, in metres. Written by
+    the phone to the anchors table (chalk/sql/schema.sql); only rows their owner chose to share are read."""
+    id: Primary[str]
+    user_id: str
+    venue_id: str
+    tag_id: str
+    label: str
+    x: float
+    y: float
+    z: float
+    confidence: float
+    shared: bool
+    seen_at: FeatureTime
+    # "<venue_id>:<tag_id>": the RoomMemory this sighting belongs to.
+    room_id: str
+
+
+@features
+class RoomMemory:
+    """What FEEL remembers at one printed tag, across the users who shared their sightings there."""
+    id: Primary[str]
+    venue_id: str
+    tag_id: str
+    anchors: DataFrame[Anchor] = has_many(lambda: Anchor.room_id == RoomMemory.id)
+    # JSON list of remembered targets (label, x, y, z, sightings, last_seen_at), one per label, the position
+    # being the median of that label's last 20 sightings; the phone reads it with FeelCore RememberedTarget.
+    targets: str
+    targets_count: int
+    last_seen_at: datetime | None
+    # The sentence the assistant reads out; past sightings only, never a claim about what is there now.
+    spoken: str

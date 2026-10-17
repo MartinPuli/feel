@@ -14,7 +14,7 @@ See [implementation status, architecture diagrams and evaluation plan](../docs/C
 |---|---|---|
 | Model Gateway | The one photo of a Where-is question, behind a restricted key with a model allowlist and trace content logging off; the phone and the evaluation share one absolute 12 s deadline | `feel_chalk/gateway.py`, `../ios/Lantern/Services/ChalkGateway.swift` |
 | Evaluations | The same task and three scorers run locally (`--local`) or hosted; one report shape with explicit denominators, latency, usage and resolved model | `feel_chalk/where_is_eval.py`, `feel_chalk/eval_report.py` |
-| Features and named queries | Confirmed finds become `ObjectHistory` (latest find, spoken sentence); reviewed rows become `Venue.pack`, byte-identical to the local builder | `feel_context/`, `chalk.yaml`, `sql/` |
+| Features and named queries | Confirmed finds become `ObjectHistory` (latest find, spoken sentence); reviewed rows become `Venue.pack`, byte-identical to the local builder; shared room anchors become `RoomMemory` (median place per label at a printed tag, spoken summary) | `feel_context/`, `chalk.yaml`, `sql/` |
 | Context client | Token exchange and online queries from this Mac today, the phone next | `feel_chalk/context.py` |
 
 ![One Where-is request](../docs/diagrams/where-is-path.svg)
@@ -111,10 +111,13 @@ pipeline end to end, not a model: real venue photos are still required before a 
 
 ## Context features: what the assistant remembers
 
-`feel_context/` defines the Chalk features behind "where did I last see my keys?" and the venue pack, with
-`sql/schema.sql` and `sql/seed.sql` for the Postgres they read and `feel_chalk/context.py` to query them.
-[feel_context/README.md](feel_context/README.md) explains what the Supabase values in `.env` are for, what Chalk
-needs instead (the database connection, registered as the `feel_finds` data source) and the deploy steps.
+`feel_context/` defines the Chalk features behind "where did I last see my keys?", the venue pack and room memory
+(what was found near a printed FEEL tag on earlier visits), with `sql/schema.sql` and `sql/seed.sql` for the Postgres
+they read and `feel_chalk/context.py` to query them. [feel_context/README.md](feel_context/README.md) explains what
+the Supabase values in `.env` are for, what Chalk needs instead (the database connection, registered as the
+`feel_finds` data source), the deploy steps, and how room memory works and what it stores.
+
+![Room memory](../docs/diagrams/room-memory.svg)
 
 ## Venue pack
 

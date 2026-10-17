@@ -38,5 +38,24 @@ create table if not exists public.venue_entries (
 );
 create index if not exists venue_entries_by_venue on public.venue_entries (venue_id);
 
+-- One remembered sighting of a target, in the frame of the printed FEEL room tag that was in view when the user
+-- confirmed it ("found it", or reaching a Where-is target). The frame is ARKit's image anchor for the tag:
+-- x right along the tag, y out of the tag into the room, z down along the tag, in metres. Anchors are personal
+-- data: a row leaves its owner's phone for the room's shared memory only when they set shared = true.
+create table if not exists public.anchors (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null,                          -- Supabase: auth.users.id
+    venue_id text not null references public.venues (id),
+    tag_id text not null check (tag_id ~ '^[a-z0-9][a-z0-9-]{0,63}$'),
+    label text not null check (label = lower(btrim(label)) and length(label) between 1 and 64),
+    x double precision not null check (abs(x) <= 100),
+    y double precision not null check (abs(y) <= 100),
+    z double precision not null check (abs(z) <= 100),
+    confidence double precision not null check (confidence between 0 and 1),
+    shared boolean not null default false,
+    seen_at timestamptz not null default now()
+);
+create index if not exists anchors_by_room on public.anchors (venue_id, tag_id, label, seen_at desc) where shared;
+
 -- Access control (row-level security and the read-only role for Chalk) is in access.sql: run it once
 -- after this file, with the password replaced.

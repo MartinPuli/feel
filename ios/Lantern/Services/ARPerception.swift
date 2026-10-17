@@ -40,6 +40,23 @@ final class ARPerception: NSObject, ARSessionDelegate {
     var onPointing: ((Int,PointingObservation)->Void)?
     /// V-sign checks, tagged with the session epoch. Skipped while the puck's codes are in view.
     var onHandSign: ((Int,HandSignObservation)->Void)?
+    /// Printed FEEL room tags recognized by ARKit image detection, tagged with the session epoch. The frame is the
+    /// tag's image anchor in the current world; room memory places remembered targets through it.
+    var onTag: ((Int,TagSighting)->Void)?
+    /// The printed width ARKit is told. ios/Lantern/Resources/feel-tag-01.png must be printed exactly this wide,
+    /// or every remembered target lands at the wrong distance.
+    static let roomTagWidthMetres=0.20
+    /// The tags shipped in the bundle (ios/scripts/make_room_tag.py draws them), named by tag id.
+    private static let roomTags: Set<ARReferenceImage>={
+        var tags: Set<ARReferenceImage>=[]
+        for name in ["feel-tag-01"] {
+            guard let url=Bundle.main.url(forResource:name,withExtension:"png"),let source=CGImageSourceCreateWithURL(url as CFURL,nil),
+                  let image=CGImageSourceCreateImageAtIndex(source,0,nil) else { continue }
+            let tag=ARReferenceImage(image,orientation:.up,physicalWidth:CGFloat(roomTagWidthMetres)); tag.name=name; tags.insert(tag)
+        }
+        return tags
+    }()
+    private var lastTagPublished: [String: TimeInterval]=[:]
     private let queue=DispatchQueue(label:"feel.arkit",qos:.userInitiated)
     private let visionQueue=DispatchQueue(label:"feel.vision",qos:.userInitiated)
     private let pointingQueue=DispatchQueue(label:"feel.pointing",qos:.userInitiated)
@@ -73,6 +90,9 @@ final class ARPerception: NSObject, ARSessionDelegate {
     let recorder=SessionRecorder()
     override init() {
         super.init(); session.delegate=self; session.delegateQueue=queue
+        if ARWorldTrackingConfiguration.isSupported {
+            for tag in Self.roomTags { tag.validate { [weak self] error in if let error { self?.publishStatus("Room tag \(tag.name ?? "") unusable: \(error.localizedDescription)") } } }
+        }
         visionQueue.async { [weak self] in
             guard let self else { return }
             let status=self.detector.modelStatus, available=self.detector.model != nil
@@ -86,6 +106,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
             self.floorY=nil; self.lastTarget=nil; self.generation += 1; self.lastProcessed = -.infinity
             self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil
             let config=ARWorldTrackingConfiguration(); config.frameSemantics=[.sceneDepth]; config.worldAlignment = .gravity
+            config.detectionImages=Self.roomTags; config.maximumNumberOfTrackedImages=Self.roomTags.isEmpty ? 0 : 1; self.lastTagPublished=[:]
             self.session.run(config,options:[.resetTracking,.removeExistingAnchors]); self.publishStatus("Move slowly, then calibrate measured camera height")
         }
         return true
@@ -253,6 +274,22 @@ final class ARPerception: NSObject, ARSessionDelegate {
                 if let failure { self.publishStatus(failure) }
             }
         }
+    }
+    func session(_ session: ARSession,didAdd anchors: [ARAnchor]) { publishTags(anchors) }
+    func session(_ session: ARSession,didUpdate anchors: [ARAnchor]) { publishTags(anchors) }
+    /// A tracked tag becomes a sighting at most twice a second: its anchor transform is the room frame in this world.
+    private func publishTags(_ anchors: [ARAnchor]) {
+        let now=ProcessInfo.processInfo.systemUptime
+        for case let anchor as ARImageAnchor in anchors where anchor.isTracked {
+            guard let name=anchor.referenceImage.name,RoomMemoryStore.isTagId(name),now-(lastTagPublished[name] ?? -.infinity)>=0.5,
+                  let frame=RoomFrame(columnMajor:Self.columnMajor(anchor.transform)) else { continue }
+            lastTagPublished[name]=now
+            let sighting=TagSighting(tagId:name,frame:frame,worldEpoch:worldEpoch,timestamp:now), epoch=sessionEpoch
+            DispatchQueue.main.async { self.onTag?(epoch,sighting) }
+        }
+    }
+    private static func columnMajor(_ m: simd_float4x4) -> [Double] {
+        [m.columns.0,m.columns.1,m.columns.2,m.columns.3].flatMap { [Double($0.x),Double($0.y),Double($0.z),Double($0.w)] }
     }
     func sessionShouldAttemptRelocalization(_ session: ARSession) -> Bool { false }
     private func invalidate() {
