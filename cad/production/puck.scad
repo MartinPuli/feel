@@ -1,6 +1,6 @@
 // Pin Puck production CAD. Export one part:
 //   openscad --backend Manifold -D 'part="chassis"' -o chassis.stl puck.scad
-// Deliverables: chassis, guide, face, shaft, shaft3, pins, foam_template, pack_tray.
+// Deliverables: chassis, guide, face, shaft, shaft3, shaft4, pins, foam_template, pack_tray.
 // Also: assembly (puck frame, -D angle=...), derived (echo only), and the x_* intersection
 // checks used by verify.py (-D angle=..., variant=3|4, offset=...).
 include <lib.scad>
@@ -25,9 +25,10 @@ odds = [for (c = [1 : 2 : cols - 1]) c];
 // Lobe row r is raised when the servo angle a sits within the flat of its band.
 function lobe_angle(v, r) = v == 3
     ? let(i = search(r, shaft3_rows)) (len(i) ? shaft3_angles[i[0]] : undef)
-    : band_angle[r];
+    : v == 44 ? shaft4_angles[r] : band_angle[r];
 function pin_raise(v, r, a) = let(b = lobe_angle(v, r)) is_undef(b) ? 0
-    : max(0, lift * lobe_s(a - b, v == 3 ? shaft3_flat : cam_flat, v == 3 ? shaft3_ramp : cam_ramp) - foot_clear);
+    : max(0, lift * lobe_s(a - b, v == 3 ? shaft3_flat : v == 44 ? shaft4_flat : cam_flat,
+                           v == 3 ? shaft3_ramp : v == 44 ? shaft4_ramp : cam_ramp) - foot_clear);
 
 module assembly(a = angle, v = variant) {
     color([0.15, 0.16, 0.18]) chassis();
@@ -60,6 +61,7 @@ else if (part == "guide") guide_plate_print();
 else if (part == "face") face_plate_print();
 else if (part == "shaft") shaft_print(4);
 else if (part == "shaft3") shaft_print(3);
+else if (part == "shaft4") shaft_print(44);
 else if (part == "pins") pins_plate_puck();
 else if (part == "foam_template") foam_template_print();
 else if (part == "pack_tray") pack_tray_print();

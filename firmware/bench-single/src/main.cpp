@@ -71,7 +71,7 @@ void setup() {
     timerHz = configured ? ledc_get_freq(LEDC_HIGH_SPEED_MODE, LEDC_TIMER_0) : 0;
     timerReady = configured && timerHz == 50;
     ledcWrite(kChannel, 0); // Do not attach on boot.
-    Serial.println("FEEL SINGLE BENCH: output OFF; ARM then CENTER or TEST5; STOP always available");
+    Serial.println("FEEL SINGLE BENCH: output OFF; ARM then CENTER, TEST5, SWEEP 1 (up) or SWEEP 0 (down); STOP always available");
     status();
 }
 void loop() {

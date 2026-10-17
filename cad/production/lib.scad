@@ -172,13 +172,16 @@ module coupling_pocket() {
     translate([0, 0, z0]) cylinder(d1 = 6.4, d2 = horn_hub_d + 2 * hub_fit, h = 0.4);       // entry chamfer
 }
 // variant 4: band_angle on rows 0..3, one ID dot. variant 3: shaft3, three dots.
+// variant 44: shaft4, four lobes in 120 degrees, two dots.
 module shaft(variant = 4) {
     three = variant == 3;
+    four120 = variant == 44;
     lobes = three ? [for (i = [0 : len(shaft3_rows) - 1]) [shaft3_rows[i], shaft3_angles[i]]]
-                  : [for (k = [0 : len(band_angle) - 1]) [k, band_angle[k]]];
-    flat = three ? shaft3_flat : cam_flat;
-    ramp = three ? shaft3_ramp : cam_ramp;
-    nd = three ? 3 : 1;
+          : four120 ? [for (k = [0 : 3]) [k, shaft4_angles[k]]]
+          : [for (k = [0 : len(band_angle) - 1]) [k, band_angle[k]]];
+    flat = three ? shaft3_flat : four120 ? shaft4_flat : cam_flat;
+    ramp = three ? shaft3_ramp : four120 ? shaft4_ramp : cam_ramp;
+    nd = three ? 3 : four120 ? 2 : 1;
     zc = coupling_y0 + coupling_len - 0.01;                  // 7.19
     zj = far_in_y - 0.21;                                    // 56.79
     difference() {

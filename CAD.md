@@ -65,6 +65,7 @@ foot_tip_r = 0.5   foot_cone = 25 (half-angle)
 cam_step = 0.5 (degrees per polygon vertex)
 ```
 Three-lobe variant for a 120° servo: `shaft3_rows = [0, 2, 3]`, `shaft3_angles = [0, 55, 110]`, `shaft3_flat = 5`, `shaft3_ramp = 22.5`.
+Four-lobe variant for a 120° servo (added Oct 17): `shaft4_angles = [0, 40, 80, 120]`, `shaft4_flat = 5`, `shaft4_ramp = 15` (flat + ramp = 20 = half the 40° spacing). Steeper ramps: hold window ±6.2° instead of ±7°, tap dip 1.57 mm at the firmware's 13° tap. Two ID dots. Gaps at 20, 60, 100: matches the current firmware angles.
 
 Lobe profile function, `s(d)` with `a = |wrap180(d)|`: `1` if `a ≤ flat`; `0` if `a ≥ flat + ramp`; else `0.5·(1 + cos(180·(a − flat)/ramp))`. Lobe radius at angle t: `r(t) = cam_base_r + lift·s(t)`.
 
@@ -204,6 +205,7 @@ Size 71.7 × 105.4 × 16.0.
 | face.stl | 1 | 88.5 × 92.5 × 7.9 | 0.20, ironing on | 15% | no |
 | shaft.stl | 7 | 11.0 × 10.9 × 58.2 | 0.10–0.15 | 100%, 4 walls | 3 mm |
 | shaft3.stl | 7 (alternative) | same | same | same | same |
+| shaft4.stl | 7 (alternative, 120° servo, all four rows) | same | same | same | same |
 | pins.stl | 1 plate | 63 × 58 × 24.7 | 0.10–0.15 | 100%, 4 walls | 3 mm |
 | foam_template.stl | 1 | 11 × 49 × 1.2 | 0.20 | any | no |
 | pack_tray.stl | 1 | 71.7 × 105.4 × 16.0 | 0.20 | 15% | no |

@@ -44,7 +44,7 @@ final class SessionRecorder {
                 let header = try SessionRecording.start(RecordingInfo(source: "iphone", createdAt: stamp, cameraHeight: cameraHeight, note: note))
                 guard FileManager.default.createFile(atPath: url.path, contents: header) else { throw CocoaError(.fileWriteUnknown) }
                 self.handle = try FileHandle(forWritingTo: url); try self.handle?.seekToEnd()
-                self.url = url; self.bytes = header.count; self.frames = 0; self.videoFrames = 0
+                self.url = url; self.bytes = header.count; self.frames = 0; self.videoFrames = 0; self.events = []
                 if video { try self.openVideo(base.appendingPathExtension("mp4")) }
                 self.lock.lock(); self.droppedInFlight = 0; self.active = true; self.lock.unlock()
                 self.publish("Recording \(url.lastPathComponent)\(video ? " with camera video" : "")")
@@ -92,6 +92,17 @@ final class SessionRecorder {
             }
             guard writer.status == .writing else { return }
             if input.isReadyForMoreMediaData, adaptor.append(buffer, withPresentationTime: time) { self.videoFrames += 1 }
+        }
+    }
+
+    /// Trial events, rewritten to <name>.events.json on each mark so a crash keeps what was marked.
+    private var events: [[String: Any]] = []
+    func mark(_ kind: String, at timestamp: Double) {
+        queue.async {
+            guard let url = self.url else { return }
+            self.events.append(["t": timestamp, "kind": kind])
+            let sidecar = url.deletingPathExtension().appendingPathExtension("events.json")
+            try? JSONSerialization.data(withJSONObject: ["events": self.events]).write(to: sidecar)
         }
     }
 

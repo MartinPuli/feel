@@ -5,20 +5,22 @@ PASS guide.stl: 1 body, 6284 tris, vol 26075.5 mm3, min z 0.0000, size 84.100 x 
 PASS face.stl: 1 body, 25030 tris, vol 50730.5 mm3, min z 0.0000, size 88.500 x 92.489 x 7.947 (stated 88.5 x 92.5 x 7.9, max dev 0.047)
 PASS shaft.stl: 1 body, 21636 tris, vol 1580.6 mm3, min z 0.0000, size 11.000 x 10.947 x 58.200 (stated 11.0 x 10.9 x 58.2, max dev 0.047)
 PASS shaft3.stl: 1 body, 17426 tris, vol 1535.1 mm3, min z 0.0000, size 11.000 x 10.947 x 58.200 (stated 11.0 x 10.9 x 58.2, max dev 0.047)
+PASS shaft4.stl: 1 body, 20888 tris, vol 1545.7 mm3, min z 0.0000, size 11.000 x 10.947 x 58.200 (stated 11.0 x 10.9 x 58.2, max dev 0.047)
 PASS pins.stl: 1 body, 80140 tris, vol 13735.8 mm3, min z 0.0000, size 63.000 x 58.000 x 24.667 (stated 63.0 x 58.0 x 24.7, max dev 0.033)
 PASS foam_template.stl: 1 body, 1020 tris, vol 566.4 mm3, min z 0.0000, size 11.000 x 49.000 x 1.200 (stated 11.0 x 49.0 x 1.2, max dev 0.000)
 PASS pack_tray.stl: 1 body, 5024 tris, vol 26482.6 mm3, min z 0.0000, size 71.700 x 105.395 x 16.000 (stated 71.7 x 105.4 x 16.0, max dev 0.005)
-PASS collision sweep: 75 intersections, max volume 0.000000 mm3
-PASS horn insertion: 10 intersections, max volume 0.000000 mm3
-INFO   x_shaft_chassis: 18 cases, max 0.000000 mm3
-INFO   x_shaft_servo: 18 cases, max 0.000000 mm3
-INFO   x_shaft_guide: 18 cases, max 0.000000 mm3
-INFO   x_shaft_shaft: 18 cases, max 0.000000 mm3
+PASS collision sweep: 119 intersections, max volume 0.000000 mm3
+PASS horn insertion: 15 intersections, max volume 0.000000 mm3
+INFO   x_shaft_chassis: 29 cases, max 0.000000 mm3
+INFO   x_shaft_servo: 29 cases, max 0.000000 mm3
+INFO   x_shaft_guide: 29 cases, max 0.000000 mm3
+INFO   x_shaft_shaft: 29 cases, max 0.000000 mm3
 INFO   x_servo_chassis: 1 cases, max 0.000000 mm3
 INFO   x_servo_guide: 1 cases, max 0.000000 mm3
 INFO   x_servo_servo: 1 cases, max 0.000000 mm3
 INFO   horn x shaft at offsets [0, 1, 2, 3, 3.4]: 0.000000, 0.000000, 0.000000, 0.000000, 0.000000 mm3
 INFO   horn x shaft3 at offsets [0, 1, 2, 3, 3.4]: 0.000000, 0.000000, 0.000000, 0.000000, 0.000000 mm3
+INFO   horn x shaft4 at offsets [0, 1, 2, 3, 3.4]: 0.000000, 0.000000, 0.000000, 0.000000, 0.000000 mm3
 PASS shaft stroke per lobe: 2.5500, 2.5500, 2.5500, 2.5500 mm (2.55 +- 0.05)
 PASS shaft rise at null gaps [29.0, 87.5, 146.0]: 0.0000, 0.0000, 0.0000 mm (<= 0.15)
 PASS shaft neighbour rise during +-20 deg tap: 0.0000, 0.0000, 0.0000, 0.0000 mm (<= 0); selected pin dips 1.970, 1.970, 1.970, 1.970 mm at 20 deg
@@ -27,3 +29,7 @@ PASS shaft3 stroke per lobe: 2.5500, 2.5500, 2.5500 mm (2.55 +- 0.05)
 PASS shaft3 rise at null gaps [27.5, 82.5]: 0.0000, 0.0000 mm (<= 0.15)
 PASS shaft3 neighbour rise during +-20 deg tap: 0.0000, 0.0000, 0.0000 mm (<= 0); selected pin dips 2.138, 2.138, 2.138 mm at 20 deg
 FAIL shaft3 flat hold window (lift >= stroke - 0.05): +-6.89, +-6.89, +-6.89 deg (>= +-7)
+PASS shaft4 stroke per lobe: 2.5500, 2.5500, 2.5500, 2.5500 mm (2.55 +- 0.05)
+PASS shaft4 rise at null gaps [20.0, 60.0, 100.0]: 0.0000, 0.0000, 0.0000 mm (<= 0.15)
+PASS shaft4 neighbour rise during +-20 deg tap: 0.0000, 0.0000, 0.0000, 0.0000 mm (<= 0); selected pin dips 2.550, 2.550, 2.550, 2.550 mm at 20 deg
+PASS shaft4 flat hold window (lift >= stroke - 0.05): +-6.24, +-6.24, +-6.24, +-6.24 deg (>= +-6)

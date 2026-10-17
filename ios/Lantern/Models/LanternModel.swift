@@ -28,6 +28,11 @@ final class LanternModel:ObservableObject {
         didSet { UserDefaults.standard.set(recordingVideo, forKey: "recordingVideo") }
     }
     @Published private(set) var recordingStatus: String?
+    /// Grid-walk trial: a timed, recorded walk with marked events (ARKit clock, same as the recording).
+    struct TrialEvent: Equatable { let t: TimeInterval; let kind: String }
+    @Published private(set) var trialStart: Date?
+    @Published private(set) var trialEvents: [TrialEvent] = []
+    @Published private(set) var lastTrialSummary: String?
     @Published var cameraHeight=1.2
     @Published var finder:FinderMode = .none { didSet { voice.invalidateSceneSpeech(); finderEpoch += 1; perception.setFinder(finder,epoch:finderEpoch); frame=nil; resetGuidance(); targetDescription="Searching: \(finder.rawValue)" } }
     /// Direction arrows on request: a V sign plays one arrow along the route to the visible target,
@@ -138,12 +143,38 @@ final class LanternModel:ObservableObject {
         status="SIMULATION: synthetic scene, no simulated BLE movement"; calibrated=false; beginTimer()
     }
     func calibrate() { guard mode == .live else { return }; perception.calibrate(cameraHeight:cameraHeight) }
+
+    /// Starts a timed grid-walk trial and records it (depth, plus camera video if enabled).
+    func startTrial() {
+        guard mode == .live, trialStart == nil else { return }
+        recordingDepth=true
+        trialStart=Date(); trialEvents=[]
+        markTrial("start")
+    }
+    /// Marks an event (bump, hesitated, arrived…) on the ARKit clock, so it lines up with the recording.
+    func markTrial(_ kind: String) {
+        guard trialStart != nil else { return }
+        let event=TrialEvent(t:ProcessInfo.processInfo.systemUptime,kind:kind)
+        trialEvents.append(event)
+        perception.recorder.mark(kind,at:event.t)
+    }
+    func endTrial(_ outcome: String) {
+        guard let start=trialStart else { return }
+        markTrial(outcome)
+        let bumps=trialEvents.filter { $0.kind == "bump" }.count
+        lastTrialSummary=String(format:"Last: %@ in %.1f s, %d bump%@",outcome,Date().timeIntervalSince(start),bumps,bumps == 1 ? "" : "s")
+        trialStart=nil
+        recordingDepth=false
+    }
+    /// Leaving grid walk ends any running trial.
+    func stopGridWalk() { if trialStart != nil { endTrial("ended") } }
     func stop(stopVoice: Bool = false) {
         voice.invalidateSceneSpeech()
         if stopVoice { voice.disconnect() }
         isStarting=false; startGeneration += 1; timer?.invalidate(); timer=nil; frame=nil; calibrated=false
         resetDirections()
         pointing.reset(); targetColumns=nil; pointingSpeech.stopSpeaking(at:.immediate)
+        if trialStart != nil { endTrial("stopped") }
         recordingDepth=false
         pointingHighlight=nil
         perception.stop(); peer.stop(); mode = .stopped; guidanceState = .stopped

@@ -5,7 +5,7 @@ Static site with no dependencies. `/replay` plays back a session:
 - **Right, stacked:** the 7 × 4 pin grid the firmware commanded, above the LiDAR depth frame that drove it.
 - **Below:** a timeline of every column against the labels.
 
-Choose any session, simulated or recorded, from the menu. `?session=<name>` links straight to one.
+Choose any session, simulated or recorded, from the menu. `?session=<name>` links straight to one. Under the recording, a **top view** plots the LiDAR points from above with the seven column sectors (simulated sessions also outline the true objects). Grid-walk trial marks (bump, unsure, arrived) appear on the timeline. **Export video** records a 1920 × 1080 MP4 of the replay for demo videos. See [docs/GRID-WALK.md](../docs/GRID-WALK.md) for live field tests.
 
 ```sh
 python3 simulation/run.py     # scores every scenario and writes the replay data to simulation/out/web
@@ -22,7 +22,7 @@ In Lantern, turn on **Record depth**. **Include camera video** is on by default.
 - `feel-<time>.mp4` (960 × 720 H.264, 15 fps, no audio)
 - `feel-<time>.video.json`, which ties video time 0 to the ARKit clock
 
-Copy all three into `simulation/recordings/` (see [simulation/README.md](../simulation/README.md)). Add a scenario that points at the `.feelrec`, then run `simulation/run.py`. The page finds the video beside the recording automatically.
+Trials started in **Grid walk** also write `feel-<time>.events.json`. Copy them all into `simulation/recordings/` and run `simulation/run.py`. New walks appear automatically as `UNLABELLED` sessions; add a scenario in `simulation/scenarios/` to label one.
 
 ## Deploying
 
