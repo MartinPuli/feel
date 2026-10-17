@@ -76,6 +76,7 @@ final class LanternModel:ObservableObject {
     private var voiceHadConnection = false
     private var voiceOwnsScan = false
     private var voiceStateSubscription: AnyCancellable?
+    private var voiceOutputSubscription: AnyCancellable?
     private var voiceTargetLostAt: TimeInterval?
     let perception=ARPerception()
     let puck=BluetoothPuck()
@@ -125,6 +126,9 @@ final class LanternModel:ObservableObject {
         voiceStateSubscription = voice.$phase.sink { [weak self] phase in
             guard let self else { return }
             UIApplication.shared.isIdleTimerDisabled = self.mode != .stopped || self.isStarting || (phase != .idle && phase != .failed)
+        }
+        voiceOutputSubscription = voice.$spokenOutputEnabled.sink { [weak self] enabled in
+            if !enabled { self?.pointingSpeech.stopSpeaking(at: .immediate) }
         }
         peer.arSession=perception.session
         perception.recorder.onStatus={ [weak self] status in
@@ -561,6 +565,7 @@ final class LanternModel:ObservableObject {
     }
 
     private func speakLocal(_ text:String) {
+        guard voice.spokenOutputEnabled else { return }
         if UIAccessibility.isVoiceOverRunning { UIAccessibility.post(notification:.announcement,argument:text) }
         else { pointingSpeech.stopSpeaking(at:.immediate); pointingSpeech.speak(AVSpeechUtterance(string:text)) }
     }
@@ -724,7 +729,7 @@ final class LanternModel:ObservableObject {
         pointing.record(CachedScene(timestamp:frame.timestamp,pose:frame.pose,tracking:encoded.state == .live,distances:frame.distances,target:target?.valid(at:frame.timestamp) == true ? target : nil))
         speakPointing(pointing.tick(now:now))
         // While pointing, the pins hold the scene from before the hand came up; arrows pause.
-        let frozen=pointing.frozenOutput(sequence:sequence)
+        let frozen=encoded.state == .live ? pointing.frozenOutput(sequence:sequence) : nil
         if frozen != nil { cuePlayer.reset(); pendingSign=false } else { tickRequest(now:now,candidates:frame.candidates,hint:frame.routeHint); tickPointingRoute(now:now,hint:frame.routeHint) }
         let output=frozen.map { EncoderOutput(packet:$0.packet,state:encoded.state,targetColumns:$0.targetColumns) } ?? withPointingHighlight(withDirections(encoded,hint:frame.routeHint,now:now),now:now)
         packet=output.packet; guidanceState=output.state; targetColumns=output.targetColumns; puck.send(packet)
