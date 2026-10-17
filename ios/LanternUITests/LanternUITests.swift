@@ -113,12 +113,19 @@ final class LanternUITests: XCTestCase {
         XCTAssertTrue(app.buttons["memorySimulation"].waitForExistence(timeout:10))
         app.buttons["memorySimulation"].tap()
         let name=app.textFields["placeName"]
-        tapControl(name); name.typeText("Desk\n")
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        // Focusing opens the landscape keyboard and changes the sheet geometry.
+        // Verify actual text entry instead of post-focus hit testing its old frame.
+        name.tap()
+        capture("memory-name-entry")
+        name.typeText("Desk\n")
+        XCTAssertEqual(name.value as? String, "Desk")
         tapControl(app.buttons["rememberPlace"])
         XCTAssertEqual(app.staticTexts["placesCount"].label,"1 places in this session")
         let back=app.buttons["simBack"]; tapControl(back); tapControl(back)
         tapControl(app.buttons["recallPlace"])
         XCTAssertTrue(app.staticTexts["Place guidance: guiding"].waitForExistence(timeout:3))
+        capture("memory-guiding")
         let tracking=app.switches["simTracking"]
         XCTAssertEqual(tracking.value as? String,"1")
         setSwitch(tracking,to:false)

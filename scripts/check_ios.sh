@@ -40,6 +40,7 @@ result_directory=$(mktemp -d ../.artifacts/ios/results.XXXXXX)
 xcodebuild -project Lantern.xcodeproj -scheme Lantern \
   -destination "platform=iOS Simulator,id=$destination" \
   -parallel-testing-enabled NO -test-timeouts-enabled YES \
+  -collect-test-diagnostics "${FEEL_TEST_DIAGNOSTICS:-on-failure}" \
   -maximum-test-execution-time-allowance 180 \
   -resultBundlePath "$result_directory/Lantern.xcresult" \
   -derivedDataPath ../.artifacts/ios/DerivedData CODE_SIGNING_ALLOWED=NO test
@@ -47,6 +48,7 @@ xcodebuild -project Lantern.xcodeproj -scheme Lantern \
 xcodebuild -project Lantern.xcodeproj -scheme Beacon \
   -destination "platform=iOS Simulator,id=$destination" \
   -parallel-testing-enabled NO -test-timeouts-enabled YES \
+  -collect-test-diagnostics "${FEEL_TEST_DIAGNOSTICS:-on-failure}" \
   -maximum-test-execution-time-allowance 180 \
   -resultBundlePath "$result_directory/Beacon.xcresult" \
   -derivedDataPath ../.artifacts/ios/DerivedData CODE_SIGNING_ALLOWED=NO test

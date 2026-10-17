@@ -1,0 +1,6 @@
+Test Case '-[LanternUITests.LanternUITests testRememberMoveRecallAndTrackingLossInMemorySimulation]' started.
+/tmp/feel-v2-update/ios/LanternUITests/LanternUITests.swift:116: error: -[LanternUITests.LanternUITests testRememberMoveRecallAndTrackingLossInMemorySimulation] : XCTAssertTrue failed
+Test Case '-[LanternUITests.LanternUITests testRememberMoveRecallAndTrackingLossInMemorySimulation]' failed (10.948 seconds).
+2026-10-16 23:59:26.841 xcodebuild[8682:845298] [MT] IDETesting: Failed to construct test run summaries and write them to the result bundle: fileSystemFailure(reason: "mkstemp: No space left on device")
+	LanternUITests.testRememberMoveRecallAndTrackingLossInMemorySimulation()
+** TEST FAILED **

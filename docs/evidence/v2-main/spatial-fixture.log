@@ -1,0 +1,7 @@
+{"memory":{"bookmarks":[],"session":"demo"},"valid":true}
+{"memory":{"bookmarks":[{"id":"desk","name":"Desk","position":{"x":0,"y":0,"z":0}}],"selectedID":"desk","session":"demo"},"valid":true}
+{"memory":{"bookmarks":[{"id":"desk","name":"Desk","position":{"x":0,"y":0,"z":0}}],"returnPoint":{"x":0,"y":0,"z":0},"selectedID":"desk","session":"demo"},"valid":true}
+{"memory":{"activeID":"desk","bookmarks":[{"id":"desk","name":"Desk","position":{"x":0,"y":0,"z":0}}],"returnPoint":{"x":0,"y":0,"z":0},"selectedID":"desk","session":"demo"},"valid":true}
+{"bands":[0,0,1,3,0,0,0],"bearingDegrees":0,"distance":2,"hex":"010000010300000003","highlight":3,"horizontalDistance":2,"memory":{"activeID":"desk","bookmarks":[{"id":"desk","name":"Desk","position":{"x":0,"y":0,"z":0}}],"returnPoint":{"x":0,"y":0,"z":0},"selectedID":"desk","session":"demo"},"memoryState":"guiding","seq":1,"state":"live","targetName":"Desk","valid":true}
+{"memory":{"bookmarks":[{"id":"desk","name":"Desk","position":{"x":0,"y":0,"z":0}}],"returnPoint":{"x":0,"y":0,"z":0},"selectedID":"desk","session":"demo"},"valid":true}
+{"memory":{"bookmarks":[]},"valid":true}
