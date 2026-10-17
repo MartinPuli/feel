@@ -26,9 +26,23 @@ and installation evidence remain in its history. `main` remains V1; V2 is publis
 
 ## Latest drawer integration validation
 
-Source integration is complete; native validation of the new floating My Places
-panel and all existing camera controls is pending. Core, perception, firmware and
-protocol behavior are unchanged from the previously validated V2 integration.
+**PASS on October 17, 2026**, source `ff1d1a7`, against frozen main baseline
+`b780519`. The full native script exited zero: **8 Lantern app tests, 7 Lantern
+UI tests, 2 Beacon UI tests**, and both unsigned device builds passed.
+[Report](evidence/v2-drawer/report.json) and [full native log](evidence/v2-drawer/ios.log).
+
+The UI suite preserves all earlier tests and checks collapsed/expanded controls,
+Stop while collapsed, floating-panel width, hidden background accessibility,
+all three panels' Stop actions, Memory name entry, Recall, tracking-loss neutral
+output, recovery and session reset. Independent read-only review found no
+integration defects. [Memory keyboard view](evidence/v2-drawer/memory-name-entry.png)
+and [Recall controls](evidence/v2-drawer/memory-guiding.png) were visually inspected;
+the entry field, action labels and Stop remain visible and readable.
+
+Core, perception, firmware and protocol behavior are unchanged from the previous
+validated V2 integration. Its portable58, firmware and replay evidence below is
+inherited; those unchanged layers were not needlessly rerun. No hardware action
+or hosted CI run occurred during this update.
 
 ## Previous camera-first integration validation
 

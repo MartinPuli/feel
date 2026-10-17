@@ -1,0 +1,29 @@
+{
+  "version": "V2 collapsible camera integration",
+  "timestamp_utc": "2026-10-17T04:28:54.784454+00:00",
+  "validated_source": "ff1d1a77ec5c0c148a0cd82c64208be9a49501c1",
+  "main_baseline": "b7805193258b596d47143ddc563b215f147793ab",
+  "status": "PASS",
+  "command": "FEEL_TEST_DIAGNOSTICS=never bash scripts/check_ios.sh",
+  "exit_code": 0,
+  "toolchain": {
+    "Xcode": "26.6 (17F113)",
+    "Swift": "6.3.3",
+    "simulator": "iPhone Air, iOS 26.5"
+  },
+  "tests": {
+    "Lantern_app": 8,
+    "Lantern_UI": 7,
+    "Beacon_UI": 2,
+    "failures": 0
+  },
+  "unsigned_device_builds": {
+    "Lantern": "PASS",
+    "Beacon": "PASS"
+  },
+  "read_only_review": "No actionable integration defects; main drawer/modal/accessibility/Stop retained, memory lifecycle and firmware unchanged.",
+  "inherited_checks": "../v2-main/report.json: portable58, firmware host, foundation2634, spatial444; these unchanged layers were not needlessly rerun.",
+  "results_local": ".artifacts/ios/results.gdpLQ8/{Lantern,Beacon}.xcresult",
+  "physical_hardware": "No hardware actions or new physical verification",
+  "hosted_CI": "Not run during local validation"
+}
