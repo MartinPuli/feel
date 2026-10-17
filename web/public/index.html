@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FEEL</title>
+<meta name="description" content="FEEL: a palm-held tactile display that shows obstacles and targets from an iPhone's LiDAR.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #fafafa; --ink: #0a0a0a; --muted: #666; --line: #eaeaea; --panel: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0a0a0a; --ink: #ededed; --muted: #a1a1a1; --line: #262626; --panel: #111; } }
+:root[data-theme="dark"] { --bg: #0a0a0a; --ink: #ededed; --muted: #a1a1a1; --line: #262626; --panel: #111; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 "Geist", -apple-system, BlinkMacSystemFont, sans-serif; }
+main { max-width: 680px; margin: 0 auto; padding: 72px 16px; }
+h1 { font-size: 40px; letter-spacing: -0.03em; margin: 0 0 12px; }
+p { color: var(--muted); margin: 0 0 28px; }
+a.card { display: block; text-decoration: none; color: inherit; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+a.card:hover { border-color: var(--muted); }
+a.card:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+a.card b { display: block; font-weight: 500; margin-bottom: 4px; }
+a.card span { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>FEEL</h1>
+  <p>A palm-held puck of 7 × 4 pins. An iPhone's LiDAR finds obstacles between waist and head height; each column is a direction and each row a distance, so you feel the space ahead.</p>
+  <a class="card" href="/replay"><b>Replay sessions →</b><span>Watch a recorded or simulated walk beside the pin grid and the LiDAR depth that drove it.</span></a>
+</main>
+</body>
+</html>

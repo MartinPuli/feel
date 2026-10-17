@@ -1,0 +1,18 @@
+{
+  "comment": "Shared parser cases for the Where-is answer. Swift (FeelCore) and Python (chalk/feel_chalk) must agree on every case.",
+  "cases": [
+    {"name": "found", "text": "{\"found\": true, \"label\": \"registration desk\", \"box\": [0.6, 0.4, 0.9, 0.8], \"confidence\": 0.82}",
+     "expect": {"found": true, "label": "registration desk", "box": [0.6, 0.4, 0.9, 0.8], "confidence": 0.82}},
+    {"name": "not found", "text": "{\"found\": false, \"label\": \"\", \"box\": null, \"confidence\": 0}",
+     "expect": {"found": false, "label": "", "box": null, "confidence": 0}},
+    {"name": "code fence is tolerated", "text": "```json\n{\"found\": false, \"label\": \"\", \"box\": null, \"confidence\": 0}\n```",
+     "expect": {"found": false, "label": "", "box": null, "confidence": 0}},
+    {"name": "prose instead of JSON", "text": "The desk is on your right.", "error": true},
+    {"name": "found without a box", "text": "{\"found\": true, \"label\": \"desk\", \"box\": null, \"confidence\": 0.9}", "error": true},
+    {"name": "box outside the image", "text": "{\"found\": true, \"label\": \"desk\", \"box\": [0.6, 0.4, 1.2, 0.8], \"confidence\": 0.9}", "error": true},
+    {"name": "box with zero width", "text": "{\"found\": true, \"label\": \"desk\", \"box\": [0.5, 0.4, 0.5, 0.8], \"confidence\": 0.9}", "error": true},
+    {"name": "box with three numbers", "text": "{\"found\": true, \"label\": \"desk\", \"box\": [0.1, 0.2, 0.3], \"confidence\": 0.9}", "error": true},
+    {"name": "confidence above one", "text": "{\"found\": true, \"label\": \"desk\", \"box\": [0.1, 0.2, 0.3, 0.4], \"confidence\": 1.5}", "error": true},
+    {"name": "found is a string", "text": "{\"found\": \"yes\", \"label\": \"desk\", \"box\": [0.1, 0.2, 0.3, 0.4], \"confidence\": 0.9}", "error": true}
+  ]
+}

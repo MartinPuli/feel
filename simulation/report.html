@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FEEL Replay Report</title>
+<style>
+:root {
+  --bg: #f7f7f5; --panel: #ffffff; --ink: #1c1c1a; --muted: #6b6b66; --line: #e2e1dc;
+  --b1: #b4320c; --b2: #e2621f; --b3: #f39a5b; --b4: #f8cfa8; --empty: #efeee9;
+  --pass: #1f7a4d; --fail: #c22f2f; --known: #a86400; --skip: #6b6b66; --miss: #d1246b; --accent: #2457c5;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141413; --panel: #1d1d1b; --ink: #ecebe6; --muted: #9b9a93; --line: #34332f;
+  --b1: #ff7a45; --b2: #e8692e; --b3: #b2542a; --b4: #6d3a22; --empty: #262522;
+  --pass: #4cc38a; --fail: #ff6b6b; --known: #f0b44c; --skip: #9b9a93; --miss: #ff5fa2; --accent: #7aa2ff;
+} }
+:root[data-theme="dark"] {
+  --bg: #141413; --panel: #1d1d1b; --ink: #ecebe6; --muted: #9b9a93; --line: #34332f;
+  --b1: #ff7a45; --b2: #e8692e; --b3: #b2542a; --b4: #6d3a22; --empty: #262522;
+  --pass: #4cc38a; --fail: #ff6b6b; --known: #f0b44c; --skip: #9b9a93; --miss: #ff5fa2; --accent: #7aa2ff;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+header { padding: 18px 16px 8px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; }
+h1 { font-size: 18px; margin: 0; }
+.muted { color: var(--muted); }
+.layout { display: grid; grid-template-columns: 270px 1fr; gap: 16px; padding: 8px 16px 32px; }
+@media (max-width: 820px) { .layout { grid-template-columns: 1fr; } }
+nav { display: flex; flex-direction: column; gap: 4px; }
+nav button { all: unset; cursor: pointer; display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 8px; }
+nav button:hover { background: var(--panel); }
+nav button[aria-current="true"] { background: var(--panel); box-shadow: inset 3px 0 0 var(--accent); }
+nav button:focus-visible { outline: 2px solid var(--accent); }
+.chip { font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 4px 6px; border-radius: 4px; color: #fff; flex: none; }
+.PASS { background: var(--pass); } .FAIL { background: var(--fail); } .KNOWN { background: var(--known); } .SKIP { background: var(--skip); }
+main { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+.card h2 { font-size: 16px; margin: 0 0 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-top: 10px; }
+.metric { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.metric b { display: block; font: 600 18px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.metric span { color: var(--muted); font-size: 12px; }
+.known { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--known); background: color-mix(in srgb, var(--known) 10%, transparent); }
+canvas { display: block; width: 100%; }
+.controls { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+.controls input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.controls button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.now { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; margin-top: 12px; }
+@media (max-width: 640px) { .now { grid-template-columns: 1fr; } }
+.grid-wrap { display: flex; flex-direction: column; gap: 6px; }
+.pins { display: grid; grid-template-columns: auto repeat(7, 1fr); gap: 6px; align-items: center; }
+.pin { aspect-ratio: 1; border-radius: 50%; background: var(--empty); border: 2px solid transparent; position: relative; }
+.pin.up { background: var(--b2); }
+.pin.want { border-color: var(--ink); border-style: dashed; }
+.pin.wrong { box-shadow: 0 0 0 3px var(--miss); }
+.pin.tap::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--accent); }
+.rowlabel { font-size: 11px; color: var(--muted); text-align: right; padding-right: 4px; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+td, th { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 500; }
+.bad { color: var(--fail); }
+</style>
+</head>
+<body>
+<header>
+  <h1>FEEL replay report</h1>
+  <span class="muted" id="generated"></span>
+  <span class="muted">Production Swift encoder + production C++ controller. No servo physics, feel, BLE radio or live detector.</span>
+</header>
+<div class="layout">
+  <nav id="list" aria-label="Scenarios"></nav>
+  <main id="main"></main>
+</div>
+<script>
+const DATA = /*DATA*/null;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const bandColor = b => b ? css('--b' + b) : css('--empty');
+let current = 0, tickIndex = 0, timer = null;
+
+function statusOf(s) {
+  if (s.skipped) return 'SKIP';
+  if (s.result.passed) return 'PASS';
+  return s.knownIssue ? 'KNOWN' : 'FAIL';
+}
+function esc(t) { return String(t ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function renderList() {
+  const nav = document.getElementById('list');
+  nav.innerHTML = '';
+  DATA.scenarios.forEach((s, i) => {
+    const b = document.createElement('button');
+    const st = statusOf(s);
+    b.innerHTML = `<span class="chip ${st}">${st}</span><span>${esc(s.title)}</span>`;
+    b.setAttribute('aria-current', i === current);
+    b.onclick = () => { current = i; tickIndex = 0; stop(); renderList(); renderScenario(); };
+    nav.appendChild(b);
+  });
+}
+
+function metric(value, label) { return `<div class="metric"><b>${esc(value)}</b><span>${esc(label)}</span></div>`; }
+
+function renderScenario() {
+  const s = DATA.scenarios[current], main = document.getElementById('main');
+  if (s.skipped) { main.innerHTML = `<div class="card"><h2>${esc(s.title)}</h2><p>${esc(s.skipped)}</p></div>`; return; }
+  const r = s.result, st = statusOf(s), lat = r.frameAgeMs;
+  main.innerHTML = `
+  <div class="card">
+    <h2><span class="chip ${st}">${st}</span>${esc(s.title)} <span class="muted mono" style="font-size:12px">${esc(s.name)} · ${esc(s.source)} · ${esc(s.digest)}</span></h2>
+    <div class="muted">${esc(s.description)}</div>
+    ${s.knownIssue ? `<div class="known"><b>Known issue:</b> ${esc(s.knownIssue)}</div>` : ''}
+    ${r.reasons.length ? `<div class="bad" style="margin-top:6px">${r.reasons.map(esc).join('<br>')}</div>` : ''}
+    <div class="metrics">
+      ${metric(r.accuracy == null ? '–' : (100 * r.accuracy).toFixed(1) + '%', `label agreement (${r.checks - r.failedChecks}/${r.checks})`)}
+      ${metric(r.phantomChecks, 'phantom pin checks')}
+      ${metric(r.missedChecks, 'missed obstacle checks')}
+      ${metric(r.bandChangesPerColumnSecond, 'live band changes / column / s')}
+      ${metric(lat ? lat.mean + ' ms' : '–', `modelled depth-frame age at send (max ${lat ? lat.max : '–'} ms)`)}
+      ${metric(s.deterministic ? 'yes' : 'NO', `deterministic · baseline ${s.baseline}`)}
+    </div>
+  </div>
+  <div class="card">
+    <canvas id="timeline" height="230" aria-label="Commanded band per column over time"></canvas>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--b1)"></span>band 1 &lt;0.9 m</span>
+      <span><span class="sw" style="background:var(--b2)"></span>2 &lt;1.6 m</span>
+      <span><span class="sw" style="background:var(--b3)"></span>3 &lt;2.5 m</span>
+      <span><span class="sw" style="background:var(--b4)"></span>4 ≤4 m</span>
+      <span><span class="sw" style="background:var(--miss)"></span>disagrees with label</span>
+      <span><span class="sw" style="background:var(--accent)"></span>tap column</span>
+      <span>grey bars: labelled windows · hatched: packet dropped</span>
+    </div>
+    <div class="controls">
+      <button id="play" type="button">Play</button>
+      <input id="scrub" type="range" min="0" max="${s.ticks.length - 1}" value="${tickIndex}" aria-label="Time">
+      <span class="mono" id="clock"></span>
+    </div>
+    <div class="now">
+      <div><canvas id="depth" aria-label="Depth frame used at this tick"></canvas>
+        <div class="muted" style="font-size:12px;margin-top:4px">Depth frame used by this tick (near = bright). Lines: column edges. Black: no usable depth.</div></div>
+      <div class="grid-wrap"><div class="pins" id="pins"></div><div id="tickinfo" class="mono" style="font-size:12px"></div></div>
+    </div>
+  </div>
+  <div class="card"><table><thead><tr><th>Label</th><th>Window</th><th>Agreement</th><th>First match</th></tr></thead><tbody>
+    ${r.expectations.map((e, i) => `<tr><td>${esc(e.label || describe(s.expect[i]))}</td><td class="mono">${e.from}–${e.to} s</td>
+      <td class="mono ${e.accuracy != null && e.accuracy < 1 ? 'bad' : ''}">${e.accuracy == null ? '–' : (100 * e.accuracy).toFixed(1) + '%'} (${e.passed}/${e.checks})</td>
+      <td class="mono">${e.firstMatch == null ? 'never' : '+' + e.firstMatch.toFixed(2) + ' s'}</td></tr>`).join('')}
+  </tbody></table></div>`;
+  document.getElementById('scrub').oninput = e => { tickIndex = +e.target.value; renderTick(); };
+  document.getElementById('play').onclick = () => timer ? stop() : play();
+  drawTimeline(); renderTick();
+}
+
+function describe(e) {
+  const parts = [];
+  if ('band' in e || 'bands' in e) parts.push(`columns ${e.columns === undefined || e.columns === 'all' ? 'all' : e.columns.join(',')} band ${'band' in e ? e.band : e.bands.join('/')}`);
+  if ('highlight' in e) parts.push(`tap ${e.highlight ?? 'none'}`);
+  if ('state' in e) parts.push(e.state);
+  return parts.join(' · ');
+}
+
+function drawTimeline() {
+  const s = DATA.scenarios[current], c = document.getElementById('timeline');
+  const dpr = devicePixelRatio || 1, W = c.clientWidth, H = 230;
+  c.width = W * dpr; c.height = H * dpr; const g = c.getContext('2d'); g.scale(dpr, dpr);
+  const left = 34, right = 8, top = 6, rowH = 22, rows = 7, labelsTop = top + rows * rowH + 8;
+  const t0 = s.ticks[0].t, t1 = s.ticks[s.ticks.length - 1].t, x = t => left + (t - t0) / Math.max(t1 - t0, 1e-9) * (W - left - right);
+  const step = (W - left - right) / s.ticks.length + 0.5;
+  g.font = '11px ui-monospace, Menlo, monospace'; g.fillStyle = css('--muted'); g.textBaseline = 'middle';
+  for (let col = 0; col < 7; col++) g.fillText('C' + col, 4, top + col * rowH + rowH / 2);
+  s.ticks.forEach(t => {
+    for (let col = 0; col < 7; col++) {
+      g.fillStyle = bandColor(t.fw[col]); g.fillRect(x(t.t), top + col * rowH, step, rowH - 3);
+      if (t.mismatch.some(m => m.column === col)) { g.fillStyle = css('--miss'); g.fillRect(x(t.t), top + col * rowH + rowH - 6, step, 3); }
+    }
+    if (t.hl < 7) { g.strokeStyle = css('--accent'); g.lineWidth = 2; g.strokeRect(x(t.t) + 1, top + t.hl * rowH + 1, step - 2, rowH - 5); }
+    if (t.dropped) { g.fillStyle = css('--muted'); g.fillRect(x(t.t), labelsTop - 6, step, 2); }
+    if (t.mismatch.some(m => m.column === null)) { g.fillStyle = css('--miss'); g.fillRect(x(t.t), labelsTop - 3, step, 2); }
+  });
+  s.expect.forEach((e, i) => {
+    const y = labelsTop + (i % 6) * 9;
+    g.fillStyle = css('--line'); g.fillRect(x(e.from), y, Math.max(2, x(e.to) - x(e.from)), 6);
+  });
+  g.fillStyle = css('--muted'); g.textBaseline = 'alphabetic';
+  for (let s1 = Math.ceil(t0); s1 <= t1; s1++) g.fillText(s1 + 's', x(s1) - 6, H - 4);
+  const cursor = s.ticks[tickIndex];
+  g.strokeStyle = css('--ink'); g.lineWidth = 1; g.beginPath(); g.moveTo(x(cursor.t) + step / 2, 0); g.lineTo(x(cursor.t) + step / 2, labelsTop + 54); g.stroke();
+}
+
+function expectedAt(s, t) {
+  const want = Array(7).fill(null); let hl;
+  s.expect.forEach(e => {
+    if (t < e.from + (e.grace || 0) || t > e.to) return;
+    if ('band' in e || 'bands' in e) {
+      const cols = e.columns === undefined || e.columns === 'all' ? [0,1,2,3,4,5,6] : e.columns;
+      cols.forEach(c => want[c] = 'band' in e ? [e.band] : e.bands);
+    }
+    if ('highlight' in e) hl = e.highlight;
+  });
+  return { want, hl };
+}
+
+function renderTick() {
+  const s = DATA.scenarios[current], t = s.ticks[tickIndex];
+  document.getElementById('scrub').value = tickIndex;
+  document.getElementById('clock').textContent = t.t.toFixed(2) + ' s';
+  drawTimeline();
+  // Pins: rows top = band 4 (fingers, far) … bottom = band 1 (wrist, near).
+  const { want, hl } = expectedAt(s, t.t), pins = document.getElementById('pins');
+  let html = '<div></div>' + [0,1,2,3,4,5,6].map(c => `<div class="rowlabel" style="text-align:center">C${c}</div>`).join('');
+  for (let band = 4; band >= 1; band--) {
+    html += `<div class="rowlabel">${band === 4 ? 'far ' : band === 1 ? 'near ' : ''}${band}</div>`;
+    for (let c = 0; c < 7; c++) {
+      const up = t.fw[c] === band, wanted = want[c] && want[c].includes(band), wrong = want[c] && !want[c].includes(t.fw[c]);
+      html += `<div class="pin ${up ? 'up' : ''} ${wanted ? 'want' : ''} ${up && wrong ? 'wrong' : ''} ${up && t.hl === c ? 'tap' : ''}" title="C${c} band ${band}"></div>`;
+    }
+  }
+  pins.innerHTML = html;
+  pins.setAttribute('aria-label', 'Pins: ' + t.fw.map((b, c) => `column ${c} band ${b}`).join(', '));
+  const dist = t.dist.map(d => d == null ? '  –  ' : d.toFixed(2)).join(' ');
+  document.getElementById('tickinfo').innerHTML =
+    `state ${esc(t.state)}${t.dropped ? ' · <span class="bad">packet dropped</span>' : ''}<br>` +
+    `range m  ${esc(dist)}<br>` +
+    `tap ${t.hl < 7 ? 'column ' + t.hl + (t.tap ? ' (tapping)' : '') : 'none'}${hl !== undefined ? ` · label: ${hl ?? 'none'}` : ''}` +
+    (t.target ? `<br>target ${esc(t.target.label)} ${t.target.bearing.toFixed(1)}° ${t.target.distance.toFixed(2)} m` : '') +
+    (t.mismatch.length ? `<br><span class="bad">${t.mismatch.length} label disagreement(s)</span>` : '') +
+    '<br><span class="muted">dashed ring = labelled band · blue ring = tap</span>';
+  drawDepth(s, t);
+}
+
+function drawDepth(s, t) {
+  const c = document.getElementById('depth'), th = t.frame == null ? null : s.thumbs[t.frame.toFixed(3)];
+  const W = c.clientWidth, dpr = devicePixelRatio || 1;
+  const w = th ? th.w : 64, h = th ? th.h : 48, H = Math.round(W * h / w);
+  c.width = W * dpr; c.height = H * dpr; c.style.height = H + 'px';
+  const g = c.getContext('2d'); g.scale(dpr, dpr);
+  if (!th) { g.fillStyle = css('--empty'); g.fillRect(0, 0, W, H); g.fillStyle = css('--muted'); g.font = '13px sans-serif';
+    g.fillText(t.frame == null ? 'no frame yet' : 'no usable depth (tracking lost or invalid mount)', 12, 22); return; }
+  const px = Uint8Array.from(atob(th.px), ch => ch.charCodeAt(0)), img = new ImageData(w, h);
+  for (let i = 0; i < w * h; i++) {
+    const v = px[i], o = i * 4;
+    if (v === 0) { img.data[o + 3] = 255; continue; }
+    const l = 255 - v; img.data[o] = l; img.data[o + 1] = l; img.data[o + 2] = Math.min(255, l + 18); img.data[o + 3] = 255;
+  }
+  const off = new OffscreenCanvas(w, h); off.getContext('2d').putImageData(img, 0, 0);
+  g.imageSmoothingEnabled = false; g.drawImage(off, 0, 0, W, H);
+  g.strokeStyle = css('--accent'); g.lineWidth = 1; g.fillStyle = css('--accent'); g.font = '11px ui-monospace, Menlo, monospace';
+  for (let k = 0; k <= 7; k++) {
+    const b = (-45 + k * 90 / 7) * Math.PI / 180, xs = (th.cx + th.fx * Math.tan(b)) / w * W;
+    if (xs > 0 && xs < W) { g.beginPath(); g.moveTo(xs, 0); g.lineTo(xs, H); g.stroke(); }
+  }
+  for (let col = 0; col < 7; col++) {
+    const b = (-45 + (col + 0.5) * 90 / 7) * Math.PI / 180, xs = (th.cx + th.fx * Math.tan(b)) / w * W;
+    if (xs > 4 && xs < W - 12) g.fillText('C' + col, xs - 7, 13);
+  }
+}
+
+function play() {
+  const s = DATA.scenarios[current];
+  document.getElementById('play').textContent = 'Pause';
+  timer = setInterval(() => { tickIndex = (tickIndex + 1) % s.ticks.length; renderTick(); }, 100);
+}
+function stop() { clearInterval(timer); timer = null; const b = document.getElementById('play'); if (b) b.textContent = 'Play'; }
+
+if (!DATA) { document.getElementById('main').textContent = 'Run simulation/run.py to fill this report.'; }
+else {
+  document.getElementById('generated').textContent = 'generated ' + DATA.generated;
+  const firstBad = DATA.scenarios.findIndex(s => statusOf(s) === 'FAIL');
+  current = firstBad >= 0 ? firstBad : 0;
+  renderList(); renderScenario();
+  addEventListener('resize', () => { if (!DATA.scenarios[current].skipped) renderTick(); });
+}
+</script>
+</body>
+</html>

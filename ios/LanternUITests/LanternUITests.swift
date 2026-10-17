@@ -6,7 +6,7 @@ final class LanternUITests: XCTestCase {
         continueAfterFailure = false
         XCUIDevice.shared.orientation = .landscapeLeft
         let app = XCUIApplication()
-        app.launchArguments += ["--uitesting"] + extraArguments
+        app.launchArguments += ["--uitesting", "-directionArrowsEnabled", "YES"] + extraArguments
         app.launch()
         XCTAssertTrue(app.buttons["controlsToggle"].waitForExistence(timeout: 10))
         if expandControls {
@@ -54,7 +54,8 @@ final class LanternUITests: XCTestCase {
         XCTAssertTrue(app.textFields["voiceEndpoint"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["controlsToggle"].exists)
         let save = app.buttons["saveVoiceSetup"]
-        for _ in 0..<4 where !save.isHittable { app.scrollViews["cameraSettingsScroll"].swipeUp() }
+        // Slow swipes scroll without momentum, so a longer panel cannot carry the button past the viewport.
+        for _ in 0..<6 where !save.isHittable { app.scrollViews["cameraSettingsScroll"].swipeUp(velocity: .slow) }
         save.tap()
         XCTAssertTrue(app.staticTexts["voiceSetupError"].exists)
         capture("voice-setup")
@@ -111,6 +112,28 @@ final class LanternUITests: XCTestCase {
             app.buttons["closeCameraPanel"].tap()
             assertStopped(app)
         }
+    }
+
+    func testDirectionArrowPlaysOnSimulatedSign() {
+        let app = launch()
+        app.buttons["cameraSettings"].tap()
+        let toggle = app.switches["directionArrowsToggle"]
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+        XCTAssertEqual(toggle.value as? String, "1")
+        app.buttons["closeCameraPanel"].tap()
+        simulate(app)
+        let title = app.staticTexts["guidanceTitle"]
+        XCTAssertEqual(title.label, "SIMULATION", "no arrow plays without a request")
+        let sign = app.buttons["simulateSign"]
+        XCTAssertTrue(sign.waitForExistence(timeout: 5))
+        // The simulated target is in view except during the 8–10 s tracking-loss window.
+        sign.tap()
+        let arrow = NSPredicate(format: "label BEGINSWITH 'SIMULATION · '")
+        expectation(for: arrow, evaluatedWith: title)
+        waitForExpectations(timeout: 3)
+        capture("direction-arrow-simulation")
+        app.buttons["stopSession"].tap()
+        assertStopped(app)
     }
 
     func testLargestTextKeepsStopReachable() {
