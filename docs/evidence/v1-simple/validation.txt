@@ -1,0 +1,31 @@
+V1 simpler interface — build 1.0.0 (3), 2026-10-16
+
+PASS: Xcode 26.6 / iPhone 17 Pro simulator iOS 26.5.
+PASS: Lantern integration suite, 4 tests, zero failures.
+PASS: Lantern UI suite, 3 tests, zero failures (including largest text).
+PASS: Beacon UI suite, 2 tests, zero failures (including largest text).
+PASS: final removal of duplicate idle/simulation copy rechecked with the
+      simulation/Stop UI test; screenshots refreshed.
+PASS: native iPhone builds for Lantern and Beacon; signatures verified.
+PASS: independent review confirmed actionable session/Bluetooth status remain
+      visible after the initial attempt to collapse them was corrected.
+PASS: visual review of default screens; git diff --check.
+
+The 38 shared-core tests passed in the preceding Geist revision. Core logic,
+fonts, palette, transport, consent and calibration behavior are unchanged here.
+No new physical sensing/actuation validation is claimed.
+
+Phone installation remains pending: devicectl lists the paired iPhone as
+unavailable. Connect/unlock it to install the signed build-3 app bundles at:
+/tmp/feel-vercel-device/Build/Products/Debug-iphoneos/Lantern.app
+/tmp/feel-vercel-device/Build/Products/Debug-iphoneos/Beacon.app
+
+Commands:
+xcodegen generate --spec ios/project.yml
+xcodebuild -project ios/Lantern.xcodeproj -scheme <Lantern|Beacon> -destination
+  'platform=iOS Simulator,id=<available simulator>' -derivedDataPath
+  /tmp/feel-v1-design-build CODE_SIGNING_ALLOWED=NO test
+xcodebuild -project ios/Lantern.xcodeproj -scheme <Lantern|Beacon>
+  -configuration Debug -destination 'generic/platform=iOS' -derivedDataPath
+  /tmp/feel-vercel-device DEVELOPMENT_TEAM=<existing team>
+  -allowProvisioningUpdates build

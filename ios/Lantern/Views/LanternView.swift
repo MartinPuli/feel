@@ -43,12 +43,9 @@ struct LanternView: View {
             Text("FEEL").font(FeelTypography.title2).tracking(-0.5)
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 8)
-            Label(model.mode.rawValue, systemImage: model.mode == .simulation ? "play.rectangle" : model.mode == .live ? "viewfinder" : "pause.circle")
-                .font(FeelTypography.label)
-                .padding(.horizontal, 12).padding(.vertical, 8)
-                .foregroundStyle(FeelTheme.accent)
-                .background(FeelTheme.inset, in: RoundedRectangle(cornerRadius: 6))
-                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(FeelTheme.border, lineWidth: 1))
+            Text(model.mode.rawValue)
+                .font(FeelTypography.caption)
+                .foregroundStyle(FeelTheme.secondary)
                 .accessibilityIdentifier("sessionMode")
         }
     }
@@ -56,9 +53,11 @@ struct LanternView: View {
     private var overview: some View {
         VStack(alignment: .leading, spacing: 16) {
             PuckView(packet: model.packet)
-            Text(model.targetDescription)
-                .font(FeelTypography.label)
-                .accessibilityIdentifier("targetStatus")
+            if model.mode != .stopped {
+                Text(model.targetDescription)
+                    .font(FeelTypography.label)
+                    .accessibilityIdentifier("targetStatus")
+            }
             Text("Neutral pins do not mean the area is clear.")
                 .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
         }
@@ -69,43 +68,35 @@ struct LanternView: View {
         VStack(alignment: .leading, spacing: 16) {
             GuidanceSummary(state: model.guidanceState, mode: model.mode)
             if model.mode == .simulation {
-                Label("SIMULATION: Synthetic inputs. No simulated movement sent to hardware.", systemImage: "info.circle")
-                    .font(FeelTypography.subheadline).fixedSize(horizontal: false, vertical: true)
-                    .padding(16)
-                    .background(FeelTheme.inset, in: RoundedRectangle(cornerRadius: 8))
+                Text("SIMULATION: No simulated movement sent to hardware.")
+                    .font(FeelTypography.footnote)
+                    .foregroundStyle(FeelTheme.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("simulationNotice")
             }
             if model.mode == .live {
                 LiveSetup(model: model)
-            } else {
-                FeelSection(title: model.mode == .simulation ? "Explore the tactile pattern" : "Ready when you are", systemImage: "hand.raised") {
-                    Text(model.mode == .simulation
-                         ? "Watch the target move across seven columns. The loop also demonstrates tracking loss."
-                         : "Connect your puck, start live sensing, then calibrate the floor before using depth estimates.")
-                        .font(FeelTypography.body)
-                    if model.mode == .stopped {
-                        Text("No puck nearby? Simulation lets you explore the pattern on screen.")
-                            .font(FeelTypography.subheadline).foregroundStyle(FeelTheme.secondary)
-                    }
-                }
             }
             PuckConnectionPanel(puck: model.puck)
-            Text(model.status).font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
-                .accessibilityIdentifier("sessionStatus")
+            if model.mode != .simulation {
+                Text(model.status).font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                    .accessibilityIdentifier("sessionStatus")
+            }
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
     private var diagnostics: some View {
-        DisclosureGroup("Packet and test notes") {
+        DisclosureGroup("Details") {
             VStack(alignment: .leading, spacing: 12) {
                 Text(model.packet.hex).font(FeelTypography.mono).textSelection(.enabled)
+                Text("Filled pins show depth. A ring marks target bearing.")
                 Text("Columns run left to right. Rows run near (wrist) to far (fingers). One pin per column. A highlighted pin indicates target bearing; it does not establish a safe path.")
                 Text("Unknown depth and lost tracking produce neutral pins. Neutral is not proof the area is clear. Indoor supervised prototype; use your usual mobility aid.")
             }.font(FeelTypography.footnote).padding(.top, 12)
         }
-        .padding(20)
-        .background(FeelTheme.surface, in: RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(FeelTheme.border, lineWidth: 1))
+        .font(FeelTypography.subheadline)
+        .padding(.vertical, 8)
     }
 }
 
@@ -160,9 +151,9 @@ struct GuidanceSummary: View {
 
     var title: String {
         switch state {
-        case .stopped: return "Your surroundings, through touch."
+        case .stopped: return "Ready"
         case .live: return "Depth estimates active"
-        case .simulation: return "A preview you can explore"
+        case .simulation: return "Preview"
         case .trackingLost: return mode == .simulation ? "Simulated tracking loss" : "Tracking lost"
         case .staleDepth: return "Waiting for fresh depth"
         case .invalidFrame: return "Depth unavailable"
@@ -172,9 +163,9 @@ struct GuidanceSummary: View {
 
     var detail: String {
         switch state {
-        case .stopped: return "Choose live sensing or try the simulation."
+        case .stopped: return ""
         case .live: return "Live depth estimates. Physical performance unverified."
-        case .simulation: return "A virtual puck shows synthetic obstacles and a moving target."
+        case .simulation: return ""
         case .trackingLost: return mode == .simulation
             ? "All pins are neutral. The simulation will resume automatically."
             : "All pins are neutral. Hold the phone steady until tracking returns."
@@ -188,7 +179,9 @@ struct GuidanceSummary: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title).font(FeelTypography.title2).accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("guidanceTitle")
-            Text(detail).font(FeelTypography.body).foregroundStyle(FeelTheme.secondary)
+            if !detail.isEmpty {
+                Text(detail).font(FeelTypography.body).foregroundStyle(FeelTheme.secondary)
+            }
         }
         .fixedSize(horizontal: false, vertical: true)
     }
@@ -229,9 +222,6 @@ struct PuckView: View {
                 Spacer()
                 Text("Right")
             }.font(FeelTypography.caption).foregroundStyle(FeelTheme.secondary)
-            Divider()
-            Text("Filled: depth  •  Ring: target bearing")
-                .font(FeelTypography.caption).foregroundStyle(FeelTheme.secondary)
         }
         .padding(16)
         .background(FeelTheme.surface, in: RoundedRectangle(cornerRadius: 10))
@@ -297,14 +287,14 @@ struct CameraPreview: UIViewRepresentable {
 struct PuckConnectionPanel: View {
     @ObservedObject var puck: BluetoothPuck
     var body: some View {
-        FeelSection(title: "Puck connection", systemImage: "antenna.radiowaves.left.and.right") {
+        VStack(alignment: .leading, spacing: 12) {
             Label(puck.isConnected ? "Puck connected" : "No puck connected", systemImage: puck.isConnected ? "checkmark.circle" : "link")
                 .font(FeelTypography.label)
                 .accessibilityIdentifier("puckConnectionStatus")
-            Text(puck.status).font(FeelTypography.subheadline).foregroundStyle(FeelTheme.secondary)
-            if puck.isConnected { Text(puck.boardStatus).font(FeelTypography.footnote) }
+            Text(puck.status).font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
             DisclosureGroup("Manage connection") {
                 VStack(alignment: .leading, spacing: 12) {
+                    if puck.isConnected { Text(puck.boardStatus).font(FeelTypography.footnote) }
                     Button("Scan for puck") { puck.scan() }.buttonStyle(FeelSecondaryButtonStyle())
                     Button("Disconnect") { puck.disconnect() }.buttonStyle(FeelSecondaryButtonStyle())
                         .accessibilityHint("Also cancels a pending connection.")

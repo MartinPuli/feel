@@ -21,7 +21,8 @@ This is a SwiftUI interpretation of Geist, without web component dependencies.
 Taste direction: variance 4, motion 2, density 4. No decorative motion.
 
 The production detector is included in local builds using the repository's
-verified model checksum. App version remains 1.0.0; build number is 2.
+verified model checksum. App version remains 1.0.0; the initial Geist build was 2.
+The simpler revision below is build 3.
 
 ## Validation
 
@@ -37,3 +38,17 @@ References: [Geist](https://vercel.com/geist/introduction),
 [colors](https://vercel.com/geist/colors),
 [typography](https://vercel.com/geist/typography),
 [official fonts](https://github.com/vercel/geist-font).
+
+## Simpler revision — build 3
+
+The user requested fewer details. Removed the duplicate Lantern onboarding
+section, decorative mode badge, panel legend and Beacon intro icon. Technical
+explanations and the pin legend are under Details; Beacon connection/privacy
+instructions expand on demand. Consent decisions remain explicit.
+
+The tactile view, session controls, simulation notice, calibration, actionable
+session errors and Bluetooth status stay visible. The simulation test checks
+both simulation labeling and the no-hardware-movement message. Independent
+review caught hidden error feedback; it was restored before final validation.
+
+See `evidence/v1-simple/validation.txt` and screenshots for this revision.

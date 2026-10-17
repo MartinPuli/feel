@@ -31,7 +31,7 @@ private struct BeaconView: View {
                     invitation(from: name)
                 }
 
-                FeelSection(title: "Connection", systemImage: "antenna.radiowaves.left.and.right") {
+                Group {
                     VStack(alignment: .leading, spacing: 16) {
                         Text(peer.status)
                             .font(FeelTypography.headline)
@@ -57,7 +57,7 @@ private struct BeaconView: View {
                     }
                 }
 
-                FeelSection(title: "Before you connect", systemImage: "hand.raised") {
+                DisclosureGroup("Connection details") {
                     Text("Requires compatible Ultra Wideband iPhones and local-network permission. Keep the rear cameras facing one another. No microphone, contact list, cloud account or location history is used.")
                         .font(FeelTypography.body)
                         .foregroundStyle(FeelTheme.secondary)
@@ -82,11 +82,6 @@ private struct BeaconView: View {
 
     private var introduction: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: "dot.radiowaves.left.and.right")
-                .font(.system(size: 24, weight: .medium))
-                .foregroundStyle(FeelTheme.accent)
-                .padding(.bottom, 8)
-                .accessibilityHidden(true)
             Text("FEEL Beacon")
                 .font(FeelTypography.largeTitle)
                 .accessibilityAddTraits(.isHeader)

@@ -26,7 +26,10 @@ final class LanternUITests: XCTestCase {
         let app = launch()
         capture("lantern-light-stopped", app: app)
         app.buttons["Simulation"].tap()
-        XCTAssertTrue(app.staticTexts["SIMULATION: Synthetic inputs. No simulated movement sent to hardware."].waitForExistence(timeout: 5))
+        let notice = app.staticTexts["simulationNotice"]
+        XCTAssertTrue(notice.waitForExistence(timeout: 5))
+        XCTAssertTrue(notice.label.contains("SIMULATION"))
+        XCTAssertTrue(notice.label.contains("No simulated movement sent to hardware"))
         XCTAssertFalse(app.buttons["Simulation"].isEnabled, "An active simulation must not restart on a duplicate tap")
         XCTAssertTrue(app.otherElements["Virtual puck"].exists)
         XCTAssertLessThanOrEqual(app.otherElements["Virtual puck"].frame.maxY, app.buttons["stopSession"].frame.minY, "The tactile display must be visible above Stop")

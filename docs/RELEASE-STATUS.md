@@ -10,7 +10,9 @@
 
 Lantern and Beacon now use the [Vercel-inspired Geist design](V1-VERCEL-DESIGN.md).
 All 47 distinct core/integration/UI tests passed locally, including repeated UI
-checks in light/dark appearances. Both apps build and sign as 1.0.0 (2).
+checks in light/dark appearances. The subsequent simpler revision passes 4 Lantern integration, 3 Lantern UI and
+2 Beacon UI tests. Both apps build and sign as 1.0.0 (3).
+[Current screenshots and checks](evidence/v1-simple/validation.txt).
 Installation of this visual update is pending: the paired iPhone is unavailable
 and the install attempt returned device-not-found. Earlier installation evidence
 below refers to the previous app build. [Validation](evidence/v1-vercel/validation.txt).
