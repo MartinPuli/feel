@@ -23,7 +23,10 @@ tests;2,634 cross-layer assertions;104 actual-CAD/controller contract checks;
 24 mesh exports;80 cam checks; model integrity; Xcode26.6 simulator tests
 (3 app tests and1 UI test), companion simulator build and both unsigned device
 builds. [Commands and evidence](evidence/v1-release/report.json) identify each
-check. Hosted CI for this revision is pending publication. The hardened firmware
+check. Published to `feel/v1-foundation` at `57c7e6b`. Hosted CI is **BLOCKED**:
+GitHub refused to start every job because of account billing/spending limits.
+[GitHub evidence](evidence/v1-release/github-actions.json) records the exact
+annotation and run URLs. Resolve account billing and rerun; no hosted test ran. The hardened firmware
 has not been flashed; the board retains the prior tested single-demo build. No claim of production hardware readiness is made.
 
 ## Historical foundation evidence (before the 120° revision)
