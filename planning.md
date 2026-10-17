@@ -1,3 +1,7 @@
+> Historical team planning notes, preserved from main. Hardware and implementation
+> claims below are not release-test evidence. For the current V1, use
+> [release status](docs/RELEASE-STATUS.md) and [test instructions](docs/TEST-V1.md).
+
 # Pin Puck — HANDOFF (full project state, Fri Oct 16 2026, ~5 PM)
 
 ## 1. One paragraph
