@@ -1,0 +1,1 @@
+{"title":"Person crossing close ahead","scene":{"duration":8,"path":[{"t":0,"x":0,"z":0}],"objects":[{"kind":"cylinder","center":[-1.1,-0.75],"radius":0.2,"height":1.75,"velocity":[0.3,0],"label":"person"}],"sensor":{"noise":0,"seed":29}},"expect":[{"from":3.5,"to":4.2,"columns":[3],"band":1,"label":"person crosses close ahead"}]}
