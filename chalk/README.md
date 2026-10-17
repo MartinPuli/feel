@@ -29,10 +29,10 @@ collects venue photos (see "Run the evaluation").
 
 The user asks "Where is the registration desk?". The phone sends one camera frame
 and the question through **Chalk's Model Gateway** to a vision model. The model
-returns a box in the photo, or says not found. The phone (still to build) looks up
-LiDAR depth at the box centre, pins that spot in the AR world, and the puck taps
-toward it. **Chalk Evaluations** score how often answers point at the right thing
-and how often the model correctly says not found, on labeled venue photos.
+returns a box in the photo, or says not found. The phone looks up LiDAR depth at
+the box centre, pins that spot in the AR world, and the puck taps toward it.
+**Chalk Evaluations** score how often answers point at the right thing and how
+often the model correctly says not found, on labeled venue photos.
 
 No web app is involved. The iPhone calls the gateway directly; evaluations run
 from this folder and are read in Chalk's dashboard.
@@ -45,14 +45,15 @@ from this folder and are read in Chalk's dashboard.
 | Gateway client, settings | `feel_chalk/gateway.py`, `feel_chalk/config.py` | Done (standard library only) |
 | Answer parser, request body, scoring rule | `feel_chalk/where_is.py` | Done, unit-tested |
 | Connection check | `check_connection.py` | Done |
-| Evaluation | `feel_chalk/where_is_eval.py` | Stub; needs photos and an Evaluations-enabled environment |
-| iPhone request/parse | `ios/Shared/FeelCore/Sources/FeelCore/WhereIs.swift` | Done, unit-tested; no app UI or networking call yet |
+| Evaluation | `feel_chalk/where_is_eval.py`, `feel_chalk/images.py` | Written, unit-tested; the Chalk run needs venue photos and an Evaluations-enabled environment |
+| Shared prompt, request body and parser | `ios/Shared/FeelCore/Sources/FeelCore/WhereIs.swift` | Done, unit-tested; no networking, so FeelCore stays portable |
+| iPhone request path | `ios/Lantern/Services/ChalkGateway.swift`, `WhereIsService.swift` | Done; posts the body with the gateway key and `X-Chalk-Env-Id`, 12 s timeout, then the on-device fallback |
 
-Still to build in the app: a "Where is…" button or voice question, JPEG capture of
-the current ARKit frame, the gateway call, depth lookup at the box centre
-(`ARPerception` already does this for door detections), and a target that persists
-until reached or cancelled (current detections expire after 500 ms). Only targets
-in front of the camera within about 4 m can be shown on the puck.
+In the app, the `where_is` voice tool captures the current ARKit frame as a JPEG
+(long side at most 1024 px, quality 0.6), posts it through `ChalkGateway`, looks up
+depth at the box centre and holds the target until it is reached, cancelled or
+replaced by a new ask. Only targets in front of the camera within about 4 m can be
+shown on the puck.
 
 ## Setup (things only you can do)
 
@@ -79,8 +80,10 @@ in front of the camera within about 4 m can be shown on the puck.
    that is **not** in the photo (`"box": null`).
 4. `python3 evals/validate_labels.py data/labels.jsonl` → "N rows valid".
 5. `.venv/bin/python -m feel_chalk.where_is_eval data/labels.jsonl --model openai/gpt-6.1-sol`,
-   then again with `--model openai/gpt-6-luna`. Read the three scores per run in the
-   Chalk dashboard and record them here with the run IDs.
+   then again with `--model openai/gpt-6-luna`. Photos are re-encoded on upload the way
+   the phone sends them (long side at most 1024 px, JPEG quality 0.6). The output ends
+   with the evaluation, suite and run ids; read the three scores per run in the Chalk
+   dashboard and record them here with those ids.
 
 ## Check the connection
 

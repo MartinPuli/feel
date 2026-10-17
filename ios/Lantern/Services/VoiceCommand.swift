@@ -14,6 +14,8 @@ enum VoiceCommand: Equatable {
     case openSystemSettings, forgetVoiceConnection
     case setCameraHeight(Double)
     case openPanel(String), findTeammate(String)
+    /// 1-based option from the app's "which one?" question.
+    case chooseTarget(Int)
 
     static func decode(name: String, arguments: String) throws -> VoiceCommand {
         guard arguments.utf8.count <= 2048,
@@ -71,6 +73,10 @@ enum VoiceCommand: Equatable {
             return .find(mode)
         case "calibrate_floor":
             return .calibrate(try measuredHeight())
+        case "choose_target":
+            guard args.count == 1, let option = args["option"] as? NSNumber, CFGetTypeID(option) != CFBooleanGetTypeID(),
+                  option.doubleValue == option.doubleValue.rounded(), (1...4).contains(option.intValue) else { throw InvalidCommand() }
+            return .chooseTarget(option.intValue)
         case "connect_puck":
             guard args.count == 1, let value = args["device_id"] as? String,
                   let id = UUID(uuidString: value) else { throw InvalidCommand() }
@@ -118,7 +124,8 @@ enum VoiceCommand: Equatable {
             tool("close_panel", "Close the current floating panel when requested."),
             tool("open_system_settings", "Open FEEL's iPhone Settings page when requested. The user must change permissions there manually; never claim permission was granted."),
             tool("forget_voice_connection", "Remove saved voice setup ONLY after explaining that the assistant will stop and need setup again, and the user explicitly confirms. Say that explanation before calling; the connection ends immediately. Never request or read credentials aloud.", properties: ["confirmed": ["type": "boolean", "enum": [true]]]),
-            tool("set_controls_expanded", "Show or hide the camera's lower drawer containing tactile dots and camera controls.", properties: ["expanded": ["type": "boolean"]])
+            tool("set_controls_expanded", "Show or hide the camera's lower drawer containing tactile dots and camera controls.", properties: ["expanded": ["type": "boolean"]]),
+            tool("choose_target", "Only after you asked 'I see N ... Which one?': call with the option number the user picked, matching their words (left, right, ahead, nearer, farther, or a number) to the options you listed. If unclear, ask once more.", properties: ["option": ["type": "integer", "minimum": 1, "maximum": 4]])
         ]
     }
 
@@ -139,6 +146,7 @@ enum VoiceCommand: Equatable {
     Say speak again or unmute: call set_spoken_output with enabled=true. Muting voice is different from pausing microphone capture.
     Say stop automatic updates: call set_proactive_updates with enabled=false while continuing to answer direct questions.
     For missing information, ask one short question and wait. Do not repeat a completed action.
+    When you have just asked which of several targets to guide to, wait for the answer and call choose_target. Don't add anything after it; the app confirms with a sound.
 
     ## Guardrails & Escalation
     Describe only observations returned by tools. Use spoken_observation when provided; keep its past tense because speech follows the camera sample.

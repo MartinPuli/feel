@@ -23,6 +23,8 @@ struct VoiceControl: View {
     }
 }
 
+/// The Assistant panel: status, a typed fallback, two toggles, and the one-time connection.
+/// Explanations live in accessibility hints, not on screen.
 struct VoiceSetup: View {
     @ObservedObject var voice: RealtimeVoiceSession
     let close: () -> Void
@@ -44,7 +46,7 @@ struct VoiceSetup: View {
                     .accessibilityIdentifier("voiceCaption")
             }
             if voice.audioUnavailable {
-                Text("Sound output is unavailable on this device. Captions and actions still work.")
+                Text("No sound output here. Captions still work.")
                     .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
                     .accessibilityIdentifier("voiceAudioUnavailable")
             }
@@ -54,7 +56,7 @@ struct VoiceSetup: View {
                         .feelField().submitLabel(.send)
                         .onSubmit { sendTyped() }
                         .accessibilityLabel("Type a request")
-                        .accessibilityHint("The same as saying it. Useful in a loud room or with a keyboard.")
+                        .accessibilityHint("The same as saying it.")
                         .accessibilityIdentifier("voiceTypedRequest")
                     Button("Send") { sendTyped() }
                         .buttonStyle(FeelSecondaryButtonStyle()).frame(width: 96)
@@ -62,20 +64,14 @@ struct VoiceSetup: View {
                         .accessibilityIdentifier("voiceSend")
                 }
             }
-            Text("FEEL listens while the app is open. Say what you need.")
-                .font(FeelTypography.body)
-            Text("Use your phone or headphones. Say find a door, check sensing, or stop. You can interrupt at any time.")
-                .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
             Toggle("Spoken replies", isOn: Binding(get: { voice.spokenOutputEnabled }, set: { voice.setSpokenOutput($0) }))
                 .font(FeelTypography.label)
-                .accessibilityHint("Mute speech while keeping voice commands available. Say speak again to unmute.")
+                .accessibilityHint("Mute speech while keeping voice commands. Say speak again to unmute.")
                 .accessibilityIdentifier("spokenReplies")
             Toggle("Useful updates", isOn: $voice.proactiveEnabled)
                 .font(FeelTypography.label)
-                .accessibilityHint("Announces nearby obstacles, target movement and sensing changes while voice is on.")
+                .accessibilityHint("Announces nearby obstacles, target changes and sensing changes while voice is on.")
                 .accessibilityIdentifier("proactiveVoice")
-            Text("FEEL mentions nearby obstacles, meaningful target changes and sensing recovery. It stays quiet while you talk.")
-                .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
             if voice.needsMicrophoneSettings {
                 Button("Allow microphone in Settings") {
                     if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
@@ -89,12 +85,7 @@ struct VoiceSetup: View {
                 Button("Connection settings") { showSetup = true }
                     .frame(minHeight: 44).font(FeelTypography.label)
             } else {
-                Text("One-time assistant setup")
-                    .font(FeelTypography.headline).accessibilityAddTraits(.isHeader)
-                Text("Enter your FEEL voice service address and access code. Your OpenAI API key stays on the server.")
-                    .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
-                    .accessibilityIdentifier("voiceProviderNote")
-                TextField("https://your-service/session", text: $endpoint)
+                TextField("Voice service address (https://…/session)", text: $endpoint)
                     .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
                     .feelField().accessibilityLabel("Voice service address")
                     .accessibilityIdentifier("voiceEndpoint")
@@ -119,7 +110,7 @@ struct VoiceSetup: View {
                     }.frame(minHeight: 44)
                 }
             }
-            Text("OpenAI receives microphone audio and the app status needed to answer while FEEL is open. Camera images stay on your phone. Listening pauses in the background and resumes when you return, unless you pause the assistant.")
+            Text("Microphone audio goes to OpenAI while FEEL is open.")
                 .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
         }
         .onAppear { endpoint = voice.configuration?.endpoint ?? "" }

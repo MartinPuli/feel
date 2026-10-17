@@ -134,7 +134,7 @@ struct LanternView: View {
                 if dynamicTypeSize.isAccessibilitySize {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
-                            PuckView(packet: model.packet)
+                            PuckView(packet: model.packet, targetColumns: model.targetColumns)
                             guidance
                         }.padding(.horizontal, 20)
                     }
@@ -143,7 +143,7 @@ struct LanternView: View {
                     sessionAction.padding(16)
                 } else {
                     HStack(spacing: 20) {
-                        PuckView(packet: model.packet, compact: true).frame(width: 200)
+                        PuckView(packet: model.packet, targetColumns: model.targetColumns, compact: true).frame(width: 200)
                         guidance.frame(maxWidth: .infinity, alignment: .leading)
                         sessionAction.frame(width: 164)
                     }
@@ -338,15 +338,13 @@ struct LanternView: View {
 
     private var settings: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Button("Assistant settings") { presentedPanel = .voice }
-                .buttonStyle(FeelSecondaryButtonStyle())
-                .accessibilityIdentifier("voiceSettings")
             if model.mode == .live {
                 LiveSetup(model: model)
             } else {
-                Text("Start the camera to calibrate and choose a target.")
+                Text("Start the camera to calibrate.")
                     .foregroundStyle(FeelTheme.secondary)
             }
+            DirectionArrowSettings(model: model)
             Button("Simulation") {
                 model.startSimulation()
                 controlsExpanded = true
@@ -354,13 +352,9 @@ struct LanternView: View {
             }
             .buttonStyle(FeelSecondaryButtonStyle())
             .disabled(model.mode == .simulation)
-            Text("Synthetic inputs. No simulated movement is sent to hardware.")
-                .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
             DisclosureGroup("Details") {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(model.packet.hex).font(FeelTypography.mono).textSelection(.enabled)
-                    Text("The dots show the puck, not positions in the camera image. Columns run left to right; rows run from near (wrist) to far (fingers). Filled dots show depth; a ring marks target bearing.")
-                    Text("Neutral pins do not mean the area is clear. Unknown depth and lost tracking produce neutral pins. Indoor supervised prototype; use your usual mobility aid.")
                 }.font(FeelTypography.footnote).padding(.top, 12)
             }
         }
@@ -406,7 +400,7 @@ private struct CameraGuidance: View {
         switch model.guidanceState {
         case .stopped: return model.isStarting ? "Opening camera" : "Camera stopped"
         case .live: return model.targetDescription
-        case .simulation: return "SIMULATION"
+        case .simulation: return model.guidanceCue.map { "SIMULATION · guiding: \($0.spoken)" } ?? "SIMULATION"
         case .trackingLost: return model.mode == .simulation ? "SIMULATION · Tracking lost" : "Tracking lost · Pins neutral"
         case .staleDepth: return "Waiting for depth · Pins neutral"
         case .invalidFrame: return "Depth unavailable · Pins neutral"
@@ -421,8 +415,22 @@ private struct CameraGuidance: View {
                 Text("No simulated movement sent to hardware.")
                     .font(FeelTypography.footnote)
                     .accessibilityIdentifier("simulationNotice")
+                if model.arrowsEnabled {
+                    Button("Simulate V sign") { model.simulateSign() }
+                        .buttonStyle(FeelSecondaryButtonStyle())
+                        .accessibilityIdentifier("simulateSign")
+                        .accessibilityHint("Plays the arrow a real V sign would request.")
+                }
             } else {
                 Text(model.status).font(FeelTypography.footnote).accessibilityIdentifier("sessionStatus")
+                if model.mode == .live {
+                    Text(model.pointingReadout).font(FeelTypography.footnote)
+                        .foregroundStyle(FeelTheme.secondary).accessibilityIdentifier("pointingReadout")
+                    if model.arrowsEnabled {
+                        Text(model.directionReadout).font(FeelTypography.footnote)
+                            .foregroundStyle(FeelTheme.secondary).accessibilityIdentifier("directionReadout")
+                    }
+                }
             }
             Text(puck.status).font(FeelTypography.footnote)
                 .foregroundStyle(FeelTheme.secondary).accessibilityIdentifier("puckConnectionStatus")
@@ -433,6 +441,8 @@ private struct CameraGuidance: View {
 
 struct PuckView: View {
     let packet: FeelPacket
+    /// Several target columns tap together; nil falls back to the packet's single highlight.
+    var targetColumns: ClosedRange<Int>? = nil
     var compact = false
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 7)
 
@@ -447,8 +457,8 @@ struct PuckView: View {
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(0..<7, id: \.self) { column in
                         let active = packet.bands[column] == UInt8(band)
-                        let target = active && packet.effectiveHighlight == UInt8(column)
-                        // Raised pins are solid ink; the target is the one orange pin; down pins are rings.
+                        let target = active && ((targetColumns.map { $0.count > 1 && $0.contains(column) } ?? false) || packet.effectiveHighlight == UInt8(column))
+                        // Raised pins are solid ink; target columns are orange; down pins are rings.
                         Circle()
                             .fill(target ? FeelTheme.pin : active ? FeelTheme.ink : FeelTheme.paper)
                             .overlay(Circle().strokeBorder(FeelTheme.ink, lineWidth: compact ? 1.5 : 2.5))
@@ -468,7 +478,27 @@ struct PuckView: View {
         .padding(compact ? 0 : 16)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Virtual puck")
-        .accessibilityValue(packet.bands.enumerated().map { "Column \($0.offset + 1), band \($0.element)" }.joined(separator: ". ") + (packet.effectiveHighlight < 7 ? ". Target column \(Int(packet.effectiveHighlight) + 1)" : ". No target highlight"))
+        .accessibilityValue(packet.bands.enumerated().map { "Column \($0.offset + 1), band \($0.element)" }.joined(separator: ". ") + targetSummary)
+    }
+
+    private var targetSummary: String {
+        if let span = targetColumns, span.count > 1 { return ". Target columns \(span.lowerBound + 1) to \(span.upperBound + 1)" }
+        return packet.effectiveHighlight < 7 ? ". Target column \(Int(packet.effectiveHighlight) + 1)" : ". No target highlight"
+    }
+}
+
+private struct DirectionArrowSettings: View {
+    @ObservedObject var model: LanternModel
+    var body: some View {
+        FeelSection(title: "Direction arrows", systemImage: "arrow.turn.up.right") {
+            Toggle("Arrows on V sign", isOn: $model.arrowsEnabled)
+                .font(FeelTypography.label)
+                .accessibilityIdentifier("directionArrowsToggle")
+                .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 
@@ -479,7 +509,7 @@ private struct LiveSetup: View {
             FeelSection(title: "Floor calibration", systemImage: "viewfinder") {
                 Label(model.calibrated ? "Floor calibrated" : "Calibration required", systemImage: model.calibrated ? "checkmark.circle" : "exclamationmark.circle")
                     .font(FeelTypography.label)
-                Text("Mount landscape-left: rear camera forward, top edge to your left; keep the phone upright. Measure lens height above the floor.")
+                Text("Phone landscape-left, rear camera forward.")
                     .font(FeelTypography.subheadline)
                 Stepper(value: $model.cameraHeight, in: 0.6...2.1, step: 0.05) {
                     VStack(alignment: .leading, spacing: 4) {
@@ -496,6 +526,19 @@ private struct LiveSetup: View {
                     .accessibilityIdentifier("calibrationStatus")
 
             }
+            FeelSection(title: "Record for replay", systemImage: "record.circle") {
+                Toggle("Record depth", isOn: $model.recordingDepth)
+                    .font(FeelTypography.label)
+                    .accessibilityIdentifier("recordDepthToggle")
+                Toggle("Include camera video", isOn: $model.recordingVideo)
+                    .font(FeelTypography.label)
+                    .disabled(model.recordingDepth)
+                    .accessibilityIdentifier("recordVideoToggle")
+                Text(model.recordingStatus ?? "Saves LiDAR depth, pose and detections, plus camera video if included, to Files › On My iPhone › FEEL › Recordings, for scoring the pins offline and watching them on the /replay page. Nothing leaves the phone until you share it. About 3 MB per second.")
+                    .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("recordingStatus")
+            }
             FeelSection(title: "Find a target", systemImage: "scope") {
                 Picker("Find", selection: $model.finder) {
                     ForEach(FinderMode.allCases) { mode in
@@ -503,9 +546,6 @@ private struct LiveSetup: View {
                     }
                 }.pickerStyle(.menu)
                 Text(model.detectorStatus).font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
-                if model.finder == .door {
-                    Text("Door candidate uses rectangle shape. It cannot confirm a door or a safe opening.").font(FeelTypography.footnote)
-                }
                 if model.finder == .teammate { PeerPanel(peer: model.peer) }
             }
         }
@@ -539,10 +579,6 @@ struct PuckConnectionPanel: View {
             }
             Button("Disconnect") { puck.disconnect() }.buttonStyle(FeelSecondaryButtonStyle())
                 .accessibilityHint("Also cancels a pending connection.")
-            if puck.devices.isEmpty && !puck.isConnected {
-                Text("Turn on your puck. Choose it when it appears.")
-                    .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
-            }
         }
         .onAppear { if !puck.isConnected { puck.scan() } }
         .onDisappear { puck.stopScanning() }
@@ -557,14 +593,9 @@ struct PeerPanel: View {
             Button("Find Beacon phones") { peer.start() }
                 .buttonStyle(FeelSecondaryButtonStyle()).disabled(peer.running)
             Button("Stop finding") { peer.stop() }.buttonStyle(FeelSecondaryButtonStyle())
-            if peer.running {
-                Text("If no phones appear or the connection fails, stop finding and try again.")
-                    .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
-            }
             ForEach(peer.peers, id: \.self) { person in
                 Button("Find \(person.displayName)") { peer.invite(person) }.buttonStyle(FeelSecondaryButtonStyle())
             }
-            Text("The teammate accepts on Beacon. Keep both apps foreground. Direction can be unavailable; no tactile target is sent without a current AR direction.").font(FeelTypography.footnote)
         }
     }
 }

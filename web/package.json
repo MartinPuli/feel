@@ -1,0 +1,11 @@
+{
+  "name": "feel-web",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node server.mjs",
+    "build": "node build.mjs",
+    "test": "node --test"
+  }
+}

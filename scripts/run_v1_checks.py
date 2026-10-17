@@ -28,6 +28,7 @@ def main():
     check('swift-core',['sh','ios/scripts/test_portable.sh'],tools=('swift',),timeout=600)
     check('swift-cli',['swift','build','-j','2','--package-path','ios/Shared/FeelCore'],tools=('swift',),timeout=600)
     check('production-integration',[sys.executable,'validation/production/run.py','--output',str(output/'simulation')],files=('ios/Shared/FeelCore/.build/debug/feel-replay','firmware/build/feel-sim'),scope='compiled production Swift and C++ with synthetic inputs')
+    check('replay-scenarios',[sys.executable,'simulation/run.py','--repeat','2','--out',str(output/'replay')],tools=('swift','c++'),timeout=900,scope='labelled depth scenes through production Swift encoder and C++ controller; no servo physics or feel')
     check('firmware-build',['pio','run','-j','2','--project-dir','firmware'],tools=('pio',),timeout=1200)
     check('firmware-single-demo-build',['pio','run','-j','2','--project-dir','firmware','-e','esp32-single-demo'],tools=('pio',),files=('firmware/platformio.ini',),timeout=1200,scope='single-servo BLE demo compile only; no upload')
     check('firmware-single-live-build',['pio','run','-j','2','--project-dir','firmware','-e','esp32-single-live'],tools=('pio',),files=('firmware/platformio.ini',),timeout=1200,scope='single-servo nominal120 live compile only; no upload')

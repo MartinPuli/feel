@@ -1,10 +1,8 @@
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 
-/// "Where is X?" through Chalk's OpenAI-compatible Model Gateway. Not yet wired into the app:
-/// the camera capture, LiDAR placement and long-lived target remain to be built (chalk/README.md).
+/// The "Where is X?" contract shared with chalk/feel_chalk/where_is.py: the prompt, the request body for
+/// Chalk's OpenAI-compatible Model Gateway, and the strict answer parser. The app posts the body through
+/// `ios/Lantern/Services/ChalkGateway.swift` (driven by `WhereIsService`); nothing here touches the network.
 /// Prompt and parsing must match protocol/where-is-prompt.txt and protocol/where-is-cases.json.
 public struct NormalizedBox: Equatable, Sendable {
     /// Fractions of image width/height, top-left origin.
@@ -68,14 +66,5 @@ public enum WhereIs {
             ["role":"user","content":[["type":"text","text":question],["type":"image_url","image_url":["url":"data:image/jpeg;base64,\(jpegBase64)"]]]],
         ]]
         return try JSONSerialization.data(withJSONObject:body,options:[.sortedKeys])
-    }
-
-    public static func request(apiHost: URL, apiKey: String, environmentID: String, body: Data, timeout: TimeInterval=15) -> URLRequest {
-        var request=URLRequest(url:apiHost.appendingPathComponent("v1/router/chat/completions"),timeoutInterval:timeout)
-        request.httpMethod="POST"; request.httpBody=body
-        request.setValue("Bearer \(apiKey)",forHTTPHeaderField:"Authorization")
-        request.setValue(environmentID,forHTTPHeaderField:"X-Chalk-Env-Id")
-        request.setValue("application/json",forHTTPHeaderField:"Content-Type")
-        return request
     }
 }

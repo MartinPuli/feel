@@ -125,6 +125,19 @@ final class WhereIsCommandTests: XCTestCase {
         XCTAssertNil(model.heldTarget)
     }
 
+    func testPlacedTargetBecomesTheRouteGoalForTheArrows() {
+        let (model, _) = makeModel()
+        model.arrowsEnabled = true
+        model.handleWhereIs(.placed(held), thing: "desk")
+        XCTAssertTrue(model.routeGoalActive, "The arrows guide to a Where-is target the way they guide to a two-finger route")
+        model.clearHeldTarget(spokenLine: nil)
+        XCTAssertFalse(model.routeGoalActive)
+        model.arrowsEnabled = false
+        model.handleWhereIs(.placed(held), thing: "desk")
+        XCTAssertFalse(model.routeGoalActive, "Arrows off: the pin alone points, silently")
+        XCTAssertEqual(model.heldTarget, held)
+    }
+
     func testResultLineIsRetriedOnceTheAssistantIsFree() {
         let (voice, transport) = VoiceTestDoubles.activeSession()
         let model = LanternModel(voice: voice, chalkStore: MemoryChalkStore(), gatewayFactory: { _ in StubChatGateway() }, localFinder: StubLocalFinder())
@@ -189,6 +202,20 @@ final class WhereIsCommandTests: XCTestCase {
         XCTAssertThrowsError(try model.saveChalkConfiguration(ChalkConfiguration(apiHost: "http://x", routerApiKey: "k", environmentId: "e", model: "m")))
         model.forgetChalkConfiguration()
         XCTAssertNil(model.chalkConfiguration)
+    }
+
+    func testSavingNewConfigurationDropsTheLookupInFlight() throws {
+        let (model, gateway) = makeModel()
+        var pending: [(FrameSnapshot?) -> Void] = []
+        model.snapshotProvider = { pending.append($0) }
+        model.beginWhereIs("desk")
+        pending[0](makeSnapshot())
+        XCTAssertEqual(gateway.calls, 1)
+        try model.saveChalkConfiguration(ChalkConfiguration(apiHost: ChalkConfiguration.defaultHost, routerApiKey: String(repeating: "n", count: 16), environmentId: "env2", model: "m2"))
+        // The old service's answer arrives after the settings changed: it must not drive the pins or speak.
+        gateway.reply(0, .success(#"{"found": true, "label": "desk", "box": [0.4, 0.4, 0.6, 0.6], "confidence": 0.9}"#))
+        XCTAssertNil(model.heldTarget, "An answer from the replaced service must be dropped")
+        XCTAssertNil(model.whereIsNotice)
     }
 
     func testNamedObservationPhrase() {

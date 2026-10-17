@@ -27,7 +27,8 @@ reached within 12 s, FEEL answers on the phone itself: Vision reads EXIT signs a
 door-shaped rectangles and finds people, and the bundled Core ML detector finds chairs
 and common objects (run `python3 scripts/fetch_model.py` before building). For anything
 else offline it says "I can only look for the exit, a door, a person, a chair or common
-objects right now."
+objects right now." With direction arrows on, a found target also becomes the arrows' route goal:
+the pins draw one arrow along the planned route to it, then again only when the route changes.
 
 **Typed requests.** While the assistant is active, the Assistant panel has a "Type a
 request" field. Text takes the same path as speech (a user item, then a response), so

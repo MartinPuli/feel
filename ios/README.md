@@ -54,6 +54,8 @@ Send one JSON object per line; each command immediately returns one JSON object.
 
 `encode` strictly validates bytes. `decode` returns `valid:false` and an error for invalid input. `perceive` uses the exact app encoder and returns `hex`, `seq`, `bands`, `highlight`, and `state`. Times are monotonic seconds; a missing range is JSON `null`. `floorCalibrated:false` tests the neutral uncalibrated state. `replay path.json` accepts a nonempty array of those commands with optional `expectedHex`; a mismatch is a nonzero process exit. Root production replay additionally passes the actual Swift packets into the actual C++ firmware controller.
 
+`synth scene.json out.feelrec` renders a deterministic synthetic depth recording, and `session in.feelrec` replays a recording (synthetic or recorded in Lantern with **Record depth**) through the app's depth step and 10 Hz tick, printing one packet per tick. `simulation/run.py` drives both through the firmware controller and scores the pin grid against labels; see [simulation/README.md](../simulation/README.md).
+
 For the restricted build host used in this session only, Swift's new driver and occasionally its test subprocess monitor crash because child `/proc/<pid>/stat` cannot be read. The official legacy-driver switch `SWIFT_USE_OLD_DRIVER=1` makes compilation possible. `test_portable.sh` builds, then executes XCTest directly. The host can still intermittently fail in its process monitor; standalone XCTest runs have completed cleanly. Record that environment failure separately from assertion results. A private verified `libncurses6` is also supplied by `LD_LIBRARY_PATH`. This is an environment workaround, not a source-code test skip; build/test failures still exit nonzero. A normal Mac or Linux installation needs none of those host-specific paths.
 
 ## Phone mounting and floor calibration
@@ -84,6 +86,57 @@ Start Live on FEEL, calibrate the floor, choose **Teammate**, and select **Find 
 FEEL enables camera assistance with its existing AR session. Only an available, current `NISession.worldTransform(for:)` in that same AR world yields a target. Raw NI direction is not treated as AR camera coordinates. Beacon can show distance without implying that FEEL has a usable direction. Lost/suspended/missing direction immediately clears both displayed and world-space target caches. Removal callbacks only affect the active discovery token. Suspension blocks updates; timeout/resumption rotates the NI session and discovery token, so delayed callbacks from the old session cannot restore guidance. Invalidated sessions require a fresh start.
 
 Apple recommends portrait orientation for strongest NI performance; FEEL's fixed landscape prototype may reduce NI availability. Test the complete landscape mount with two real phones before promising this feature. Door/EXIT/person finding remains independent of the companion phone.
+
+## Direction arrows (V sign)
+
+**Settings → Direction arrows** (on by default) draws one tactile arrow toward the selected target when the wearer asks. It reuses the normal nine-byte packets at 10 Hz, with no firmware or protocol change. Source: `FeelCore/HandSign.swift`, `FloorGrid.swift`, `DirectionCues.swift`, `Lantern/Services/HandSignDetector.swift`; tests in `DirectionTests.swift`.
+
+- **Request sign:** a V, with index and middle fingers straight and spread, ring and little fingers folded, held about 0.5 s.
+  - Any rotation works: the check uses joint distances and angles only.
+  - The hand must look closer than 0.55 m, estimated from palm size, so bystanders' hands don't count.
+  - After firing, the sign must disappear for 0.8 s before it can fire again.
+  - It is not checked while the puck's point-to-describe codes are in view. It runs on the pointing queue with the same image, so no extra ARKit frame is retained.
+- **Floor map:**
+  - Medium/high-confidence LiDAR points become 10 cm cells.
+  - Anything 10 cm–2 m above the calibrated floor blocks a cell, including bags and chair legs below the 0.6 m sector window.
+  - Floor hits mark cells free and wear away old obstacle hits, so people who move away clear.
+  - Cells beyond 8 m are dropped.
+  - The map resets on start, stop, calibration, finder change and AR interruption.
+- **Route:**
+  - About 2.5 times a second, but only while the target is in view right now, A* runs from the wearer to any open cell within 0.7 m of the target.
+  - Cells within 0.3 m of an obstacle, and unknown cells, cost extra.
+  - The arrow aims at the route point 1.2 m ahead, relative to the camera's facing direction.
+- **Arrows** (fingers = forward):
+
+  | Cue | Bearing | Pattern |
+  |---|---|---|
+  | Straight | ≤ 15° | a V growing to `1234321` |
+  | Bear left/right | ≤ 50° | the finger row runs to the column |
+  | Turn left/right | ≤ 135° | ↰/↱: the centre pin climbs, then runs sideways |
+  | Turn around | > 135° | the middle columns step from fingers to wrist |
+  | Arrived | target within 1 m | two pulses of the middle columns |
+
+  Thresholds favour the previous cue by 5°.
+- **Asking for a target:** make the V sign and say one word: "exit", "door", "chair", "person" or "teammate" (also "way out", "doorway", "seat", "someone").
+  - Listening starts as soon as the sign is seen, so the word can be said while holding it. If the word isn't in yet when the hold completes, a quiet blip means "listening" and the window stays open for 2.5 s.
+  - Recognition is on-device only (`Lantern/Services/KeywordListener.swift`). While the Grok assistant runs, its microphone is borrowed and its uplink muted for the window, so it neither hears nor answers the word.
+  - With no word, the target already chosen (Settings or "find a door" to the assistant) is used.
+- **Starting:** the target must appear with a route within 3 s.
+  - If two or more of that kind are in view, at least 1 m apart, the assistant asks: "I see 2 exits. 1: left, about 3 meters. 2: right, about 5 meters. Which one?" The answer comes back through the `choose_target` tool, and guidance then follows only that one; it never jumps to the other.
+  - Without a running assistant, the one most straight ahead is chosen.
+- **No speech, only sounds** (`Lantern/Services/Chime.swift`, synthesized in memory):
+  - A rising two-note chime when guidance starts, repeats or arrives.
+  - A soft falling pair on failure: no word or target, target not seen, no route, target lost, or no answer within 15 s.
+  - The quiet listening blip.
+  - Later route changes are pins only.
+- **When an arrow plays:**
+  - On request, then only after a noticeable change that holds for 0.8 s, at least 1.5 s after the last arrow. Slight-turn drifts under two columns are ignored.
+  - The sign again replays the current arrow (or switches target if a new word is said).
+  - Guidance ends on arrival, or 3 s without the target in view.
+- **Override:** an obstacle within 0.9 m holds the arrow back. It restarts if the obstacle clears within 2 s; otherwise it is dropped.
+- **Simulation:** **Simulate V sign** plays arrows toward the synthetic target on screen. Simulation still sends nothing to the puck.
+- **Limits:** the map covers only what the camera has seen in the current room. Objects under 10 cm, glass, mirrors, dark surfaces and moving people can be missed. A suggested direction, not a safe route.
+- **Hardware:** untested on a real hand, phone or puck. Pin return speed decides whether arrows read as motion.
 
 ## Deterministic demo and limitations
 

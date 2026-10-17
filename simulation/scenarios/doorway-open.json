@@ -1,0 +1,18 @@
+{
+  "title": "Open doorway, 2 m ahead",
+  "description": "Standing still facing a wall 2 m away with a 1 m opening straight ahead and nothing within 4 m behind it. The centre column (±6.4°) sits inside the opening (±14°) and must stay clear; every other column shows the wall in band 3.",
+  "scene": {
+    "duration": 5,
+    "path": [{"t": 0, "x": 0, "z": 0}],
+    "objects": [
+      {"kind": "box", "min": [-10, 0, -2.2], "max": [-0.5, 3, -2.0], "label": "wall left"},
+      {"kind": "box", "min": [0.5, 0, -2.2], "max": [10, 3, -2.0], "label": "wall right"},
+      {"kind": "box", "min": [-10, 0, -7.2], "max": [10, 3, -7.0], "label": "far wall"}
+    ],
+    "sensor": {"noise": 0.005, "seed": 11}
+  },
+  "expect": [
+    {"from": 0.3, "to": 5.0, "columns": [3], "band": 0, "label": "opening is clear"},
+    {"from": 0.3, "to": 5.0, "columns": [0, 1, 2, 4, 5, 6], "band": 3, "label": "wall either side"}
+  ]
+}

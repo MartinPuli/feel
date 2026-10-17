@@ -1,4 +1,5 @@
 import XCTest
+import AVFoundation
 import UIKit
 import ARKit
 import FeelCore
@@ -71,5 +72,23 @@ final class MemoryCoordinatorTests:XCTestCase {
         XCTAssertNil(model.spatialMemory.activeID); XCTAssertEqual(model.packet.highlight,255)
         model.startSimulation()
         XCTAssertTrue(model.spatialMemory.bookmarks.isEmpty); XCTAssertNil(model.spatialMemory.session)
+    }
+}
+
+final class ChimeTests: XCTestCase {
+    func testChimeIsAValidShortWav() throws {
+        let data = Chime.wav()
+        XCTAssertEqual(String(decoding: data.prefix(4), as: UTF8.self), "RIFF")
+        XCTAssertEqual(String(decoding: data[8..<12], as: UTF8.self), "WAVE")
+        // Two 110 ms notes at 44.1 kHz, 16-bit mono, plus a 44-byte header.
+        XCTAssertEqual(data.count, 44 + 2 * 4851 * 2)
+        let player = try AVAudioPlayer(data: data)
+        XCTAssertEqual(player.duration, 0.22, accuracy: 0.01)
+    }
+    func testFailureAndListeningSoundsDiffer() throws {
+        XCTAssertEqual(try AVAudioPlayer(data: Chime.wav(.failure)).duration, 0.28, accuracy: 0.01)
+        XCTAssertEqual(try AVAudioPlayer(data: Chime.wav(.listening)).duration, 0.06, accuracy: 0.01)
+        XCTAssertGreaterThan(Chime.notes(.success).frequencies.first!, Chime.notes(.failure).frequencies.first!)
+        XCTAssertGreaterThan(Chime.notes(.failure).frequencies.first!, Chime.notes(.failure).frequencies.last!, "failure falls")
     }
 }

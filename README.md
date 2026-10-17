@@ -78,6 +78,7 @@ BLE, NI, tactile usability or mechanical reliability from the simulator.
 
 ## Source map
 
+- [Codebase guide](docs/CODEBASE.md): how the apps, firmware, CAD, voice, and checks fit together.
 - [`ios/`](ios/README.md): Lantern/FEEL app, Beacon companion, pure Swift core/tests.
 - [`firmware/`](firmware/README.md): shared C++ controller, ESP32 adapters, host CLI/tests.
 - [`cad/`](cad/README.md): parametric OpenSCAD test rig, puck, cams, pins and forearm pack.

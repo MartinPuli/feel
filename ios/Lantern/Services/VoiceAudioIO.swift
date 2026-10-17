@@ -9,6 +9,24 @@ protocol VoiceAudioIO: AnyObject {
     func play(_ pcm: Data) throws
     func interruptPlayback()
     func stop()
+    /// Also hands raw microphone buffers to `handler` (on the audio thread) while it is set.
+    /// Used to hear the one target word after a V sign without opening a second microphone.
+    func setAuxiliaryInput(_ handler: ((AVAudioPCMBuffer) -> Void)?)
+}
+
+extension VoiceAudioIO {
+    func setAuxiliaryInput(_ handler: ((AVAudioPCMBuffer) -> Void)?) {}
+}
+
+/// Lock-protected handler shared between the main thread and the audio tap.
+final class AuxiliaryInput {
+    private let lock = NSLock()
+    private var handler: ((AVAudioPCMBuffer) -> Void)?
+    func set(_ newValue: ((AVAudioPCMBuffer) -> Void)?) { lock.lock(); handler = newValue; lock.unlock() }
+    func forward(_ buffer: AVAudioPCMBuffer) {
+        lock.lock(); let current = handler; lock.unlock()
+        current?(buffer)
+    }
 }
 
 enum VoiceAudioError: LocalizedError {
@@ -67,6 +85,9 @@ final class DeviceVoiceAudio: VoiceAudioIO {
     private var groupCompletedFrames = 0
     private var previousGroupFrames = 0
     private var ownsAudioSession = false
+    private let auxiliary = AuxiliaryInput()
+
+    func setAuxiliaryInput(_ handler: ((AVAudioPCMBuffer) -> Void)?) { auxiliary.set(handler) }
 
     var pendingPlayback: Bool { queuedBuffers > 0 }
 
@@ -106,7 +127,9 @@ final class DeviceVoiceAudio: VoiceAudioIO {
             let delivery = VoiceInputDelivery(onInput: onInput)
             inputDelivery = delivery
             let capture = VoiceInputCapture(converter: converter, delivery: delivery)
+            let auxiliary = self.auxiliary
             input.installTap(onBus: 0, bufferSize: 1_024, format: inputFormat) { buffer, _ in
+                auxiliary.forward(buffer)
                 capture.receive(buffer)
             }
             tapInstalled = true
@@ -195,6 +218,7 @@ final class DeviceVoiceAudio: VoiceAudioIO {
         // Invalidate delivery first. An in-flight tap retains its converter and cannot reach a new session.
         inputDelivery?.invalidate()
         inputDelivery = nil
+        auxiliary.set(nil)
         onPlaybackDrained = nil
         interruptPlayback()
         engine?.stop()
