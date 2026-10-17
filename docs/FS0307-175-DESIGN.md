@@ -114,3 +114,10 @@ an endpoint continuously; this is not a timed sweep. Existing500ms timeout,
 disconnect and serialSTOP detach; app zero packets command the nearest gap.
 Only GPIO32 is enabled. Default seven-servo and production gates are unchanged.
 The BLE name remains FEEL Puck; the serial mode says LIVE189_UNVERIFIED.
+
+## Seven-output extension
+
+The user subsequently requested the same alignment for all seven columns.
+Use [the seven-servo live profile](SEVEN-SERVO-LIVE.md) for that configuration.
+It maps each camera sector to its own GPIO, including center→GPIO26.
+The earlier single-unit profile remains available for isolated testing.

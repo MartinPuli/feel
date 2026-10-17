@@ -14,6 +14,15 @@
 #ifndef FEEL_SINGLE_SERVO_WIDE
 #define FEEL_SINGLE_SERVO_WIDE 0
 #endif
+#ifndef FEEL_SEVEN_SERVO_LIVE
+#define FEEL_SEVEN_SERVO_LIVE 0
+#endif
+#if FEEL_SEVEN_SERVO_LIVE && (FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE || FEEL_SINGLE_SERVO_WIDE || FEEL_ENABLE_SERVO_OUTPUT)
+#error "Seven-live is isolated from single-servo and measured production profiles"
+#endif
+#if FEEL_SEVEN_SERVO_LIVE && (!defined(FEEL_BOARD_CLASSIC) || defined(FEEL_BOARD_S3) || defined(CONFIG_IDF_TARGET_ESP32S3))
+#error "Seven-live requires the explicit classic ESP32 board"
+#endif
 #if FEEL_SINGLE_SERVO_WIDE && !FEEL_SINGLE_SERVO_LIVE
 #error "Experimental wide output requires the isolated single-live adapter"
 #endif

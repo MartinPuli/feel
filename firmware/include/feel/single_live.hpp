@@ -11,7 +11,8 @@ constexpr uint16_t kSingleLiveMaximumUs = 2648;
 // band/gap/tap/calibration input within its assumed175-degree design envelope.
 // The connected-unit trim extends experimental output to the189-degree command.
 // These limits are NOT measured travel or a claim about physical calibration.
-inline uint16_t singleLivePulse(const Snapshot& state) {
+inline uint16_t livePulseForColumn(const Snapshot& state, std::size_t column) {
+    if (column >= kColumns) return 0;
     if (!state.connected || !state.active || state.benchArmed || state.rawPulse) return 0;
     for (auto band : state.bands) {
         if (band > 4) return 0;
@@ -19,11 +20,14 @@ inline uint16_t singleLivePulse(const Snapshot& state) {
     // A fresh zero-band packet requests the nearest empty cam gap.
     // Detaching here would leave a previously selected pin raised.
     // Disconnect, timeout and explicit serial STOP still detach above.
-    const uint16_t pulse = state.pulses[kSingleLiveSector];
+    const uint16_t pulse = state.pulses[column];
     if (pulse < kMinPulseUs || pulse > kMaxPulseUs) return 0;
     const int adjusted = static_cast<int>(pulse) + kSingleLiveTrimUs;
     return static_cast<uint16_t>(adjusted < kMinPulseUs ? kMinPulseUs :
                                  adjusted > kSingleLiveMaximumUs ? kSingleLiveMaximumUs : adjusted);
+}
+inline uint16_t singleLivePulse(const Snapshot& state) {
+    return livePulseForColumn(state, kSingleLiveSector);
 }
 // Compatibility alias for the existing experimental BLE name/environment.
 // The shared controller already emits the175-degree design envelope. Never
