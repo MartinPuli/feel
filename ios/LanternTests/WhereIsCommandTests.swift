@@ -174,6 +174,20 @@ final class WhereIsCommandTests: XCTestCase {
         XCTAssertNil(model.chalkConfiguration)
     }
 
+    func testSavingNewConfigurationDropsTheLookupInFlight() throws {
+        let (model, gateway) = makeModel()
+        var pending: [(FrameSnapshot?) -> Void] = []
+        model.snapshotProvider = { pending.append($0) }
+        model.beginWhereIs("desk")
+        pending[0](makeSnapshot())
+        XCTAssertEqual(gateway.calls, 1)
+        try model.saveChalkConfiguration(ChalkConfiguration(apiHost: ChalkConfiguration.defaultHost, routerApiKey: String(repeating: "n", count: 16), environmentId: "env2", model: "m2"))
+        // The old service's answer arrives after the settings changed: it must not drive the pins or speak.
+        gateway.reply(0, .success(#"{"found": true, "label": "desk", "box": [0.4, 0.4, 0.6, 0.6], "confidence": 0.9}"#))
+        XCTAssertNil(model.heldTarget, "An answer from the replaced service must be dropped")
+        XCTAssertNil(model.whereIsNotice)
+    }
+
     func testNamedObservationPhrase() {
         XCTAssertEqual(VoicePhrasing.observation(TargetObservation(bearingDegrees: 30, distance: 3, timestamp: 1), named: "desk", now: 1), "The desk was 3 meters to your right.")
         XCTAssertEqual(VoicePhrasing.observation(TargetObservation(bearingDegrees: -30, distance: 1, timestamp: 1), named: "water fountain", now: 1), "The water fountain was 1 meter to your left.")

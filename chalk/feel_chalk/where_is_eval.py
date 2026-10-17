@@ -12,6 +12,10 @@ first: python3 evals/validate_labels.py data/labels.jsonl
 Each labels.jsonl row (see evals/labels.example.jsonl):
     {"image": "photos/hall-01.jpg", "question": "Where is the registration desk?",
      "box": [x_min, y_min, x_max, y_max] or null when the thing is not in the photo}
+
+Photos are uploaded as the phone would send them (long side at most 1024 px, JPEG quality 0.6,
+feel_chalk/images.py), so the scores describe the app's input. The run output ends with the
+evaluation, suite and run ids: record them in chalk/README.md with the three scores.
 """
 from __future__ import annotations
 import argparse
@@ -23,7 +27,7 @@ from pathlib import Path
 import chalkcompute
 from chalkcompute import Secret
 
-from feel_chalk import gateway, where_is
+from feel_chalk import gateway, images, where_is
 from feel_chalk.config import settings
 
 SECRETS = [Secret.from_local_env('CHALK_ROUTER_API_KEY'), Secret.from_local_env('CHALK_ENV_ID'),
@@ -80,7 +84,7 @@ def load_rows(labels: Path) -> list[dict]:
         if not line.strip():
             continue
         item = json.loads(line)
-        image = (labels.parent / item['image']).read_bytes()
+        image = images.phone_jpeg((labels.parent / item['image']).read_bytes())
         rows.append({'question': item['question'], 'image_b64': base64.b64encode(image).decode(),
                      'expected_box': json.dumps(item['box'])})
     if not rows:
@@ -99,5 +103,11 @@ if __name__ == '__main__':
     dataset = chalkcompute.DatasetClient().upload('feel-where-is', load_rows(args.labels))
     evaluation = chalkcompute.Evaluation.create(f'feel-where-is-{model.replace("/", "-")}', dataset=dataset, task=where_is_task,
                                                 scorers=[points_correctly, reply_is_well_formed, false_found])
-    run = evaluation.run(metadata={'model': model}).wait()
-    print(run.status, 'model:', model, 'evaluation:', evaluation, 'run:', run)
+    # The suite groups this evaluation's runs across models in the Chalk dashboard; keep its id with the scores.
+    suite = evaluation.suite_id or 'none'
+    run = evaluation.run(metadata={'model': model, 'suite_id': suite}).wait()
+    print(f'status: {run.status.value}')
+    print(f'model: {model}')
+    print(f'evaluation: {evaluation.id}')
+    print(f'suite: {suite}')
+    print(f'run: {run.id}')

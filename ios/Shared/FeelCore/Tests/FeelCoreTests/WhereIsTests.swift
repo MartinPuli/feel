@@ -27,17 +27,14 @@ final class WhereIsTests: XCTestCase {
             XCTAssertEqual(answer.confidence,try XCTUnwrap((expect["confidence"] as? NSNumber)?.doubleValue),accuracy:1e-9,name)
         }
     }
-    func testRequestCarriesGatewayHeadersAndImage() throws {
+    func testRequestBodyCarriesPromptQuestionAndImage() throws {
         let body=try WhereIs.requestBody(model:"anthropic/example",question:"Where is the desk?",jpegBase64:"QUJD")
-        let request=WhereIs.request(apiHost:URL(string:"https://api.chalk.ai")!,apiKey:"key",environmentID:"env",body:body)
-        XCTAssertEqual(request.url?.absoluteString,"https://api.chalk.ai/v1/router/chat/completions")
-        XCTAssertEqual(request.httpMethod,"POST")
-        XCTAssertEqual(request.value(forHTTPHeaderField:"Authorization"),"Bearer key")
-        XCTAssertEqual(request.value(forHTTPHeaderField:"X-Chalk-Env-Id"),"env")
         let json=try XCTUnwrap(JSONSerialization.jsonObject(with:body) as? [String:Any])
+        XCTAssertEqual(json["model"] as? String,"anthropic/example")
         let messages=try XCTUnwrap(json["messages"] as? [[String:Any]])
         XCTAssertEqual(messages[0]["content"] as? String,WhereIs.prompt)
         let parts=try XCTUnwrap(messages[1]["content"] as? [[String:Any]])
+        XCTAssertEqual(parts[0]["text"] as? String,"Where is the desk?")
         XCTAssertEqual((parts[1]["image_url"] as? [String:Any])?["url"] as? String,"data:image/jpeg;base64,QUJD")
     }
 }

@@ -231,7 +231,7 @@ final class LanternModel:ObservableObject {
     func saveChalkConfiguration(_ configuration: ChalkConfiguration) throws {
         guard configuration.isValid else { throw KeychainStoreError.invalid }
         try chalkStore.save(configuration)
-        chalkConfiguration = configuration; whereIsService = nil
+        chalkConfiguration = configuration; whereIsService?.cancel(); whereIsService = nil   // a lookup in flight must not answer through the old settings
     }
     func forgetChalkConfiguration() {
         chalkStore.clear(); chalkConfiguration = nil; whereIsService?.cancel(); whereIsService = nil
