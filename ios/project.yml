@@ -12,7 +12,7 @@ settings:
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ''
     ENABLE_USER_SCRIPT_SANDBOXING: YES
-    CURRENT_PROJECT_VERSION: '5'
+    CURRENT_PROJECT_VERSION: '6'
     MARKETING_VERSION: '1.0.0'
 packages:
   FeelCore:
@@ -35,6 +35,7 @@ targets:
         CFBundleShortVersionString: '$(MARKETING_VERSION)'
         CFBundleDisplayName: FEEL
         NSCameraUsageDescription: FEEL uses the camera and LiDAR to estimate nearby obstacles and find selected targets.
+        NSMicrophoneUsageDescription: FEEL sends your voice to Grok while you choose to talk, so you can control the app and hear responses.
         NSBluetoothAlwaysUsageDescription: FEEL sends tactile commands to your chosen palm puck.
         NSLocalNetworkUsageDescription: FEEL finds a teammate's Beacon phone and exchanges Nearby Interaction tokens after both people agree.
         NSNearbyInteractionUsageDescription: FEEL measures the relative direction and distance of your chosen teammate's phone.

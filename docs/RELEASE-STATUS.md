@@ -13,6 +13,22 @@
 
 # Current V1 release candidate
 
+## Current iPhone assistant update
+
+V1 build 6 adds the [personal voice assistant](V1-VOICE.md). After provisioning,
+it listens automatically on app foreground entry and reports readiness aloud.
+Stop preserves listening; Pause assistant ends the microphone. The FEEL wordmark
+has no background or LIVE label. Native sensing and V2/V3 branches are preserved.
+
+Signed build 1.0.0 (6) is installed and launched on the paired iPhone 17 Pro.
+The first launch attempt was blocked by the locked phone; retry succeeded at
+00:49:08 EDT. Thirty-six native tests and ten token-service tests passed locally. [Voice validation](evidence/v1-voice/validation.txt).
+
+**Live Grok activation is BLOCKED** on an xAI key and reachable HTTPS token
+service. No real conversation, headset routing or physical voice latency result
+is claimed. Camera images remain local. Audio is sent to xAI only during an
+active assistant session. The app pauses streaming when backgrounded/locked.
+
 ## Current iPhone visual update
 
 Lantern now uses a chevron drawer in the [camera-first interface](V1-CAMERA-UI.md).

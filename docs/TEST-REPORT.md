@@ -1,3 +1,10 @@
+## October 17 V1 assistant update
+
+36 native tests and 10 token-service tests passed locally. The signed build 6
+was installed and launched on iPhone 17 Pro after unlocking the phone. Live
+Grok and physical headset checks remain pending. See [voice evidence](evidence/v1-voice/validation.txt)
+and [behavior/provisioning](V1-VOICE.md).
+
 > Seven-servo preparation: `esp32-production` and its English setup guide are
 > ready in source. Host/configuration tests, enabled-output compile fixtures and
 > 2,634 cross-layer assertions passed. Real deployment is still gated on the

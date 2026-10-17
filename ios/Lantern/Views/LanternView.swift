@@ -4,6 +4,11 @@ import FeelCore
 
 struct LanternView: View {
     @ObservedObject var model: LanternModel
+    @ObservedObject private var voice: GrokVoiceSession
+    init(model: LanternModel) {
+        self.model = model
+        self.voice = model.voice
+    }
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var presentedPanel: CameraPanel?
     @State private var attemptedInitialStart = false
@@ -12,7 +17,7 @@ struct LanternView: View {
     @AccessibilityFocusState private var modalFocused: Bool
 
     private enum CameraPanel: String, Identifiable {
-        case settings, connection
+        case settings, connection, voice
         var id: String { rawValue }
     }
 
@@ -25,6 +30,9 @@ struct LanternView: View {
                         header
                         if !controlsExpanded { compactAttention }
                         Spacer(minLength: 8)
+                        if !dynamicTypeSize.isAccessibilitySize {
+                            VoiceControl(voice: voice, showCaption: !controlsExpanded) { presentedPanel = .voice }
+                        }
                         controlDrawer(availableHeight: geometry.size.height)
                     }
                 }
@@ -45,6 +53,11 @@ struct LanternView: View {
         .tint(FeelTheme.accent)
         .preferredColorScheme(.dark)
         .onChange(of: presentedPanel) { panel in modalFocused = panel != nil }
+        .onChange(of: model.voicePanel) { panel in
+            guard let panel else { return }
+            presentedPanel = panel == .settings ? .settings : .connection
+            model.voicePanel = nil
+        }
         .onChange(of: model.status) { _ in
             // Denied permission and unsupported hardware must not disappear in a closed drawer.
             if model.mode == .stopped && !model.isStarting { setControlsExpanded(true) }
@@ -52,7 +65,10 @@ struct LanternView: View {
         .task {
             guard !attemptedInitialStart else { return }
             attemptedInitialStart = true
-            if !ProcessInfo.processInfo.arguments.contains("--uitesting") { model.startLive() }
+            if !ProcessInfo.processInfo.arguments.contains("--uitesting") {
+                model.startLive()
+                model.voice.enterForeground()
+            }
         }
     }
 
@@ -161,7 +177,7 @@ struct LanternView: View {
     private func floatingPanel(_ panel: CameraPanel, availableSize: CGSize) -> some View {
         VStack(spacing: 0) {
             HStack {
-                Text(panel == .connection ? "Connect puck" : "Settings")
+                Text(panel == .connection ? "Connect puck" : panel == .voice ? "Assistant" : "Settings")
                     .font(FeelTypography.title3).accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 12)
                 Button { closePanel() } label: {
@@ -177,20 +193,30 @@ struct LanternView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     if panel == .connection {
                         PuckConnectionPanel(puck: model.puck)
+                    } else if panel == .voice {
+                        VoiceSetup(voice: voice) { closePanel() }
                     } else {
                         settings
                     }
                 }.padding(.horizontal, 20).padding(.bottom, 20)
             }
             .accessibilityIdentifier("cameraSettingsScroll")
-            if model.mode != .stopped || model.isStarting {
-                Button("Stop", role: .destructive) {
-                    model.stop()
-                    closePanel()
-                }
-                .buttonStyle(CameraPillButtonStyle(primary: false))
-                .accessibilityIdentifier("panelStop")
-                .padding(16)
+            if model.mode != .stopped || model.isStarting || voice.isActive {
+                HStack {
+                    if model.mode != .stopped || model.isStarting {
+                        Button("Stop camera", role: .destructive) {
+                            model.stop(); closePanel()
+                        }
+                        .buttonStyle(CameraPillButtonStyle(primary: false))
+                        .accessibilityHint("Stops sensing and tactile output. The assistant keeps listening.")
+                        .accessibilityIdentifier("panelStop")
+                    }
+                    if voice.isActive {
+                        Button("Pause assistant") { voice.pauseAssistant(); closePanel() }
+                            .buttonStyle(CameraPillButtonStyle(primary: false))
+                            .accessibilityHint("Stops the microphone and spoken responses.")
+                    }
+                }.padding(16)
             }
         }
         .frame(width: min(540, availableSize.width - 32), height: availableSize.height - 24)
@@ -208,13 +234,19 @@ struct LanternView: View {
             HStack(spacing: 12) {
                 if !dynamicTypeSize.isAccessibilitySize {
                     Text("FEEL").font(FeelTypography.headline).accessibilityAddTraits(.isHeader)
+                        .accessibilityIdentifier("feelWordmark")
                 }
-                Text(model.mode.rawValue).font(FeelTypography.caption)
-                    .accessibilityIdentifier("sessionMode")
+                if model.mode == .simulation {
+                    Text("SIMULATION").font(FeelTypography.caption)
+                        .accessibilityIdentifier("sessionMode")
+                }
             }
-            .padding(.horizontal, 14).frame(minHeight: 48)
-            .background(FeelTheme.surface, in: Capsule())
+            .frame(minHeight: 48)
+            .shadow(color: .black.opacity(0.65), radius: 3, y: 1)
             Spacer(minLength: 0)
+            if dynamicTypeSize.isAccessibilitySize {
+                VoiceControl(voice: voice, compact: true) { presentedPanel = .voice }
+            }
             CameraConnectionButton(puck: model.puck) { presentedPanel = .connection }
             Button { presentedPanel = .settings } label: {
                 Image(systemName: "slider.horizontal.3").frame(width: 48, height: 48)
@@ -228,6 +260,10 @@ struct LanternView: View {
 
     private var guidance: some View {
         VStack(alignment: .leading, spacing: 8) {
+            if model.mode == .stopped {
+                Text("STOPPED").font(FeelTypography.caption)
+                    .foregroundStyle(FeelTheme.secondary).accessibilityIdentifier("sessionMode")
+            }
             CameraGuidance(model: model, puck: model.puck)
             if model.mode == .live && !model.calibrated {
                 Button("Calibrate") { presentedPanel = .settings }
@@ -261,6 +297,9 @@ struct LanternView: View {
 
     private var settings: some View {
         VStack(alignment: .leading, spacing: 16) {
+            Button("Assistant settings") { presentedPanel = .voice }
+                .buttonStyle(FeelSecondaryButtonStyle())
+                .accessibilityIdentifier("voiceSettings")
             if model.mode == .live {
                 LiveSetup(model: model)
             } else {
@@ -303,14 +342,17 @@ private struct CameraPillButtonStyle: ButtonStyle {
 
 private struct CameraConnectionButton: View {
     @ObservedObject var puck: BluetoothPuck
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let open: () -> Void
     var body: some View {
         Button(action: open) {
             Label(puck.status.hasPrefix("Write error:") ? "Connection error" : puck.isConnected ? "Connected" : "Connect puck", systemImage: "link")
+                .labelStyle(CompactConnectionLabelStyle(compact: dynamicTypeSize.isAccessibilitySize))
                 .font(FeelTypography.label)
                 .padding(.horizontal, 12).frame(minHeight: 48)
                 .background(FeelTheme.inset, in: Capsule())
         }
+        .accessibilityLabel(puck.isConnected ? "Connected puck" : "Connect puck")
         .accessibilityIdentifier("connectPuck")
         .accessibilityValue(puck.status)
     }
@@ -486,6 +528,16 @@ struct PeerPanel: View {
                 Button("Find \(person.displayName)") { peer.invite(person) }.buttonStyle(FeelSecondaryButtonStyle())
             }
             Text("The teammate accepts on Beacon. Keep both apps foreground. Direction can be unavailable; no tactile target is sent without a current AR direction.").font(FeelTypography.footnote)
+        }
+    }
+}
+
+private struct CompactConnectionLabelStyle: LabelStyle {
+    let compact: Bool
+    func makeBody(configuration: Configuration) -> some View {
+        HStack {
+            configuration.icon
+            if !compact { configuration.title }
         }
     }
 }
