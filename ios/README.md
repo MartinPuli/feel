@@ -1,10 +1,40 @@
-# FEEL V3 iOS — advanced
+# FEEL V4 iOS — Chalk understanding
 
 Lantern is the internal target for FEEL; Beacon is the companion phone app.
 This branch includes current V1 camera-first UI with collapsible controls and floating panels, V2 session memory, and V3 explicit
 voice commands, one saved local map, adaptive highlighting and QR/barcode finding.
 V1 remains on `main`; V2 remains on `feel/v2-spatial-memory`.
 See [the version guide](../docs/VERSIONS.md) and [V3 details](../docs/ADVANCED.md).
+
+## Optional Chalk command understanding
+
+V4 adds an opt-in **Settings → Voice, saved map and feedback → Chalk understanding** panel.
+Configure the root HTTPS URL of your FEEL server and its app bearer token under Connection.
+This is not a Chalk provider key; provider credentials remain on the server. The app token is
+stored in the device Keychain. Enable both cloud commands and explicit text/place-name sharing.
+The additional retention switch allows request/context snapshots and explicit feedback to be
+saved for evaluation. All switches start off on each app launch. With cloud off, V3 local
+commands continue unchanged.
+
+Start a live sensing session or a memory simulation, then use the existing Command field or
+explicit on-device speech controls. Cloud commands currently support remembering, recalling,
+listing places, an explicit return point, clarification and Stop. Turn cloud understanding off
+for the local finder grammar. No audio, image, coordinates or AR map is sent to the server.
+The server receives command text, current place names/IDs, language, an ephemeral session ID,
+tracking/restoration state and whether a return point exists. Basic operational IDs, action types
+and timings can be retained even when text/context retention is disabled.
+
+The app validates response request/session identity, current place IDs, fresh tracking and an
+independent four-second execution deadline. A Remember response is rejected if the phone moved
+more than 0.2 m while processing. Stop, a new command, manual selection, session/map changes,
+connection/consent changes and starting a new speech attempt cancel pending work. Delayed replies
+cannot bypass cancellation. The displayed round-trip latency includes network and local handling;
+it is not a measured Chalk-only inference time.
+
+With retention enabled, Correct/Incorrect feedback can include an explicitly selected corrected
+place. Feedback does not execute an action, train a model or publish changes. Simulation continues
+to use the production local memory encoder without BLE movement. Live cloud access and physical
+navigation remain separate verification gates; see [V4 setup](../docs/V4-CHALK.md).
 
 ## What is implemented
 
