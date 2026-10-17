@@ -46,11 +46,15 @@ struct VoiceSetup: View {
                 .font(FeelTypography.body)
             Text("Use your phone or headphones. Say find a door, check sensing, or stop. You can interrupt at any time.")
                 .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+            Toggle("Spoken replies", isOn: Binding(get: { voice.spokenOutputEnabled }, set: { voice.setSpokenOutput($0) }))
+                .font(FeelTypography.label)
+                .accessibilityHint("Mute speech while keeping voice commands available. Say speak again to unmute.")
+                .accessibilityIdentifier("spokenReplies")
             Toggle("Useful updates", isOn: $voice.proactiveEnabled)
                 .font(FeelTypography.label)
-                .accessibilityHint("Announces target and sensing changes while voice is on.")
+                .accessibilityHint("Announces nearby obstacles, target movement and sensing changes while voice is on.")
                 .accessibilityIdentifier("proactiveVoice")
-            Text("FEEL speaks when it finds your target or loses sensing. It stays quiet while you talk.")
+            Text("FEEL mentions nearby obstacles, meaningful target changes and sensing recovery. It stays quiet while you talk.")
                 .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
             if voice.needsMicrophoneSettings {
                 Button("Allow microphone in Settings") {

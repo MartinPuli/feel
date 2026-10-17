@@ -52,8 +52,17 @@ struct LanternView: View {
         .onChange(of: presentedPanel) { panel in modalFocused = panel != nil }
         .onChange(of: model.voicePanel) { panel in
             guard let panel else { return }
-            presentedPanel = panel == .settings ? .settings : .connection
+            switch panel {
+            case .settings: presentedPanel = .settings
+            case .connection: presentedPanel = .connection
+            case .assistant: presentedPanel = .voice
+            case .closed: closePanel()
+            }
             model.voicePanel = nil
+        }
+        .onChange(of: model.voiceControlsExpanded) { expanded in
+            guard let expanded else { return }
+            setControlsExpanded(expanded); model.voiceControlsExpanded = nil
         }
         .onChange(of: model.status) { _ in
             // Denied permission and unsupported hardware must not disappear in a closed drawer.

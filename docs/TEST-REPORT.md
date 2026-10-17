@@ -1,3 +1,12 @@
+## October 17 proactive voice and full app controls
+
+Build 14 is signed, installed and launched on the iPhone. All 60 native tests
+and 7 UI tests passed, including deterministic proactive observations, strict command decoding,
+mute preserving capture and tools, unmute, panel controls and simulation isolation.
+The phone accepted the expanded OpenAI session and recovered the audio engine.
+Physical spoken command evaluation and headphones remain pending.
+[Current evidence](evidence/v1-proactive-voice/validation.txt).
+
 ## October 17 OpenAI migration and audio recovery
 
 The native OpenAI client and protected token service are implemented. Build 13

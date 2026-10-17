@@ -27,6 +27,147 @@ final class RealtimeVoiceTests: XCTestCase {
         XCTAssertFalse(VoiceConfiguration(endpoint: config.endpoint, accessToken: "short").isValid)
     }
 
+    func testExpandedAppCommandsDecodeOnlyTheirDeclaredArguments() throws {
+        let valid: [(String, String, VoiceCommand)] = [
+            ("set_spoken_output", "{\"enabled\":false}", .setSpokenOutput(false)),
+            ("set_spoken_output", "{\"enabled\":true}", .setSpokenOutput(true)),
+            ("set_proactive_updates", "{\"enabled\":false}", .setProactiveUpdates(false)),
+            ("set_controls_expanded", "{\"expanded\":true}", .setControlsExpanded(true)),
+            ("start_simulation", "{}", .startSimulation),
+            ("disconnect_puck", "{}", .disconnectPuck),
+            ("set_camera_height", "{\"measured_height_meters\":0.6}", .setCameraHeight(0.6)),
+            ("set_camera_height", "{\"measured_height_meters\":2.1}", .setCameraHeight(2.1)),
+            ("open_panel", "{\"panel\":\"settings\"}", .openPanel("settings")),
+            ("open_panel", "{\"panel\":\"connection\"}", .openPanel("connection")),
+            ("open_panel", "{\"panel\":\"assistant\"}", .openPanel("assistant")),
+            ("close_panel", "{}", .closePanel),
+            ("scan_teammates", "{}", .scanTeammates),
+            ("list_teammates", "{}", .listTeammates),
+            ("find_teammate", "{\"device_id\":\"opaque-peer-7\"}", .findTeammate("opaque-peer-7")),
+            ("stop_finding_teammate", "{}", .stopFindingTeammate),
+            ("open_system_settings", "{}", .openSystemSettings),
+            ("forget_voice_connection", "{\"confirmed\":true}", .forgetVoiceConnection),
+        ]
+        for (name, arguments, expected) in valid {
+            XCTAssertEqual(try VoiceCommand.decode(name: name, arguments: arguments), expected, name)
+        }
+        let malformed = [
+            ("set_spoken_output", "{\"enabled\":1}"),
+            ("set_spoken_output", "{\"enabled\":\"false\"}"),
+            ("set_spoken_output", "{\"enabled\":null}"),
+            ("set_proactive_updates", "{\"enabled\":0}"),
+            ("set_controls_expanded", "{\"expanded\":true,\"extra\":1}"),
+            ("set_camera_height", "{\"measured_height_meters\":true}"),
+            ("set_camera_height", "{\"measured_height_meters\":0.59}"),
+            ("set_camera_height", "{\"measured_height_meters\":2.11}"),
+            ("set_camera_height", "{\"measured_height_meters\":\"1.2\"}"),
+            ("open_panel", "{\"panel\":\"billing\"}"),
+            ("open_panel", "{\"panel\":\"settings\",\"extra\":true}"),
+            ("find_teammate", "{\"device_id\":\"\"}"),
+            ("find_teammate", "{\"device_id\":\"a b\"}"),
+            ("find_teammate", "{\"device_id\":\"bad\\npeer\"}"),
+            ("find_teammate", "{\"device_id\":7}"),
+            ("find_teammate", "{\"device_id\":\"" + String(repeating: "a", count: 129) + "\"}"),
+            ("forget_voice_connection", "{\"confirmed\":false}"),
+            ("forget_voice_connection", "{\"confirmed\":1}"),
+            ("forget_voice_connection", "{}"),
+        ]
+        for (name, arguments) in malformed {
+            XCTAssertThrowsError(try VoiceCommand.decode(name: name, arguments: arguments), name)
+        }
+        for name in ["start_simulation", "disconnect_puck", "close_panel", "scan_teammates",
+                     "list_teammates", "stop_finding_teammate", "open_system_settings"] {
+            XCTAssertThrowsError(try VoiceCommand.decode(name: name, arguments: "{\"extra\":true}"), name)
+        }
+    }
+
+    func testVoiceMuteStopsPlaybackButPreservesCaptureCaptionsToolsAndUnmute() {
+        let (voice, transport, audio) = ready()
+        var actions: [VoiceCommand] = []
+        voice.onCommand = { [weak voice] command in
+            actions.append(command)
+            if case .setSpokenOutput(let enabled) = command { voice?.setSpokenOutput(enabled) }
+            return ["ok": true]
+        }
+        transport.emit(["type": "response.created", "response": ["id": "mute"]])
+        transport.emit(audioEvent("mute"))
+        XCTAssertTrue(audio.pendingPlayback)
+        transport.emit(toolEvent("mute", id: "mute-call", name: "set_spoken_output", arguments: "{\"enabled\":false}"))
+        XCTAssertFalse(voice.spokenOutputEnabled)
+        XCTAssertFalse(audio.pendingPlayback)
+        XCTAssertTrue(audio.running)
+        XCTAssertTrue(voice.isActive)
+        transport.emit(audioEvent("mute"))
+        XCTAssertEqual(audio.playCount, 1)
+        transport.emit(["type": "response.done", "response": ["id": "mute"]])
+        transport.emit(manualResponseCreated(transport, id: "silent-confirmation"))
+        transport.emit(audioEvent("silent-confirmation"))
+        transport.emit(["type": "response.output_audio_transcript.delta", "response_id": "silent-confirmation", "delta": "Voice muted."])
+        XCTAssertEqual(voice.caption, "Voice muted.")
+        transport.emit(["type": "response.done", "response": ["id": "silent-confirmation"]])
+        XCTAssertEqual(voice.phase, .listening)
+        XCTAssertEqual(audio.playCount, 1)
+        audio.onInput?(Data([1, 0]))
+        XCTAssertTrue(transport.sent.contains { $0["type"] as? String == "input_audio_buffer.append" })
+
+        transport.emit(["type": "response.created", "response": ["id": "quiet-command"]])
+        transport.emit(toolEvent("quiet-command", id: "camera-call", name: "start_camera"))
+        transport.emit(audioEvent("quiet-command"))
+        XCTAssertEqual(actions, [.setSpokenOutput(false), .startCamera])
+        XCTAssertEqual(audio.playCount, 1)
+        XCTAssertTrue(transport.sent.contains {
+            ($0["item"] as? [String: Any])?["call_id"] as? String == "camera-call"
+        })
+
+        transport.emit(["type": "input_audio_buffer.speech_started"])
+        transport.emit(["type": "input_audio_buffer.speech_stopped"])
+        transport.emit(["type": "response.created", "response": ["id": "unmute"]])
+        transport.emit(toolEvent("unmute", id: "unmute-call", name: "set_spoken_output", arguments: "{\"enabled\":true}"))
+        transport.emit(audioEvent("unmute"))
+        XCTAssertTrue(voice.spokenOutputEnabled)
+        XCTAssertTrue(audio.running)
+        XCTAssertEqual(audio.playCount, 2)
+        XCTAssertTrue(audio.pendingPlayback)
+        voice.disconnect()
+    }
+
+    func testMutedAnnouncementsDoNotGenerateResponsesAndMalformedMuteDoesNotChangeState() {
+        let (voice, transport, audio) = ready()
+        var actions = 0
+        voice.onCommand = { _ in actions += 1; return [:] }
+        transport.emit(["type": "response.created", "response": ["id": "bad-mute"]])
+        transport.emit(toolEvent("bad-mute", id: "bad-mute-call", name: "set_spoken_output", arguments: "{\"enabled\":0}"))
+        XCTAssertEqual(actions, 0)
+        XCTAssertTrue(voice.spokenOutputEnabled)
+        let output = (transport.sent.last?["item"] as? [String: Any])?["output"] as? String
+        XCTAssertTrue(output?.contains("invalid arguments") == true)
+        voice.setSpokenOutput(false)
+        let requests = transport.sent.count
+        XCTAssertFalse(voice.announce("The puck disconnected."))
+        XCTAssertFalse(voice.announce("I'm here.", automatic: false))
+        XCTAssertEqual(transport.sent.count, requests)
+        XCTAssertTrue(audio.running)
+        voice.disconnect()
+        XCTAssertFalse(voice.spokenOutputEnabled)
+    }
+
+    func testMutedSessionStartsListeningWithoutGreetingOrProactiveSpeech() {
+        let (voice, transport, audio) = connected()
+        voice.setSpokenOutput(false)
+        transport.emit(["type": "session.created"])
+        transport.emit(["type": "session.updated"])
+        XCTAssertTrue(audio.running)
+        XCTAssertEqual(voice.phase, .listening)
+        XCTAssertEqual(voice.label, "Listening quietly")
+        XCTAssertFalse(voice.announce("The puck disconnected."))
+        XCTAssertFalse(voice.announce("I'm here.", automatic: false))
+        XCTAssertFalse(transport.sent.contains { $0["type"] as? String == "response.create" })
+        voice.setSpokenOutput(true)
+        XCTAssertTrue(voice.announce("Voice is on.", automatic: false))
+        XCTAssertTrue(transport.sent.contains { $0["type"] as? String == "response.create" })
+        voice.disconnect()
+    }
+
     #if DEBUG
     func testDeveloperProvisioningRequiresOptInAndPersistsValidatedServiceCredential() throws {
         var environment = ["FEEL_VOICE_ENDPOINT": config.endpoint, "FEEL_VOICE_ACCESS_TOKEN": config.accessToken]
@@ -481,8 +622,8 @@ final class RealtimeVoiceTests: XCTestCase {
     private func audioEvent(_ response: String) -> [String: Any] {
         ["type": "response.output_audio.delta", "response_id": response, "item_id": "item-1", "delta": Data([1, 0]).base64EncodedString()]
     }
-    private func toolEvent(_ response: String, id: String, name: String) -> [String: Any] {
-        ["type": "response.function_call_arguments.done", "response_id": response, "call_id": id, "name": name, "arguments": "{}"]
+    private func toolEvent(_ response: String, id: String, name: String, arguments: String = "{}") -> [String: Any] {
+        ["type": "response.function_call_arguments.done", "response_id": response, "call_id": id, "name": name, "arguments": arguments]
     }
 }
 

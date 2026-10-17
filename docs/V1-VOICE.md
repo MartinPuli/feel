@@ -19,11 +19,30 @@ listening. “Pause assistant” or “stop listening” ends microphone capture
 VoiceOver-accessible status control can resume it. Each modal exposes separate
 Stop camera and Pause assistant actions when applicable.
 
-Useful updates are enabled by default and can be turned off in Assistant
-settings. FEEL announces target acquisition/loss, unavailable sensing and puck
-loss from actual app state. Updates are deduplicated, separated by at least five
-seconds and suppressed while the user speaks. Target-loss announcements wait
-600 ms to avoid momentary detector gaps. No periodic conversational polling.
+Useful updates are enabled by default and can be turned off by voice or in
+Assistant settings. FEEL announces stable nearby obstacles, initial target
+acquisition, meaningful target movement, target loss and sensing recovery.
+New scene observations need 0.8 seconds of stability and at least eight seconds
+between accepted observations. Unchanged readings stay quiet. Obstacles at or
+within 0.9 meters take priority; readings below 0.3 meters remain eligible.
+Target movement requires a side change or a distance change of at least 0.5 meters.
+Obstacle approach requires at least 0.4 meters of change. These are event-driven
+updates from fresh calibrated live frames, not periodic conversational polling.
+Target-loss announcements wait 600 ms; all updates wait while the user speaks.
+
+“Silence yourself” mutes current and future speech while leaving the microphone
+and app controls active. “Speak again” restores spoken replies. “Stop automatic
+updates” disables unsolicited observations but preserves answers to questions.
+“Stop listening” pauses capture and needs the accessible on-screen control to
+resume. Locking/backgrounding still pauses capture in every mode.
+
+Voice actions now cover the camera, target selection, measured camera height,
+floor calibration, puck discovery/selection/disconnection, teammate discovery,
+explicit invitations and stopping, simulation, panel navigation, the drawer,
+spoken replies and useful updates. Teammates still accept on their own phone.
+FEEL can open its iPhone Settings page, but iOS permission choices remain manual.
+Forgetting voice setup requires explicit confirmation and ends the connection.
+Credential entry remains manual; the assistant never requests secrets aloud.
 
 Scene-bearing speech expires after three seconds or immediately on invalid
 tracking/target state. Stale audio and tools from interrupted responses are

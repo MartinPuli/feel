@@ -66,6 +66,7 @@ final class RealtimeVoiceSession: ObservableObject {
     @Published private(set) var errorMessage = ""
     @Published private(set) var needsMicrophoneSettings = false
     @Published private(set) var configuration: VoiceConfiguration?
+    @Published private(set) var spokenOutputEnabled = true
     @Published var proactiveEnabled = UserDefaults.standard.object(forKey: "voice.proactive") as? Bool ?? true {
         didSet { UserDefaults.standard.set(proactiveEnabled, forKey: "voice.proactive") }
     }
@@ -114,7 +115,7 @@ final class RealtimeVoiceSession: ObservableObject {
         switch phase {
         case .idle: return isPausedByUser ? "Assistant paused" : "Assistant unavailable"
         case .connecting: return "Connecting"
-        case .listening: return "Listening"
+        case .listening: return spokenOutputEnabled ? "Listening" : "Listening quietly"
         case .thinking: return "Thinking"
         case .speaking: return "FEEL is speaking"
         case .failed: return "Assistant unavailable"
@@ -217,6 +218,18 @@ final class RealtimeVoiceSession: ObservableObject {
         start()
     }
 
+    /// Silence output without disconnecting the microphone, tools or transport.
+    func setSpokenOutput(_ enabled: Bool) {
+        guard spokenOutputEnabled != enabled else { return }
+        spokenOutputEnabled = enabled
+        if !enabled {
+            audio.interruptPlayback()
+            speaker?.stopSpeaking(at: .immediate)
+            if phase == .speaking { phase = responseRunning ? .thinking : .listening }
+            finishTurnIfReady()
+        }
+    }
+
     func start() {
         guard !isActive else { return }
         disconnect()
@@ -275,7 +288,7 @@ final class RealtimeVoiceSession: ObservableObject {
 
     /// Only exact, freshly produced app text may be announced without a user turn.
     @discardableResult func announce(_ text: String, automatic: Bool = true, sceneBound: Bool = false) -> Bool {
-        guard (!automatic || proactiveEnabled), !userSpeaking, phase == .listening, !responseRunning, pendingRequestID == nil, !audio.pendingPlayback,
+        guard spokenOutputEnabled, (!automatic || proactiveEnabled), !userSpeaking, phase == .listening, !responseRunning, pendingRequestID == nil, !audio.pendingPlayback,
               Date().timeIntervalSince(lastAnnouncement) > 5 else { return false }
         lastAnnouncement = Date()
         if sceneBound { bindSceneSpeech() }
@@ -362,7 +375,7 @@ final class RealtimeVoiceSession: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + Double(retryCount * 2), execute: retry)
     }
     private func speak(_ text: String) {
-        guard speaksLocally, !ProcessInfo.processInfo.arguments.contains("--uitesting") else { return }
+        guard spokenOutputEnabled, speaksLocally, !ProcessInfo.processInfo.arguments.contains("--uitesting") else { return }
         // Local fallback feedback remains audible when the voice network fails.
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
         let utterance = AVSpeechUtterance(string: text)
@@ -527,6 +540,7 @@ final class RealtimeVoiceSession: ObservableObject {
         case "response.output_audio.delta", "response.audio.delta":
             guard accepts(event), let delta = event["delta"] as? String, delta.count < 1_000_000,
                   let data = Data(base64Encoded: delta) else { return }
+            guard spokenOutputEnabled else { return }
             // Out-of-band announcements do not have a default-history item to truncate.
             assistantItemID = responseIsAnnouncement ? nil : event["item_id"] as? String
             do { try audio.play(data); phase = .speaking }

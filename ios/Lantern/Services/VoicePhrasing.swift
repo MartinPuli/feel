@@ -19,7 +19,7 @@ enum VoicePhrasing {
             ? String(format: "%.0f", locale: Locale(identifier: "en_US_POSIX"), rounded)
             : String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), rounded)
         let unit = rounded == 1 ? "meter" : "meters"
-        let side = abs(target.bearingDegrees) <= 10 ? "ahead" : target.bearingDegrees < 0 ? "to your left" : "to your right"
+        let side = abs(target.bearingDegrees) <= 15 ? "ahead" : target.bearingDegrees < 0 ? "to your left" : "to your right"
         return "\(object) was \(distance) \(unit) \(side)."
     }
 }

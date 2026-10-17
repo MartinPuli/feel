@@ -13,24 +13,25 @@
 
 # Current V1 release candidate
 
-## Current OpenAI voice update — October 17
+## Current proactive voice update — October 17
 
-Build 13 is signed and ready for installation. All 40 native tests, 7 UI tests
-and 18 service tests passed. The production token service now
-uses OpenAI Realtime (`gpt-realtime-2.1`, Cedar), with provider credentials kept
-on Vercel. Unauthorized requests return 401; authenticated requests issue only
-an ephemeral value and expiration. The FEEL wordmark now matches the background
-and border of the adjacent controls.
+Build 14 is signed, installed and launched on the paired iPhone at 01:48 EDT.
+OpenAI accepted the expanded voice tool set; phone diagnostics show readiness
+and successful audio-engine recovery. Spoken action checks with the user and
+headset behavior remain pending. The production token service retains provider
+credentials on Vercel. The FEEL wordmark has a matching control background.
 
-A phone diagnostic identified a stopped audio engine at first playback. The app
-now attempts a guarded restart and tolerates short microphone send stalls.
-Unique request identifiers prevent stale announcements from overriding a newer
-spoken command. Independent review found no remaining P0/P1 issue in these fixes.
+V1 adds event-driven nearby-obstacle and target-movement notices, sensing
+recovery, and spoken access to the app's operational controls. “Silence yourself”
+mutes speech while preserving microphone capture and commands; “speak again”
+unmutes. “Stop listening” ends capture and requires touch to resume. iOS permission
+choices and credential entry remain manual. The phone still pauses capture when
+backgrounded or locked. [Evidence](evidence/v1-proactive-voice/validation.txt).
 
-The iPhone became unavailable after build 12 installation. Build 13 installation
-and real microphone/headset verification remain pending reconnection. The server
-now speaks the OpenAI protocol, so the older Grok app must be updated before use.
-[Current evidence](evidence/v1-openai-voice/validation.txt).
+All 60 native unit/integration tests and 7 UI tests passed.
+Independent review identified a sub-0.3 m filtering issue, fixed with regression
+coverage. Earlier [OpenAI migration evidence](evidence/v1-openai-voice/validation.txt)
+records the prior 40 native tests, 7 UI tests and 18 service tests.
 
 ## Prior iPhone voice provisioning
 
