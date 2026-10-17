@@ -56,10 +56,21 @@ service /session URL and that access token in Assistant settings. Neither the
 xAI key nor any usable credential is bundled with the app. Both phone settings
 are stored in Keychain. Audio streams directly to xAI; camera images stay local.
 
-Live activation remains blocked on an available xAI credential and reachable
-HTTPS token endpoint. These were not present in the task environment. The
-installed app explains missing setup aloud rather than pretending to listen.
-No real Grok conversation or headset test has been completed.
+The production token endpoint is `https://feel-v1-voice.vercel.app/session`.
+A Voice-only Grok Inference key is configured in Vercel and expires November 16,
+2026. The server and real Sal readiness audio have been verified. Build 8 was
+provisioned and launched on the unlocked iPhone at 01:24 EDT on October 17.
+The user confirmed that FEEL hears them and responds. Headset routing,
+interruptions and cold-relaunch persistence still need physical checks.
+
+Debug builds accept an explicit paired developer launch with
+`FEEL_PROVISION_VOICE=1`, `FEEL_VOICE_ENDPOINT` and `FEEL_VOICE_ACCESS_TOKEN`.
+Only the separate service token is supplied; never an xAI key. With devicectl,
+provide these through the caller environment prefixed by `DEVICECTL_CHILD_`,
+not command-line values. Validation and a successful Keychain save are required.
+An invalid explicit setup fails closed instead of using previous settings.
+Release builds ignore this mechanism. UI tests skip provisioning. Relaunch
+normally afterward to verify persistence without the environment.
 
 ## Validation and review
 
@@ -76,9 +87,9 @@ existing sensing/BLE implementation were retained. V2/V3 were not imported.
 
 ## Next physical checks
 
-1. Provision xAI and the HTTPS token service, then enable the assistant once.
-2. On the unlocked iPhone, confirm audible readiness, spoken camera/target/Stop
-   commands, pause, VoiceOver access, and invalid-state recovery.
+1. Reopen FEEL normally and confirm the assistant starts without setup again.
+2. Check spoken camera/target/Stop commands, pause, VoiceOver access and
+   invalid-state recovery on the unlocked iPhone.
 3. Repeat with the intended headphones, including interruptions, disconnect,
    reconnection and locking. Test sensing/tactile behavior separately with supervision.
 

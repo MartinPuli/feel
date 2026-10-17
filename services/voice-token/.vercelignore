@@ -1,0 +1,10 @@
+# Only deployment source belongs in the upload. In particular, never upload .env.
+*
+!api
+!api/**
+!public
+!public/.gitkeep
+!server.mjs
+!vercel-handler.mjs
+!package.json
+!vercel.json
