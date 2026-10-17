@@ -67,7 +67,7 @@
     ],
     "runtime_source": "f658742",
     "final_device_build_source": "78df330",
-    "contrast_only_followup": "PENDING"
+    "contrast_only_followup": "PASS: both advanced UI tests on78df330, advanced-final-style.log"
   },
   "physical_hardware": "NOT VERIFIED",
   "firmware_and_cad": "Identical to integrated main; existing builds/mesh evidence inherited, current host and CAD regression checks rerun.",
