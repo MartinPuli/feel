@@ -2,8 +2,8 @@
 
 V2 is a greenfield extension of the recreated V1 software, developed on the isolated
 `feel/v2-spatial-memory` branch. It does not reproduce unavailable original source.
-V1 is maintained on `main`; this branch integrates its current `a4c141e` baseline.
-The app preserves V1's Geist design and persistent Stop, with My Places in a dedicated sheet from the camera header. This feature stores places only in RAM for one
+V1 is maintained on `main`; this branch integrates its current `b780519` baseline.
+The app preserves V1's Geist design and persistent Stop, with My Places in a dedicated floating panel from the camera header. This feature stores places only in RAM for one
 continuous AR session. There is no persistent map, cross-session relocalization,
 voice command interface, route planning, or claim of obstacle-free navigation.
 
@@ -14,7 +14,7 @@ orientation as V1: rear camera forward, top edge to the user's left, phone uprig
 Normal launch requests camera access once; after Stop, use **Start camera**.
 Wait for normal tracking and calibrate the floor from measured camera height in
 **Settings**. Open **My Places** using the location icon in the camera header.
-The sheet keeps a Stop button available.
+The floating panel keeps a Stop button available while sensing or simulating.
 
 1. Enter a **Place name** and press **Remember** to save the current phone position.
 2. Move within the same continuous sensing session.

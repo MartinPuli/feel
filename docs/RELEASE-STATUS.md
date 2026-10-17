@@ -1,6 +1,6 @@
 # FEEL V3 — current integration
 
-V3 integrates V1 main `a4c141e` through updated V2, retaining explicit voice
+V3 integrates V1 main `b780519` through updated V2, retaining explicit voice
 commands, saved maps, adaptive highlights and barcode finding.
 
 Current validation is recorded in [V3-MAIN-INTEGRATION.md](V3-MAIN-INTEGRATION.md).

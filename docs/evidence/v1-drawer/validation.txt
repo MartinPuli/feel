@@ -1,0 +1,60 @@
+V1 camera drawer and floating panels — 2026-10-17, Lantern 1.0.0 (5)
+
+PASS: Xcode 26.6 simulator build and all 11 tests: 5 integration, 6 UI.
+      iPhone 17 Pro simulator / iOS 26.5, zero failures, zero skipped.
+      Machine-readable counts are in test-summary.json.
+PASS: collapsed/expanded drawer, actual packet display visibility, compact Stop,
+      modal size and exclusion of background controls from accessibility.
+PASS: neutral Stop, simulation labeling, modal dismissal without restart,
+      background/foreground without restart, Stop in both panels and at largest
+      accessibility text, unavailable camera/permission recovery.
+PASS: signed native Lantern build, detector model included, signature verified
+      with codesign --verify --deep --strict using the local trust store.
+PASS: final build installed and launched on the paired iPhone 17 Pro.
+      Device inventory confirms org.feel.hackharvard.lantern, 1.0.0, build 5.
+PASS: independent code review and simulator screenshot inspection.
+
+Initial UI runs found that accessibilityHidden did not remove background
+controls from the modal hierarchy. The controls now conditionally leave the
+view tree while the camera remains mounted. Adding the modal accessibility
+trait changes its XCUI type to Alert; the test queries its identifier across
+element types. The final complete suite passed without removing the background
+isolation assertion. An earlier simulator run attached a SpringBoard crash;
+the final run completed all tests without a crash attachment.
+
+The phone intermittently interrupted installation (CoreDevice 3002 / remote
+connection closed) and one launch lookup (1011). Retrying with the hardware
+UDID succeeded. The final successful install includes the accessibility fix;
+launch and device app inventory were checked afterward. No device reset used.
+
+Source model SHA-256:
+0e32f297ad9cfc0ea8e67276867956488c7ee10dc87c057da4debc939e20b76d
+
+Commands (device/team identifiers omitted):
+xcodegen generate --spec ios/project.yml
+xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern -destination
+  'platform=iOS Simulator,id=<available simulator>' -derivedDataPath
+  /tmp/feel-drawer-sim -resultBundlePath /tmp/feel-drawer-verified.xcresult
+  -parallel-testing-enabled NO -collect-test-diagnostics never
+  CODE_SIGNING_ALLOWED=NO test
+xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern -configuration Debug
+  -destination 'generic/platform=iOS' -derivedDataPath /tmp/feel-camera-install
+  DEVELOPMENT_TEAM=<existing team> -allowProvisioningUpdates build
+codesign --verify --deep --strict
+  /tmp/feel-camera-install/Build/Products/Debug-iphoneos/Lantern.app
+xcrun devicectl device install app --device <hardware UDID>
+  /tmp/feel-camera-install/Build/Products/Debug-iphoneos/Lantern.app --timeout 60
+xcrun devicectl device process launch --device <hardware UDID>
+  org.feel.hackharvard.lantern --timeout 30
+xcrun devicectl device info apps --device <hardware UDID>
+  --bundle-id org.feel.hackharvard.lantern
+
+Screenshots show a simulator with no live camera; they do not verify actual
+camera rendering, mounting orientation, calibration, BLE/UWB or actuation.
+No hardware/firmware changes were made. Shared core and Beacon were unchanged;
+their earlier validation remains recorded in prior evidence directories.
+No hosted Actions runs were requested; publish commits use [skip ci].
+
+Remaining physical checks: (1) inspect camera/mount orientation; (2) calibrate
+measured height and check live depth/dot correspondence; (3) verify connection
+and neutral Stop on the supervised physical setup.

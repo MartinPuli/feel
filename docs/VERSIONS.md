@@ -10,6 +10,10 @@ seven-column design and nominal FS0307 120-degree mapping.
 | V2 — `feel/v2-spatial-memory` | Adds named places within the current AR session: Remember, Recall, a separately set return point, and Return. | Open My Places from the camera header; within one continuous live session, remember a place, move, select it and Recall. Memory simulation offers a software-only example. | Places are cleared when the session stops or is restarted/interrupted. Direction to a place is not route planning. |
 | V3 — `feel/v3-advanced` | Adds explicit typed/on-device voice commands, one saved local AR map, configurable target-tap cadence, and QR/barcode finding. | Open Settings → Voice, saved map and feedback; type `list places` or `remember Desk`. Save/Load requires a real mapped area and successful relocalization. | Speech support depends on the phone/language. Map restoration, camera code detection and tactile cadence need physical checks. |
 
+The camera controls start collapsed. **Show controls** reveals the virtual puck
+and Start camera action; Stop remains available during active sensing even when
+the controls are hidden. Connection, Settings and My Places open floating panels.
+
 ## What V3 adds in detail
 
 - Commands are a bounded grammar, not an open-ended conversational assistant.

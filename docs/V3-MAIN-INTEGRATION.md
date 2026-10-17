@@ -1,7 +1,7 @@
 # V3 integration with current main
 
-V3 incorporates V1 main `a4c141e` through updated V2, plus documentation-only
-installation evidence from `a53cbf1`. It retains session memory,
+V3 incorporates V1 main `b780519` through updated V2, including collapsible
+camera controls and floating panels. It retains session memory,
 explicit on-device voice/typed commands, one saved AR map, adaptive target taps
 and QR/barcode finding. Main remains V1; V2 and V3 stay on their own branches.
 
@@ -9,7 +9,8 @@ and QR/barcode finding. Main remains V1; V2 and V3 stay on their own branches.
 
 - Preserve V1's camera-first screen, Geist fonts, camera startup guards and puck
   connection panel. My Places opens V2 memory controls. Settings contains V3's
-  Voice, saved map and feedback panel. Every sheet retains Stop outside its scroll.
+  Voice, saved map and feedback panel. Every floating panel retains Stop outside its scroll; collapsed controls also
+  keep Stop reachable.
 - Preserve V3 cancellation, map identity/relocalization checks and restored-map
   teammate restrictions. Voice commands never execute camera or barcode text.
 - Adapt advanced control rows for large text and use the shared contrasting primary
@@ -35,7 +36,7 @@ and QR/barcode finding. Main remains V1; V2 and V3 stay on their own branches.
 | V1 production replay | 2,634 assertions, 558 states PASS |
 | V2 spatial replay | 444 assertions, 43 states PASS |
 | V3 advanced replay | 1,753 assertions, 156 states PASS |
-| Native iOS tests and unsigned device builds | PENDING |
+| Native iOS tests and unsigned device builds | First camera integration PASS; latest drawer integration in progress |
 
 Firmware and CAD files are byte-identical to integrated main. Existing firmware
 build and mesh-export evidence is inherited; it is not described as a new build.

@@ -9,7 +9,7 @@ This branch adds explicit voice commands, a saved local map, adaptive target tap
 > The opt-in [single-servo live profile](docs/SINGLE-SERVO-LIVE.md) uses nominal120° production mapping on GPIO32.
 
 V3 includes V2 session memory and current V1 camera-first UI, firmware and CAD from
-`main` (`a4c141e`). See [version guide](docs/VERSIONS.md) and
+`main` (`b780519`). See [version guide](docs/VERSIONS.md) and
 [current integration checks](docs/V3-MAIN-INTEGRATION.md).
 
 **V1 is maintained on `main`.** It includes the current firmware and CAD,

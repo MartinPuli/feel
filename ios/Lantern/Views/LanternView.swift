@@ -7,6 +7,9 @@ struct LanternView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var presentedPanel: CameraPanel?
     @State private var attemptedInitialStart = false
+    @State private var controlsExpanded = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AccessibilityFocusState private var modalFocused: Bool
 
     private enum CameraPanel: String, Identifiable {
         case settings, connection, memory
@@ -14,118 +17,221 @@ struct LanternView: View {
     }
 
     var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            if model.mode == .live {
-                CameraPreview(session: model.perception.session)
-                    .ignoresSafeArea()
-                    .accessibilityHidden(true)
-            } else if !dynamicTypeSize.isAccessibilitySize {
-                VStack(spacing: 12) {
-                    Image(systemName: "viewfinder").font(.system(size: 36, weight: .ultraLight))
-                    Text(model.mode == .simulation ? "Simulation · Camera off" : "Camera stopped")
-                        .font(FeelTypography.subheadline)
-                }
-                .foregroundStyle(FeelTheme.secondary)
-                .accessibilityIdentifier("cameraPlaceholder")
-            }
-            VStack(spacing: 0) {
-                header
-                if dynamicTypeSize.isAccessibilitySize {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
-                            PuckView(packet: model.packet)
-                            guidance
-                        }.padding(16)
+        GeometryReader { geometry in
+            ZStack {
+                cameraSurface
+                if presentedPanel == nil {
+                    VStack(spacing: 0) {
+                        header
+                        if !controlsExpanded { compactAttention }
+                        Spacer(minLength: 8)
+                        controlDrawer(availableHeight: geometry.size.height)
                     }
-                    .background(Color.black.opacity(0.9))
-                    .accessibilityIdentifier("cameraReadingScroll")
-                } else {
-                    Spacer(minLength: 0)
+                }
+
+                if let panel = presentedPanel {
+                    Color.black.opacity(0.6).ignoresSafeArea()
+                        .onTapGesture { closePanel() }
+                        .accessibilityHidden(true)
+                    floatingPanel(panel, availableSize: geometry.size)
+                        .transition(.opacity)
+                        .zIndex(1)
                 }
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            HStack(alignment: .center, spacing: 20) {
-                if !dynamicTypeSize.isAccessibilitySize {
-                    PuckView(packet: model.packet, compact: true).frame(width: 210)
-                    guidance.frame(maxWidth: .infinity, alignment: .leading)
-                }
-                sessionAction.frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : 160)
-            }
-            .padding(.horizontal, 20).padding(.vertical, 12)
-            .background(Color.black)
-        }
+        .background(Color.black.ignoresSafeArea())
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: presentedPanel)
         .font(FeelTypography.body)
         .tint(FeelTheme.accent)
         .preferredColorScheme(.dark)
-        .sheet(item: $presentedPanel) { panel in
-            NavigationStack {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        if panel == .connection {
-                            PuckConnectionPanel(puck: model.puck)
-                        } else if panel == .memory {
-                            memory
-                        } else {
-                            settings
-                        }
-                    }.padding(20)
-                }
-                .accessibilityIdentifier("cameraSettingsScroll")
-                .background(FeelTheme.canvas)
-                .navigationTitle(panel == .connection ? "Connect puck" : panel == .memory ? "My Places" : "Settings")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { presentedPanel = nil }.accessibilityIdentifier("closeCameraPanel")
-                    }
-                }
-                .safeAreaInset(edge: .bottom) {
-                    Button("Stop", role: .destructive) {
-                        model.stop()
-                        presentedPanel = nil
-                    }
-                    .buttonStyle(FeelStopButtonStyle())
-                    .accessibilityIdentifier("panelStop")
-                    .padding(16)
-                    .background(FeelTheme.surface)
-                }
-            }
-            .font(FeelTypography.body)
-            .tint(FeelTheme.accent)
-            .preferredColorScheme(.dark)
+        .onChange(of: presentedPanel) { panel in modalFocused = panel != nil }
+        .onChange(of: model.status) { _ in
+            // Denied permission and unsupported hardware must not disappear in a closed drawer.
+            if model.mode == .stopped && !model.isStarting { setControlsExpanded(true) }
         }
         .task {
-            // Once per screen lifetime: never restart after Stop, a sheet or backgrounding.
             guard !attemptedInitialStart else { return }
             attemptedInitialStart = true
             if !ProcessInfo.processInfo.arguments.contains("--uitesting") { model.startLive() }
         }
     }
 
+    private var cameraSurface: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            if model.mode == .live {
+                CameraPreview(session: model.perception.session)
+                    .ignoresSafeArea().accessibilityHidden(true)
+            }
+        }
+    }
+
+    private func setControlsExpanded(_ expanded: Bool) {
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.22)) {
+            controlsExpanded = expanded
+        }
+    }
+
+    private func closePanel() { presentedPanel = nil }
+
+    private func controlDrawer(availableHeight: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            ZStack {
+                Button { setControlsExpanded(!controlsExpanded) } label: {
+                    Image(systemName: "chevron.up")
+                        .font(.system(size: 17, weight: .semibold))
+                        .rotationEffect(.degrees(controlsExpanded ? 180 : 0))
+                        .frame(width: 76, height: 48)
+                        .background(FeelTheme.inset, in: Capsule())
+                        .overlay(Capsule().strokeBorder(FeelTheme.border, lineWidth: 1))
+                }
+                .accessibilityLabel(controlsExpanded ? "Hide controls" : "Show controls")
+                .accessibilityValue(controlsExpanded ? "Expanded" : "Collapsed")
+                .accessibilityIdentifier("controlsToggle")
+                .simultaneousGesture(DragGesture(minimumDistance: 20).onEnded { value in
+                    if abs(value.translation.height) > 35 {
+                        setControlsExpanded(value.translation.height < 0)
+                    }
+                })
+                if !controlsExpanded && (model.mode != .stopped || model.isStarting) {
+                    HStack {
+                        Spacer()
+                        Button(role: .destructive) { model.stop() } label: {
+                            Image(systemName: "stop.fill").frame(width: 48, height: 48)
+                                .background(FeelTheme.inset, in: Circle())
+                                .overlay(Circle().strokeBorder(FeelTheme.border, lineWidth: 1))
+                        }
+                        .accessibilityLabel("Stop")
+                        .accessibilityIdentifier("stopSession")
+                        .accessibilityHint("Stops sensing even with controls hidden.")
+                    }
+                }
+            }
+            .padding(.horizontal, 16).padding(.vertical, 8)
+
+            if controlsExpanded {
+                if dynamicTypeSize.isAccessibilitySize {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            PuckView(packet: model.packet)
+                            guidance
+                        }.padding(.horizontal, 20)
+                    }
+                    .frame(height: max(110, availableHeight - 285))
+                    .accessibilityIdentifier("cameraReadingScroll")
+                    sessionAction.padding(16)
+                } else {
+                    HStack(spacing: 20) {
+                        PuckView(packet: model.packet, compact: true).frame(width: 200)
+                        guidance.frame(maxWidth: .infinity, alignment: .leading)
+                        sessionAction.frame(width: 164)
+                    }
+                    .padding(.horizontal, 20).padding(.bottom, 20)
+                }
+            }
+        }
+        .frame(maxWidth: 800)
+        .background {
+            if controlsExpanded {
+                RoundedRectangle(cornerRadius: 24).fill(FeelTheme.surface)
+                    .overlay(RoundedRectangle(cornerRadius: 24).strokeBorder(FeelTheme.border, lineWidth: 1))
+            }
+        }
+        .padding(.horizontal, 16).padding(.bottom, 12)
+    }
+
+    @ViewBuilder private var compactAttention: some View {
+        if model.mode == .live {
+            HStack {
+                if !model.calibrated {
+                    Button("Calibrate") { presentedPanel = .settings }
+                        .font(FeelTypography.label).frame(minHeight: 44)
+                        .padding(.horizontal, 16).background(FeelTheme.inset, in: Capsule())
+                } else if model.guidanceState != .live {
+                    Button("Check sensing") { setControlsExpanded(true) }
+                        .font(FeelTypography.label).frame(minHeight: 44)
+                        .padding(.horizontal, 16).background(FeelTheme.inset, in: Capsule())
+                        .accessibilityValue(model.status)
+                }
+                Spacer()
+            }.padding(.horizontal, 20)
+        }
+    }
+
+    private func floatingPanel(_ panel: CameraPanel, availableSize: CGSize) -> some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text(panel == .connection ? "Connect puck" : panel == .memory ? "My Places" : "Settings")
+                    .font(FeelTypography.title3).accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 12)
+                Button { closePanel() } label: {
+                    Image(systemName: "xmark").font(.system(size: 15, weight: .semibold))
+                        .frame(width: 44, height: 44)
+                        .background(FeelTheme.inset, in: Circle())
+                }
+                .accessibilityLabel("Close panel")
+                .accessibilityIdentifier("closeCameraPanel")
+                .accessibilityFocused($modalFocused)
+            }.padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 8)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    if panel == .connection {
+                        PuckConnectionPanel(puck: model.puck)
+                    } else if panel == .memory {
+                        memory
+                    } else {
+                        settings
+                    }
+                }.padding(.horizontal, 20).padding(.bottom, 20)
+            }
+            .accessibilityIdentifier("cameraSettingsScroll")
+            if model.mode != .stopped || model.isStarting {
+                Button("Stop", role: .destructive) {
+                    model.stop()
+                    closePanel()
+                }
+                .buttonStyle(CameraPillButtonStyle(primary: false))
+                .accessibilityIdentifier("panelStop")
+                .padding(16)
+            }
+        }
+        .frame(width: min(540, availableSize.width - 32), height: availableSize.height - 24)
+        .background(FeelTheme.surface, in: RoundedRectangle(cornerRadius: 24))
+        .overlay(RoundedRectangle(cornerRadius: 24).strokeBorder(FeelTheme.border, lineWidth: 1))
+        .shadow(color: .black.opacity(0.35), radius: 24, y: 8)
+        .accessibilityElement(children: .contain)
+        .accessibilityAddTraits(.isModal)
+        .accessibilityIdentifier("cameraFloatingPanel")
+        .accessibilityAction(.escape) { closePanel() }
+    }
+
     private var header: some View {
         HStack(spacing: 12) {
-            if !dynamicTypeSize.isAccessibilitySize {
-                Text("FEEL").font(FeelTypography.headline).accessibilityAddTraits(.isHeader)
+            HStack(spacing: 12) {
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Text("FEEL").font(FeelTypography.headline).accessibilityAddTraits(.isHeader)
+                }
+                Text(model.mode.rawValue).font(FeelTypography.caption)
+                    .accessibilityIdentifier("sessionMode")
             }
-            Text(model.mode.rawValue).font(FeelTypography.caption)
-                .accessibilityIdentifier("sessionMode")
+            .padding(.horizontal, 14).frame(minHeight: 48)
+            .background(FeelTheme.surface, in: Capsule())
             Spacer(minLength: 0)
             CameraConnectionButton(puck: model.puck) { presentedPanel = .connection }
             Button { presentedPanel = .memory } label: {
                 Image(systemName: "mappin.and.ellipse").frame(width: 48, height: 48)
             }
+            .background(FeelTheme.inset, in: Circle())
             .accessibilityLabel("My Places")
             .accessibilityIdentifier("memoryPlaces")
             Button { presentedPanel = .settings } label: {
                 Image(systemName: "slider.horizontal.3").frame(width: 48, height: 48)
             }
+            .background(FeelTheme.inset, in: Circle())
             .accessibilityLabel("Settings")
             .accessibilityIdentifier("cameraSettings")
         }
-        .padding(.horizontal, 20).padding(.vertical, 4)
-        .background(Color.black.opacity(0.85))
+        .padding(.horizontal, 20).padding(.vertical, 8)
     }
 
     private var guidance: some View {
@@ -141,12 +247,21 @@ struct LanternView: View {
 
     @ViewBuilder private var sessionAction: some View {
         if model.mode == .stopped && !model.isStarting {
-            Button { model.startLive() } label: { Label("Start camera", systemImage: "camera") }
-                .buttonStyle(FeelPrimaryButtonStyle())
+            Button { model.startLive() } label: {
+                if dynamicTypeSize.isAccessibilitySize {
+                    Label("Start camera", systemImage: "camera.fill")
+                } else {
+                    VStack(spacing: 6) {
+                        Image(systemName: "camera.fill").font(.system(size: 21, weight: .medium))
+                        Text("Start camera").font(FeelTypography.label)
+                    }.padding(.vertical, 6)
+                }
+            }
+                .buttonStyle(CameraPillButtonStyle())
                 .accessibilityIdentifier("startCamera")
         } else {
             Button(role: .destructive) { model.stop() } label: { Label("Stop", systemImage: "stop.fill") }
-                .buttonStyle(FeelStopButtonStyle())
+                .buttonStyle(CameraPillButtonStyle(primary: false))
                 .accessibilityIdentifier("stopSession")
                 .accessibilityHint("Stops the camera and sends neutral pins if connected.")
         }
@@ -162,7 +277,10 @@ struct LanternView: View {
                     .foregroundStyle(FeelTheme.secondary)
             }
             if model.mode != .live {
-                Button("Memory simulation") { model.startSimulation(memory: true) }
+                Button("Memory simulation") {
+                    model.startSimulation(memory: true)
+                    controlsExpanded = true
+                }
                     .buttonStyle(FeelSecondaryButtonStyle())
                     .disabled(model.mode == .simulation && model.simulationScene == .memory)
                     .accessibilityIdentifier("memorySimulation")
@@ -181,6 +299,7 @@ struct LanternView: View {
             }
             Button("Simulation") {
                 model.startSimulation()
+                controlsExpanded = true
                 presentedPanel = nil
             }
             .buttonStyle(FeelSecondaryButtonStyle())
@@ -199,15 +318,29 @@ struct LanternView: View {
     }
 }
 
+private struct CameraPillButtonStyle: ButtonStyle {
+    var primary = true
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(FeelTypography.headline)
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .padding(.horizontal, 16).padding(.vertical, 6)
+            .foregroundStyle(primary ? FeelTheme.onAccent : FeelTheme.accent)
+            .background(primary ? FeelTheme.accent : FeelTheme.inset, in: Capsule())
+            .overlay(Capsule().strokeBorder(primary ? FeelTheme.accent : FeelTheme.border, lineWidth: 1))
+            .opacity(configuration.isPressed ? 0.7 : 1)
+    }
+}
+
 private struct CameraConnectionButton: View {
     @ObservedObject var puck: BluetoothPuck
     let open: () -> Void
     var body: some View {
         Button(action: open) {
-            Label(puck.isConnected ? "Connected" : "Connect puck", systemImage: "link")
+            Label(puck.status.hasPrefix("Write error:") ? "Connection error" : puck.isConnected ? "Connected" : "Connect puck", systemImage: "link")
                 .font(FeelTypography.label)
                 .padding(.horizontal, 12).frame(minHeight: 48)
-                .background(FeelTheme.inset, in: RoundedRectangle(cornerRadius: 8))
+                .background(FeelTheme.inset, in: Capsule())
         }
         .accessibilityIdentifier("connectPuck")
         .accessibilityValue(puck.status)
@@ -322,9 +455,9 @@ private struct LiveSetup: View {
                     }
                 }.pickerStyle(.menu)
                 if model.restoredMapSession {
-                Text("Teammate ranging needs a fresh camera session. Stop, then Start camera to leave the saved map.").font(FeelTypography.footnote)
-            }
-            Text(model.detectorStatus).font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                    Text("Teammate ranging needs a fresh camera session. Stop, then Start camera to leave the saved map.").font(FeelTypography.footnote)
+                }
+                Text(model.detectorStatus).font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
                 if model.finder == .door {
                     Text("Door candidate uses rectangle shape. It cannot confirm a door or a safe opening.").font(FeelTypography.footnote)
                 }
