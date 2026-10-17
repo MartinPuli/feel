@@ -1,0 +1,60 @@
+{
+  "source_commit": "80375f85a3a9d5e4367b7bbbe83704e3faa8ef8f",
+  "main_integrated": "a4c141e",
+  "timestamp_utc": "2026-10-17T04:02:04.445338+00:00",
+  "checks": [
+    {
+      "check": "swift-core.log",
+      "status": "PASS",
+      "completion": "Executed 90 tests, with 0 failures"
+    },
+    {
+      "check": "swift-cli.log",
+      "status": "PASS",
+      "completion": "Build complete!"
+    },
+    {
+      "check": "firmware-host.log",
+      "status": "PASS",
+      "completion": "Ran 13 tests"
+    },
+    {
+      "check": "tooling.log",
+      "status": "PASS",
+      "completion": "OK"
+    },
+    {
+      "check": "reference.log",
+      "status": "PASS",
+      "completion": "OK"
+    },
+    {
+      "check": "cad-tools.log",
+      "status": "PASS",
+      "completion": "OK"
+    },
+    {
+      "check": "cam.log",
+      "status": "PASS",
+      "completion": "80/80"
+    },
+    {
+      "check": "production.log",
+      "status": "PASS",
+      "completion": "PASS: 2634"
+    },
+    {
+      "check": "spatial.log",
+      "status": "PASS",
+      "completion": "PASS: 444"
+    },
+    {
+      "check": "advanced.log",
+      "status": "PASS",
+      "completion": "PASS: 1753"
+    }
+  ],
+  "native_ios": "PENDING",
+  "physical_hardware": "NOT VERIFIED",
+  "firmware_and_cad": "Identical to integrated main; existing builds/mesh evidence inherited, current host and CAD regression checks rerun."
+}

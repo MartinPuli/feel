@@ -1,10 +1,10 @@
-# FEEL iOS — greenfield implementation
+# FEEL V3 iOS — advanced
 
-This source recreates the intended system from the handoff. No original Swift project or model weights were recovered. Historical handoff test counts do not apply to this implementation. `Lantern` is the internal app target; the display name is FEEL. `Beacon` is the second-phone app. This V3 branch includes the V1 foundation and V2 Spatial Memory, with each earlier version preserved on its own branch.
-
-# FEEL V2 iOS — Spatial Memory
-
-This source recreates the intended system from the handoff. No original Swift project or model weights were recovered. Historical handoff test counts do not apply to this implementation. `Lantern` is the internal app target; the display name is FEEL. `Beacon` is the second-phone app. This V2 branch adds session-only Spatial Memory to the latest V1 on `main`, including its Geist interface and persistent Stop control.
+Lantern is the internal target for FEEL; Beacon is the companion phone app.
+This branch includes current V1 camera-first UI, V2 session memory, and V3 explicit
+voice commands, one saved local map, adaptive highlighting and QR/barcode finding.
+V1 remains on `main`; V2 remains on `feel/v2-spatial-memory`.
+See [the version guide](../docs/VERSIONS.md) and [V3 details](../docs/ADVANCED.md).
 
 ## What is implemented
 

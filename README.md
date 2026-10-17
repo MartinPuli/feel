@@ -29,7 +29,7 @@ verification of this repository. The earlier preparation work is preserved on
 | `main` | Current V1: iOS apps, perception, BLE, ESP32, CAD and production replay |
 | `feel/v1-foundation` | Preserved V1 development history; continue new V1 work on `main` |
 | `feel/v2-spatial-memory` | Remember / Recall / Return, created only after V1 validation |
-| `feel/v3-advanced` | Optional advanced work, only after V1 and V2 |
+| `feel/v3-advanced` | V2 plus explicit voice commands, saved maps, adaptive taps and QR/barcode finding |
 
 For the final seven-servo configuration, start with [SEVEN-SERVO-PRODUCTION.md](docs/SEVEN-SERVO-PRODUCTION.md).
 
