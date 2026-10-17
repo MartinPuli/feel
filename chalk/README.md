@@ -1,4 +1,31 @@
-# FEEL Where-is (Chalk) — scaffold, not wired into the app yet
+# FEEL Where-is (Chalk)
+
+## Where Chalk is used
+
+- **Every model call goes through Chalk's Model Gateway.** The iPhone app's `where_is`
+  tool (`ios/Lantern/Services/WhereIsService.swift`, `ChalkGateway.swift`) posts the
+  camera photo and the question to `{host}/v1/router/chat/completions` with the gateway
+  key and `X-Chalk-Env-Id`; the model is `openai/gpt-6.1-sol` by default and can be
+  changed in the app's Where-is setup without a rebuild. The Python client here
+  (`feel_chalk/gateway.py`) uses the same route for checks and evaluations.
+- **Chalk Evaluations prove the tool.** `feel_chalk/where_is_eval.py` uploads labeled
+  venue photos as a Chalk dataset, deploys the gateway call as the task, and scores every
+  row with three custom scorers: `points_correctly` (box centre inside the labeled box, or
+  a correct "not found"), `reply_is_well_formed` (obeys the JSON contract) and
+  `false_found` (claimed to see something that is not there: the dangerous error for a
+  blind user). Running it twice with `--model` compares `gpt-6.1-sol` against the 20×
+  cheaper `gpt-6-luna` in the Chalk dashboard.
+- **The contract is shared.** `protocol/where-is-prompt.txt` and
+  `protocol/where-is-cases.json` are the single prompt and parser cases that both the
+  Swift app and the Python evaluation are tested against, so the thing being evaluated is
+  the thing the phone runs.
+
+Status (2026-10-17 02:30): gateway verified end to end from this machine and from the app
+in the iOS Simulator (self-test with a sample photo). The evaluation code is written and
+unit-tested; the Chalk run itself is **blocked** until someone runs `chalk login` and
+collects venue photos (see "Run the evaluation").
+
+## Scaffold notes
 
 The user asks "Where is the registration desk?". The phone sends one camera frame
 and the question through **Chalk's Model Gateway** to a vision model. The model
@@ -39,6 +66,21 @@ in front of the camera within about 4 m can be shown on the puck.
 6. For evaluations: install the CLI (`curl -s -L https://api.chalk.ai/install.sh | sh`),
    run `chalk login`, then `chalk environment <environment-id>`. Ask the Chalk team on
    Slack whether Evaluations and the Function queue are enabled in your environment.
+
+## Run the evaluation
+
+1. `curl -s -L https://api.chalk.ai/install.sh | sh`, then `chalk login` (opens a browser)
+   and `chalk environment bnsb82aac313`. Ask the Chalk team on the event Slack if the
+   first run reports Evaluations or the Function queue as disabled.
+2. Take 20–30 photos at the venue from chest height with teammates' consent and no
+   bystanders' faces. Save them under `chalk/data/photos/` (git-ignored).
+3. Label them in `chalk/data/labels.jsonl`, one JSON object per line as in
+   `evals/labels.example.jsonl`; at least a third of the rows should ask for something
+   that is **not** in the photo (`"box": null`).
+4. `python3 evals/validate_labels.py data/labels.jsonl` → "N rows valid".
+5. `.venv/bin/python -m feel_chalk.where_is_eval data/labels.jsonl --model openai/gpt-6.1-sol`,
+   then again with `--model openai/gpt-6-luna`. Read the three scores per run in the
+   Chalk dashboard and record them here with the run IDs.
 
 ## Check the connection
 

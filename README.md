@@ -91,3 +91,12 @@ provided through a separate model with its own limitations.
 
 FEEL is an experimental perception interface, not a certified mobility aid or a
 route planner. Test indoors with a spotter after the bench checklist passes.
+
+## Where Chalk is used
+
+FEEL's assistant has a `where_is` tool: "Where is the registration desk?" sends one camera
+photo and the question through **Chalk's Model Gateway** (`openai/gpt-6.1-sol` by default)
+to a vision model, places the answer in the room with LiDAR depth, and the puck taps toward
+it until you arrive. **Chalk Evaluations** score the tool on labeled venue photos: pointing
+accuracy, well-formed replies, and the false-found rate (claiming to see something absent).
+Details, setup and the evaluation commands: [chalk/README.md](chalk/README.md).
