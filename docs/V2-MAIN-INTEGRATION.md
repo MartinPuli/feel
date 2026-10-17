@@ -24,14 +24,46 @@ previous V2 tip was `063c07c`. `main` remains V1; V2 is published on
 
 ## Validation
 
-Validation is being completed in the isolated V2 integration worktree. Results
-will be finalized before the integration commit. The initial native build attempt
-exhausted host disk space while compiling Apple SDK modules; this was an environment
-failure, not a failing behavioral assertion.
+**PASS on October 17, 2026**, source `0daf914`, Xcode 26.6 (17F113), Swift 6.3.3,
+XcodeGen 2.46.0 and the iPhone Air / iOS 26.5 simulator.
+[Machine-readable report and commands](evidence/v2-main/report.json).
 
-Portable firmware tests and both replays passed: 2,634 foundation assertions over
-558 controller states; 444 spatial assertions over 43 controller states. Source
-presence, seven tooling tests and 51 independent reference tests also passed.
+| Check | Result |
+| --- | --- |
+| Portable Swift | 58 tests, zero failures |
+| Firmware host/controller/configuration/adapter suites | PASS |
+| Foundation production replay | 2,634 assertions / 558 controller states |
+| Spatial production replay | 444 assertions / 43 controller states |
+| Stateful spatial CLI fixture | PASS |
+| Lantern app/coordinator tests | 8 tests, zero failures |
+| Lantern UI tests | 6 tests, zero failures |
+| Beacon UI tests | 2 tests, zero failures |
+| Lantern and Beacon unsigned device builds | Both PASS |
+| Source presence, tooling, reference tests, model integrity | PASS; 7 tooling and 51 reference tests |
+| Independent source review | No actionable integration defects |
+
+The native command was `FEEL_TEST_DIAGNOSTICS=never bash scripts/check_ios.sh`.
+This disables only verbose failure sysdiagnose for limited local disk; assertions,
+screenshots and result bundles remain enabled. CI keeps its default diagnostics.
+The script now exercises both applications' UI test suites before device builds.
+[Full native log](evidence/v2-main/ios.log),
+[camera view](evidence/v2-main/camera-simulation.png),
+[memory entry](evidence/v2-main/memory-name-entry.png) and
+[Recall controls](evidence/v2-main/memory-guiding.png) are retained.
+
+Initial attempts exhausted disk space while compiling Apple SDK modules. A later
+memory UI attempt failed an immediate post-focus hit-test precondition as the
+keyboard changed the sheet geometry. The test now types a name and asserts the
+actual field value before Remember; all motion, recall, neutral-output, recovery
+and reset assertions remain. Its focused rerun and the complete native suite
+passed. Failure excerpts are preserved, rather than reported as successful runs.
+A failed result bundle could not finalize due disk exhaustion and was removed as
+unreadable; its full text log remains locally and its failure excerpt is tracked.
+
+CAD, firmware and protocol source are identical to the current main baseline.
+Their inherited physical limits and historical evidence remain applicable; this
+integration did not rerun embedded uploads or physical tests. Hosted CI was not
+run as part of these local checks.
 
 ## Physical limits
 

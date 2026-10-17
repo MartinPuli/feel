@@ -7,6 +7,6 @@ test_missing_production_source_does_not_execute_command (test_runner.RunnerTests
 test_timeout_also_stops_build_descendants (test_runner.RunnerTests) ... ok
 
 ----------------------------------------------------------------------
-Ran 7 tests in 1.214s
+Ran 7 tests in 1.246s
 
 OK
