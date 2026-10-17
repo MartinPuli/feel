@@ -17,7 +17,7 @@ struct WhereIsSetup: View {
             Text(configured ? "Where-is ready" : "Where-is not set up")
                 .font(FeelTypography.label)
                 .accessibilityIdentifier("whereIsStatus")
-            Text("“Where is the desk?” sends one camera photo through Chalk's gateway to a vision model, then the pins point at the answer. These settings stay in Keychain.")
+            Text("“Where is the desk?” sends one camera photo through Chalk's gateway to a vision model, then the pins point at the answer. Without Chalk, or when it can't be reached, the phone's own detector answers for exits, doors, people, chairs and common objects. These settings stay in Keychain.")
                 .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
             field("Gateway address", text: $host, identifier: "chalkHost", keyboard: .URL)
             field("Environment ID", text: $environment, identifier: "chalkEnvironment")

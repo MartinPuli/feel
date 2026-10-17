@@ -277,9 +277,16 @@ final class RealtimeVoiceSession: ObservableObject {
 
     /// A typed request takes the same path as speech: a user item, then a response.
     /// Also the fallback for a loud room or a Bluetooth keyboard with VoiceOver.
+    private static let runsInSimulator: Bool = {
+        #if targetEnvironment(simulator)
+        return true
+        #else
+        return false
+        #endif
+    }()
     @discardableResult func sendText(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard isActive, receivedConfiguration, !userSpeaking, (1...160).contains(trimmed.unicodeScalars.count) else { return false }
+        guard isActive, receivedConfiguration, !userSpeaking, !responseRunning, pendingRequestID == nil, (1...160).contains(trimmed.unicodeScalars.count) else { return false }
         phase = .thinking; caption = String(trimmed.prefix(400))
         enqueue(["type": "conversation.item.create", "item": ["type": "message", "role": "user",
                  "content": [["type": "input_text", "text": trimmed]]]])
@@ -561,8 +568,9 @@ final class RealtimeVoiceSession: ObservableObject {
             // Out-of-band announcements do not have a default-history item to truncate.
             assistantItemID = responseIsAnnouncement ? nil : event["item_id"] as? String
             do { try audio.play(data); phase = .speaking }
-            catch VoiceAudioError.notRunning {
-                // No sound output (simulator, dead route): keep the conversation going through captions and tools.
+            catch VoiceAudioError.notRunning where Self.runsInSimulator {
+                // The simulator has no audio engine: keep the conversation going through captions and tools.
+                // On a phone a stopped engine is a real failure and takes the recovery path below.
                 VoiceDiagnostics.record("playback_failure", detail: "engine_not_running")
                 audioUnavailable = true; phase = .speaking
             }

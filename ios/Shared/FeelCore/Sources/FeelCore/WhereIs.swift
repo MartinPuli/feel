@@ -9,6 +9,12 @@ import FoundationNetworking
 public struct NormalizedBox: Equatable, Sendable {
     /// Fractions of image width/height, top-left origin.
     public let xMin: Double, yMin: Double, xMax: Double, yMax: Double
+    public init(xMin: Double,yMin: Double,xMax: Double,yMax: Double) { self.xMin=xMin; self.yMin=yMin; self.xMax=xMax; self.yMax=yMax }
+    /// From a Vision box (normalized, bottom-left origin), clamped to the image.
+    public init(bottomLeftX x: Double,y: Double,width: Double,height: Double) {
+        let clamp={ (v: Double) in min(1,max(0,v)) }
+        self.init(xMin:clamp(x),yMin:clamp(1-(y+height)),xMax:clamp(x+width),yMax:clamp(1-y))
+    }
     public var center: (x: Double, y: Double) { ((xMin+xMax)/2,(yMin+yMax)/2) }
 }
 
@@ -17,6 +23,7 @@ public struct WhereIsAnswer: Equatable, Sendable {
     public let label: String
     public let box: NormalizedBox?
     public let confidence: Double
+    public init(found: Bool,label: String,box: NormalizedBox?,confidence: Double) { self.found=found; self.label=label; self.box=box; self.confidence=confidence }
 }
 
 public enum WhereIsError: Error, Equatable { case malformed(String) }

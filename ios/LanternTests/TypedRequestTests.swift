@@ -38,6 +38,7 @@ final class TypedRequestTests: XCTestCase {
                                          configuration: config, speaksLocally: false, requestPermission: { $0(true) })
         voice.start(); token.complete(.success("ephemeral"))
         transport.emit(["type": "session.created"]); transport.emit(["type": "session.updated"])
+        acknowledgeOpeningGreeting(transport.sent, emit: transport.emit)
         return (voice, transport)
     }
 
@@ -53,6 +54,14 @@ final class TypedRequestTests: XCTestCase {
         XCTAssertEqual(content.first?["text"] as? String, "where is the exit")
         XCTAssertFalse(voice.sendText("   "), "Blank text is not sent")
         XCTAssertFalse(voice.sendText(String(repeating: "x", count: 161)), "Overlong text is not sent")
+    }
+
+    func testSendTextWaitsForTheCurrentReply() {
+        let (voice, transport) = ready()
+        transport.emit(["type": "response.created", "response": ["id": "r1"]])
+        XCTAssertFalse(voice.sendText("where is the exit"), "A typed request must not race the reply in progress")
+        transport.emit(["type": "response.done", "response": ["id": "r1"]])
+        XCTAssertTrue(voice.sendText("where is the exit"))
     }
 
     func testSendTextIsRejectedWhileIdle() {

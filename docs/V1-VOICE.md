@@ -22,7 +22,12 @@ say stop, pick another target, or tracking resets. When the pins cannot show it,
 FEEL says a direction instead ("desk is to your left"). Enter the Chalk gateway
 settings once under Assistant settings → Where-is setup; they stay in Keychain. A
 photo leaves the phone only for this request. The result is a model's reading of
-one photo, not a confirmed object.
+one photo, not a confirmed object. Without Chalk settings, or when Chalk cannot be
+reached within 12 s, FEEL answers on the phone itself: Vision reads EXIT signs and
+door-shaped rectangles and finds people, and the bundled Core ML detector finds chairs
+and common objects (run `python3 scripts/fetch_model.py` before building). For anything
+else offline it says "I can only look for the exit, a door, a person, a chair or common
+objects right now."
 
 **Typed requests.** While the assistant is active, the Assistant panel has a "Type a
 request" field. Text takes the same path as speech (a user item, then a response), so

@@ -72,6 +72,14 @@ final class ARPerception: NSObject, ARSessionDelegate {
     }
     /// One frame for Where-is: photo, depth and pose captured together, or nil when the
     /// camera is not tracking normally, is mounted wrong, or has no depth. No photo is kept.
+    /// Runs the detector on a Where-is photo for the on-device fallback. Completion on the Vision queue;
+    /// nil when the detector cannot run that query here (object queries without the Core ML weights).
+    func detectLocal(_ query: LocalQuery,jpeg: Data,completion: @escaping ([ImageDetection]?) -> Void) {
+        visionQueue.async {
+            guard self.detector.canRun(query) else { completion(nil); return }
+            completion((try? self.detector.detect(jpeg:jpeg,query:query)) ?? [])
+        }
+    }
     func snapshot(completion: @escaping (FrameSnapshot?) -> Void) {
         queue.async {
             var result: FrameSnapshot?

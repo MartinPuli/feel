@@ -35,7 +35,7 @@ final class WhereIsServiceTests: XCTestCase {
 
     func testFoundPlacesTarget() throws {
         guard case .placed(let target)? = run(reply: .success(found)) else { return XCTFail("expected a placed target") }
-        XCTAssertEqual(target.label, "registration desk")
+        XCTAssertEqual(target.label, "desk", "The user's own words name the target, not the model's label")
         XCTAssertEqual(target.position.z, -2, accuracy: 1e-6)
         XCTAssertEqual(target.worldEpoch, 1)
     }
@@ -60,6 +60,41 @@ final class WhereIsServiceTests: XCTestCase {
         let parts = try XCTUnwrap(messages[1]["content"] as? [[String: Any]])
         XCTAssertEqual(parts[0]["text"] as? String, "Where is the desk?")
         XCTAssertEqual((parts[1]["image_url"] as? [String: Any])?["url"] as? String, "data:image/jpeg;base64,QUJD")
+    }
+    func testWithoutChalkTheLocalFinderAnswers() {
+        let local = StubLocalFinder()
+        local.outcome = .placed(HeldTarget(position: Vector3(0, 0, -1), label: "exit", worldEpoch: 1, setAt: 0))
+        var outcome: WhereIsOutcome?
+        WhereIsService(gateway: nil, model: "", local: local).find("exit", snapshot: snapshot()) { outcome = $0 }
+        XCTAssertEqual(local.things, ["exit"])
+        XCTAssertEqual(outcome, local.outcome)
+    }
+    func testGatewayFailureFallsBackToTheLocalFinder() {
+        let gateway = StubChatGateway(), local = StubLocalFinder()
+        let service = WhereIsService(gateway: gateway, model: "m", local: local)
+        var outcome: WhereIsOutcome?
+        service.find("exit", snapshot: snapshot()) { outcome = $0 }
+        XCTAssertTrue(local.things.isEmpty, "Chalk is asked first")
+        gateway.reply(0, .failure(GatewayError.http(500)))
+        XCTAssertEqual(local.things, ["exit"])
+        XCTAssertEqual(outcome, .notVisible)
+    }
+    func testChalkAnswersAreNotSecondGuessedLocally() {
+        let gateway = StubChatGateway(), local = StubLocalFinder()
+        let service = WhereIsService(gateway: gateway, model: "m", local: local)
+        var outcome: WhereIsOutcome?
+        service.find("exit", snapshot: snapshot()) { outcome = $0 }
+        gateway.reply(0, .success(#"{"found": false, "label": "", "box": null, "confidence": 0}"#))
+        XCTAssertEqual(outcome, .notVisible)
+        XCTAssertTrue(local.things.isEmpty)
+    }
+    func testNothingToAskIsFailed() {
+        var outcome: WhereIsOutcome?
+        WhereIsService(gateway: nil, model: "", local: nil).find("exit", snapshot: snapshot()) { outcome = $0 }
+        XCTAssertEqual(outcome, .failed)
+    }
+    func testChalkWaitsAtMostTwelveSecondsBeforeTheFallback() {
+        XCTAssertEqual(WhereIsService.timeout, 12)
     }
     func testSecondRequestCancelsFirst() {
         let gateway = StubChatGateway()

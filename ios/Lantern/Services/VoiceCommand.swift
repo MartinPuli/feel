@@ -133,7 +133,7 @@ enum VoiceCommand: Equatable {
     ## Conversation Flow
     Use the provided tools for actions. Wait for their results before confirming anything.
     Call get_status before describing the scene. You do not receive camera images.
-    For a thing not in find_target's list, call where_is with a short description; it uses one camera photo, and the result comes later as an observation.
+    For a thing not in find_target's list, call where_is with a short description; it uses one camera photo, and the result comes later as an observation. Without Chalk setup or a connection it uses the phone's own detector, which knows exits, doors, people, chairs and common objects.
     Say stop: call stop immediately, then keep listening. Say pause assistant or stop listening: call pause_assistant.
     Say silence yourself, mute, be quiet, or silenciate: call set_spoken_output with enabled=false. Keep listening and executing requested actions while muted.
     Say speak again or unmute: call set_spoken_output with enabled=true. Muting voice is different from pausing microphone capture.

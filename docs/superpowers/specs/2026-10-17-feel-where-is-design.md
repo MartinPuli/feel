@@ -86,7 +86,7 @@ it uses one camera photo, and the result comes later as an observation." In Guar
 | Condition | Result |
 |---|---|
 | `mode != .live` | `error: "Camera is not live. Ask the user whether to start it."` |
-| Chalk not configured | `error: "Where-is needs Chalk setup in Assistant settings."` |
+| Chalk not configured | `error: "Where-is needs Chalk setup in Assistant settings."` |  *(superseded 2026-10-17: without Chalk settings, or when the gateway fails, the on-device detector answers; no refusal)*
 | `guidanceState != .live` | `error: "Sensing isn't ready. Calibrate or wait for tracking, then try again."` |
 | otherwise | starts the lookup; `status: "Looking for the <thing> with one camera photo. The result arrives as an observation in a few seconds; call get_status to check."`, `pending: true` |
 

@@ -11,6 +11,7 @@ final class MemoryChalkStore: ChalkConfigurationStoring {
 
 final class WhereIsCommandTests: XCTestCase {
     private let held = HeldTarget(position: Vector3(0, 0, -2), label: "desk", worldEpoch: 1, setAt: 0)
+    private let local = StubLocalFinder()
 
     private func makeModel(configured: Bool = true) -> (LanternModel, StubChatGateway) {
         let gateway = StubChatGateway()
@@ -19,7 +20,7 @@ final class WhereIsCommandTests: XCTestCase {
             store.stored = ChalkConfiguration(apiHost: ChalkConfiguration.defaultHost, routerApiKey: String(repeating: "k", count: 16), environmentId: "env", model: "m")
         }
         let voice = RealtimeVoiceSession(configuration: nil, speaksLocally: false)
-        let model = LanternModel(voice: voice, chalkStore: store, gatewayFactory: { _ in gateway })
+        let model = LanternModel(voice: voice, chalkStore: store, gatewayFactory: { _ in gateway }, localFinder: local)
         return (model, gateway)
     }
 
@@ -44,15 +45,82 @@ final class WhereIsCommandTests: XCTestCase {
     }
 
     func testRefusalReasonsFollowTheSpecOrder() {
-        XCTAssertEqual(LanternModel.whereIsRefusal(mode: .stopped, configured: true, guidance: .live), "Camera is not live. Ask the user whether to start it.")
-        XCTAssertEqual(LanternModel.whereIsRefusal(mode: .live, configured: false, guidance: .live), "Where-is needs Chalk setup in Assistant settings.")
-        XCTAssertEqual(LanternModel.whereIsRefusal(mode: .live, configured: true, guidance: .staleDepth), "Sensing isn't ready. Calibrate or wait for tracking, then try again.")
-        XCTAssertNil(LanternModel.whereIsRefusal(mode: .live, configured: true, guidance: .live))
+        XCTAssertEqual(LanternModel.whereIsRefusal(mode: .stopped, guidance: .live), "Camera is not live. Ask the user whether to start it.")
+        XCTAssertEqual(LanternModel.whereIsRefusal(mode: .live, guidance: .staleDepth), "Sensing isn't ready. Calibrate or wait for tracking, then try again.")
+        XCTAssertNil(LanternModel.whereIsRefusal(mode: .live, guidance: .live), "Chalk setup is optional: the on-device finder answers without it")
     }
 
-    func testWhereIsAvailableNeedsConfiguration() {
-        XCTAssertFalse(makeModel(configured: false).0.whereIsAvailable)
-        XCTAssertEqual(makeModel(configured: false).0.voiceSnapshot()["where_is_available"] as? Bool, false)
+    func testWhereIsNeedsNoChalkSetup() {
+        let (model, gateway) = makeModel(configured: false)
+        XCTAssertFalse(model.whereIsAvailable, "Stopped camera")
+        XCTAssertEqual(model.voiceSnapshot()["where_is_available"] as? Bool, false)
+        var pending: [(FrameSnapshot?) -> Void] = []
+        model.snapshotProvider = { pending.append($0) }
+        local.outcome = .placed(held)
+        model.beginWhereIs("desk")
+        pending[0](makeSnapshot())
+        XCTAssertEqual(gateway.calls, 0)
+        XCTAssertEqual(local.things, ["desk"])
+        XCTAssertEqual(model.heldTarget, held)
+    }
+
+    func testNewAskClearsThePreviousTargetAndWaitsForItsOwnPhoto() throws {
+        let (model, gateway) = makeModel()
+        var pending: [(FrameSnapshot?) -> Void] = []
+        model.snapshotProvider = { pending.append($0) }
+        model.finder = .chair
+        model.handleWhereIs(.placed(held), thing: "desk")
+        model.beginWhereIs("chair")
+        XCTAssertNil(model.heldTarget, "The old target must stop driving the pins at once")
+        XCTAssertNil(model.whereIsNotice)
+        XCTAssertEqual(model.finder, .none, "A finder target must not shadow the answer")
+        model.beginWhereIs("exit")
+        pending[0](makeSnapshot())   // the chair photo arrives after the exit ask: dropped
+        XCTAssertEqual(gateway.calls, 0)
+        pending[1](makeSnapshot())
+        XCTAssertEqual(gateway.calls, 1)
+        let body = try XCTUnwrap(JSONSerialization.jsonObject(with: try XCTUnwrap(gateway.bodies.first)) as? [String: Any])
+        let parts = try XCTUnwrap((body["messages"] as? [[String: Any]])?[1]["content"] as? [[String: Any]])
+        XCTAssertEqual(parts[0]["text"] as? String, "Where is the exit?")
+    }
+
+    func testPlacedInAnotherWorldIsNotHeld() {
+        let (model, _) = makeModel()
+        model.handleWhereIs(.placed(held), thing: "desk", frame: makeFrame(worldEpoch: 2))
+        XCTAssertNil(model.heldTarget)
+        XCTAssertEqual(model.whereIsNotice, "Lost tracking. Say it again.")
+    }
+
+    func testPlacedOutsideThePinsFieldSaysWhereItIs() {
+        let (model, _) = makeModel()
+        let behind = HeldTarget(position: Vector3(0, 0, 3), label: "desk", worldEpoch: 1, setAt: 0)
+        model.handleWhereIs(.placed(behind), thing: "desk", frame: makeFrame())
+        XCTAssertEqual(model.heldTarget, behind)
+        XCTAssertEqual(model.whereIsNotice, "desk is behind you.")
+        model.handleWhereIs(.placed(held), thing: "desk", frame: makeFrame())
+        XCTAssertEqual(model.whereIsNotice, "The desk was 2 meters ahead.")
+    }
+
+    func testUnsupportedThingExplainsTheLocalVocabulary() {
+        let (model, _) = makeModel()
+        model.handleWhereIs(.unsupported, thing: "unicorn")
+        XCTAssertEqual(model.whereIsNotice, "I can only look for the exit, a door, a person, a chair or common objects right now.")
+        XCTAssertNil(model.heldTarget)
+    }
+
+    func testResultLineIsRetriedOnceTheAssistantIsFree() {
+        let (voice, transport) = VoiceTestDoubles.activeSession()
+        let model = LanternModel(voice: voice, chalkStore: MemoryChalkStore(), gatewayFactory: { _ in StubChatGateway() }, localFinder: StubLocalFinder())
+        model.startSimulation()
+        transport.emit(["type": "response.created", "response": ["id": "r1"]])   // the assistant is mid-reply: announce() refuses
+        model.handleWhereIs(.notVisible, thing: "desk")
+        XCTAssertFalse(transport.json.contains("I couldn't see a desk"))
+        transport.emit(["type": "response.done", "response": ["id": "r1"]])
+        // The session also allows one announcement per five seconds; the result line must still arrive, once.
+        let spoken = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in transport.json.contains("I couldn't see a desk") }, object: nil)
+        wait(for: [spoken], timeout: 8)
+        XCTAssertEqual(transport.json.components(separatedBy: "I couldn't see a desk").count - 1, 1, "Spoken exactly once")
+        model.stop()
     }
 
     func testPlacedOutcomeHoldsTargetAndSnapshotReportsIt() {

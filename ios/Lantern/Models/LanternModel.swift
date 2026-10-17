@@ -34,7 +34,14 @@ final class LanternModel:ObservableObject {
     private var whereIsService: WhereIsService?
     private var selfTestService: WhereIsService?
     private var lastDirectionSpokenAt: TimeInterval = -.infinity
-    var whereIsAvailable: Bool { chalkConfiguration?.isValid == true && mode == .live && guidanceState == .live }
+    /// Each ask gets a number; a photo or answer from an earlier ask is dropped.
+    private var whereIsRequest = 0
+    /// A result line the assistant could not speak at once (it was mid-reply); retried from the tick for ten seconds.
+    private var unspokenLine: (line: String, sceneBound: Bool, expires: TimeInterval)?
+    private lazy var localFinder: LocalWhereIsFinding = LocalWhereIs(detect: perception.detectLocal)
+    /// Where a Where-is photo comes from; tests hand snapshots in by hand.
+    lazy var snapshotProvider: (@escaping (FrameSnapshot?) -> Void) -> Void = { [perception] completion in perception.snapshot(completion: completion) }
+    var whereIsAvailable: Bool { mode == .live && guidanceState == .live }
     private var proactiveVoice = ProactiveVoicePolicy()
     private var voiceNotice: ProactiveVoicePolicy.Notice?
     private var voiceSawTarget = false
@@ -55,8 +62,10 @@ final class LanternModel:ObservableObject {
     private var startGeneration=0
     private var finderEpoch=0
     init(voice: RealtimeVoiceSession = RealtimeVoiceSession(), chalkStore: ChalkConfigurationStoring = ChalkConfigurationStore(),
-         gatewayFactory: @escaping (ChalkConfiguration) -> ChatGateway = { ChalkGateway(configuration: $0) }) {
+         gatewayFactory: @escaping (ChalkConfiguration) -> ChatGateway = { ChalkGateway(configuration: $0) },
+         localFinder: LocalWhereIsFinding? = nil) {
         self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory
+        if let localFinder { self.localFinder = localFinder }
         chalkConfiguration = chalkStore.loadForLaunch()
         voice.onCommand = { [weak self] command in self?.performVoiceCommand(command) ?? ["error": "App unavailable"] }
         voice.onEnded = { [weak self] in
@@ -103,7 +112,7 @@ final class LanternModel:ObservableObject {
         voice.invalidateSceneSpeech()
         if stopVoice { voice.disconnect() }
         isStarting=false; startGeneration += 1; timer?.invalidate(); timer=nil; frame=nil; calibrated=false
-        heldTarget = nil; whereIsService?.cancel(); whereIsNotice = nil
+        heldTarget = nil; whereIsService?.cancel(); whereIsNotice = nil; unspokenLine = nil
         perception.stop(); peer.stop(); mode = .stopped; guidanceState = .stopped
         sequence &+= 1; packet = .neutral(sequence:sequence); puck.send(packet)
         status="Stopped. Neutral command sent if connected"; targetDescription="No guidance"
@@ -130,9 +139,8 @@ final class LanternModel:ObservableObject {
             return voiceSnapshot()
         case .status: return voiceSnapshot()
         case .whereIs(let thing):
-            if let refusal = Self.whereIsRefusal(mode: mode, configured: chalkConfiguration?.isValid == true, guidance: guidanceState) { return ["error": refusal] }
-            whereIsNotice = nil
-            startWhereIs(thing)
+            if let refusal = Self.whereIsRefusal(mode: mode, guidance: guidanceState) { return ["error": refusal] }
+            beginWhereIs(thing)
             return ["status": "Looking for the \(thing) with one camera photo. The result arrives as an observation in a few seconds; call get_status to check.",
                     "pending": true]
         case .find(let target):
@@ -238,7 +246,7 @@ final class LanternModel:ObservableObject {
         whereIsSelfTestRunning = true; whereIsSelfTest = "Asking \(configuration.model) about the sample photo…"
         let grid = DepthGrid(width: 20, height: 10, depths: Array(repeating: 2, count: 200), confidence: Array(repeating: 2, count: 200))
         let snapshot = FrameSnapshot(timestamp: 0, worldEpoch: -1, pose: .identity, intrinsics: CameraIntrinsics(fx: 10, fy: 10, cx: 10, cy: 5), depth: grid, jpegBase64: data.base64EncodedString())
-        let service = WhereIsService(gateway: gatewayFactory(configuration), model: configuration.model)
+        let service = WhereIsService(gateway: gatewayFactory(configuration), model: configuration.model, local: nil)   // Chalk only: the test is about the setup
         selfTestService = service
         let started = Date()
         service.find("3D puck model", snapshot: snapshot) { [weak self] outcome in
@@ -249,55 +257,75 @@ final class LanternModel:ObservableObject {
             case .placed(let target): self.whereIsSelfTest = "Found “\(target.label)” in the sample photo and placed it, in \(seconds) s. The live camera path is tested separately."
             case .notVisible: self.whereIsSelfTest = "The model answered “not visible” for the sample photo, in \(seconds) s."
             case .noDepth: self.whereIsSelfTest = "Found it but could not place it, in \(seconds) s."
+            case .unsupported: self.whereIsSelfTest = "The on-device detector doesn't know that object."
             case .failed: self.whereIsSelfTest = "Failed after \(seconds) s. Check the key, environment ID, model name and network."
             }
         }
     }
-    static func whereIsRefusal(mode: RunMode, configured: Bool, guidance: GuidanceState) -> String? {
+    static func whereIsRefusal(mode: RunMode, guidance: GuidanceState) -> String? {
         if mode != .live { return "Camera is not live. Ask the user whether to start it." }
-        if !configured { return "Where-is needs Chalk setup in Assistant settings." }
         if guidance != .live { return "Sensing isn't ready. Calibrate or wait for tracking, then try again." }
         return nil
     }
+    /// A new ask replaces everything from the previous one: the held target, a lookup in flight, a finder target.
+    func beginWhereIs(_ thing: String) {
+        whereIsNotice = nil; unspokenLine = nil
+        if finder != .none { finder = .none }
+        clearHeldTarget(spokenLine: nil)
+        whereIsService?.cancel()
+        whereIsRequest += 1
+        startWhereIs(thing)
+    }
     private func startWhereIs(_ thing: String) {
-        guard let configuration = chalkConfiguration else { return }
-        let service = whereIsService ?? WhereIsService(gateway: gatewayFactory(configuration), model: configuration.model)
+        let service = whereIsService ?? WhereIsService(gateway: chalkConfiguration.map(gatewayFactory), model: chalkConfiguration?.model ?? "", local: localFinder)
         whereIsService = service
-        let generation = startGeneration
-        perception.snapshot { [weak self] snapshot in
-            guard let self, self.startGeneration == generation, self.mode == .live else { return }
+        let generation = startGeneration, request = whereIsRequest
+        snapshotProvider { [weak self] snapshot in
+            // The photo belongs to this ask only: a later ask or a stopped camera drops it.
+            guard let self, self.startGeneration == generation, self.whereIsRequest == request else { return }
             guard let snapshot else { self.handleWhereIs(.failed, thing: thing); return }
             service.find(thing, snapshot: snapshot) { [weak self] outcome in
-                guard let self, self.startGeneration == generation else { return }
-                self.handleWhereIs(outcome, thing: thing)
+                guard let self, self.startGeneration == generation, self.whereIsRequest == request else { return }
+                self.handleWhereIs(outcome, thing: thing, frame: self.frame)
             }
         }
     }
     /// Main queue. The spoken line is kept in `whereIsNotice` so get_status can relay it.
-    func handleWhereIs(_ outcome: WhereIsOutcome, thing: String) {
+    func handleWhereIs(_ outcome: WhereIsOutcome, thing: String, frame: PerceptionFrame? = nil) {
         switch outcome {
         case .placed(let target):
-            heldTarget = target; voiceSawTarget = true; lastDirectionSpokenAt = -.infinity
+            // The photo's world must still be the current one; after a tracking reset the point means nothing.
+            if let frame, frame.worldEpoch != target.worldEpoch { say("Lost tracking. Say it again."); return }
+            heldTarget = target; voiceSawTarget = false; lastDirectionSpokenAt = -.infinity
             let now = ProcessInfo.processInfo.systemUptime
             if let pose = frame?.pose, let observation = target.observation(pose: pose, now: now, worldEpoch: target.worldEpoch),
                let phrase = VoicePhrasing.observation(observation, named: target.label, now: now) {
                 say(phrase, sceneBound: true)
+            } else if let pose = frame?.pose, let direction = target.spokenDirection(pose: pose) {
+                lastDirectionSpokenAt = now; say(direction)   // outside the pins' field: say where it is now, then every five seconds
             } else {
                 say("I found the \(thing). The pins will point to it.", sceneBound: true)
             }
         case .notVisible: say("I couldn't see a \(thing) in the photo.")
         case .noDepth: say("I see the \(thing), but it's too far to point at.")
+        case .unsupported: say("I can only look for the exit, a door, a person, a chair or common objects right now.")
         case .failed: say("I couldn't look just now. Try again.")
         }
     }
     func clearHeldTarget(spokenLine: String?) {
         guard heldTarget != nil else { return }
-        heldTarget = nil
+        heldTarget = nil; voiceSawTarget = false
         if let spokenLine { say(spokenLine) }
     }
     private func say(_ line: String, sceneBound: Bool = false) {
         whereIsNotice = line
-        voice.announce(line, automatic: false, sceneBound: sceneBound)
+        if voice.announce(line, automatic: false, sceneBound: sceneBound) { unspokenLine = nil }
+        else { unspokenLine = (line, sceneBound, ProcessInfo.processInfo.systemUptime + 10) }
+    }
+    private func retryUnspokenLine(now: TimeInterval) {
+        guard let pending = unspokenLine else { return }
+        guard now < pending.expires, whereIsNotice == pending.line else { unspokenLine = nil; return }
+        if voice.announce(pending.line, automatic: false, sceneBound: pending.sceneBound) { unspokenLine = nil }
     }
 
     func voiceSnapshot() -> [String: Any] {
@@ -364,7 +392,7 @@ final class LanternModel:ObservableObject {
             return
         }
         if !targetAvailable {
-            if voiceSawTarget {
+            if HeldTargetGuidance.announcesTargetLost(sawTarget: voiceSawTarget, holding: heldTarget != nil) {
                 if voiceTargetLostAt == nil { voiceTargetLostAt = now }
                 if now - (voiceTargetLostAt ?? now) >= 0.6,
                    voice.announce("I no longer see your target.") { voiceSawTarget = false }
@@ -379,6 +407,7 @@ final class LanternModel:ObservableObject {
 
     private func tick() {
         let now=ProcessInfo.processInfo.systemUptime; sequence &+= 1
+        retryUnspokenLine(now: now)
         if mode == .simulation {
             let phase=(now-simulatedAt).truncatingRemainder(dividingBy:12)
             let tracking=phase<8 || phase>=10
@@ -392,9 +421,9 @@ final class LanternModel:ObservableObject {
             packet = .neutral(sequence:sequence); guidanceState = mode == .live ? .staleDepth : .stopped
             if mode == .live { puck.send(packet) }; updateVoiceAwareness(targetAvailable: false); return
         }
-        // A held Where-is target takes precedence over finder and teammate targets.
+        // A held Where-is target owns the pins: finder and teammate targets never shadow it, even while it is out of the field.
         let held=heldTarget?.observation(pose:frame.pose,now:now,worldEpoch:frame.worldEpoch)
-        let target=held ?? (finder == .teammate ? peer.currentTarget(pose:frame.pose,now:now) : frame.target)
+        let target=HeldTargetGuidance.pins(held:held,holding:heldTarget != nil,finder:finder == .teammate ? peer.currentTarget(pose:frame.pose,now:now) : frame.target)
         let output=TactileEncoder.encode(sequence:sequence,now:now,frameTimestamp:frame.timestamp,tracking:frame.tracking,distances:frame.distances,target:target,floorCalibrated:frame.floorY != nil)
         packet=output.packet; guidanceState=output.state; puck.send(packet)
         if let target,target.valid(at:now),output.state == .live {
@@ -407,10 +436,11 @@ final class LanternModel:ObservableObject {
         updateVoiceAwareness(targetAvailable: target?.valid(at: now) == true && output.state == .live,
                              target: target, distances: frame.distances, now: now)
         if let heldTarget {
-            if heldTarget.worldEpoch != frame.worldEpoch { clearHeldTarget(spokenLine: "Lost tracking. Say it again.") }
-            else if heldTarget.reached(pose: frame.pose) { clearHeldTarget(spokenLine: "You're at the \(heldTarget.label).") }
-            else if held == nil, output.state == .live, now - lastDirectionSpokenAt >= 5, let direction = heldTarget.spokenDirection(pose: frame.pose) {
-                if voice.announce(direction, automatic: false) { lastDirectionSpokenAt = now; whereIsNotice = direction }
+            switch HeldTargetGuidance.event(target: heldTarget, pose: frame.pose, worldEpoch: frame.worldEpoch, now: now, live: output.state == .live, inField: held != nil, lastSpokenAt: lastDirectionSpokenAt) {
+            case .lostTracking: clearHeldTarget(spokenLine: "Lost tracking. Say it again.")
+            case .reached: clearHeldTarget(spokenLine: "You're at the \(heldTarget.label).")
+            case .speak(let direction): if voice.announce(direction, automatic: false) { lastDirectionSpokenAt = now; whereIsNotice = direction }
+            case .keep: break
             }
         }
     }

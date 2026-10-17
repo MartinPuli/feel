@@ -99,4 +99,6 @@ photo and the question through **Chalk's Model Gateway** (`openai/gpt-6.1-sol` b
 to a vision model, places the answer in the room with LiDAR depth, and the puck taps toward
 it until you arrive. **Chalk Evaluations** score the tool on labeled venue photos: pointing
 accuracy, well-formed replies, and the false-found rate (claiming to see something absent).
+Without Chalk settings, or when the gateway can't be reached, `where_is` falls back to the
+phone's own Vision and Core ML detector (EXIT signs, doors, people, chairs, common objects).
 Details, setup and the evaluation commands: [chalk/README.md](chalk/README.md).
