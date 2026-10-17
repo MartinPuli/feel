@@ -1,0 +1,101 @@
+/private/tmp/feel-travel-pio/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Processing esp32-single-live (board: esp32dev; platform: espressif32@6.9.0; framework: arduino)
+--------------------------------------------------------------------------------
+/private/tmp/feel-travel-pio/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+PLATFORM: Espressif 32 (6.9.0) > Espressif ESP32 Dev Module
+HARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+DEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+ - tool-mkfatfs @ 2.0.1 
+ - tool-mklittlefs @ 1.203.210628 (2.3) 
+ - tool-mkspiffs @ 2.230.0 (2.30) 
+ - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 34 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- NimBLE-Arduino @ 2.3.6
+|-- Preferences @ 2.0.0
+Building in release mode
+Retrieving maximum program size .pio/build/esp32-single-live/firmware.elf
+Checking size .pio/build/esp32-single-live/firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [=         ]  11.0% (used 35908 bytes from 327680 bytes)
+Flash: [=====     ]  46.0% (used 602921 bytes from 1310720 bytes)
+Configuring upload protocol...
+AVAILABLE: cmsis-dap, esp-bridge, esp-prog, espota, esptool, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa
+CURRENT: upload_protocol = esptool
+Looking for upload port...
+Using manually specified: /dev/cu.usbserial-0001
+Uploading .pio/build/esp32-single-live/firmware.bin
+esptool.py v4.5.1
+Serial port /dev/cu.usbserial-0001
+Connecting.....
+Chip is ESP32-D0WD-V3 (revision v3.1)
+Features: WiFi, BT, Dual Core, 240MHz, VRef calibration in efuse, Coding Scheme None
+Crystal is 40MHz
+MAC: 4c:c3:82:20:e7:28
+Uploading stub...
+Running stub...
+Stub running...
+Changing baud rate to 460800
+Changed.
+Configuring flash size...
+Flash will be erased from 0x00001000 to 0x00005fff...
+Flash will be erased from 0x00008000 to 0x00008fff...
+Flash will be erased from 0x0000e000 to 0x0000ffff...
+Flash will be erased from 0x00010000 to 0x000a4fff...
+Compressed 17536 bytes to 12202...
+Writing at 0x00001000... (100 %)
+Wrote 17536 bytes (12202 compressed) at 0x00001000 in 0.5 seconds (effective 294.7 kbit/s)...
+Hash of data verified.
+Compressed 3072 bytes to 146...
+Writing at 0x00008000... (100 %)
+Wrote 3072 bytes (146 compressed) at 0x00008000 in 0.1 seconds (effective 223.5 kbit/s)...
+Hash of data verified.
+Compressed 8192 bytes to 47...
+Writing at 0x0000e000... (100 %)
+Wrote 8192 bytes (47 compressed) at 0x0000e000 in 0.1 seconds (effective 584.9 kbit/s)...
+Hash of data verified.
+Compressed 609424 bytes to 371058...
+Writing at 0x00010000... (4 %)
+Writing at 0x0001b4c8... (8 %)
+Writing at 0x0002bcb8... (13 %)
+Writing at 0x000313e8... (17 %)
+Writing at 0x0003660e... (21 %)
+Writing at 0x0003babd... (26 %)
+Writing at 0x00041200... (30 %)
+Writing at 0x0004675e... (34 %)
+Writing at 0x0004bd48... (39 %)
+Writing at 0x00051351... (43 %)
+Writing at 0x00056aeb... (47 %)
+Writing at 0x0005c9fa... (52 %)
+Writing at 0x00062e0b... (56 %)
+Writing at 0x00068bd7... (60 %)
+Writing at 0x0006e458... (65 %)
+Writing at 0x00073cc8... (69 %)
+Writing at 0x000794c1... (73 %)
+Writing at 0x00082486... (78 %)
+Writing at 0x00089193... (82 %)
+Writing at 0x000906a1... (86 %)
+Writing at 0x00095c3a... (91 %)
+Writing at 0x0009b979... (95 %)
+Writing at 0x000a0f6c... (100 %)
+Wrote 609424 bytes (371058 compressed) at 0x00010000 in 10.3 seconds (effective 473.3 kbit/s)...
+Hash of data verified.
+
+Leaving...
+Hard resetting via RTS pin...
+========================= [SUCCESS] Took 18.90 seconds =========================
+
+Environment        Status    Duration
+-----------------  --------  ------------
+esp32-single-live  SUCCESS   00:00:18.903
+========================= 1 succeeded in 00:00:18.903 =========================

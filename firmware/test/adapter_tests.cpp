@@ -17,7 +17,7 @@ void pwmTests() {
     assert(feel::servoDuty(1500, 900, 2100, duty) && duty == 1229);
     assert(feel::servoDuty(900, 900, 2100, duty) && duty == 738);
     assert(feel::servoDuty(2100, 900, 2100, duty) && duty == 1720);
-    const unsigned intervals[][2] = {{900,2100},{1000,2000},{1450,1550}};
+    const unsigned intervals[][2] = {{650,2500},{900,2100},{1000,2000},{1450,1550}};
     for (const auto& interval : intervals) {
         uint32_t previous = 0;
         for (unsigned pulse = interval[0]; pulse <= interval[1]; ++pulse) {
@@ -35,9 +35,9 @@ void pwmTests() {
     }
     // Some one-microsecond intervals contain no 14-bit timer tick. Discover
     // representability independently by enumerating integer counter positions.
-    for (unsigned minimum = 900; minimum < 2100; ++minimum) {
+    for (unsigned minimum = 650; minimum < 2500; ++minimum) {
         bool exists = false;
-        for (unsigned tick = 700; tick <= 1800; ++tick) {
+        for (unsigned tick = 500; tick <= 2100; ++tick) {
             if (tick * 20000u >= minimum * 16384u &&
                 tick * 20000u <= (minimum + 1) * 16384u) exists = true;
         }

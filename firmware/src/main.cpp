@@ -69,12 +69,21 @@ bool configurePwmTimer(uint8_t index) {
 #if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
 constexpr uint8_t kDemoPin = 32;
 #if FEEL_SINGLE_SERVO_LIVE
-constexpr const char* kAdvertisedName = "FEEL Center Live";
-constexpr const char* kSingleMode = "LIVE120";
+#if FEEL_SINGLE_SERVO_WIDE
+constexpr const char* kAdvertisedName = "FEEL Wide TEST";
+constexpr const char* kSingleMode = "WIDE_UNVERIFIED";
+constexpr uint16_t kSingleMinimumUs = 650;
+constexpr uint16_t kSingleMaximumUs = 2500;
+constexpr std::size_t kSingleSector = feel::kSingleLiveSector;
+constexpr const char* kSingleHelp = "EXPERIMENTAL ONE UNLOADED SERVO GPIO32:650..2500us; NOT verified travel or production; app may command endpoints; zero bands -> gap; serial STOP/disconnect detaches";
+#else
+constexpr const char* kAdvertisedName = "FEEL Puck";
+constexpr const char* kSingleMode = "LIVE175";
 constexpr uint16_t kSingleMinimumUs = feel::kMinPulseUs;
 constexpr uint16_t kSingleMaximumUs = feel::kMaxPulseUs;
 constexpr std::size_t kSingleSector = feel::kSingleLiveSector;
-constexpr const char* kSingleHelp = "ONE SERVO LIVE120: center sector3 production band/gap/tap/calibration -> GPIO32, nominal900..2100us; NOT measured travel; STATUS or STOP; no serial motion/calibration";
+constexpr const char* kSingleHelp = "ONE SERVO LIVE175: center sector3 production band/gap/tap/calibration -> GPIO32, assumed650..2500us; NOT measured travel; STATUS or STOP; no serial motion/calibration";
+#endif
 #else
 constexpr const char* kAdvertisedName = "FEEL Center Demo";
 constexpr const char* kSingleMode = "DEMO";
@@ -113,7 +122,11 @@ void setupDemo() {
 }
 void writeDemo() {
 #if FEEL_SINGLE_SERVO_LIVE
+    #if FEEL_SINGLE_SERVO_WIDE
+    const uint16_t pulse = feel::singleWidePulse(controller.snapshot());
+#else
     const uint16_t pulse = feel::singleLivePulse(controller.snapshot());
+#endif
 #else
     const uint16_t pulse = feel::singleDemoPulse(controller.snapshot());
 #endif
@@ -413,7 +426,7 @@ void setup() {
         feel::CalibrationRecord record;
         if (preferences.getBytes(feel::kCalibrationKey, &record, sizeof(record)) != sizeof(record) ||
             !feel::loadCalibration(controller, record)) {
-            Serial.println("ERROR stored 120-degree calibration invalid; all offsets default to0");
+            Serial.println("ERROR stored 175-degree calibration invalid; all offsets default to0");
         }
     }
     controller.tick(millis());

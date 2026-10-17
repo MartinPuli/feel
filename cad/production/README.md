@@ -43,4 +43,11 @@ The repo's `cad/tools/check_stl.py` rounds vertices to 1e-5 mm. That collapses s
 ## Notes on the spec as written
 
 - **Screw points versus corner radius:** the four screw points sit 8.85 mm from the centres of the 9 mm corner radius. The chassis pilot holes break through the rounded corner by 1.15 mm, the face clearance holes by 1.55 mm, and the face counterbores by about 2.95 mm. This is modelled exactly as specified; see `evidence/` and render the `face` part to see it.
-- **Firmware angles:** the firmware drives bands at `{0, 40, 80, 120}°` (`firmware/include/feel/controller.hpp`). Neither production shaft uses those angles: `shaft` uses 0/58/117/175 and `shaft3` uses 0/55/110 with no lobe on row 1. The firmware must change to match whichever shaft is printed. The 4-lobe shaft needs about 180° of servo travel; the repo's current design target is 120°.
+- **Firmware angles (October 17):** the current shared controller assumes
+  `{0, 58, 117, 175}°`, matching this tree's four-lobe `shaft` centers. Its
+  13° highlight dip differs from this tree's earlier ±20° verification; the
+  greenfield contact contract does not validate this different cam profile.
+  `shaft3` uses 0/55/110 with no lobe on row 1 and remains incompatible with
+  the four-band controller. Do not install it with the current firmware.
+  175° is a user-selected assumption, not verified servo travel. Existing
+  geometry-only evidence and the shaft3 hold-window failure remain unchanged.

@@ -45,11 +45,11 @@ class ProductionConfigTests(unittest.TestCase):
         deployment = FIRMWARE / config.CONFIG_NAME
         self.deployment_before = hashlib.sha256(deployment.read_bytes()).hexdigest() if deployment.exists() else None
         self.record = {
-            "schema_version": 1, "board": "esp32-classic", "verified": True,
+            "schema_version": 2, "design_profile": "fs0307-assumed175-v3", "board": "esp32-classic", "verified": True,
             "verified_by": "SYNTHETIC_TEST_ONLY", "verified_at": "2026-10-16T12:00:00Z",
             "evidence_file": "SYNTHETIC-EVIDENCE.txt",
             "servos": [{"column": column, "gpio": gpio, "unit_id": "SYNTHETIC-" + str(column),
-                        "verified": True, "measured_min_us": 850, "measured_max_us": 2200,
+                        "verified": True, "measured_min_us": 600, "measured_max_us": 2600,
                         "evidence_file": "SYNTHETIC-EVIDENCE.txt"}
                        for column, gpio in enumerate(config.GPIO_BY_COLUMN)]}
 
@@ -85,13 +85,13 @@ class ProductionConfigTests(unittest.TestCase):
     def test_valid_synthetic_records_use_service_envelope(self):
         self.write()
         result = config.load_measurements(self.path)
-        self.assertEqual((result["minimum_us"], result["maximum_us"], result["columns"]), (900,2100,7))
+        self.assertEqual((result["minimum_us"], result["maximum_us"], result["columns"]), (650,2500,7))
         self.assertEqual(len(result["sha256"]), 64)
 
     def test_exact_boundaries_and_column_order(self):
         for servo in self.record["servos"]:
-            servo["measured_min_us"] = 900
-            servo["measured_max_us"] = 2100
+            servo["measured_min_us"] = 650
+            servo["measured_max_us"] = 2500
         self.record["servos"].reverse()
         self.write()
         self.assertEqual(config.load_measurements(self.path)["columns"], 7)
@@ -109,8 +109,8 @@ class ProductionConfigTests(unittest.TestCase):
             with self.subTest(gpio=gpio): self.reject(document)
 
     def test_ranges_must_cover_entire_service_envelope(self):
-        for minimum,maximum in ((901,2100),(900,2099),(2100,900),(0,2200),(800,20000),
-                                (None,2100),(900,None),(True,2100),(900,2100.0)):
+        for minimum,maximum in ((651,2500),(650,2499),(2500,650),(0,2200),(800,20000),
+                                (None,2500),(650,None),(True,2500),(650,2500.0)):
             document = copy.deepcopy(self.record)
             document["servos"][6].update(measured_min_us=minimum,measured_max_us=maximum)
             with self.subTest(limits=(minimum,maximum)): self.reject(document)
@@ -123,7 +123,8 @@ class ProductionConfigTests(unittest.TestCase):
     def test_attestations_and_timestamp_required(self):
         for field,value in (("verified",False),("verified",1),("verified_by",None),
                             ("verified_at",None),("verified_at","2026-10-16"),
-                            ("verified_at","yesterday"),("board","esp32s3"),("schema_version",True)):
+                            ("verified_at","yesterday"),("board","esp32s3"),("schema_version",True),("schema_version",1),
+                            ("design_profile",None),("design_profile","fs0307-120-v2")):
             document = copy.deepcopy(self.record);document[field] = value
             with self.subTest(field=field,value=value): self.reject(document)
         document = copy.deepcopy(self.record);document["servos"][4]["verified"] = False
@@ -155,8 +156,8 @@ class ProductionConfigTests(unittest.TestCase):
     def test_hook_injects_only_after_synthetic_validation(self):
         self.write();env = self.hook()
         self.assertEqual(env.appended, [{"CPPDEFINES": [
-            ("FEEL_ENABLE_SERVO_OUTPUT",1),("FEEL_VERIFIED_PULSE_MIN_US",900),
-            ("FEEL_VERIFIED_PULSE_MAX_US",2100),("FEEL_PRODUCTION_MEASUREMENTS_LOADED",1)]}])
+            ("FEEL_ENABLE_SERVO_OUTPUT",1),("FEEL_VERIFIED_PULSE_MIN_US",650),
+            ("FEEL_VERIFIED_PULSE_MAX_US",2500),("FEEL_PRODUCTION_MEASUREMENTS_LOADED",1)]}])
         deployment = FIRMWARE / config.CONFIG_NAME
         after = hashlib.sha256(deployment.read_bytes()).hexdigest() if deployment.exists() else None
         self.assertEqual(after, self.deployment_before,

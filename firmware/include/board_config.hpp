@@ -11,8 +11,14 @@
 #ifndef FEEL_SINGLE_SERVO_LIVE
 #define FEEL_SINGLE_SERVO_LIVE 0
 #endif
+#ifndef FEEL_SINGLE_SERVO_WIDE
+#define FEEL_SINGLE_SERVO_WIDE 0
+#endif
+#if FEEL_SINGLE_SERVO_WIDE && !FEEL_SINGLE_SERVO_LIVE
+#error "Experimental wide output requires the isolated single-live adapter"
+#endif
 #if FEEL_SINGLE_SERVO_DEMO && FEEL_SINGLE_SERVO_LIVE
-#error "Select either midpoint demo or nominal120 single-live output, never both"
+#error "Select either midpoint demo or assumed175 single-live output, never both"
 #endif
 #if (FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE) && FEEL_ENABLE_SERVO_OUTPUT
 #error "Single-servo adapters cannot enable the production seven-servo output"
@@ -37,7 +43,7 @@
 #endif
 static_assert(FEEL_VERIFIED_PULSE_MIN_US >= feel::kMinPulseUs && FEEL_VERIFIED_PULSE_MAX_US <= feel::kMaxPulseUs &&
     FEEL_VERIFIED_PULSE_MIN_US < FEEL_VERIFIED_PULSE_MAX_US,
-    "Measured output guard must be ordered within the controller's 900..2100us service range");
+    "Measured output guard must be ordered within the controller's 650..2500us service range");
 #else
 #define FEEL_VERIFIED_PULSE_MIN_US 0
 #define FEEL_VERIFIED_PULSE_MAX_US 0

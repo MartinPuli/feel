@@ -1,3 +1,5 @@
+> October17 update: use [the175° design](FS0307-175-DESIGN.md). Production measurement records now require schema2 and design_profile `fs0307-assumed175-v3`; old120° records cannot enable this build.
+
 # V1 seven-servo production setup
 
 This is the final **7 columns × 4 pins** configuration: seven FS0307 servos,
@@ -63,8 +65,8 @@ The existing compile-only fixtures exercise the same seven-output code path
 without creating a deployable configuration. The actual connected board remains
 on its previously installed single-live firmware.
 
-The selected design is nominal120°, with band angles0/40/80/120 and neutral
-gaps20/60/100. The pulse envelope is900–2100µs. Every servo must physically
+The selected design assumes175°, with band angles0/58/117/175 and neutral
+gaps29/87.5/146. The experimental pulse envelope is650–2500µs. Every servo must physically
 support that envelope for this design; narrower travel needs design changes,
 not invented measurements or silently rescaled angles. Stored offsets are
 per-column, limited to±5°, and cannot add missing travel.
@@ -96,5 +98,5 @@ PWM does not remove electrical power.
 
 Record PASS/FAIL/NOT TESTED per column. Software tests cover decoding, sequencing,
 all seven requested outputs, neutral/timeout logic and output guards. They do
-not establish correct wiring, current capacity, physical120° travel, cam fit or
+not establish correct wiring, current capacity, physical175° travel, cam fit or
 reliable tactile interpretation. Full-device physical acceptance is still pending.

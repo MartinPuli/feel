@@ -39,3 +39,8 @@ python3 "$firmware_dir/test/test_bench_validation.py"
 "$firmware_dir/build/single-live-tests"
 
 python3 "$firmware_dir/test/test_production_config.py"
+
+"$compiler" -std=c++11 -Wall -Wextra -Werror -Wpedantic -O2 \
+  -I "$firmware_dir/include" "$firmware_dir/src/controller.cpp" \
+  "$firmware_dir/test/single_wide_tests.cpp" -o "$firmware_dir/build/single-wide-tests"
+"$firmware_dir/build/single-wide-tests"

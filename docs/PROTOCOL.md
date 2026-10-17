@@ -67,9 +67,9 @@ unavailable. See `ios/README.md` for detector, floor, and mount conventions.
 
 ## Cam commands
 
-FS0307 nominal 120° design (supersedes v7): band centres `0°, 40°, 80°, 120°`; down gaps `20°, 60°, 100°`.
+FS0307 assumed 175° design (user decision October 17, 2026): band centres `0°, 58°, 117°, 175°`; down gaps `29°, 87.5°, 146°`. This is not measured travel.
 When a pin disappears, command the nearest gap to its previous band (tie to lower
-gap), startup 20°. Highlight dips **13° toward that gap** and returns. Firmware
+gap), startup 29°. Highlight dips **13° toward that gap** and returns. Firmware
 implements a nominal 100 ms dip in a 600 ms cycle; these times are unmeasured
 prototype defaults. Calibration offsets apply per column within documented limits.
 
@@ -84,8 +84,8 @@ rig and one powered column before expanding to seven.
 115200 baud, newline-terminated ASCII. Refer to `firmware/README.md` for `ARM`,
 `B`, `HL`, `CAL`, and `US`, the bench timeout, save behavior, and output enable.
 Never copy raw pulse endpoints into hardware without checking the actual servo.
-The controller maps 0–120° to a nominal 900–2100 µs envelope (60° → 1500 µs).
+The controller maps 0–175° to an experimental 650–2500 µs envelope (87.5° → 1575 µs).
 Raw commands outside this envelope are rejected; calibration cannot expand it.
 These are design values, not measured safe endpoints for an individual servo.
 Physical outputs stay disabled until the measured-range opt-in is configured.
-Bench use is separate from normal BLE control; old 650–2500 µs commands are obsolete.
+Bench use is separate from normal BLE control. V1–V4 continue to send the same nine-byte band-selection packet; the firmware owns the angle mapping. Old 120° calibration records must not be reused.

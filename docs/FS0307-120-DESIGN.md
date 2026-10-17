@@ -1,3 +1,5 @@
+> Historical 120° design. Superseded for current source by the October 17 user-selected [175° assumption](FS0307-175-DESIGN.md). Existing 120° printed parts and generated meshes are not converted by a firmware update.
+
 # FEEL — FS0307 nominal 120° design
 
 October 16, 2026. User decision: **assume 120° for the design**.
