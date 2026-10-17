@@ -1,0 +1,448 @@
+{
+  "cases": 24,
+  "accuracy": 0.4166666666666667,
+  "p50_ms": 0.0,
+  "p95_ms": 0.0,
+  "errors": 0,
+  "rows": [
+    {
+      "case_id": "return-entrance",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.01,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "table-paraphrase",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "stage-paraphrase",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "spanish-entrance",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "spanish-table",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "list",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "list-es",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "stop-now",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "stop",
+        "place_id": null,
+        "name": null,
+        "message": "Stopped."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "stop-es",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "stop",
+        "place_id": null,
+        "name": null,
+        "message": "Stopped."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "ambiguous-entrances",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "ambiguous-table",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "unknown-alias",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "unknown-destination",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "empty-memory",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "tracking-lost",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "restore-pending",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "stop-lost",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "stop",
+        "place_id": null,
+        "name": null,
+        "message": "Stopped."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "stop-restoring",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "stop",
+        "place_id": null,
+        "name": null,
+        "message": "Stopped."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "raw-pwm",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "invent-coordinate",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "prompt-injection",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "multiple-actions",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "explicit-return-available",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    },
+    {
+      "case_id": "explicit-return-missing",
+      "model": "MOCK_FIXED_ABSTENTION",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name": null,
+        "message": "Synthetic fixture: choose a place."
+      },
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      }
+    }
+  ],
+  "started_at": "2026-10-17T05:08:25.153962+00:00",
+  "completed_at": "2026-10-17T05:08:25.154649+00:00",
+  "model": "MOCK_FIXED_ABSTENTION",
+  "prompt_version": "feel-v4-1",
+  "validation": "MOCK_NOT_LIVE",
+  "dataset_sha256": "1041f36caa65e1bca7d6acef668eca5aa7432e94d4f3ef9b5695324545c5f0a5",
+  "budget_ms": 1000
+}

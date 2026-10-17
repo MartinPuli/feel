@@ -32,3 +32,10 @@ cad/viewer/mesh_*.js
 # Local, per-unit physical measurement records and supporting evidence
 firmware/production-measurements.local.json
 firmware/production-evidence/
+
+# V4 consented interaction storage and private evaluation exports
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+services/chalk/private/

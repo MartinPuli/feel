@@ -1,0 +1,11 @@
+usage: chalk_evaluation.py [-h] --name NAME --output OUTPUT
+                           dataset candidate_report
+
+positional arguments:
+  dataset
+  candidate_report
+
+options:
+  -h, --help        show this help message and exit
+  --name NAME
+  --output OUTPUT

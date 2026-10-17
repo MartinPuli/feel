@@ -19,6 +19,9 @@ jobs:
         with: {persist-credentials: false}
       - run: python3 scripts/check_sources.py
       - run: python3 -m unittest discover -s scripts/tests -v
+      - run: python3 scripts/check_chalk_boundary.py
+      - name: Chalk service contract and feedback tests (no cloud credentials)
+        run: python3 -m unittest discover -s services/chalk -v
       - run: python3 -m unittest discover -s validation/tests -v
       - run: swift --version && sh ios/scripts/test_portable.sh
       - run: swift build --package-path ios/Shared/FeelCore

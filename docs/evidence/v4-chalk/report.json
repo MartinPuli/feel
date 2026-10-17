@@ -1,0 +1,60 @@
+{
+  "version": "V4 Chalk",
+  "baseline": "e56e141b5fd9cecc079ed398c5b81cb3e93dbb77",
+  "backend_source": "8bdb150",
+  "ios_source": "c9086f2",
+  "timestamp_utc": "2026-10-17T05:13:34.237913+00:00",
+  "local_checks": {
+    "backend_tests": {
+      "status": "PASS",
+      "count": 28,
+      "log": "backend-tests.log"
+    },
+    "tooling_tests": {
+      "status": "PASS",
+      "count": 11,
+      "log": "tooling-tests.log"
+    },
+    "hardware_boundary": {
+      "status": "PASS",
+      "unchanged_files": 67,
+      "log": "hardware-boundary.log"
+    },
+    "sdk_import_help": {
+      "status": "PASS",
+      "chalkcompute": "2.13.7",
+      "pyarrow": "26.0.0",
+      "log": "sdk-help.log",
+      "meaning": "No deployment or remote execution occurred"
+    }
+  },
+  "native_ios": {
+    "status": "PASS",
+    "app_tests": 37,
+    "Lantern_UI_tests": 10,
+    "Beacon_UI_tests": 2,
+    "unsigned_device_builds": [
+      "Lantern",
+      "Beacon"
+    ],
+    "runtime_source": "c9086f2",
+    "log": "ios-final.log",
+    "exit_code": 0
+  },
+  "live_chalk": {
+    "status": "BLOCKED",
+    "reason": "Hackathon signup requires .edu; current account could not claim access. No credentials configured."
+  },
+  "hosted_evaluations": {
+    "status": "NOT_RUN"
+  },
+  "mock_report": {
+    "cases": 24,
+    "file": "mock-contract-report.json",
+    "meaning": "Synthetic plumbing fixture only, not model accuracy or latency evidence"
+  },
+  "physical_hardware": "NOT_VERIFIED; no flashing/installation/electrical changes",
+  "independent_review": "Backend author reviewed iOS and parent report; iOS author reviewed backend schema. Parent separately reran backend and tooling checks. Return-point mismatch and mixed mock/live comparison were corrected.",
+  "publication": "Target branch: feel/v4-chalk; verify GitHub head against this release commit.",
+  "handoff": "User requested Benjamin continue live account setup and validation."
+}

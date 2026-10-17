@@ -1,7 +1,7 @@
 # FEEL versions and branch guide
 
 `main` remains V1. V2 and V3 are separate, progressively extended versions; neither
-advanced branch is merged into V1. All three use the same nine-byte BLE protocol,
+advanced branch is merged into V1. All four use the same nine-byte BLE protocol,
 seven-column design and nominal FS0307 120-degree mapping.
 
 | Version and branch | What it does | How to try it | Main limitation |
@@ -13,6 +13,18 @@ seven-column design and nominal FS0307 120-degree mapping.
 The camera controls start collapsed. **Show controls** reveals the virtual puck
 and Start camera action; Stop remains available during active sensing even when
 the controls are hidden. Connection, Settings and My Places open floating panels.
+
+## V4 — Chalk contextual commands
+
+`feel/v4-chalk` builds on V3. In Settings, enable Chalk understanding and explicit
+text sharing, then configure the authenticated HTTPS FEEL service. Commands use
+the current session's actual place IDs. Correction retention is a separate opt-in.
+Stop and tracking checks remain local; late responses cannot restart a stopped
+session. Local commands remain available with cloud understanding off.
+
+The backend calls the real Chalk Model Gateway, records consented corrections and
+runs versioned evaluation workflows. No automatic model training or promotion is
+claimed. See [V4 guide](V4-CHALK.md) and [current evidence](V4-CHALK-STATUS.md).
 
 ## What V3 adds in detail
 

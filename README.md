@@ -1,6 +1,11 @@
-# FEEL V3 — advanced
+# FEEL V4 — Chalk contextual commands
 
-This branch adds explicit voice commands, a saved local map, adaptive target taps and QR/barcode finding on top of V2. See [ADVANCED.md](docs/ADVANCED.md).
+V4 adds optional natural-language place commands through Chalk, explicit correction
+feedback, measured latency and reproducible evaluation on top of validated V3.
+Benjamin: start with [the handoff](docs/HANDOFF-BENJAMIN-V4.md).
+Read [the V4 guide](docs/V4-CHALK.md), [service setup](services/chalk/README.md)
+and [current evidence](docs/V4-CHALK-STATUS.md). Live Chalk access and physical
+verification are tracked separately from local tests.
 
 > **FS0307 120° revision:** current CAD and firmware use 0/40/80/120° band positions.
 > See [design and validation](docs/FS0307-120-DESIGN.md). Old 175° shafts/calibration
@@ -14,7 +19,7 @@ V3 includes V2 session memory and current V1 camera-first UI, firmware and CAD f
 
 **V1 is maintained on `main`.** It includes the current firmware and CAD,
 Lantern with its [camera-first interface](docs/V1-CAMERA-UI.md), Beacon, and V1 validation tools.
-Use `main` for all current V1 work. V2 and V3 remain separate development branches.
+Use `main` for all current V1 work. V2, V3 and V4 remain separate development branches.
 
 A prototype that translates indoor depth and target direction into a **7-column ×
 4-pin tactile puck**, using a LiDAR iPhone, BLE, an ESP32 and seven servos.
@@ -27,9 +32,9 @@ verification of this repository. The earlier preparation work is preserved on
 | Branch | Purpose |
 |---|---|
 | `main` | Current V1: iOS apps, perception, BLE, ESP32, CAD and production replay |
-| `feel/v1-foundation` | Preserved V1 development history; continue new V1 work on `main` |
 | `feel/v2-spatial-memory` | Remember / Recall / Return, created only after V1 validation |
 | `feel/v3-advanced` | V2 plus explicit voice commands, saved maps, adaptive taps and QR/barcode finding |
+| `feel/v4-chalk` | V3 plus grounded cloud commands, explicit feedback and Chalk evaluations |
 
 For the final seven-servo configuration, start with [SEVEN-SERVO-PRODUCTION.md](docs/SEVEN-SERVO-PRODUCTION.md).
 
@@ -40,7 +45,7 @@ To set up the board on your Mac, start with [SETUP-MAC-ESP32.md](docs/SETUP-MAC-
 See [release status](docs/RELEASE-STATUS.md) for actual checks and blockers.
 **One-servo motion has been observed; full travel, seven-servo mechanics and sensing accuracy remain unverified.**
 
-See [version guide](docs/VERSIONS.md) for V1/V2/V3 features and branch selection.
+See [version guide](docs/VERSIONS.md) for V1/V2/V3/V4 features and branch selection.
 
 ## Run software checks
 

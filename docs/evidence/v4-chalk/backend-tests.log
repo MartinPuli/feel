@@ -1,0 +1,33 @@
+test_duplicate_results_rejected_before_sdk_import (test_evaluation_cli.EvaluationCLITests) ... ok
+test_feedback_export_cli_preserves_snapshot_and_private_permissions (test_evaluation_cli.EvaluationCLITests) ... ok
+test_help_requires_no_chalk_install_or_credentials (test_evaluation_cli.EvaluationCLITests) ... ok
+test_mock_rejected_before_sdk_import (test_evaluation_cli.EvaluationCLITests) ... ok
+test_scorers_import_without_sdk_or_deployment (test_evaluation_cli.EvaluationCLITests) ... ok
+test_bad_request_shapes (test_server.ServiceTests) ... ok
+test_cross_session_aliases (test_server.ServiceTests) ... ok
+test_cross_session_feedback (test_server.ServiceTests) ... ok
+test_delete_session (test_server.ServiceTests) ... ok
+test_duplicate_feedback_and_request (test_server.ServiceTests) ... ok
+test_duplicate_names (test_server.ServiceTests) ... ok
+test_duplicate_place_ids (test_server.ServiceTests) ... ok
+test_gateway_http_error_redacted (test_server.ServiceTests) ... ok
+test_gateway_malformed_payload (test_server.ServiceTests) ... ok
+test_http_auth_and_feedback (test_server.ServiceTests) ... ok
+test_interpret_and_correction (test_server.ServiceTests) ... ok
+test_live_evaluation_does_not_pass_expected (test_server.ServiceTests) ... ok
+test_local_stop_no_gateway (test_server.ServiceTests) ... ok
+test_malformed_and_hardware_model (test_server.ServiceTests) ... ok
+test_no_config (test_server.ServiceTests) ... ok
+test_no_consent_retains_no_text (test_server.ServiceTests) ... ok
+test_replay_stop_uses_production_shortcut (test_server.ServiceTests) ... ok
+test_retention_prunes_trace_and_alias (test_server.ServiceTests) ... ok
+test_return_point_has_no_bookmark_id (test_server.ServiceTests) ... ok
+test_timeout (test_server.ServiceTests) ... ok
+test_tracking_guard (test_server.ServiceTests) ... ok
+test_unknown_correction (test_server.ServiceTests) ... ok
+test_unknown_model_place (test_server.ServiceTests) ... ok
+
+----------------------------------------------------------------------
+Ran 28 tests in 1.137s
+
+OK

@@ -1,0 +1,16 @@
+test_failures_stay_in_denominator_and_no_fabricated_baseline (test_chalk_report.ChalkReportTests) ... ok
+test_refuses_different_inputs (test_chalk_report.ChalkReportTests) ... ok
+test_refuses_mock_as_live_baseline (test_chalk_report.ChalkReportTests) ... ok
+test_report_escapes_untrusted_case_names (test_chalk_report.ChalkReportTests) ... ok
+test_dependency_sources_do_not_count_as_firmware (test_preflight.SourcePresenceTests) ... ok
+test_documentation_and_empty_files_do_not_count_as_implementation (test_preflight.SourcePresenceTests) ... ok
+test_empty_repository_is_blocked (test_preflight.SourcePresenceTests) ... ok
+test_presence_never_claims_release_pass (test_preflight.SourcePresenceTests) ... ok
+test_failed_command_retains_output_and_exit (test_runner.RunnerTests) ... ok
+test_missing_production_source_does_not_execute_command (test_runner.RunnerTests) ... ok
+test_timeout_also_stops_build_descendants (test_runner.RunnerTests) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 1.203s
+
+OK
