@@ -608,6 +608,8 @@ struct AdvancedPanel:View {
                 Text(model.commandNotice).accessibilityIdentifier("commandNotice")
                 Text("Speech requires on-device support for the selected language. There is no cloud recognition fallback. Type a command if speech is unavailable.").font(.footnote)
                 Divider()
+                ChalkPanel(model:model)
+                Divider()
                 Picker("Target tap profile",selection:$model.adaptiveProfile) {
                     Text("Standard").tag(AdaptiveProfile.standard); Text("Reduced").tag(AdaptiveProfile.reduced); Text("Automatic").tag(AdaptiveProfile.automatic)
                 }.pickerStyle(.menu).accessibilityIdentifier("adaptiveProfile")

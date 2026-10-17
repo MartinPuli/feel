@@ -216,6 +216,31 @@ final class LanternUITests: XCTestCase {
         app.buttons["memoryPlaces"].tap()
         XCTAssertEqual(app.staticTexts["placesCount"].label,"1 places in this session")
     }
+    func testChalkSharingDefaultsOffAndStopStaysReachable() {
+        let app=launch()
+        simulate(app)
+        app.buttons["cameraSettings"].tap()
+        app.buttons["Voice, saved map and feedback"].tap()
+        let chalk=app.buttons["Chalk understanding"]
+        XCTAssertTrue(chalk.waitForExistence(timeout:5))
+        let scroll=app.scrollViews["cameraSettingsScroll"]
+        for _ in 0..<20 {
+            if chalk.isHittable && chalk.frame.maxY < app.buttons["panelStop"].frame.minY { break }
+            let upward=chalk.frame.minY >= scroll.frame.minY
+            scroll.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:upward ? 0.7 : 0.3))
+                .press(forDuration:0.05,thenDragTo:scroll.coordinate(withNormalizedOffset:CGVector(dx:0.5,dy:upward ? 0.3 : 0.7)))
+        }
+        XCTAssertTrue(chalk.isHittable)
+        XCTAssertLessThan(chalk.frame.maxY,app.buttons["panelStop"].frame.minY)
+        chalk.tap()
+        XCTAssertEqual(app.switches["cloudEnabled"].value as? String,"0")
+        XCTAssertEqual(app.switches["cloudSharing"].value as? String,"0")
+        XCTAssertEqual(app.switches["cloudRetention"].value as? String,"0")
+        XCTAssertTrue(app.buttons["panelStop"].isHittable)
+        capture("chalk-consent-defaults")
+        app.buttons["panelStop"].tap()
+        XCTAssertTrue(app.buttons["controlsToggle"].waitForExistence(timeout:5))
+    }
     private func tapControl(_ element:XCUIElement,file:StaticString=#filePath,line:UInt=#line) {
         XCTAssertTrue(element.waitForExistence(timeout:5),file:file,line:line)
         // XCUI's native tap scrolls this exact control into view. App-wide swipes

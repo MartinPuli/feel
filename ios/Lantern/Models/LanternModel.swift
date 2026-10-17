@@ -23,6 +23,7 @@ final class LanternModel:ObservableObject {
     @Published var finder:FinderMode = .none {
         didSet {
             guard oldValue != finder else { return }
+            cancelCloud()
             adaptive.reset()
             spatialMemory.stopGuidance(); memoryGuidance=nil
             finderEpoch += 1; perception.setFinder(finder,epoch:finderEpoch); frame=nil
@@ -32,18 +33,33 @@ final class LanternModel:ObservableObject {
     @Published private(set) var spatialMemory=SpatialMemoryManager()
     @Published private(set) var memoryGuidance:MemoryGuidance?
     @Published private(set) var memoryNotice="Places last only until this sensing session ends."
-    @Published var placeName=""
+    @Published var placeName="" { didSet { if oldValue != placeName { cancelCloud() } } }
     @Published private(set) var simulatedPosition=Vector3.zero
     @Published private(set) var simulatedYaw=0.0
     @Published var simulatedTracking=true { didSet { if mode == .simulation,simulationScene == .memory { tick() } } }
     @Published var adaptiveProfile:AdaptiveProfile = .standard { didSet { adaptive.reset(); tick() } }
-    @Published var commandText=""
-    @Published var commandLanguage:VoiceLanguage = .en { didSet { voice.cancel() } }
+    @Published var commandText="" { didSet { if oldValue != commandText { cancelCloud() } } }
+    @Published var commandLanguage:VoiceLanguage = .en { didSet { voice.cancel(); cancelCloud() } }
     @Published private(set) var commandNotice="Type a command or explicitly start on-device speech."
     @Published private(set) var mapNotice="One local map can be saved explicitly. No map loads automatically."
     @Published private(set) var restoreState:WorldMapRestoreState = .idle
     @Published private(set) var restoredMapSession=false
     @Published private(set) var mapBusy=false
+    @Published var cloudEnabled=false { didSet { cancelCloud() } }
+    @Published var cloudSharing=false { didSet { cancelCloud() } }
+    @Published var cloudFeedbackConsent=false { didSet { cancelCloud() } }
+    @Published var cloudEndpoint=UserDefaults.standard.string(forKey:"feel.cloud.endpoint") ?? "" { didSet { cancelCloud() } }
+    @Published private(set) var cloudPending=false
+    @Published private(set) var cloudNotice="Cloud understanding is off. Local commands remain available."
+    @Published private(set) var cloudLatency:Double?
+    @Published private(set) var cloudFeedbackAvailable=false
+    @Published var cloudCorrectedPlace=""
+    private let cloudTransport:ChalkTransport
+    private var cloudToken:String
+    private var cloudTask:Task<Void,Never>?
+    private var feedbackTask:Task<Void,Never>?
+    private var cloudGeneration=0
+    private var feedbackTrace:(id:String,session:String)?
     let voice=VoiceControl()
     let perception=ARPerception()
     let puck=BluetoothPuck()
@@ -63,11 +79,13 @@ final class LanternModel:ObservableObject {
     var speechLocale:String { commandLanguage == .en ? "en-US" : "es-ES" }
     var memoryControlsVisible:Bool { mode == .live || (mode == .simulation && simulationScene == .memory) }
     var selectedPlace:SpatialBookmark? { spatialMemory.bookmarks.first { $0.id==spatialMemory.selectedID } }
-    init() {
+    init(cloudTransport:ChalkTransport=ChalkTransport(), cloudToken:String=ChalkTokenStore.read()) {
+        self.cloudTransport=cloudTransport; self.cloudToken=cloudToken
         voice.onFinalTranscript={ [weak self] text in self?.executeCommand(text) }
         peer.arSession=perception.session
         perception.onWorldSession={ [weak self] epoch,id in
             guard let self,self.mode == .live,epoch==self.startGeneration else { return }
+            self.cancelCloud()
             self.mapOperation += 1; self.mapBusy=false
             self.frame=nil; self.calibrated=false; self.memoryGuidance=nil
             // NI world coordinates belong to this same AR world and must be discarded too.
@@ -121,6 +139,7 @@ final class LanternModel:ObservableObject {
     }
     func calibrate() { guard mode == .live else { return }; perception.calibrate(cameraHeight:cameraHeight) }
     func stop() {
+        cancelCloud()
         isStarting=false; startGeneration += 1; timer?.invalidate(); timer=nil; frame=nil; calibrated=false
         mapOperation += 1; mapBusy=false; restoreGate.cancel(); restoreState = .idle; restoredMapSession=false
         voice.cancel(); adaptive.reset()
@@ -167,9 +186,11 @@ final class LanternModel:ObservableObject {
         performMemoryAction { finder = .none; try spatialMemory.returnToStart(); return "Returning to your explicit return point." }
     }
     func stopMemoryGuidance() {
+        cancelCloud()
         spatialMemory.stopGuidance(); memoryGuidance=nil; memoryNotice="Place guidance stopped. Obstacle sensing continues."; tick()
     }
     private func performMemoryAction(_ action:() throws -> String) {
+        cancelCloud()
         // Kept synchronous on main so selection changes cannot race a packet tick.
         guard !restoringMap else { memoryNotice="Saved-map coordinates are inactive until relocalization succeeds. Start fresh Live to cancel."; return }
         adaptive.reset()
@@ -177,6 +198,7 @@ final class LanternModel:ObservableObject {
         tick()
     }
     func resetSimulatedSession() {
+        cancelCloud()
         guard mode == .simulation,simulationScene == .memory else { return }
         adaptive.reset(); simulatedPosition = .zero; simulatedYaw=0; simulatedTracking=true
         do { try spatialMemory.begin(session:UUID().uuidString); memoryNotice="SIMULATION: New session. Name and Remember this position, then Move back twice and Recall." }
@@ -249,9 +271,15 @@ final class LanternModel:ObservableObject {
         adaptive.apply(packet:packet,profile:adaptiveProfile,session:spatialMemory.session ?? "run-\(startGeneration)",now:now)
     }
     func submitTypedCommand() { voice.cancel(); executeCommand(commandText) }
-    func startVoiceCommand() { voice.start(localeIdentifier:speechLocale) }
+    func startVoiceCommand() { cancelCloud(); voice.start(localeIdentifier:speechLocale) }
     func readCommandResult() { voice.speak(commandNotice,localeIdentifier:speechLocale) }
     private func executeCommand(_ text:String) {
+        cancelCloud()
+        // Stop is parsed locally before any network work, even with cloud enabled.
+        if let intent=try? VoiceIntentParser.parse(text:text,language:commandLanguage,isFinal:true), case .stop=intent {
+            stop(); commandNotice="Stopped. Guidance is neutral."; return
+        }
+        if cloudEnabled { submitCloudCommand(text); return }
         do {
             let intent=try VoiceIntentParser.parse(text:text,language:commandLanguage,isFinal:true)
             switch intent {
@@ -270,7 +298,108 @@ final class LanternModel:ObservableObject {
             }
         } catch { commandNotice=String(describing:error) }
     }
+    func saveCloudConnection(token:String) {
+        cancelCloud()
+        guard ChalkTokenStore.write(token) else { cloudNotice="Could not save the app token securely."; return }
+        cloudToken=token
+        UserDefaults.standard.set(cloudEndpoint,forKey:"feel.cloud.endpoint")
+        cloudNotice=token.isEmpty ? "App token removed." : "Connection saved. Enable sharing before sending a command."
+    }
+    func cancelCloud() {
+        cloudGeneration += 1; cloudTask?.cancel(); cloudTask=nil; feedbackTask?.cancel(); feedbackTask=nil
+        if cloudPending { cloudNotice="Request cancelled. No delayed action will run." }
+        cloudPending=false; cloudFeedbackAvailable=false; feedbackTrace=nil; cloudCorrectedPlace=""
+    }
+    private var cloudTrackingValid:Bool {
+        let now=ProcessInfo.processInfo.systemUptime
+        guard !restoringMap,let pose=currentMemoryPose(now:now) else { return false }
+        return pose.tracking && now-pose.timestamp >= 0 && now-pose.timestamp <= 0.25
+    }
+    private func submitCloudCommand(_ text:String) {
+        guard cloudSharing,let session=spatialMemory.session,!text.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty,text.count <= 1000 else {
+            cloudNotice="Enable text sharing and start a sensing or memory simulation session first. Commands are limited to 1,000 characters."; return
+        }
+        let context=ChalkContext(places:spatialMemory.bookmarks.map { ChalkPlace(id:$0.id,name:$0.name) },trackingValid:cloudTrackingValid,restoring:restoringMap,mode:mode.rawValue,hasReturnPoint:spatialMemory.returnPoint != nil)
+        let request=ChalkRequest(requestId:UUID().uuidString,sessionId:session,utterance:text,language:commandLanguage == .en ? "en" : "es",context:context,consent:cloudFeedbackConsent)
+        let generation=cloudGeneration,endpoint=cloudEndpoint,token=cloudToken
+        let started=ProcessInfo.processInfo.systemUptime
+        let requestedPose=currentMemoryPose(now:started)?.pose
+        cloudPending=true; cloudNotice="Understanding your request…"; cloudLatency=nil
+        cloudTask=Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                let response=try await self.cloudTransport.interpret(request,endpoint:endpoint,token:token)
+                guard !Task.isCancelled,self.cloudGeneration==generation else { return }
+                guard self.spatialMemory.session==session,
+                      self.cloudEnabled,self.cloudSharing,self.cloudEndpoint==endpoint,
+                      self.spatialMemory.bookmarks.map({ ChalkPlace(id:$0.id,name:$0.name) })==context.places else { self.cancelCloud(); return }
+                self.cloudPending=false; self.cloudTask=nil
+                guard ProcessInfo.processInfo.systemUptime-started <= 4 else {
+                    self.cloudNotice="The response arrived too late. Please repeat your request."; return
+                }
+                let decision=response.decision
+                if decision.action == .remember {
+                    guard let original=requestedPose,let current=self.currentMemoryPose(now:ProcessInfo.processInfo.systemUptime)?.pose else {
+                        self.cloudNotice="Position unavailable. Repeat Remember at the desired place."; return
+                    }
+                    let delta=current.position-original.position
+                    guard delta.x*delta.x+delta.y*delta.y+delta.z*delta.z <= 0.04 else {
+                        self.cloudNotice="You moved while the request was processing. Repeat Remember at the desired place."; return
+                    }
+                }
+                switch decision.action {
+                case .recall,.remember,.returnToPoint:
+                    guard self.cloudTrackingValid else { self.cloudNotice="Tracking is unavailable. No cloud action was applied."; return }
+                default: break
+                }
+                switch decision.action {
+                case .recall:
+                    guard let id=decision.placeId,self.spatialMemory.bookmarks.contains(where:{$0.id==id}) else { throw ChalkError.invalidResponse }
+                    self.selectPlace(id); self.recall(); self.commandNotice=self.memoryNotice
+                case .remember:
+                    guard let name=decision.name else { throw ChalkError.invalidResponse }
+                    self.placeName=name; self.remember(); self.commandNotice=self.memoryNotice
+                case .returnToPoint: self.returnToPoint(); self.commandNotice=self.memoryNotice
+                case .listPlaces: self.commandNotice=self.spatialMemory.bookmarks.isEmpty ? "No places in this session." : "Places: " + self.spatialMemory.bookmarks.map(\.name).joined(separator:", ")
+                case .clarify,.reject: self.commandNotice=decision.message
+                case .stop: self.stop(); self.commandNotice="Stopped. Guidance is neutral."
+                }
+                self.cloudLatency=(ProcessInfo.processInfo.systemUptime-started)*1000
+                self.cloudNotice=self.commandNotice
+                if request.consent,self.spatialMemory.session==session {
+                    self.feedbackTrace=(response.traceId,session); self.cloudFeedbackAvailable=true
+                }
+            } catch {
+                guard self.cloudGeneration==generation,!Task.isCancelled else { return }
+                self.cloudPending=false; self.cloudTask=nil
+                self.cloudNotice="Could not understand the request. No cloud action applied. Check the connection or use local commands."
+            }
+        }
+    }
+    func sendCloudFeedback(correct:Bool) {
+        guard cloudFeedbackConsent,cloudSharing,let trace=feedbackTrace,trace.session==spatialMemory.session else { return }
+        let corrected=cloudCorrectedPlace.isEmpty ? nil : cloudCorrectedPlace
+        guard corrected == nil || spatialMemory.bookmarks.contains(where:{$0.id==corrected}) else { return }
+        struct Feedback:Encodable { let traceId:String; let sessionId:String; let outcome:String; let correctedPlaceId:String? }
+        let body=Feedback(traceId:trace.id,sessionId:trace.session,outcome:correct ? "correct" : "incorrect",correctedPlaceId:correct ? nil : corrected)
+        let generation=cloudGeneration,endpoint=cloudEndpoint,token=cloudToken
+        cloudFeedbackAvailable=false
+        feedbackTask=Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                let data = try await self.cloudTransport.post(body,path:"/v1/feedback",endpoint:endpoint,token:token)
+                struct Receipt:Decodable { let recorded:Bool }
+                guard try JSONDecoder().decode(Receipt.self,from:data).recorded else { throw ChalkError.invalidResponse }
+                guard !Task.isCancelled,self.cloudGeneration==generation else { return }
+                self.cloudNotice="Feedback saved for evaluation. It does not automatically train or publish a model."
+            } catch {
+                guard !Task.isCancelled,self.cloudGeneration==generation else { return }
+                self.cloudNotice="Feedback could not be saved. Try again."; self.cloudFeedbackAvailable=true
+            }
+        }
+    }
     func saveMap() {
+        cancelCloud()
         guard mode == .live,!restoringMap,!mapBusy,let session=spatialMemory.session else { mapNotice="Save requires an active live session after relocalization, if any."; return }
         let now=ProcessInfo.processInfo.systemUptime
         guard let pose=currentMemoryPose(now:now),pose.tracking,now-pose.timestamp>=0,now-pose.timestamp<=0.25 else { mapNotice="Save needs fresh normal tracking."; return }
@@ -293,6 +422,7 @@ final class LanternModel:ObservableObject {
         }
     }
     func loadMap() {
+        cancelCloud()
         guard mode == .live,!mapBusy else { mapNotice="Start Live, then explicitly Load the saved map."; return }
         mapOperation += 1; let operation=mapOperation; mapBusy=true; mapNotice="Reading saved local map…"
         mapQueue.async {
@@ -332,6 +462,7 @@ final class LanternModel:ObservableObject {
         }
     }
     func deleteSavedMap() {
+        cancelCloud()
         mapOperation += 1; let operation=mapOperation; mapBusy=true
         mapQueue.async {
             let result=Result { try self.mapStore.delete() }
