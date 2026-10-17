@@ -30,6 +30,7 @@ jobs:
           firmware/build/single-bench-tests
       - run: python3 validation/production/run.py
       - run: python3 validation/spatial/run.py
+      - run: python3 validation/advanced/run.py
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -37,6 +38,7 @@ jobs:
           path: |
             .artifacts/production/
             .artifacts/spatial/
+            .artifacts/advanced/
   firmware:
     name: ESP32 and ESP32-S3 compile
     runs-on: ubuntu-24.04

@@ -1,6 +1,10 @@
-# FEEL V2 iOS — Spatial Memory
+# FEEL V3 iOS — advanced
 
-This source recreates the intended system from the handoff. No original Swift project or model weights were recovered. Historical handoff test counts do not apply to this implementation. `Lantern` is the internal app target; the display name is FEEL. `Beacon` is the second-phone app. This V2 branch adds session-only Spatial Memory to the latest V1 on `main`, including its Geist interface and persistent Stop control.
+Lantern is the internal target for FEEL; Beacon is the companion phone app.
+This branch includes current V1 camera-first UI with collapsible controls and floating panels, V2 session memory, and V3 explicit
+voice commands, one saved local map, adaptive highlighting and QR/barcode finding.
+V1 remains on `main`; V2 remains on `feel/v2-spatial-memory`.
+See [the version guide](../docs/VERSIONS.md) and [V3 details](../docs/ADVANCED.md).
 
 ## What is implemented
 
@@ -168,4 +172,27 @@ arrival assumptions, stateful CLI schema, lifecycle rules, and remaining validat
 
 `FeelCore` includes 20 spatial-memory regression tests. `LanternTests` adds three
 coordinator tests and `LanternUITests` adds the explicit simulation flow; these
+Apple-target tests require Xcode and have not been run on the Linux host.
+
+## V3 advanced branch
+
+The isolated V3 branch adds explicit push-to-talk commands in English by default,
+with optional Spanish input, typed fallback and optional spoken readback, one local saved AR world map with
+multiple bookmarks, a guarded relocalization flow, adaptive target highlighting,
+and Vision QR/barcode finding. Read [ADVANCED.md](../docs/ADVANCED.md) for controls,
+supported grammar, archive bounds, lifecycle behavior and replay commands.
+
+Loading a map never immediately activates remembered guidance. The app requires
+matching map/session evidence, fresh stable tracking, floor recalibration and
+explicit Recall. Teammate finding is disabled throughout a restored-map session;
+start fresh Live to use it. Simulation never transmits synthetic movement to BLE.
+
+The software suite now contains 90 portable core tests, 22 native app tests and
+3 UI tests. Run `python3 scripts/fetch_model.py` followed by
+`bash scripts/check_ios.sh` from the repository root for the full native gate,
+including Beacon simulator and both unsigned device builds. Actual executed
+results and the simulator barcode revision compatibility policy are recorded in
+[TEST-REPORT.md](../docs/TEST-REPORT.md). Speech recognition, real map alignment,
+camera detection and physical tactile guidance still require device validation.
+
 Apple-target tests require Xcode; current results are recorded in the integration report.

@@ -1,0 +1,56 @@
+test_all_sequence_bytes_are_legal (test_model.PacketContractTests) ... ok
+test_byte_decoder_rejects_nonbytes (test_model.PacketContractTests) ... ok
+test_encoder_rejects_range_and_noninteger_fields (test_model.PacketContractTests) ... ok
+test_every_byte_value_in_every_band_position (test_model.PacketContractTests) ... ok
+test_every_highlight_byte (test_model.PacketContractTests) ... ok
+test_golden_invalid_payloads (test_model.PacketContractTests) ... ok
+test_golden_valid_bytes_and_fields (test_model.PacketContractTests) ... ok
+test_legal_byte_corruption_cannot_be_detected (test_model.PacketContractTests) ... ok
+test_packet_freezes_caller_owned_bands (test_model.PacketContractTests) ... ok
+test_256_sequence_values_cannot_encode_absolute_age (test_model.ReceiverTests) ... ok
+test_changed_bands_have_explicit_nominal_gap_phase (test_model.ReceiverTests) ... ok
+test_clear_uses_last_band_gap_without_claiming_actual_return (test_model.ReceiverTests) ... ok
+test_disconnect_clears_and_blocks_then_reconnect_waits (test_model.ReceiverTests) ... ok
+test_equal_time_is_allowed_for_atomic_events (test_model.ReceiverTests) ... ok
+test_forward_only_accepts_delta_127_but_does_not_prove_freshness (test_model.ReceiverTests) ... ok
+test_forward_only_rejects_ambiguous_half_range (test_model.ReceiverTests) ... ok
+test_highlight_empty_column_does_not_invent_a_pin_or_tap (test_model.ReceiverTests) ... ok
+test_invalid_model_configuration_rejected (test_model.ReceiverTests) ... ok
+test_invalid_traffic_does_not_refresh_timeout (test_model.ReceiverTests) ... ok
+test_monotonic_time_is_required_everywhere (test_model.ReceiverTests) ... ok
+test_nominal_angles_and_tap_directions_are_reference_only (test_model.ReceiverTests) ... ok
+test_observe_policy_exposes_duplicate_and_backward_risk (test_model.ReceiverTests) ... ok
+test_repeated_band_command_does_not_restart_reference_settling (test_model.ReceiverTests) ... ok
+test_sender_restart_can_recover_after_timeout (test_model.ReceiverTests) ... ok
+test_snapshot_is_not_a_mutable_backdoor (test_model.ReceiverTests) ... ok
+test_startup_has_no_logical_guidance (test_model.ReceiverTests) ... ok
+test_timeout_exact_boundary_and_recovery (test_model.ReceiverTests) ... ok
+test_timeout_is_configurable_but_default_is_500 (test_model.ReceiverTests) ... ok
+test_wrap_and_short_forward_gap (test_model.ReceiverTests) ... ok
+test_empty_fixture_cannot_generate_a_passing_report (test_model.ReplayTests) ... ok
+test_empty_suites_events_and_expectations_are_rejected (test_model.ReplayTests) ... ok
+test_every_scenario_matches_hand_authored_expectations (test_model.ReplayTests) ... ok
+test_html_escapes_script_terminators_in_fixture_text (test_model.ReplayTests) ... ok
+test_html_is_self_contained_trace_not_second_protocol_model (test_model.ReplayTests) ... ok
+test_logical_single_pin_invariant_across_all_traces (test_model.ReplayTests) ... ok
+test_loss_fixture_matches_declared_seed (test_model.ReplayTests) ... ok
+test_replay_is_byte_deterministic (test_model.ReplayTests) ... ok
+test_schema_ids_time_and_event_shape_are_checked (test_model.ReplayTests) ... ok
+test_wrong_fixture_expectation_is_reported (test_model.ReplayTests) ... ok
+test_wrong_nominal_command_phases_fail_replay (test_model.ReplayTests) ... ok
+test_band_interval_edges (test_model.SyntheticInputTests) ... ok
+test_bearing_boundaries_and_out_of_field_of_view (test_model.SyntheticInputTests) ... ok
+test_close_policy_is_explicit_and_configurable (test_model.SyntheticInputTests) ... ok
+test_delayed_target_cannot_restore_old_highlight (test_model.SyntheticInputTests) ... ok
+test_depth_freshness_boundary (test_model.SyntheticInputTests) ... ok
+test_future_timestamps_rejected (test_model.SyntheticInputTests) ... ok
+test_input_configuration_and_shape_validation (test_model.SyntheticInputTests) ... ok
+test_synthetic_pose_is_metadata_not_an_arkit_transform (test_model.SyntheticInputTests) ... ok
+test_target_loss_and_conflict_do_not_change_obstacles (test_model.SyntheticInputTests) ... ok
+test_tracking_loss_clears_bands_and_highlight (test_model.SyntheticInputTests) ... ok
+test_unknown_depth_is_not_a_free_space_claim (test_model.SyntheticInputTests) ... ok
+
+----------------------------------------------------------------------
+Ran 51 tests in 0.061s
+
+OK

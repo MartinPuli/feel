@@ -12,7 +12,7 @@ struct ImageDetection {
     let confidence: Double
 }
 enum FinderMode: String, CaseIterable, Identifiable {
-    case none="Obstacles", door="Door candidate", exit="EXIT sign", chair="Chair", person="Person", teammate="Teammate"
+    case none="Obstacles", door="Door candidate", exit="EXIT sign", chair="Chair", person="Person", teammate="Teammate", barcode="QR / barcode"
     var id: String { rawValue }
 }
 
@@ -26,12 +26,51 @@ final class ObjectDetector {
                 let configuration=MLModelConfiguration(); configuration.computeUnits = .all
                 model=try VNCoreMLModel(for:MLModel(contentsOf:url,configuration:configuration)); modelStatus="CoreML detector loaded"
             } catch { modelStatus="CoreML unavailable: \(error.localizedDescription)" }
-        } else { modelStatus="No CoreML weights bundled; EXIT, person and door-candidate fallbacks available" }
+        } else { modelStatus="No CoreML weights bundled; EXIT, person, door-candidate and barcode detection available" }
     }
+    /// Payload is display-only data: never a URL to open or a command to execute.
+    /// Bound both the inspected input and output, including pathological Unicode.
+    static func barcodeLabel(_ payload: String?) -> String {
+        guard let payload else { return "Barcode" }
+        var label = String.UnicodeScalarView()
+        var previousWasSpace = true
+        for scalar in payload.unicodeScalars.prefix(512) {
+            if CharacterSet.whitespacesAndNewlines.contains(scalar) {
+                if !previousWasSpace { label.append(" "); previousWasSpace = true }
+            } else {
+                switch scalar.properties.generalCategory {
+                case .control, .format, .lineSeparator, .paragraphSeparator, .surrogate:
+                    continue
+                default:
+                    label.append(scalar); previousWasSpace = false
+                }
+            }
+            if label.count >= 58 { break }
+        }
+        let text = String(label).trimmingCharacters(in: .whitespacesAndNewlines)
+        return text.isEmpty ? "Barcode" : "Code: \(text)"
+    }
+
+    static func barcodeRequest() -> VNDetectBarcodesRequest {
+        let request=VNDetectBarcodesRequest()
+        #if targetEnvironment(simulator)
+        // The retained iOS 26.2 fixture decodes with revisions 1/2, but returns
+        // no observations with 3/4 through either image input or CPU policy.
+        // Select the verified revision only for simulator builds when supported.
+        // iOS 26.5 requires CPU execution for this retained simulator fixture.
+        // Physical-device revision and compute selection retain framework defaults.
+        if VNDetectBarcodesRequest.supportedRevisions.contains(VNDetectBarcodesRequestRevision2) {
+            request.revision=VNDetectBarcodesRequestRevision2
+            request.usesCPUOnly=true
+        }
+        #endif
+        return request
+    }
+
     /// The live finder's query for a mode; nil for modes without a detector.
     static func query(for mode: FinderMode) -> LocalQuery? {
         switch mode {
-        case .none,.teammate: return nil
+        case .none,.teammate,.barcode: return nil
         case .exit: return .exitSign
         case .door: return .doorCandidate
         case .person: return .person
@@ -44,6 +83,13 @@ final class ObjectDetector {
         return true
     }
     func detect(pixelBuffer: CVPixelBuffer, mode: FinderMode) throws -> [ImageDetection] {
+        if mode == .barcode {
+            let request=Self.barcodeRequest()
+            try VNImageRequestHandler(cvPixelBuffer:pixelBuffer,orientation:.up,options:[:]).perform([request])
+            return (request.results ?? []).filter { $0.confidence>=0.5 }.map {
+                ImageDetection(label:Self.barcodeLabel($0.payloadStringValue),box:$0.boundingBox,confidence:Double($0.confidence))
+            }
+        }
         guard let query=Self.query(for:mode) else { return [] }
         let imageRatio=Double(CVPixelBufferGetHeight(pixelBuffer))/Double(CVPixelBufferGetWidth(pixelBuffer))
         return try detect(handler:VNImageRequestHandler(cvPixelBuffer:pixelBuffer,orientation:.up,options:[:]),imageRatio:imageRatio,query:query)

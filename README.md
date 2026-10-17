@@ -1,14 +1,16 @@
+# FEEL V3 — advanced
+
+This branch adds explicit voice commands, a saved local map, adaptive target taps and QR/barcode finding on top of V2. See [ADVANCED.md](docs/ADVANCED.md).
+
 > **FS0307 120° revision:** current CAD and firmware use 0/40/80/120° band positions.
 > See [design and validation](docs/FS0307-120-DESIGN.md). Old 175° shafts/calibration
 > are superseded. Default seven-servo PWM is disabled pending measured limits.
 > The [midpoint demo](docs/SINGLE-SERVO-IPHONE.md) has user-reported motion.
 > The opt-in [single-servo live profile](docs/SINGLE-SERVO-LIVE.md) uses nominal120° production mapping on GPIO32.
 
-# FEEL V2 — Spatial Memory
-
-This V2 branch integrates the latest V1 foundation from `main` (`b780519`) with
-session-only Remember, Recall, Return and multiple bookmarks. Start with
-[Spatial Memory](docs/SPATIAL-MEMORY.md). V3 features remain on their own branch.
+V3 includes V2 session memory and current V1 camera-first UI, firmware and CAD from
+`main` (`b780519`). See [version guide](docs/VERSIONS.md) and
+[current integration checks](docs/V3-MAIN-INTEGRATION.md).
 
 **V1 is maintained on `main`.** It includes the current firmware and CAD,
 Lantern with its [camera-first interface](docs/V1-CAMERA-UI.md), Beacon, and V1 validation tools.
@@ -27,7 +29,7 @@ verification of this repository. The earlier preparation work is preserved on
 | `main` | Current V1: iOS apps, perception, BLE, ESP32, CAD and production replay |
 | `feel/v1-foundation` | Preserved V1 development history; continue new V1 work on `main` |
 | `feel/v2-spatial-memory` | Remember / Recall / Return, created only after V1 validation |
-| `feel/v3-advanced` | Optional advanced work, only after V1 and V2 |
+| `feel/v3-advanced` | V2 plus explicit voice commands, saved maps, adaptive taps and QR/barcode finding |
 
 For the final seven-servo configuration, start with [SEVEN-SERVO-PRODUCTION.md](docs/SEVEN-SERVO-PRODUCTION.md).
 
@@ -57,7 +59,7 @@ sh cad/build.sh
 python3 cad/tools/check_stl.py stl/*/*.stl
 python3 cad/tools/cam_sim.py
 python3 scripts/run_v1_checks.py
-python3 scripts/run_spatial_checks.py  # V2 memory and inherited V1 contract
+python3 scripts/run_advanced_checks.py  # V3 plus inherited V1/V2 contracts
 ```
 
 Full runner exits0 for complete pass,1 for failure,2 for blocked/not-run checks.

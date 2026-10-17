@@ -212,10 +212,10 @@ final class RealtimeVoiceSession: ObservableObject {
         retryCount = 0
         start()
     }
-    func pauseAssistant() {
+    func pauseAssistant(announce: Bool = true) {
         isPausedByUser = true
         disconnect(); caption = "Assistant paused"
-        speak("Assistant paused.")
+        if announce { speak("Assistant paused.") }
     }
     func resumeAssistant() {
         isPausedByUser = false; waitingForHeadphones = false

@@ -12,6 +12,7 @@ enum VoicePhrasing {
         case .exit: object = "An exit sign"
         case .chair: object = "A chair"
         case .person: object = "A person"
+        case .barcode: object = "A barcode"
         case .teammate: object = "Your teammate"
         }
         return "\(object) was \(distanceText(target.distance)) \(side(target.bearingDegrees))."

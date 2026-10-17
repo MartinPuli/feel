@@ -73,3 +73,44 @@ simulator cannot run that Vision barcode path; the Mac harness covers all 15
 synthetic scenarios. All 10 UI tests passed (`/tmp/feel-latest-v2-tests.log`),
 completed October 17 at 13:35 EDT.
 No phone installation or board deployment.
+
+## V3 initial voice checkpoint
+
+## V3 Advanced
+
+Integrated validated V2 `2620acf` into existing V3 `e56e141`. Preserved saved-map
+restoration gates, adaptive target feedback, barcode finding and explicit local
+speech/typed commands. The local recognizer has its own name and cannot own audio
+at the same time as Realtime. Explicit local capture pauses Realtime without a
+spoken pause; resuming Realtime cancels local capture. Global mute covers readback.
+Barcode payloads remain data, never commands. V3 retains version3.0.0, build14.
+PASS: 90 core tests, 81 native unit/integration tests, four selected UI tests,
+and the unsigned iPhone build. Three UI tests passed on the first run; the typed
+command test passed after replacing overshooting test swipes with native element
+targeting. Product assertions remain intact. Completed October 17 at 03:41 EDT.
+Commands match V2, selecting LanternTests plus voice setup, largest-text Advanced
+panel, typed-command fallback and Stop reachability UI tests. Evidence logs:
+`/tmp/feel-v3-core-sync.log`, `/tmp/feel-v3-sync-tests.log`,
+`/tmp/feel-v3-ui-native-tap.log`, `/tmp/feel-v3-sync-device.log`.
+Voice token service: 18 tests passed (`npm test --prefix services/voice-token`),
+using local mock HTTP servers. Independent review found no new critical/high
+issues in audio ownership, global mute, saved-map gates or barcode isolation.
+No V3 installation or hardware deployment performed.
+
+## V3 latest-main propagation
+
+Integrated V2 `79a8863`, including main `f2fb703`. Preserved saved-map restoration,
+local command speech, adaptive feedback and barcode detection. Local speech and
+V-sign keyword capture release one another's microphone ownership. Restoring maps
+cancels pending interactions; barcode payloads remain display-only. Independent
+review found no new critical/high issues in those merge paths.
+PASS: 236 core tests, 135 native tests across the full run and targeted detector
+retry, three selected UI tests, and unsigned iPhone build. The initial simulator
+Vision backend returned no codes; the detector now uses the already verified CPU
+revision in simulator builds, with unchanged defaults on physical devices. The
+capability probe uses that same factory; all 15 assertions run and pass. No test
+assertions were removed. The Mac harness also passed all 15 scenarios again.
+Additional logs: `/tmp/feel-latest-v3-pointing-cpu.log`,
+`/tmp/feel-latest-pointing-factory.log`. Completed October 17 at 13:43 EDT.
+Logs: `/tmp/feel-latest-v3-core.log`, `/tmp/feel-latest-v3-tests.log`,
+`/tmp/feel-latest-v3-device.log`. Version 3.0.0, build 14; no device installation.

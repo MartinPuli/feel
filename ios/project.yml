@@ -13,7 +13,7 @@ settings:
     DEVELOPMENT_TEAM: ''
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     CURRENT_PROJECT_VERSION: '14'
-    MARKETING_VERSION: '2.0.0'
+    MARKETING_VERSION: '3.0.0'
 packages:
   FeelCore:
     path: Shared/FeelCore
@@ -36,7 +36,8 @@ targets:
         CFBundleDisplayName: FEEL
         NSCameraUsageDescription: FEEL uses the camera and LiDAR to estimate nearby obstacles and find selected targets.
         NSMicrophoneUsageDescription: FEEL listens while the app is open so you can control it hands-free, and for a few seconds after a V sign to hear what you want to find. Assistant speech is sent to OpenAI; the word after a V sign is recognized on your iPhone. You can pause listening anytime.
-        NSSpeechRecognitionUsageDescription: After a V sign, FEEL recognizes the one word you say, such as exit or door, on your iPhone to choose what to guide you to.
+        NSSpeechRecognitionUsageDescription: FEEL recognizes explicit local commands and the target word after a V sign on your iPhone when supported. Typed commands remain available.
+
         NSBluetoothAlwaysUsageDescription: FEEL sends tactile commands to your chosen palm puck.
         NSLocalNetworkUsageDescription: FEEL finds a teammate's Beacon phone and exchanges Nearby Interaction tokens after both people agree.
         NSNearbyInteractionUsageDescription: FEEL measures the relative direction and distance of your chosen teammate's phone.
@@ -54,6 +55,8 @@ targets:
       - sdk: CoreBluetooth.framework
       - sdk: CoreML.framework
       - sdk: Vision.framework
+      - sdk: Speech.framework
+      - sdk: AVFoundation.framework
       - sdk: NearbyInteraction.framework
       - sdk: MultipeerConnectivity.framework
     settings:

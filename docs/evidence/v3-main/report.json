@@ -1,0 +1,96 @@
+{
+  "source_commit": "80375f85a3a9d5e4367b7bbbe83704e3faa8ef8f",
+  "main_integrated": "b7805193258b596d47143ddc563b215f147793ab",
+  "timestamp_utc": "2026-10-17T04:02:04.445338+00:00",
+  "checks": [
+    {
+      "check": "swift-core.log",
+      "status": "PASS",
+      "completion": "Executed 90 tests, with 0 failures"
+    },
+    {
+      "check": "swift-cli.log",
+      "status": "PASS",
+      "completion": "Build complete!"
+    },
+    {
+      "check": "firmware-host.log",
+      "status": "PASS",
+      "completion": "Ran 13 tests"
+    },
+    {
+      "check": "tooling.log",
+      "status": "PASS",
+      "completion": "OK"
+    },
+    {
+      "check": "reference.log",
+      "status": "PASS",
+      "completion": "OK"
+    },
+    {
+      "check": "cad-tools.log",
+      "status": "PASS",
+      "completion": "OK"
+    },
+    {
+      "check": "cam.log",
+      "status": "PASS",
+      "completion": "80/80"
+    },
+    {
+      "check": "production.log",
+      "status": "PASS",
+      "completion": "PASS: 2634"
+    },
+    {
+      "check": "spatial.log",
+      "status": "PASS",
+      "completion": "PASS: 444"
+    },
+    {
+      "check": "advanced.log",
+      "status": "PASS",
+      "completion": "PASS: 1753"
+    }
+  ],
+  "native_ios": {
+    "status": "PASS",
+    "command": "FEEL_TEST_DIAGNOSTICS=never bash scripts/check_ios.sh",
+    "exit_code": 0,
+    "evidence": "ios-drawer.log",
+    "app_tests": 24,
+    "Lantern_UI_tests": 9,
+    "Beacon_UI_tests": 2,
+    "unsigned_device_builds": [
+      "Lantern",
+      "Beacon"
+    ],
+    "runtime_source": "b188770",
+    "results_local": ".artifacts/ios/results.9JZfu3/{Lantern,Beacon}.xcresult",
+    "visual_review": "Final typed-command contrast and persistent Stop inspected in exported screenshots; large text retains reachable Stop.",
+    "toolchain": "Xcode 26.6 (17F113), iPhone Air iOS 26.5 simulator"
+  },
+  "physical_hardware": "NOT VERIFIED",
+  "firmware_and_cad": "Identical to integrated main; existing builds/mesh evidence inherited, current host and CAD regression checks rerun.",
+  "main_runtime_baseline": "b7805193258b596d47143ddc563b215f147793ab",
+  "v2_integrated": "ae11404b95117f5607bb03a0d2bd2fdd3f966536",
+  "hosted_ci": "NOT RUN; repository billing/spending limit previously blocks execution",
+  "previous_native_ios": {
+    "status": "PASS",
+    "command": "FEEL_TEST_DIAGNOSTICS=never bash scripts/check_ios.sh",
+    "evidence": "ios-final.log",
+    "app_tests": 24,
+    "Lantern_UI_tests": 8,
+    "Beacon_UI_tests": 2,
+    "unsigned_device_builds": [
+      "Lantern",
+      "Beacon"
+    ],
+    "runtime_source": "f658742",
+    "final_device_build_source": "78df330",
+    "contrast_only_followup": "PASS: both advanced UI tests on78df330, advanced-final-style.log"
+  },
+  "final_validation_timestamp_utc": "2026-10-17T04:33:07.089304+00:00",
+  "unchanged_layer_evidence": "Portable/core/firmware/CAD checks remain tied to source_commit; final drawer changes do not modify these layers."
+}

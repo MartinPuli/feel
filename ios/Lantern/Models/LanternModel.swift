@@ -3,6 +3,7 @@ import Combine
 import AVFoundation
 import UIKit
 import FeelCore
+import ARKit
 import MultipeerConnectivity
 
 /// UI and 10Hz transmission coordinator. All state is confined to the main queue.
@@ -36,6 +37,7 @@ final class LanternModel:ObservableObject {
         didSet {
             cancelWhereIs()
             guard oldValue != finder else { return }
+            adaptive.reset()
             invalidateVoiceScene()
             resetGuidance()
             spatialMemory.stopGuidance(); memoryGuidance=nil
@@ -50,6 +52,15 @@ final class LanternModel:ObservableObject {
     @Published private(set) var simulatedPosition=Vector3.zero
     @Published private(set) var simulatedYaw=0.0
     @Published var simulatedTracking=true { didSet { if mode == .simulation,simulationScene == .memory { tick() } } }
+    @Published var adaptiveProfile:AdaptiveProfile = .standard { didSet { adaptive.reset(); tick() } }
+    @Published var commandText=""
+    @Published var commandLanguage:VoiceLanguage = .en { didSet { localVoice.cancel() } }
+    @Published private(set) var commandNotice="Type a command or explicitly start on-device speech."
+    @Published private(set) var mapNotice="One local map can be saved explicitly. No map loads automatically."
+    @Published private(set) var restoreState:WorldMapRestoreState = .idle
+    @Published private(set) var restoredMapSession=false
+    @Published private(set) var mapBusy=false
+    let localVoice=LocalVoiceControl()
     /// Direction arrows on request: a V sign plays one arrow along the route to the visible target,
     /// then only noticeable route changes play again. Obstacles within 0.9 m always override it.
     @Published var arrowsEnabled = UserDefaults.standard.object(forKey: "directionArrowsEnabled") as? Bool ?? true {
@@ -106,6 +117,13 @@ final class LanternModel:ObservableObject {
     private var simulatedAt:TimeInterval=0
     private var startGeneration=0
     private var finderEpoch=0
+    private var adaptive=AdaptiveTactileController()
+    private var restoreGate=WorldMapRestoreGate()
+    private let mapStore=WorldMapStore()
+    private let mapQueue=DispatchQueue(label:"feel.saved-map",qos:.userInitiated)
+    private var mapOperation=0
+    var restoringMap:Bool { restoreState == .awaitingRelocalization || restoreState == .failed }
+    var speechLocale:String { commandLanguage == .en ? "en-US" : "es-ES" }
     var memoryControlsVisible:Bool { mode == .live || (mode == .simulation && simulationScene == .memory) }
     var selectedPlace:SpatialBookmark? { spatialMemory.bookmarks.first { $0.id==spatialMemory.selectedID } }
     private var signTrigger=HandSignTrigger()
@@ -139,6 +157,7 @@ final class LanternModel:ObservableObject {
         self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory
         if let localFinder { self.localFinder = localFinder }
         chalkConfiguration = chalkStore.loadForLaunch()
+        localVoice.onFinalTranscript={ [weak self] text in self?.executeCommand(text) }
         voice.onCommand = { [weak self] command in self?.performVoiceCommand(command) ?? ["error": "App unavailable"] }
         voice.onEnded = { [weak self] in
             guard let self else { return }
@@ -146,24 +165,29 @@ final class LanternModel:ObservableObject {
         }
         voiceStateSubscription = voice.$phase.sink { [weak self] phase in
             guard let self else { return }
+            if phase != .idle && phase != .failed { self.localVoice.cancel() }
             UIApplication.shared.isIdleTimerDisabled = self.mode != .stopped || self.isStarting || (phase != .idle && phase != .failed)
         }
         voiceOutputSubscription = voice.$spokenOutputEnabled.sink { [weak self] enabled in
-            if !enabled { self?.pointingSpeech.stopSpeaking(at: .immediate) }
+            if !enabled { self?.localVoice.stopReadback(); self?.pointingSpeech.stopSpeaking(at: .immediate) }
         }
         peer.arSession=perception.session
         perception.onWorldSession={ [weak self] epoch,id in
             guard let self,self.mode == .live,epoch==self.startGeneration else { return }
+            self.mapOperation += 1; self.mapBusy=false
             self.cancelWhereIs()
             self.resetSceneInteractions()
             self.invalidateVoiceScene()
             self.frame=nil; self.calibrated=false; self.memoryGuidance=nil
             // NI world coordinates belong to this same AR world and must be discarded too.
             self.peer.stop()
+            self.localVoice.cancel(); self.adaptive.reset(); self.invalidateVoiceScene()
             if let id {
-                do { try self.spatialMemory.begin(session:id); self.memoryNotice="New session. Remember places or set a return point." }
+                if self.restoreGate.session != id { self.restoreGate.cancel(); self.restoreState = .idle; self.restoredMapSession=false }
+                do { try self.spatialMemory.begin(session:id); self.memoryNotice=self.restoringMap ? "Waiting for saved-map relocalization. Places are inactive." : "New session. Remember places or set a return point." }
                 catch { self.spatialMemory.end(); self.memoryNotice=String(describing:error) }
             } else {
+                self.restoreGate.cancel(); self.restoreState = .idle; self.restoredMapSession=false
                 self.spatialMemory.end(); self.memoryNotice="Session interrupted. Saved places and return point cleared."
             }
             self.tick()
@@ -172,6 +196,7 @@ final class LanternModel:ObservableObject {
             guard let self,self.mode == .live,frame.epoch==self.startGeneration,frame.finderEpoch==self.finderEpoch,
                   frame.worldSession==self.spatialMemory.session else { return }
             self.frame=frame; self.calibrated=frame.floorY != nil
+            self.observeRestoration(frame)
         }
         perception.recorder.onStatus={ [weak self] status in
             guard let self else { return }
@@ -217,6 +242,8 @@ final class LanternModel:ObservableObject {
         voice.invalidateSceneSpeech()
         if stopVoice { voice.disconnect() }
         isStarting=false; startGeneration += 1; timer?.invalidate(); timer=nil; frame=nil; calibrated=false
+        mapOperation += 1; mapBusy=false; restoreGate.cancel(); restoreState = .idle; restoredMapSession=false
+        localVoice.cancel(); adaptive.reset()
         cancelWhereIs()
         resetDirections()
         pointing.reset(); targetColumns=nil; pointingSpeech.stopSpeaking(at:.immediate)
@@ -274,12 +301,14 @@ final class LanternModel:ObservableObject {
         resetSceneInteractions()
         cancelWhereIs()
         invalidateVoiceScene()
+        guard !restoringMap else { memoryNotice="Saved-map coordinates are inactive until relocalization succeeds. Start fresh Live to cancel."; return }
+        adaptive.reset()
         do { memoryNotice=try action() } catch { memoryNotice=String(describing:error) }
         tick()
     }
     func resetSimulatedSession() {
         guard mode == .simulation,simulationScene == .memory else { return }
-        simulatedPosition = .zero; simulatedYaw=0; simulatedTracking=true
+        adaptive.reset(); simulatedPosition = .zero; simulatedYaw=0; simulatedTracking=true
         do { try spatialMemory.begin(session:UUID().uuidString); memoryNotice="SIMULATION: New session. Name and Remember this position, then Move back twice and Recall." }
         catch { spatialMemory.end(); memoryNotice=String(describing:error) }
         memoryGuidance=nil; tick()
@@ -328,6 +357,7 @@ final class LanternModel:ObservableObject {
         case .find(let target):
             cancelWhereIs()
             guard mode == .live else { return ["error": "Camera is not live. Ask the user whether to start it."] }
+            guard target != .teammate || !restoredMapSession else { return ["error": "Teammate ranging requires a fresh Live session. Stop and start the camera to leave the saved map."] }
             guard target != .chair || detectorAvailable else { return ["error": detectorStatus] }
             if spatialMemory.activeID != nil { stopMemoryGuidance() }
             finder = target; voiceSawTarget = false
@@ -375,6 +405,7 @@ final class LanternModel:ObservableObject {
             voicePanel = .closed; voiceControlsExpanded = expanded
             return ["status": expanded ? "Camera controls opening requested." : "Camera controls closing requested."]
         case .scanTeammates:
+            guard !restoredMapSession else { return ["error": "Teammate ranging requires a fresh Live session. Stop and start the camera to leave the saved map."] }
             guard mode == .live else { return ["error": "Start the live camera before finding a teammate."] }
             voiceTeammates = [:]; peer.start()
             return ["status": peer.status, "note": "Ask which Beacon phone to invite after listing results. The teammate must accept."]
@@ -387,6 +418,7 @@ final class LanternModel:ObservableObject {
                 ["device_id": $0, "name": voiceTeammates[$0]!.displayName]
             }]
         case .findTeammate(let id):
+            guard !restoredMapSession else { return ["error": "Teammate ranging requires a fresh Live session. Stop and start the camera to leave the saved map."] }
             guard mode == .live, peer.running, let selected = voiceTeammates[id], peer.peers.contains(selected) else {
                 return ["error": "That Beacon phone is unavailable. Scan and list phones again."]
             }
@@ -534,7 +566,7 @@ final class LanternModel:ObservableObject {
         let valid = mode == .live && guidanceState == .live
         return ["mode": mode.rawValue, "camera_starting": isStarting,
                 "guidance": String(describing: guidanceState), "calibrated": calibrated,
-                "status": status, "target": valid && spatialMemory.activeID == nil ? targetDescription : "No current live target observation",
+                "status": status, "target": valid && spatialMemory.activeID == nil ? (finder == .barcode ? (voiceTargetAvailable ? "QR or barcode detected. Payload is display-only." : "No current barcode observation") : targetDescription) : "No current live target observation",
                 "scene_observation": valid && voiceTargetAvailable,
                 "spoken_observation": valid && voiceTargetAvailable ? voiceTargetPhrase ?? "No current target" : "No current target",
                 "selected_target": finder.rawValue, "direction_arrows": arrowsEnabled ? (guiding ? "guiding" : "waiting for V sign") : "off", "puck_connected": puck.isConnected,
@@ -612,7 +644,7 @@ final class LanternModel:ObservableObject {
     }
 
     private func handlePointing(_ observation:PointingObservation,epoch:Int) {
-        guard mode == .live,epoch==startGeneration,spatialMemory.activeID == nil else { return }
+        guard mode == .live,epoch==startGeneration,!restoringMap,spatialMemory.activeID == nil else { return }
         let name=Self.spokenTargetName(finder)
         speakPointing(pointing.update(observation,targetName:name) { cell,scene in PointingDescriber.describe(cell,in:scene,targetName:name) })
         pointingReadout=Self.pointingReadout(observation,phase:pointing.phase)
@@ -626,6 +658,7 @@ final class LanternModel:ObservableObject {
         case .chair: return "Chair"
         case .person: return "Person"
         case .teammate: return "Your teammate"
+        case .barcode: return "QR or barcode"
         }
     }
 
@@ -755,6 +788,7 @@ final class LanternModel:ObservableObject {
         case .chair: return .chair
         case .person: return .person
         case .teammate: return .teammate
+        case .barcode: return nil
         }
     }
     private static func finder(_ word:TargetWord)->FinderMode {
@@ -762,7 +796,7 @@ final class LanternModel:ObservableObject {
     }
 
     private func handleHandSign(_ observation:HandSignObservation,epoch:Int) {
-        guard mode == .live,epoch==startGeneration,arrowsEnabled,!pointing.isActive else { return }
+        guard mode == .live,epoch==startGeneration,!restoringMap,arrowsEnabled,!pointing.isActive else { return }
         let now=ProcessInfo.processInfo.systemUptime
         let wasHolding=signTrigger.holding
         let fired=signTrigger.update(observation)
@@ -788,13 +822,18 @@ final class LanternModel:ObservableObject {
     private func perform(_ actions:[RequestAction]) {
         for action in actions {
             switch action {
-            case .startListening: listener.start()
+            case .startListening: localVoice.cancel(); listener.start()
             case .stopListening: listener.stop()
             case .sound(let sound):
                 if sound == .listening && !listener.isListening { continue }
                 chime.play(sound)
             case .select(let word):
                 let mode=Self.finder(word)
+                if mode == .teammate && restoredMapSession {
+                    request.reset(); listener.stop()
+                    speakLocal("Teammate ranging requires a fresh Live session.")
+                    return
+                }
                 if mode == .chair && !detectorAvailable { request.reset(); chime.play(.failure); return }
                 if finder != mode { finder=mode }
             case .ask(let choices):
@@ -847,11 +886,15 @@ final class LanternModel:ObservableObject {
 
     private func tick() {
         let now=ProcessInfo.processInfo.systemUptime; sequence &+= 1
+        if restoreGate.state == .awaitingRelocalization,restoreGate.checkDeadline(now:now) == .failed {
+            restoreState = .failed; spatialMemory.end(); mapNotice="Map restoration timed out. Start fresh Live or explicitly Load again."
+        }
         retryUnspokenLine(now: now)
         if mode == .simulation {
+            invalidateVoiceScene(); voiceLastGuidance = nil
             if simulationScene == .memory,let sample=currentMemoryPose(now:now) {
                 let result=spatialMemory.encode(sequence:sequence,sample:sample,now:now,distances:[nil,nil,0.7,nil,nil,nil,nil])
-                packet=result.output.packet; guidanceState=result.output.state == .live ? .simulation : result.output.state
+                packet=adapt(result.output.packet,now:now); guidanceState=result.output.state == .live ? .simulation : result.output.state
                 memoryGuidance=result.guidance; targetDescription="SIMULATION · " + memoryDescription(result.guidance)
                 return
             }
@@ -863,14 +906,14 @@ final class LanternModel:ObservableObject {
             // Simulated route: straight to the synthetic target, no floor map.
             let hint=tracking ? RouteHint(timestamp:now,status:.route,bearingDegrees:target.bearingDegrees,targetDistance:target.distance,routeLength:target.distance,label:"simulated target") : nil
             let output=withDirections(EncoderOutput(packet:encoded.packet,state:encoded.state == .live ? .simulation : encoded.state),hint:hint,now:now)
-            packet=output.packet; guidanceState=output.state
+            packet=adapt(output.packet,now:now); guidanceState=output.state
             targetDescription=tracking ? "SIMULATED target sweeping left to right" : "SIMULATED tracking loss. All pins neutral"
             return
         }
-        guard mode == .live,let frame else {
+        guard mode == .live,let frame,!restoringMap else {
             packet = .neutral(sequence:sequence); guidanceState = mode == .live ? .staleDepth : .stopped
             memoryGuidance=nil; voiceTargetPhrase=nil
-            if mode == .live { targetDescription="Waiting for fresh tracking and depth. Guidance neutral"; puck.send(packet) }
+            if mode == .live { targetDescription=restoringMap ? "Saved-map guidance inactive: \(restoreState.rawValue)" : "Waiting for fresh tracking and depth. Guidance neutral"; puck.send(packet) }
             cuePlayer.reset(); targetColumns=nil
             tickRequest(now:now,candidates:[],hint:nil)
             _=withDirections(.init(packet:packet,state:guidanceState),hint:nil,now:now)
@@ -883,7 +926,7 @@ final class LanternModel:ObservableObject {
                 puck.send(packet); updateVoiceAwareness(targetAvailable: false, now: now); return
             }
             let result=spatialMemory.encode(sequence:sequence,sample:sample,now:now,distances:frame.distances,floorCalibrated:frame.floorY != nil)
-            packet=result.output.packet; guidanceState=result.output.state; memoryGuidance=result.guidance; targetColumns=result.output.targetColumns
+            packet=adapt(result.output.packet,now:now); guidanceState=result.output.state; memoryGuidance=result.guidance; targetColumns=result.output.targetColumns
             targetDescription=result.output.state == .live ? memoryDescription(result.guidance) : "Guidance neutral: \(result.output.state.rawValue)"
             // A saved phone position is not a current visual target observation.
             voiceTargetPhrase=nil
@@ -894,15 +937,15 @@ final class LanternModel:ObservableObject {
         memoryGuidance=nil
         // A held Where-is target owns the pins: finder and teammate targets never shadow it, even while it is out of the field.
         let held=heldTarget?.observation(pose:frame.pose,now:now,worldEpoch:frame.worldEpoch)
-        let target=HeldTargetGuidance.pins(held:held,holding:heldTarget != nil,finder:finder == .none ? nil : (finder == .teammate ? peer.currentTarget(pose:frame.pose,now:now) : frame.target))
+        let target=HeldTargetGuidance.pins(held:held,holding:heldTarget != nil,finder:finder == .none ? nil : (finder == .teammate ? (restoredMapSession ? nil : peer.currentTarget(pose:frame.pose,now:now)) : frame.target))
         let encoded=TactileEncoder.encode(sequence:sequence,now:now,frameTimestamp:frame.timestamp,tracking:frame.tracking,distances:frame.distances,target:target,floorCalibrated:frame.floorY != nil)
-        pointing.record(CachedScene(timestamp:frame.timestamp,pose:frame.pose,tracking:encoded.state == .live,distances:frame.distances,target:target?.valid(at:frame.timestamp) == true ? target : nil))
+        pointing.record(CachedScene(timestamp:frame.timestamp,pose:frame.pose,tracking:encoded.state == .live,distances:frame.distances,target:finder != .barcode && target?.valid(at:frame.timestamp) == true ? target : nil))
         speakPointing(pointing.tick(now:now))
         // While pointing, the pins hold the scene from before the hand came up; arrows pause.
         let frozen=encoded.state == .live ? pointing.frozenOutput(sequence:sequence) : nil
         if frozen != nil { cuePlayer.reset(); pendingSign=false } else { tickRequest(now:now,candidates:frame.candidates,hint:frame.routeHint); tickPointingRoute(now:now,hint:frame.routeHint) }
         let output=frozen.map { EncoderOutput(packet:$0.packet,state:encoded.state,targetColumns:$0.targetColumns) } ?? withPointingHighlight(withDirections(encoded,hint:frame.routeHint,now:now),now:now)
-        packet=output.packet; guidanceState=output.state; targetColumns=output.targetColumns; puck.send(packet)
+        packet=adapt(output.packet,now:now); guidanceState=output.state; targetColumns=output.targetColumns; puck.send(packet)
         if pointing.isActive {
             // The arm in front of the camera must not trigger target-lost or sensing announcements.
             targetDescription="Pointing · pins hold the scene from before your hand came up"; voiceTargetPhrase=nil; return
@@ -922,6 +965,119 @@ final class LanternModel:ObservableObject {
             case .reached: clearHeldTarget(spokenLine: "You're at the \(heldTarget.label).")
             case .speak(let direction): if voice.announce(direction, automatic: false) { lastDirectionSpokenAt = now; whereIsNotice = direction }
             case .keep: break
+            }
+        }
+    }
+    private func adapt(_ packet:FeelPacket,now:Double)->FeelPacket {
+        adaptive.apply(packet:packet,profile:adaptiveProfile,session:spatialMemory.session ?? "run-\(startGeneration)",now:now)
+    }
+    func submitTypedCommand() { localVoice.cancel(); executeCommand(commandText) }
+    func startVoiceCommand() {
+        // Explicit on-device capture temporarily owns the microphone. Resume the assistant explicitly.
+        resetDirections()
+        pointingSpeech.stopSpeaking(at: .immediate)
+        voice.pauseAssistant(announce: false)
+        localVoice.start(localeIdentifier:speechLocale)
+    }
+    func readCommandResult() {
+        guard voice.spokenOutputEnabled else { return }
+        if voice.isActive {
+            _ = voice.announce(commandNotice, automatic: false)
+        } else {
+            localVoice.speak(commandNotice,localeIdentifier:speechLocale)
+        }
+    }
+    private func executeCommand(_ text:String) {
+        do {
+            let intent=try VoiceIntentParser.parse(text:text,language:commandLanguage,isFinal:true)
+            switch intent {
+            case .remember(let name): placeName=name; remember(); commandNotice=memoryNotice
+            case .recall(let name):
+                let key=name.folding(options:[.caseInsensitive,.diacriticInsensitive],locale:Locale(identifier:"en_US_POSIX"))
+                guard let place=spatialMemory.bookmarks.first(where: { $0.name.folding(options:[.caseInsensitive,.diacriticInsensitive],locale:Locale(identifier:"en_US_POSIX"))==key }) else { throw SpatialMemoryError.unknownBookmark }
+                selectPlace(place.id); recall(); commandNotice=memoryNotice
+            case .returnToPoint: returnToPoint(); commandNotice=memoryNotice
+            case .stop: stop(); commandNotice="Stopped. Guidance is neutral."
+            case .listPlaces: commandNotice=spatialMemory.bookmarks.isEmpty ? "No places in this session." : "Places: " + spatialMemory.bookmarks.map(\.name).joined(separator:", ")
+            case .find(let mode):
+                if mode == .teammate,restoredMapSession { commandNotice="Teammate ranging requires a fresh Live session. Saved-map sessions cannot share camera assistance."; return }
+                let modes:[VoiceFindMode:FinderMode]=[.obstacles:.none,.door:.door,.exit:.exit,.chair:.chair,.person:.person,.teammate:.teammate,.barcode:.barcode]
+                finder=modes[mode] ?? .none; commandNotice="Finder selected: \(finder.rawValue). " + (self.mode == .live ? "" : "Start Live for camera perception.")
+            }
+        } catch { commandNotice=String(describing:error) }
+    }
+    func saveMap() {
+        guard mode == .live,!restoringMap,!mapBusy,let session=spatialMemory.session else { mapNotice="Save requires an active live session after relocalization, if any."; return }
+        let now=ProcessInfo.processInfo.systemUptime
+        guard let pose=currentMemoryPose(now:now),pose.tracking,now-pose.timestamp>=0,now-pose.timestamp<=0.25 else { mapNotice="Save needs fresh normal tracking."; return }
+        let snapshot=spatialMemory.snapshot; mapOperation += 1; let operation=mapOperation
+        mapBusy=true; mapNotice="Capturing local AR map…"
+        perception.captureWorldMap(sessionID:session) { [weak self] result in
+            guard let self,self.mapOperation==operation,self.spatialMemory.session==session else { return }
+            do {
+                let (bytes,mapID,anchorID)=try result.get()
+                let archive=try PersistentMemoryArchive(mapID:mapID,anchorID:anchorID,mapData:bytes,snapshot:snapshot)
+                self.mapQueue.async {
+                    let saved=Result { try self.mapStore.save(archive) }
+                    DispatchQueue.main.async {
+                        guard self.mapOperation==operation else { return }; self.mapBusy=false
+                        switch saved { case .success: self.mapNotice="Saved one local map with \(snapshot.bookmarks.count) places. Load requires relocalization in the same area."
+                        case .failure(let error): self.mapNotice=String(describing:error) }
+                    }
+                }
+            } catch { self.mapBusy=false; self.mapNotice=String(describing:error) }
+        }
+    }
+    func loadMap() {
+        guard mode == .live,!mapBusy else { mapNotice="Start Live, then explicitly Load the saved map."; return }
+        cancelWhereIs(); resetSceneInteractions(); invalidateVoiceScene()
+        localVoice.cancel(); adaptive.reset()
+        spatialMemory.stopGuidance(); memoryGuidance=nil
+        mapOperation += 1; let operation=mapOperation; mapBusy=true; mapNotice="Reading saved local map…"
+        mapQueue.async {
+            let result=Result { try self.mapStore.load() }
+            DispatchQueue.main.async {
+                guard self.mapOperation==operation,self.mode == .live else { return }; self.mapBusy=false
+                switch result {
+                case .failure(let error): self.mapNotice=String(describing:error)
+                case .success(let loaded): self.beginMapRestore(archive:loaded.archive,map:loaded.map)
+                }
+            }
+        }
+    }
+    private func beginMapRestore(archive:PersistentMemoryArchive,map:ARWorldMap) {
+        stop(); startGeneration += 1
+        let session=UUID().uuidString
+        do { try restoreGate.begin(archive:archive,session:session,now:ProcessInfo.processInfo.systemUptime) }
+        catch { mapNotice=String(describing:error); return }
+        restoreState=restoreGate.state; restoredMapSession=true; mode = .live
+        if finder == .teammate { finder = .none }
+        guard perception.start(epoch:startGeneration,restoredMap:map,mapID:archive.mapID,sessionID:session) else { stop(); mapNotice="This device cannot restore a LiDAR session."; return }
+        perception.setFinder(finder,epoch:finderEpoch)
+        mapNotice="Move slowly in the saved area. Waiting for relocalization, matching marker and 0.5 s fresh normal tracking. Places remain inactive."
+        beginTimer()
+    }
+    private func observeRestoration(_ frame:PerceptionFrame) {
+        guard restoreGate.state == .awaitingRelocalization,let mapID=frame.mapID else { return }
+        restoreState=restoreGate.observe(session:frame.worldSession,mapID:mapID,anchorID:frame.mapAnchorID,now:ProcessInfo.processInfo.systemUptime,sample:MemoryPose(session:frame.worldSession,pose:frame.pose,timestamp:frame.timestamp,tracking:frame.tracking),relocalizing:frame.relocalizing)
+        if restoreState == .ready,let archive=restoreGate.archive {
+            do {
+                try spatialMemory.restore(archive:archive,session:frame.worldSession)
+                memoryNotice="Restored \(archive.bookmarks.count) places. Select a place and explicitly Recall."
+                mapNotice="Map relocalized. Recalibrate floor before tactile guidance. Teammate ranging requires a fresh Live session."
+            } catch { restoreState = .failed; spatialMemory.end(); mapNotice=String(describing:error) }
+        } else if restoreState == .failed {
+            spatialMemory.end(); mapNotice="Map restoration failed or timed out. Start a fresh Live session, or explicitly Load again."
+        }
+    }
+    func deleteSavedMap() {
+        mapOperation += 1; let operation=mapOperation; mapBusy=true
+        mapQueue.async {
+            let result=Result { try self.mapStore.delete() }
+            DispatchQueue.main.async {
+                guard self.mapOperation==operation else { return }; self.mapBusy=false
+                switch result { case .success: self.mapNotice="Local saved map deleted. Current session places remain until Stop."
+                case .failure(let error): self.mapNotice=String(describing:error) }
             }
         }
     }

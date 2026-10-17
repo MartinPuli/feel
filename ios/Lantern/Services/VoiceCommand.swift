@@ -68,7 +68,7 @@ enum VoiceCommand: Equatable {
                   id.utf8.allSatisfy({ (33...126).contains($0) }) else { throw InvalidCommand() }
             return .findTeammate(id)
         case "find_target":
-            let modes: [String: FinderMode] = ["obstacles": .none, "door": .door, "exit": .exit, "chair": .chair, "person": .person, "teammate": .teammate]
+            let modes: [String: FinderMode] = ["obstacles": .none, "door": .door, "exit": .exit, "chair": .chair, "person": .person, "teammate": .teammate, "barcode": .barcode]
             guard args.count == 1, let value = args["target"] as? String, let mode = modes[value] else { throw InvalidCommand() }
             return .find(mode)
         case "calibrate_floor":
@@ -106,8 +106,9 @@ enum VoiceCommand: Equatable {
             tool("set_spoken_output", "Enable or mute FEEL's voice. Silence yourself, mute, be quiet, or silenciate means enabled=false. Speak again or unmute means enabled=true. Muting preserves listening and app control, and needs no spoken confirmation.", properties: ["enabled": ["type": "boolean"]]),
             tool("set_proactive_updates", "Enable or disable unsolicited app status announcements. Disabling them still permits spoken replies to the user's requests.", properties: ["enabled": ["type": "boolean"]]),
             tool("get_status", "Read fresh sensing, calibration, target and connection state. ALWAYS call before describing surroundings. Never reuse old readings."),
-            tool("find_target", "Select the target the user asks for. This does not confirm a detection or start the camera.", properties: ["target": ["type": "string", "enum": ["obstacles", "door", "exit", "chair", "person", "teammate"]]]),
+            tool("find_target", "Select the target the user asks for. This does not confirm a detection or start the camera.", properties: ["target": ["type": "string", "enum": ["obstacles", "door", "exit", "chair", "person", "teammate", "barcode"]]]),
             tool("where_is", "Find one thing the user names that is not in find_target's list, such as the registration desk, a water fountain or the stairs. Takes one camera photo and points the pins at it when found. Confirm once; the result arrives a few seconds later as an observation. Call get_status to check progress.", properties: ["thing": ["type": "string", "minLength": 1, "maxLength": 60]]),
+
             tool("calibrate_floor", "Calibrate only after the user supplies a measured lens height in meters and confirms the phone is mounted upright with rear camera forward and top edge to their left. Never guess height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
             tool("set_camera_height", "Set the measured camera lens height without calibrating. Ask the user for their measurement in meters; never infer it from their body height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
             tool("start_simulation", "Start the synthetic demo only when requested. Always identify it as simulation, never live sensing."),

@@ -218,12 +218,58 @@ final class LanternUITests: XCTestCase {
         tapControl(app.buttons["simResetSession"])
         XCTAssertEqual(app.staticTexts["placesCount"].label,"0 places in this session")
     }
+    func testAdvancedPanelKeepsStopReachableAtLargestText() {
+        let app = launch(extraArguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
+        simulate(app)
+        app.buttons["cameraSettings"].tap()
+        tapControl(app.buttons["Voice, saved map and feedback"])
+        XCTAssertTrue(app.textFields["commandText"].exists)
+        capture("advanced-largest-text")
+        XCTAssertTrue(app.buttons["panelStop"].isHittable)
+        app.buttons["panelStop"].tap()
+        assertStopped(app)
+    }
+    func testTypedCommandFallbackRemembersWithoutMicrophone() {
+        let app=launch()
+        app.buttons["memoryPlaces"].tap()
+        XCTAssertTrue(app.buttons["memorySimulation"].waitForExistence(timeout: 5))
+        app.buttons["memorySimulation"].tap()
+        app.buttons["closeCameraPanel"].tap()
+        app.buttons["cameraSettings"].tap()
+        tapControl(app.buttons["Voice, saved map and feedback"])
+        let command=app.textFields["commandText"]
+        // Native element targeting scrolls the field into view before focusing it.
+        // Fixed swipes can overshoot in the short landscape scroll container.
+        command.tap()
+        let scroll = app.scrollViews["cameraSettingsScroll"]
+        capture("advanced-field-position")
+        print("Command frame: \(command.frame); scroll: \(scroll.frame); Stop: \(app.buttons["panelStop"].frame)")
+        XCTAssertTrue(command.isHittable)
+        XCTAssertLessThan(command.frame.maxY, app.buttons["panelStop"].frame.minY)
+        capture("advanced-before-entry")
+        enterText("remember Lab",in:command)
+        tapControl(app.buttons["runCommand"])
+        XCTAssertEqual(app.staticTexts["commandNotice"].label,"Remembered Lab.")
+        capture("advanced-typed-command")
+        XCTAssertFalse(app.buttons["Finish speaking"].isEnabled)
+        app.buttons["closeCameraPanel"].tap()
+        XCTAssertEqual(app.staticTexts["sessionMode"].label,"SIMULATION")
+        app.buttons["memoryPlaces"].tap()
+        XCTAssertEqual(app.staticTexts["placesCount"].label,"1 places in this session")
+    }
     private func tapControl(_ element:XCUIElement,file:StaticString=#filePath,line:UInt=#line) {
         XCTAssertTrue(element.waitForExistence(timeout:5),file:file,line:line)
         // XCUI's native tap scrolls this exact control into view. App-wide swipes
         // did not move the landscape SwiftUI scroll container in hosted CI.
         element.tap()
         XCTAssertTrue(element.isHittable,file:file,line:line)
+    }
+    private func enterText(_ text:String,in element:XCUIElement,file:StaticString=#filePath,line:UInt=#line) {
+        XCTAssertTrue(element.waitForExistence(timeout:5),file:file,line:line)
+        // A focused SwiftUI field can report isHittable=false despite a visible
+        // caret. Real typing requires focus; verify the resulting field value.
+        element.tap(); element.typeText(text + "\n")
+        XCTAssertEqual(element.value as? String,text,file:file,line:line)
     }
     private func setSwitch(_ element:XCUIElement,to enabled:Bool,file:StaticString=#filePath,line:UInt=#line) {
         let expected=enabled ? "1" : "0"

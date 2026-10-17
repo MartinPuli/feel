@@ -1,0 +1,23 @@
+2026-10-16T23:09:57.4052050Z Xcode 16.4
+2026-10-16T23:09:57.4053310Z Build version 16F6
+2026-10-16T23:10:00.4067010Z Xcode 16.4
+2026-10-16T23:10:00.4069280Z Build version 16F6
+2026-10-16T23:10:37.7828630Z Selected installed simulator: 48B2DA2E-AF18-4E36-BB25-B25969A4EBCF
+2026-10-16T23:12:55.9020690Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.298 (0.300) seconds
+2026-10-16T23:12:56.2220860Z Test Case '-[LanternTests.BarcodeDetectorTests testVisionDetectsGeneratedQRCodeWithUsableBoundingBox]' started.
+2026-10-16T23:12:56.6160180Z 2026-10-16 23:12:55.341417+0000 Lantern[5369:22603] fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-16T23:12:56.7803740Z 2026-10-16 23:12:55.668816+0000 Lantern[5369:22603] fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-16T23:12:57.1766030Z /Users/runner/work/hackharvard/hackharvard/ios/LanternTests/BarcodeDetectorTests.swift:77: error: -[LanternTests.BarcodeDetectorTests testVisionDetectsGeneratedQRCodeWithUsableBoundingBox] : XCTUnwrap failed: expected non-nil value of type "ImageDetection" - Expected generated payload; found []
+2026-10-16T23:12:57.2334060Z Test Case '-[LanternTests.BarcodeDetectorTests testVisionDetectsGeneratedQRCodeWithUsableBoundingBox]' failed (1.926 seconds).
+2026-10-16T23:12:57.2336330Z 	 Executed 2 tests, with 1 failure (0 unexpected) in 1.993 (1.994) seconds
+2026-10-16T23:12:57.4321830Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.007 (0.009) seconds
+2026-10-16T23:12:57.8636450Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.017 (0.109) seconds
+2026-10-16T23:12:58.8668060Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.041 (0.056) seconds
+2026-10-16T23:12:59.3166830Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.016 (0.020) seconds
+2026-10-16T23:12:59.3401890Z 	 Executed 22 tests, with 1 failure (0 unexpected) in 2.374 (2.489) seconds
+2026-10-16T23:12:59.3645490Z 	 Executed 22 tests, with 1 failure (0 unexpected) in 2.374 (2.490) seconds
+2026-10-16T23:15:39.9288270Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 120.199 (120.204) seconds
+2026-10-16T23:15:39.9469300Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 120.199 (120.205) seconds
+2026-10-16T23:15:40.2002890Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 120.199 (120.208) seconds
+2026-10-16T23:16:25.6405380Z 	BarcodeDetectorTests.testVisionDetectsGeneratedQRCodeWithUsableBoundingBox()
+2026-10-16T23:16:25.6661590Z ** TEST FAILED **

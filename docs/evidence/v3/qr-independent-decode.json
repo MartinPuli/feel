@@ -1,0 +1,14 @@
+{
+  "decoder": "zxing-cpp2.3.0",
+  "sha256": "33b872bd4039342ad0c7695769fbb68cc32955e182adb650c11e9d64bbed7880",
+  "width": 350,
+  "height": 350,
+  "results": [
+    {
+      "text": "FEEL test shelf",
+      "valid": true,
+      "format": "BarcodeFormat.QRCode",
+      "orientation": 0
+    }
+  ]
+}

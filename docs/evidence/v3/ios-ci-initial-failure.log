@@ -1,0 +1,30 @@
+Exact selected lines from failed job 117230169979 in run38977441252.
+2026-10-16T22:43:44.1582690Z Xcode 16.4
+2026-10-16T22:43:48.3326030Z Xcode 16.4
+2026-10-16T22:48:04.2781260Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.161 (0.163) seconds
+2026-10-16T22:48:06.2482820Z 2026-10-16 22:47:58.472836+0000 Lantern[4855:20039] The filter 'CIPortraitEffectSpillCorrection' is not implemented in the bundle at /Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/System/Library/CoreImage/PortraitFilters.cifilter.
+2026-10-16T22:48:08.3821570Z /Users/runner/work/hackharvard/hackharvard/ios/LanternTests/BarcodeDetectorTests.swift:39: error: -[LanternTests.BarcodeDetectorTests testVisionDetectsGeneratedQRCodeWithUsableBoundingBox] : XCTUnwrap failed: expected non-nil value of type "ImageDetection"
+2026-10-16T22:48:08.4108100Z Test Case '-[LanternTests.BarcodeDetectorTests testVisionDetectsGeneratedQRCodeWithUsableBoundingBox]' failed (5.312 seconds).
+2026-10-16T22:48:08.5464380Z Test Suite 'BarcodeDetectorTests' failed at 2026-10-16 22:48:05.409.
+2026-10-16T22:48:08.5475360Z 	 Executed 2 tests, with 1 failure (0 unexpected) in 5.355 (7.150) seconds
+2026-10-16T22:48:08.7153910Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.005 (0.006) seconds
+2026-10-16T22:48:08.8760600Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.027 (0.104) seconds
+2026-10-16T22:48:09.1847700Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.010 (2.141) seconds
+2026-10-16T22:48:10.0450830Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.033 (0.035) seconds
+2026-10-16T22:48:10.0639820Z Test Suite 'LanternTests.xctest' failed at 2026-10-16 22:48:07.883.
+2026-10-16T22:48:10.0884310Z 	 Executed 22 tests, with 1 failure (0 unexpected) in 5.591 (9.791) seconds
+2026-10-16T22:48:10.0996760Z Test Suite 'All tests' failed at 2026-10-16 22:48:07.883.
+2026-10-16T22:48:10.1170050Z 	 Executed 22 tests, with 1 failure (0 unexpected) in 5.591 (9.792) seconds
+2026-10-16T22:48:10.3037750Z 2026-10-16 22:48:08.385605+0000 Lantern[4855:24458] [Inference] E5RTNetwork: unable to compile network: /Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/System/Library/PrivateFrameworks/Quagga.framework/Networks/anmd-model.espresso.net
+2026-10-16T22:48:47.4252500Z /Users/runner/work/hackharvard/hackharvard/ios/LanternUITests/LanternUITests.swift:23: error: -[LanternUITests.LanternUITests testRememberMoveRecallAndTrackingLossInMemorySimulation] : XCTAssertTrue failed
+2026-10-16T22:48:47.7876980Z Test Case '-[LanternUITests.LanternUITests testRememberMoveRecallAndTrackingLossInMemorySimulation]' failed (13.511 seconds).
+2026-10-16T22:49:09.6351710Z /Users/runner/work/hackharvard/hackharvard/ios/LanternUITests/LanternUITests.swift:46: error: -[LanternUITests.LanternUITests testTypedCommandFallbackRemembersWithoutMicrophone] : XCTAssertTrue failed
+2026-10-16T22:49:09.9278840Z Test Case '-[LanternUITests.LanternUITests testTypedCommandFallbackRemembersWithoutMicrophone]' failed (13.461 seconds).
+2026-10-16T22:49:09.9380140Z Test Suite 'LanternUITests' failed at 2026-10-16 22:49:09.911.
+2026-10-16T22:49:09.9488690Z 	 Executed 3 tests, with 2 failures (0 unexpected) in 35.645 (35.647) seconds
+2026-10-16T22:49:09.9606020Z Test Suite 'LanternUITests.xctest' failed at 2026-10-16 22:49:09.912.
+2026-10-16T22:49:09.9730630Z 	 Executed 3 tests, with 2 failures (0 unexpected) in 35.645 (35.648) seconds
+2026-10-16T22:49:09.9731320Z Test Suite 'All tests' failed at 2026-10-16 22:49:09.912.
+2026-10-16T22:49:09.9833490Z 	 Executed 3 tests, with 2 failures (0 unexpected) in 35.645 (35.649) seconds
+2026-10-16T22:49:48.5248310Z ** TEST FAILED **
+

@@ -1,0 +1,68 @@
+PASS boot_is_neutral_disconnected
+PASS decode_roundtrip_preserves_nine_wire_bytes
+PASS decoder_length_and_null_are_rejected
+PASS all_band_values_checked_in_every_column_atomically
+PASS all_highlight_values_checked
+PASS empty_highlight_is_wire_legal_but_effective_off
+PASS all_bands_map_to_expected_angles
+PASS disappearing_pin_uses_nearest_last_band_gap
+PASS rejection_does_not_partially_apply_bands_or_highlight
+PASS duplicate_does_not_extend_watchdog
+PASS stale_and_half_range_sequences_rejected
+PASS every_sequence_delta_matches_modular_contract
+PASS sequence_rollover_254_255_0_1
+PASS watchdog_boundary_is_greater_or_equal_500
+PASS watchdog_resets_sequence_baseline_even_inside_receive
+PASS invalid_traffic_cannot_keep_motion_alive
+PASS disconnect_clears_state_and_reconnect_accepts_any_sequence
+PASS millis_rollover_preserves_watchdog_boundary
+PASS highlight_taps_toward_gap_for_all_bands
+PASS repeated_packets_do_not_restart_tap_phase
+PASS changing_highlight_or_its_band_restarts_tap
+PASS tap_millis_rollover_works
+PASS calibration_requires_arm_and_valid_finite_offset
+PASS calibration_clamps_both_servo_endpoints
+PASS calibration_does_not_extend_motion_watchdog
+PASS raw_pulse_requires_arm_and_bounds
+PASS raw_pulse_is_exclusive_and_stop_clears_it
+PASS bench_cannot_arm_while_ble_connected
+PASS keepalive_cannot_resurrect_expired_motion
+PASS bench_arm_expires_even_with_keepalives
+PASS pulse_conversion_is_bounded_and_monotonic
+PASS serial_parser_valid_commands
+PASS serial_parser_rejects_unbounded_and_ambiguous_input
+PASS serial_commands_share_controller_watchdog_and_save_gate
+PASS seed_0xc0ffee_packet_fault_fuzz_preserves_output_bounds
+PASS calibration_records_reject_old_schema_and_corruption_atomically
+PASS raw_pulse_roundtrip_and_timeout_cover_entire_120_degree_range
+PASS calibrated_bands_taps_and_failure_paths_never_exceed_design_range
+PASS disabled_output_guard_rejects_all_physical_commands
+PASS output_guard_latches_fault_for_any_out_of_measured_range_channel
+PASS output_guard_rejects_bad_config_and_accepts_measured_boundary_only
+41/41 firmware host tests passed; physical hardware NOT VERIFIED
+PASS firmware CLI: 17 commands, JSON states, production decoder and timeout assertions
+PASS firmware board config: 25 compile-only default/range/single/production isolation checks (no physical outputs)
+PASS firmware compile-only hook: 6 target guard cases (no upload command executed)
+PASS firmware bench helper: 4 out-of-range inputs rejected before serial access
+PASS single demo: band mapping, boot/connect off, all-zero STOP, timeout, duplicate freshness, highlight isolation, disconnect, bench isolation, invalid band
+PASS adapters: PWM endpoints/monotonicity/representability; serial NUL, control bytes, overflow, CRLF, recovery and fail-closed controller integration
+PASS: boot off, arming, expiry, keepalive, absolute cap, invalid commands, STOP, rollover, TEST5 phase sequence and caps
+PASS single live: production center bands/gaps/taps/calibration, demo isolation, boot/connect off, STOP, freshness, disconnect, bench rejection, invalid bounds, rollover
+test_attestations_and_timestamp_required (__main__.ProductionConfigTests) ... ok
+test_duplicate_json_keys_and_nonfinite_values_rejected (__main__.ProductionConfigTests) ... ok
+test_evidence_must_exist_and_not_be_empty (__main__.ProductionConfigTests) ... ok
+test_exact_boundaries_and_column_order (__main__.ProductionConfigTests) ... ok
+test_hook_injects_only_after_synthetic_validation (__main__.ProductionConfigTests) ... ok
+test_hook_refuses_missing_and_invalid_config (__main__.ProductionConfigTests) ... ok
+test_missing_config (__main__.ProductionConfigTests) ... ok
+test_missing_extra_duplicate_or_invalid_columns (__main__.ProductionConfigTests) ... ok
+test_missing_or_wrong_gpio (__main__.ProductionConfigTests) ... ok
+test_ranges_must_cover_entire_service_envelope (__main__.ProductionConfigTests) ... ok
+test_tracked_template_is_unverified (__main__.ProductionConfigTests) ... ok
+test_unique_nonempty_unit_ids (__main__.ProductionConfigTests) ... ok
+test_valid_synthetic_records_use_service_envelope (__main__.ProductionConfigTests) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.038s
+
+OK

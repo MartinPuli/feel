@@ -1,0 +1,81 @@
+{
+  "version": "V3 advanced",
+  "timestamp_utc": "2026-10-16T22:40:13.035861+00:00",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+  "available_checks": "PASS",
+  "complete_software_gate": "BLOCKED",
+  "physical_hardware": "NOT VERIFIED",
+  "checks": [
+    {
+      "name": "swift-core",
+      "scope": "production",
+      "command": "sh ios/scripts/test_portable.sh",
+      "timestamp_utc": "2026-10-16T22:40:08.229913+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard-v3/.artifacts/v3-validated-complete/swift-core.log"
+    },
+    {
+      "name": "swift-cli",
+      "scope": "production",
+      "command": "swift build -j 2 --package-path ios/Shared/FeelCore",
+      "timestamp_utc": "2026-10-16T22:40:09.550840+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard-v3/.artifacts/v3-validated-complete/swift-cli.log"
+    },
+    {
+      "name": "firmware-host",
+      "scope": "production",
+      "command": "sh firmware/test/run_host_tests.sh",
+      "timestamp_utc": "2026-10-16T22:40:10.320133+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard-v3/.artifacts/v3-validated-complete/firmware-host.log"
+    },
+    {
+      "name": "v1-production-contract",
+      "scope": "production",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 validation/production/run.py --output /workspace/scratch/47edcf5d6ea3/hackharvard-v3/.artifacts/v3-validated-complete/production",
+      "timestamp_utc": "2026-10-16T22:40:12.741739+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard-v3/.artifacts/v3-validated-complete/v1-production-contract.log"
+    },
+    {
+      "name": "v2-spatial-contract",
+      "scope": "production",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 validation/spatial/run.py --output /workspace/scratch/47edcf5d6ea3/hackharvard-v3/.artifacts/v3-validated-complete/spatial",
+      "timestamp_utc": "2026-10-16T22:40:12.856310+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard-v3/.artifacts/v3-validated-complete/v2-spatial-contract.log"
+    },
+    {
+      "name": "v3-advanced-contract",
+      "scope": "production",
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3 validation/advanced/run.py --output /workspace/scratch/47edcf5d6ea3/hackharvard-v3/.artifacts/v3-validated-complete/advanced",
+      "timestamp_utc": "2026-10-16T22:40:12.920923+00:00",
+      "status": "PASS",
+      "exit_code": 0,
+      "log": "/workspace/scratch/47edcf5d6ea3/hackharvard-v3/.artifacts/v3-validated-complete/v3-advanced-contract.log"
+    },
+    {
+      "name": "ios-platform",
+      "scope": "production",
+      "command": "bash scripts/check_ios.sh",
+      "timestamp_utc": "2026-10-16T22:40:13.035518+00:00",
+      "status": "BLOCKED",
+      "missing": [
+        "tool:xcodegen",
+        "tool:xcodebuild",
+        "tool:xcrun"
+      ],
+      "next_action": "Run the same source on the listed platform/toolchain; consult hosted CI evidence separately."
+    }
+  ],
+  "prerequisite_evidence": [
+    "docs/evidence/v1/github-actions.json",
+    "docs/evidence/v2/github-actions.json"
+  ]
+}

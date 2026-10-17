@@ -22,14 +22,14 @@ check. You do not need the full Xcode installation for this first ESP32 step.
 
 ## 2. Clone the branch containing the code
 
-This guide checks out V2 Spatial Memory. Use `main` instead if you want V1 only.
+This guide checks out V3 advanced. Use `main` instead if you want V1 only.
 
 Copy this block into Terminal:
 
 ```sh
 mkdir -p ~/Projects
 cd ~/Projects
-git clone --branch feel/v2-spatial-memory https://github.com/MartinPuli/hackharvard.git feel
+git clone --branch feel/v3-advanced https://github.com/MartinPuli/hackharvard.git feel
 cd feel
 ```
 
@@ -45,7 +45,7 @@ first check whether you have local changes:
 cd ~/Projects/feel
 git status
 git fetch origin
-git switch feel/v2-spatial-memory
+git switch feel/v3-advanced
 git pull --ff-only
 ```
 

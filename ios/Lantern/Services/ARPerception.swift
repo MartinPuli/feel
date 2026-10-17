@@ -23,6 +23,9 @@ struct PerceptionFrame {
     let target: TargetObservation?
     let pose: CameraPose
     let floorY: Double?
+    let mapID:String?
+    let mapAnchorID:String?
+    let relocalizing:Bool
     /// Route to the currently visible target over the local floor grid; nil without one.
     var routeHint: RouteHint? = nil
     /// Distinct targets of the selected kind in view, left to right.
@@ -63,6 +66,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private var floorY: Double?
     private var sessionEpoch=0
     private var worldSession:String?
+    private var loadedMapID:String?
     private var running=false
     private var worldEpoch=0
     private var earliestFrame:TimeInterval = 0
@@ -83,22 +87,23 @@ final class ARPerception: NSObject, ARSessionDelegate {
             DispatchQueue.main.async { self.onModelStatus?(status,available) }
         }
     }
-    @discardableResult func start(epoch:Int) -> Bool {
+    @discardableResult func start(epoch:Int,restoredMap:ARWorldMap?=nil,mapID:String?=nil,sessionID:String=UUID().uuidString) -> Bool {
         guard ARWorldTrackingConfiguration.isSupported,ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) else { publishStatus("Live sensing requires a LiDAR iPhone or iPad. Use Simulation for software replay."); return false }
         queue.async {
             self.running=true; self.sessionEpoch=epoch; self.worldEpoch += 1; self.earliestFrame=ProcessInfo.processInfo.systemUptime
-            let id=UUID().uuidString; self.worldSession=id
+            let id=sessionID; self.worldSession=id; self.loadedMapID=mapID
             DispatchQueue.main.async { self.onWorldSession?(epoch,id) }
             self.floorY=nil; self.lastTarget=nil; self.generation += 1; self.lastProcessed = -.infinity
             self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil
             let config=ARWorldTrackingConfiguration(); config.frameSemantics=[.sceneDepth]; config.worldAlignment = .gravity
+            config.initialWorldMap=restoredMap
             self.session.run(config,options:[.resetTracking,.removeExistingAnchors]); self.publishStatus("Move slowly, then calibrate measured camera height")
         }
         return true
     }
     func stop() {
         queue.async {
-            self.running=false; self.session.pause(); self.worldEpoch += 1; self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.worldSession=nil
+            self.running=false; self.session.pause(); self.worldEpoch += 1; self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.worldSession=nil; self.loadedMapID=nil
             self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil
             let epoch=self.sessionEpoch
             DispatchQueue.main.async { self.onWorldSession?(epoch,nil) }
@@ -121,6 +126,30 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private static func flatDistance(_ a: Vector3,_ b: Vector3) -> Double { hypot(a.x-b.x,a.z-b.z) }
     private static func nearest(_ targets: [CapturedTarget],to point: Vector3) -> CapturedTarget? {
         targets.filter { flatDistance($0.position,point)<=1.5 }.min { flatDistance($0.position,point)<flatDistance($1.position,point) }
+    }
+    func captureWorldMap(sessionID:String,completion:@escaping (Result<(Data,String,String),Error>)->Void) {
+        queue.async {
+            func fail(_ reason:String) { DispatchQueue.main.async { completion(.failure(PersistentMemoryError.invalidArchive(reason))) } }
+            guard self.running,self.worldSession==sessionID,let frame=self.session.currentFrame,
+                  case .normal=frame.camera.trackingState,Self.mountValid(Self.pose(frame.camera.transform)),
+                  ProcessInfo.processInfo.systemUptime-frame.timestamp<=0.25,
+                  frame.worldMappingStatus == .mapped || frame.worldMappingStatus == .extending else { fail("save needs fresh normal tracking and an explored map"); return }
+            let token=self.generation
+            self.session.getCurrentWorldMap { map,error in
+                self.queue.async {
+                    guard self.running,self.worldSession==sessionID,token==self.generation else { fail("session changed during capture"); return }
+                    guard let map else { fail(error?.localizedDescription ?? "ARKit did not return a map"); return }
+                    do {
+                        let mapID=UUID().uuidString
+                        let marker=ARAnchor(name:WorldMapStore.anchorName(mapID:mapID),transform:matrix_identity_float4x4)
+                        // Keep only one FEEL marker when re-saving a previously loaded map.
+                        map.anchors.removeAll { $0.name?.hasPrefix("FEEL.map.") == true }; map.anchors.append(marker)
+                        let bytes=try NSKeyedArchiver.archivedData(withRootObject:map,requiringSecureCoding:true)
+                        DispatchQueue.main.async { completion(.success((bytes,mapID,marker.identifier.uuidString))) }
+                    } catch { fail(error.localizedDescription) }
+                }
+            }
+        }
     }
     func calibrate(cameraHeight: Double) {
         queue.async {
@@ -201,10 +230,12 @@ final class ARPerception: NSObject, ARSessionDelegate {
             }
         }
         let normal: Bool; if case .normal=frame.camera.trackingState { normal=true } else { normal=false }
+        let relocalizing:Bool; if case .limited(.relocalizing)=frame.camera.trackingState { relocalizing=true } else { relocalizing=false }
+        let mapAnchor=loadedMapID.flatMap { id in frame.anchors.first { $0.name==WorldMapStore.anchorName(mapID:id) }?.identifier.uuidString }
         guard normal,Self.mountValid(pose),let depth=frame.sceneDepth,let map=DepthFrame(depth,camera:frame.camera) else {
             if recorder.isActive { recorder.append(RecordedFrame(timestamp:frame.timestamp,trackingNormal:normal,pose:pose,floorY:floorY,depth:nil)) }
             lastTarget=nil; lastHint=nil; candidates=[]; generation += 1
-            publish(PerceptionFrame(epoch:sessionEpoch,worldSession:worldSession,finderEpoch:finderEpoch,worldEpoch:worldEpoch,timestamp:frame.timestamp,tracking:false,distances:Array(repeating:nil,count:7),target:nil,pose:pose,floorY:floorY))
+            publish(PerceptionFrame(epoch:sessionEpoch,worldSession:worldSession,finderEpoch:finderEpoch,worldEpoch:worldEpoch,timestamp:frame.timestamp,tracking:false,distances:Array(repeating:nil,count:7),target:nil,pose:pose,floorY:floorY,mapID:loadedMapID,mapAnchorID:mapAnchor,relocalizing:relocalizing))
             publishStatus(normal ? "Depth missing or mounting orientation invalid — guidance neutral" : "Tracking uncertain — guidance neutral")
             return
         }
@@ -228,7 +259,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
             lastPlan=frame.timestamp
             lastHint=RouteHint.make(path:grid.route(from:pose.position,to:goal.position),pose:pose,target:goal.position,timestamp:frame.timestamp,label:goal.label)
         }
-        var published=PerceptionFrame(epoch:sessionEpoch,worldSession:worldSession,finderEpoch:finderEpoch,worldEpoch:worldEpoch,timestamp:frame.timestamp,tracking:true,distances:distances,target:target,pose:pose,floorY:floorY)
+        var published=PerceptionFrame(epoch:sessionEpoch,worldSession:worldSession,finderEpoch:finderEpoch,worldEpoch:worldEpoch,timestamp:frame.timestamp,tracking:true,distances:distances,target:target,pose:pose,floorY:floorY,mapID:loadedMapID,mapAnchorID:mapAnchor,relocalizing:relocalizing)
         published.routeHint=lastHint
         published.candidates=candidates.compactMap { c in c.observation(pose:pose,now:frame.timestamp).map { VisibleCandidate(position:c.position,observation:$0) } }
             .sorted { $0.observation.bearingDegrees<$1.observation.bearingDegrees }
@@ -270,7 +301,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
     }
     func sessionShouldAttemptRelocalization(_ session: ARSession) -> Bool { false }
     private func invalidate() {
-        lastTarget=nil; floorY=nil; worldSession=nil; worldEpoch += 1; grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil; generation += 1
+        lastTarget=nil; floorY=nil; worldSession=nil; loadedMapID=nil; worldEpoch += 1; grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil; generation += 1
         let epoch=sessionEpoch
         DispatchQueue.main.async { self.onWorldSession?(epoch,nil); self.onInvalidated?(epoch) }
     }

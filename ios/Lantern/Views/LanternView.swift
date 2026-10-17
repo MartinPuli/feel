@@ -352,6 +352,10 @@ struct LanternView: View {
             }
             .buttonStyle(FeelSecondaryButtonStyle())
             .disabled(model.mode == .simulation)
+            Text("Synthetic inputs. No simulated movement is sent to hardware.")
+                .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+            AdvancedPanel(model: model, voice: model.localVoice)
+
             DisclosureGroup("Details") {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(model.packet.hex).font(FeelTypography.mono).textSelection(.enabled)
@@ -542,11 +546,18 @@ private struct LiveSetup: View {
             FeelSection(title: "Find a target", systemImage: "scope") {
                 Picker("Find", selection: $model.finder) {
                     ForEach(FinderMode.allCases) { mode in
-                        Text(mode.rawValue).tag(mode).disabled(mode == .chair && !model.detectorAvailable)
+                        Text(mode.rawValue).tag(mode).disabled((mode == .chair && !model.detectorAvailable) || (mode == .teammate && model.restoredMapSession))
                     }
                 }.pickerStyle(.menu)
+                if model.restoredMapSession {
+                    Text("Teammate ranging needs a fresh camera session. Stop, then Start camera to leave the saved map.").font(FeelTypography.footnote)
+                }
                 Text(model.detectorStatus).font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
-                if model.finder == .teammate { PeerPanel(peer: model.peer) }
+                if model.finder == .door {
+                    Text("Door candidate uses rectangle shape. It cannot confirm a door or a safe opening.").font(FeelTypography.footnote)
+                }
+                if model.finder == .teammate && !model.restoredMapSession { PeerPanel(peer: model.peer) }
+
             }
         }
     }
@@ -657,6 +668,59 @@ struct MemoryPanel:View {
                 Text("Range follows the phone's camera plane; horizontal distance uses the floor plane. Arrival means within 0.35 m horizontally and 0.75 m vertically. A highlighted place does not establish a clear route.").font(FeelTypography.footnote)
             }.frame(maxWidth:.infinity,alignment:.leading)
         }
+    }
+}
+
+struct AdvancedPanel:View {
+    @ObservedObject var model:LanternModel
+    @ObservedObject var voice:LocalVoiceControl
+    @FocusState private var editingCommand:Bool
+    var body:some View {
+        DisclosureGroup("Voice, saved map and feedback") {
+            VStack(alignment:.leading,spacing:14) {
+                Text("This panel accepts typed or on-device speech commands. The separate Assistant uses OpenAI. Camera text and barcode labels never execute commands.").font(.footnote)
+                Picker("Command language",selection:$model.commandLanguage) { Text("English").tag(VoiceLanguage.en); Text("Spanish").tag(VoiceLanguage.es) }.pickerStyle(.segmented)
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField("Command",text:$model.commandText).textFieldStyle(.roundedBorder).focused($editingCommand)
+                        .submitLabel(.done).onSubmit { editingCommand=false }.accessibilityIdentifier("commandText")
+                    Button("Run command") { editingCommand=false; model.submitTypedCommand() }.buttonStyle(FeelPrimaryButtonStyle()).accessibilityIdentifier("runCommand")
+                }
+                Text(model.commandLanguage == .en ? "remember Desk · recall Desk · return · stop · list places · find barcode" : "recuerda Mesa · recupera Mesa · vuelve · para · lista lugares · busca código").font(.footnote)
+                ViewThatFits(in: .horizontal) {
+                    HStack { speechActions }.fixedSize(horizontal: true, vertical: false)
+                    VStack(alignment: .leading, spacing: 8) { speechActions }
+                }.buttonStyle(.bordered)
+                Text(voice.status).accessibilityIdentifier("voiceStatus")
+                Text("Starting local speech pauses the Assistant. Resume it from Assistant settings afterward.").font(.footnote)
+                if !voice.transcript.isEmpty { Text(voice.transcript).font(.footnote) }
+                Text(model.commandNotice).accessibilityIdentifier("commandNotice")
+                Text("Speech requires on-device support for the selected language. There is no cloud recognition fallback. Type a command if speech is unavailable.").font(.footnote)
+                Divider()
+                Picker("Target tap profile",selection:$model.adaptiveProfile) {
+                    Text("Standard").tag(AdaptiveProfile.standard); Text("Reduced").tag(AdaptiveProfile.reduced); Text("Automatic").tag(AdaptiveProfile.automatic)
+                }.pickerStyle(.menu).accessibilityIdentifier("adaptiveProfile")
+                Text("Obstacle pins stay unchanged. Reduced target taps use 1.8 seconds quiet, then 0.6 seconds highlighted. Automatic chooses reduced when any near obstacle appears and waits 2.4 seconds clear before resuming standard.").font(.footnote)
+                Divider()
+                Text("One saved local map").font(.headline)
+                ViewThatFits(in: .horizontal) {
+                    HStack { mapActions }.fixedSize(horizontal: true, vertical: false)
+                    VStack(alignment: .leading, spacing: 8) { mapActions }
+                }.buttonStyle(.bordered)
+                Text(model.mapNotice).accessibilityIdentifier("mapNotice")
+                Text("Save replaces the previous local map and its places. Load starts a new session in the same physical area; places stay inactive until relocalization succeeds. Select and Recall explicitly afterward. Simulation never creates a real AR map.").font(.footnote)
+            }.padding(.top,8)
+        }
+    }
+    @ViewBuilder private var speechActions: some View {
+                    Button("Start speaking") { editingCommand=false; model.startVoiceCommand() }.disabled(voice.isListening)
+                    Button("Finish speaking") { voice.finish() }.disabled(!voice.canFinish)
+                    Button("Cancel speech") { voice.cancel() }
+                    Button("Read result") { model.readCommandResult() }.disabled(voice.isListening)
+    }
+    @ViewBuilder private var mapActions: some View {
+                    Button("Save map") { model.saveMap() }.disabled(model.mode != .live || model.mapBusy || model.restoringMap)
+                    Button("Load map") { model.loadMap() }.disabled(model.mode != .live || model.mapBusy)
+                    Button("Delete saved map",role:.destructive) { model.deleteSavedMap() }.disabled(model.mapBusy)
     }
 }
 

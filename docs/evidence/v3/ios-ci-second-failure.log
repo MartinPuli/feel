@@ -1,0 +1,20 @@
+Exact selected lines from job117233782225 in run38978568683.
+2026-10-16T22:55:38.4392670Z Xcode 16.4
+2026-10-16T22:55:40.9107420Z Xcode 16.4
+2026-10-16T22:58:56.1721520Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.129 (0.246) seconds
+2026-10-16T22:58:57.5041530Z /Users/runner/work/hackharvard/hackharvard/ios/LanternTests/BarcodeDetectorTests.swift:77: error: -[LanternTests.BarcodeDetectorTests testVisionDetectsGeneratedQRCodeWithUsableBoundingBox] : XCTUnwrap failed: expected non-nil value of type "ImageDetection" - Expected generated payload; found []
+2026-10-16T22:58:57.5154620Z Test Case '-[LanternTests.BarcodeDetectorTests testVisionDetectsGeneratedQRCodeWithUsableBoundingBox]' failed (1.713 seconds).
+2026-10-16T22:58:57.5301390Z Test Suite 'BarcodeDetectorTests' failed at 2026-10-16 22:58:55.798.
+2026-10-16T22:58:57.5421920Z 	 Executed 2 tests, with 1 failure (0 unexpected) in 1.715 (1.794) seconds
+2026-10-16T22:58:58.2278320Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.004 (0.006) seconds
+2026-10-16T22:59:00.9254920Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.221 (0.262) seconds
+2026-10-16T22:59:04.6119750Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.014 (0.065) seconds
+2026-10-16T22:59:06.9278530Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.008 (0.009) seconds
+2026-10-16T22:59:07.0099580Z Test Suite 'LanternTests.xctest' failed at 2026-10-16 22:58:57.470.
+2026-10-16T22:59:07.0906880Z 	 Executed 22 tests, with 1 failure (0 unexpected) in 2.091 (3.712) seconds
+2026-10-16T22:59:07.3556900Z Test Suite 'All tests' failed at 2026-10-16 22:58:57.470.
+2026-10-16T22:59:07.8537770Z 	 Executed 22 tests, with 1 failure (0 unexpected) in 2.091 (3.713) seconds
+2026-10-16T23:00:59.0248270Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 72.337 (72.343) seconds
+2026-10-16T23:00:59.0647610Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 72.337 (72.345) seconds
+2026-10-16T23:00:59.1562070Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 72.337 (72.347) seconds
+2026-10-16T23:01:44.7992490Z ** TEST FAILED **

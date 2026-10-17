@@ -19,7 +19,7 @@ func makeSnapshot(confidence: UInt8 = 2, worldEpoch: Int = 1) -> FrameSnapshot {
 }
 func makeFrame(worldEpoch: Int = 1, pose: CameraPose = .identity) -> PerceptionFrame {
     PerceptionFrame(epoch: 0, worldSession: "where-is-test-session", finderEpoch: 0, worldEpoch: worldEpoch, timestamp: 1, tracking: true,
-                    distances: Array(repeating: nil, count: 7), target: nil, pose: pose, floorY: nil)
+                    distances: Array(repeating: nil, count: 7), target: nil, pose: pose, floorY: nil, mapID: nil, mapAnchorID: nil, relocalizing: false)
 }
 
 final class ScriptedVoiceToken: VoiceTokenFetching {

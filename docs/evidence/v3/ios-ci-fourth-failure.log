@@ -1,0 +1,41 @@
+2026-10-16T23:20:01.2640940Z Xcode 16.4
+2026-10-16T23:20:01.2645410Z Build version 16F6
+2026-10-16T23:20:03.1190570Z Xcode 16.4
+2026-10-16T23:20:03.1193250Z Build version 16F6
+2026-10-16T23:21:14.1916660Z Selected installed simulator: 48B2DA2E-AF18-4E36-BB25-B25969A4EBCF
+2026-10-16T23:23:43.0118920Z 	 Executed 4 tests, with 0 failures (0 unexpected) in 0.520 (0.574) seconds
+2026-10-16T23:23:43.3126400Z Test Case '-[LanternTests.BarcodeDetectorTests testVisionDetectsGeneratedQRCodeWithUsableBoundingBox]' started.
+2026-10-16T23:23:44.7773680Z [QR diagnostic] runtime=Version 26.2 (Build 23C54), supportedRevisions=[1, 2, 3, 4], productionRevision=4, productionCPUOnly=true
+2026-10-16T23:23:44.7884800Z [QR diagnostic] fixture=350x350, pixelFormat=1111970369, bytesPerRow=1408
+2026-10-16T23:23:44.8949200Z [QR diagnostic] input=CGImage, revision=1, cpuOnly=false, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+2026-10-16T23:23:44.8972660Z [QR diagnostic] input=CVPixelBuffer, revision=1, cpuOnly=false, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+2026-10-16T23:23:45.0011670Z [QR diagnostic] input=CGImage, revision=1, cpuOnly=true, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+2026-10-16T23:23:45.1267530Z [QR diagnostic] input=CVPixelBuffer, revision=1, cpuOnly=true, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+2026-10-16T23:23:45.3506700Z [QR diagnostic] input=CGImage, revision=2, cpuOnly=false, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+2026-10-16T23:23:45.5178190Z [QR diagnostic] input=CVPixelBuffer, revision=2, cpuOnly=false, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+2026-10-16T23:23:45.5181610Z [QR diagnostic] input=CGImage, revision=2, cpuOnly=true, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+2026-10-16T23:23:45.5966070Z [QR diagnostic] input=CVPixelBuffer, revision=2, cpuOnly=true, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+2026-10-16T23:23:45.6798530Z [QR diagnostic] input=CGImage, revision=3, cpuOnly=false, orientation=up, observations=[]
+2026-10-16T23:23:45.7620600Z [QR diagnostic] input=CVPixelBuffer, revision=3, cpuOnly=false, orientation=up, observations=[]
+2026-10-16T23:23:45.7827690Z [QR diagnostic] input=CGImage, revision=3, cpuOnly=true, orientation=up, observations=[]
+2026-10-16T23:23:46.4585640Z [QR diagnostic] input=CVPixelBuffer, revision=3, cpuOnly=true, orientation=up, observations=[]
+2026-10-16T23:23:46.6640530Z [QR diagnostic] input=CGImage, revision=4, cpuOnly=false, orientation=up, observations=[]
+2026-10-16T23:23:46.9077630Z [QR diagnostic] input=CVPixelBuffer, revision=4, cpuOnly=false, orientation=up, observations=[]
+2026-10-16T23:23:47.0289080Z [QR diagnostic] input=CGImage, revision=4, cpuOnly=true, orientation=up, observations=[]
+2026-10-16T23:23:47.2087660Z [QR diagnostic] input=CVPixelBuffer, revision=4, cpuOnly=true, orientation=up, observations=[]
+2026-10-16T23:23:47.2913520Z [QR diagnostic] input=CGImage, revision=4, cpuOnly=true, orientation=upMirrored, observations=[]
+2026-10-16T23:23:47.4523250Z [QR diagnostic] input=CVPixelBuffer, revision=4, cpuOnly=true, orientation=upMirrored, observations=[]
+2026-10-16T23:23:47.5394400Z /Users/runner/work/hackharvard/hackharvard/ios/LanternTests/BarcodeDetectorTests.swift:75: error: -[LanternTests.BarcodeDetectorTests testVisionDetectsGeneratedQRCodeWithUsableBoundingBox] : XCTUnwrap failed: expected non-nil value of type "ImageDetection" - Expected generated payload; found []
+2026-10-16T23:23:47.6998200Z Test Case '-[LanternTests.BarcodeDetectorTests testVisionDetectsGeneratedQRCodeWithUsableBoundingBox]' failed (2.509 seconds).
+2026-10-16T23:23:48.1091630Z 	 Executed 2 tests, with 1 failure (0 unexpected) in 2.511 (2.514) seconds
+2026-10-16T23:23:49.0072480Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.078) seconds
+2026-10-16T23:23:50.1724570Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 0.011 (0.246) seconds
+2026-10-16T23:23:51.1395910Z 	 Executed 8 tests, with 0 failures (0 unexpected) in 0.004 (0.084) seconds
+2026-10-16T23:23:51.1426310Z 	 Executed 2 tests, with 0 failures (0 unexpected) in 0.079 (0.080) seconds
+2026-10-16T23:23:51.1427840Z 	 Executed 22 tests, with 1 failure (0 unexpected) in 3.128 (6.498) seconds
+2026-10-16T23:23:51.1428870Z 	 Executed 22 tests, with 1 failure (0 unexpected) in 3.128 (6.500) seconds
+2026-10-16T23:25:35.4641200Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 55.516 (55.518) seconds
+2026-10-16T23:25:35.6161570Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 55.516 (55.519) seconds
+2026-10-16T23:25:35.7558240Z 	 Executed 3 tests, with 0 failures (0 unexpected) in 55.516 (55.520) seconds
+2026-10-16T23:26:25.9284060Z 	BarcodeDetectorTests.testVisionDetectsGeneratedQRCodeWithUsableBoundingBox()
+2026-10-16T23:26:25.9727780Z ** TEST FAILED **

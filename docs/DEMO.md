@@ -23,6 +23,15 @@ Spatial Memory belongs to the separate V2 demo only after its checks pass:
 Remember a place, move/turn, Recall, and feel its bearing. Return indicates a
 straight-line bearing, **not** a verified obstacle-free route.
 
+For the isolated V3 software demo, open the advanced recorded replay or the app's
+Memory simulation. Expand **Voice, saved map and feedback**, type `remember Desk`,
+move back and type `recall Desk`. Select Reduced and show that the obstacle pins
+stay unchanged while the target highlight starts quiet. The recorded replay also
+shows archive rejection, inactive restore and settling gates using synthetic map
+evidence. It is not footage of real relocalization. Save/Load and microphone/QR
+camera demonstrations require actual device checks; use the typed fallback until
+then. See ADVANCED.md for the real-device sequence and recovery requirements.
+
 ## Recovery
 
 - Tracking/depth unavailable: stop, restore the documented mount, recalibrate.

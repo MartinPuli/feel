@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FEEL V3 · Production replay</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#101820;color:#edf2f3;font:16px/1.5 system-ui,sans-serif}main{max-width:1080px;margin:auto;padding:28px}h1{font-size:clamp(27px,4vw,42px);margin:4px 0 10px}h2{font-size:20px;margin-top:0}.eyebrow{color:#91c9d0;font-size:13px;letter-spacing:.13em}.warning{background:#392b1d;border:1px solid #a97635;border-radius:10px;padding:14px;color:#ffdcaa}.grid{display:grid;grid-template-columns:1fr 1.2fr;gap:20px;margin:22px 0}.card{background:#1b2833;border:1px solid #354957;border-radius:15px;padding:22px;min-width:0}.muted{color:#acbdc7}.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}button{background:#c7eef0;color:#142329;border:0;border-radius:8px;padding:10px 15px;font:inherit;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #ffbe69;outline-offset:3px}input[type=range]{flex:1;min-width:150px;accent-color:#ffbe69}.pins{display:grid;grid-template-columns:repeat(7,1fr);gap:11px;margin:20px 0}.pin{aspect-ratio:1;border-radius:50%;background:#344651;border:1px solid #58717f}.pin.active{background:#9ad6d9;border-color:#9ad6d9}.pin.highlight{background:#ffbe69;border-color:#ffbe69;box-shadow:0 0 0 3px #ffbe6933}.axis{display:flex;justify-content:space-between;color:#acbdc7;font-size:13px}dl{display:grid;grid-template-columns:100px 1fr;gap:10px;margin:0}dt{color:#acbdc7}dd{margin:0;overflow-wrap:anywhere}code,pre{font-family:ui-monospace,monospace}code{color:#c7eef0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;background:#101820;padding:14px;border-radius:8px}details{margin-top:20px}summary{cursor:pointer}.metrics{display:flex;gap:20px;flex-wrap:wrap;margin:16px 0}.metric strong{display:block;font-size:24px}.metric span{font-size:13px;color:#acbdc7}#caption{min-height:3em;font-size:18px}footer{font-size:13px;color:#acbdc7}@media(max-width:700px){main{padding:16px}.grid{grid-template-columns:1fr}.card{padding:17px}dl{grid-template-columns:86px 1fr}.pins{gap:9px}}
+</style>
+<main>
+<div class="eyebrow">FEEL / V3 / EXECUTED PRODUCTION REPLAY</div>
+<h1>Voice, saved places, tactile timing</h1>
+<p class="muted">Recorded inputs run through the actual Swift core, nine-byte packets and C++ controller.</p>
+<p class="warning"><strong>SIMULATION.</strong> No microphone, live camera, saved ARWorldMap, BLE radio or physical servo is used by this replay. Software state and commanded angles do not establish physical behavior.</p>
+<div class="metrics"><div class="metric"><strong id="result"></strong><span>Replay result</span></div><div class="metric"><strong id="assertions"></strong><span>Assertions executed</span></div><div class="metric"><strong id="states"></strong><span>Firmware states recorded</span></div></div>
+<section class="card"><div class="controls"><button id="play" aria-label="Play recorded states">Play</button><button id="next">Next</button><input id="step" aria-label="Recorded state" type="range" min="0" value="0"><output id="position"></output></div><p id="caption" aria-live="polite"></p></section>
+<div class="grid">
+<section class="card"><h2>Virtual tactile puck</h2><div class="axis"><span>Fingers / far</span><span>Four bands</span></div><div class="pins" id="pins" role="img" aria-label="Virtual 28-pin puck"></div><div class="axis"><span>Left</span><span>Wrist / near</span><span>Right</span></div><p class="muted">Blue = selected band. Amber = target column. A highlight never establishes a clear route.</p></section>
+<section class="card"><h2>Production output</h2><dl><dt>Packet</dt><dd><code id="packet"></code></dd><dt>Bands</dt><dd id="bands"></dd><dt>Highlight</dt><dd id="highlight"></dd><dt>Tap active</dt><dd id="tap"></dd><dt>Angles</dt><dd id="angles"></dd><dt>Controller</dt><dd id="controller"></dd></dl><details><summary>Input and Swift reply</summary><pre id="reply"></pre></details></section>
+</div>
+<footer>The runner verifies each recorded expectation before emitting a PASS report. Synthetic map/pose evidence exercises software gates; real relocalization, voice recognition, QR detection and touch require device validation.</footer>
+</main>
+<script>
+const report=__REPORT__;
+const byID=id=>document.getElementById(id),steps=report.steps;
+byID('result').textContent=report.status;byID('assertions').textContent=report.assertions;byID('states').textContent=steps.length;
+const cells=[];for(let band=4;band>=1;band--)for(let column=0;column<7;column++){const el=document.createElement('div');el.className='pin';el.title=`Column ${column+1}, band ${band}`;byID('pins').append(el);cells.push({el,band,column});}
+byID('step').max=steps.length-1;let timer;
+function draw(){const index=Number(byID('step').value),step=steps[index],state=step.state;byID('position').textContent=`${index+1} / ${steps.length}`;byID('caption').textContent=step.name;for(const {el,band,column} of cells){el.className='pin'+(state.bands[column]===band?' active'+(state.highlight===column?' highlight':''):'');}byID('bands').textContent=state.bands.join(' · ');byID('highlight').textContent=state.highlight<7?`Column ${state.highlight+1}`:'None';byID('tap').textContent=state.tap_active?'Yes — commanded dip':'No';byID('angles').textContent=state.angles_deg.map(v=>`${v}°`).join(' · ');byID('controller').textContent=`${state.result}; ${state.active?'active':'neutral'}`;byID('packet').textContent=step.advanced?.hex??step.packet??'No new packet';byID('reply').textContent=JSON.stringify(step.advanced??{command:step.command,state:step.state},null,2);byID('pins').setAttribute('aria-label',state.bands.map((v,i)=>`Column ${i+1}, band ${v}`).join('. '));}
+function advance(){byID('step').value=(Number(byID('step').value)+1)%steps.length;draw();}
+byID('step').addEventListener('input',draw);byID('next').addEventListener('click',advance);byID('play').addEventListener('click',()=>{if(timer){clearInterval(timer);timer=null;byID('play').textContent='Play';}else{timer=setInterval(advance,600);byID('play').textContent='Pause';}});draw();
+</script>
+</html>

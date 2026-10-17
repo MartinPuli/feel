@@ -51,7 +51,8 @@ public enum SpatialMemoryError: Error, Equatable, CustomStringConvertible {
     }
 }
 
-/// Volatile memory only. No maps, persistence, navigation paths, or object recognition.
+/// Session memory. Persistent archives may populate a new frame only after the caller's
+/// WorldMapRestoreGate reports ready. No navigation paths or object recognition.
 /// The caller confines mutation to one queue (the app uses the main queue).
 public struct SpatialMemoryManager: Sendable {
     public static let returnID = "$return"
@@ -74,6 +75,12 @@ public struct SpatialMemoryManager: Sendable {
         end(); usedSessions.insert(id); session=id
     }
     public mutating func end() { session=nil; bookmarks=[]; selectedID=nil; activeID=nil; returnPoint=nil }
+    /// Installation is inactive: a separate explicit Recall or Return is required.
+    public mutating func restore(archive:PersistentMemoryArchive,session:String) throws {
+        guard self.session==session else { throw SpatialMemoryError.noSession }
+        guard bookmarks.isEmpty,returnPoint==nil,activeID==nil else { throw PersistentMemoryError.invalidArchive("restore session is no longer empty") }
+        bookmarks=archive.bookmarks; returnPoint=archive.returnPoint
+    }
     @discardableResult public mutating func remember(id: String=UUID().uuidString, name: String, sample: MemoryPose, now: Double) throws -> SpatialBookmark {
         try requireContext(sample,now:now)
         guard Self.validID(id) else { throw SpatialMemoryError.invalidID }
