@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import AVFoundation
+import ARKit
 import UIKit
 import FeelCore
 import MultipeerConnectivity
@@ -16,6 +17,7 @@ final class LanternModel:ObservableObject {
     @Published private(set) var detectorStatus="Loading detector"
     @Published private(set) var detectorAvailable=false
     @Published private(set) var targetDescription="No target selected"
+    var automaticFloorCalibrationSupported: Bool { ARPlaneAnchor.isClassificationSupported }
     @Published private(set) var calibrated=false
     /// Depth-only session recording for offline replay (simulation/run.py). Stops with sensing.
     @Published var recordingDepth=false {
@@ -499,7 +501,9 @@ final class LanternModel:ObservableObject {
             if voiceLastGuidance != guidanceState {
                 let message: String
                 switch guidanceState {
-                case .uncalibrated: message = "What's the measured camera height? I need it to calibrate."
+                case .uncalibrated: message = automaticFloorCalibrationSupported
+                    ? "Looking for the floor. Move slowly with some floor in view. You can also use measured height in floor setup."
+                    : "Automatic floor calibration is unavailable. Enter the measured camera height in floor setup."
                 case .trackingLost: message = "Tracking lost. Sensing is unavailable."
                 default: message = "Sensing is unavailable. Pins are neutral."
                 }

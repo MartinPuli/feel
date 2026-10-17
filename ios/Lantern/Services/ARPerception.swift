@@ -59,6 +59,9 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private var lastPointing: TimeInterval = -.infinity
     private lazy var detector=ObjectDetector()
     private var floorY: Double?
+    private var automaticFloor=AutomaticFloorCalibration()
+    private var isRunning=false
+    private var isInterrupted=false
     private var sessionEpoch=0
     private var worldEpoch=0
     private var earliestFrame:TimeInterval = 0
@@ -81,17 +84,21 @@ final class ARPerception: NSObject, ARSessionDelegate {
     }
     @discardableResult func start(epoch:Int) -> Bool {
         guard ARWorldTrackingConfiguration.isSupported,ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) else { publishStatus("Live sensing requires a LiDAR iPhone or iPad. Use Simulation for software replay."); return false }
-        queue.async {
-            self.sessionEpoch=epoch; self.worldEpoch += 1; self.earliestFrame=ProcessInfo.processInfo.systemUptime
-            self.floorY=nil; self.lastTarget=nil; self.generation += 1; self.lastProcessed = -.infinity
-            self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil
-            let config=ARWorldTrackingConfiguration(); config.frameSemantics=[.sceneDepth]; config.worldAlignment = .gravity
-            self.session.run(config,options:[.resetTracking,.removeExistingAnchors]); self.publishStatus("Move slowly, then calibrate measured camera height")
-        }
+        queue.async { self.isRunning=true; self.runSession(epoch:epoch) }
         return true
     }
+    /// Called only on the AR delegate queue, including interruption recovery.
+    private func runSession(epoch: Int) {
+        isInterrupted=false; sessionEpoch=epoch; worldEpoch += 1; earliestFrame=ProcessInfo.processInfo.systemUptime
+        floorY=nil; automaticFloor.reset(); lastTarget=nil; generation += 1; lastProcessed = -.infinity
+        grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil
+        let config=ARWorldTrackingConfiguration(); config.frameSemantics=[.sceneDepth]
+        config.worldAlignment = .gravity; config.planeDetection=[.horizontal]
+        session.run(config,options:[.resetTracking,.removeExistingAnchors])
+        publishStatus(ARPlaneAnchor.isClassificationSupported ? "Looking for floor — move slowly with the floor in view" : "Automatic floor detection unavailable — calibrate measured camera height")
+    }
     func stop() {
-        queue.async { self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.publishStatus("Stopped") }
+        queue.async { self.isRunning=false; self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.automaticFloor.reset(); self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.publishStatus("Stopped") }
     }
     func setFinder(_ mode: FinderMode,epoch:Int) { queue.async { self.finder=mode; self.finderEpoch=epoch; self.lastTarget=nil; self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.generation += 1 } }
     /// Route to a fixed world point (two fingers on a puck column) until cleared with nil.
@@ -112,11 +119,11 @@ final class ARPerception: NSObject, ARSessionDelegate {
     }
     func calibrate(cameraHeight: Double) {
         queue.async {
-            guard cameraHeight.isFinite,cameraHeight>=0.6,cameraHeight<=2.1,let frame=self.session.currentFrame,case .normal=frame.camera.trackingState,ProcessInfo.processInfo.systemUptime-frame.timestamp<=0.25 else { self.publishStatus("Calibration needs fresh normal tracking and camera height 0.6–2.1 m"); return }
+            guard self.isRunning,!self.isInterrupted,cameraHeight.isFinite,cameraHeight>=0.6,cameraHeight<=2.1,let frame=self.session.currentFrame,frame.timestamp>=self.earliestFrame,case .normal=frame.camera.trackingState,ProcessInfo.processInfo.systemUptime>=frame.timestamp,ProcessInfo.processInfo.systemUptime-frame.timestamp<=0.25 else { self.publishStatus("Calibration needs fresh normal tracking and camera height 0.6–2.1 m"); return }
             let pose=Self.pose(frame.camera.transform)
             guard Self.mountValid(pose) else { self.publishStatus("Hold camera landscape-left, upright and facing forward"); return }
             // Heights in the floor map depend on the floor level, so start the map again.
-            self.floorY=pose.position.y-cameraHeight; self.grid.reset(); self.lastHint=nil; self.publishStatus("Floor calibrated from measured camera height")
+            self.floorY=pose.position.y-cameraHeight; self.automaticFloor.reset(); self.grid.reset(); self.lastHint=nil; self.publishStatus("Floor calibrated from measured camera height")
         }
     }
     /// One frame for Where-is: photo, depth and pose captured together, or nil when the
@@ -166,6 +173,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private func publishStatus(_ status: String) { DispatchQueue.main.async { self.onStatus?(status) } }
     private func publish(_ frame: PerceptionFrame) { DispatchQueue.main.async { self.onFrame?(frame) } }
     func session(_ session: ARSession,didUpdate frame: ARFrame) {
+        guard isRunning,!isInterrupted else { return }
         // Camera video for replay runs at its own rate, before the 10 Hz processing gate.
         if frame.timestamp>=earliestFrame,recorder.isActive { recorder.appendVideo(frame.capturedImage,timestamp:frame.timestamp) }
         guard frame.timestamp>=earliestFrame,frame.timestamp-lastProcessed>=0.095 else { return }; lastProcessed=frame.timestamp
@@ -187,7 +195,26 @@ final class ARPerception: NSObject, ARSessionDelegate {
             }
         }
         let normal: Bool; if case .normal=frame.camera.trackingState { normal=true } else { normal=false }
-        guard normal,Self.mountValid(pose),let depth=frame.sceneDepth,let map=DepthFrame(depth,camera:frame.camera) else {
+        let depthMap=frame.sceneDepth.flatMap { DepthFrame($0,camera:frame.camera) }
+        // Stability is sampled across fresh frames containing the same classified anchor,
+        // not independent classification events. A manual calibration or accepted automatic floor
+        // remains latched until the AR session resets; automatic updates never overwrite it.
+        if floorY == nil {
+            let planes: [FloorPlaneObservation] = ARPlaneAnchor.isClassificationSupported ? frame.anchors.compactMap { anchor in
+                guard let plane=anchor as? ARPlaneAnchor,plane.alignment == .horizontal else { return nil }
+                let center=plane.transform * SIMD4<Float>(plane.center.x,plane.center.y,plane.center.z,1)
+                return FloorPlaneObservation(id:plane.identifier.uuidString,
+                    classification:plane.classification == .floor ? .floor : .other,
+                    worldY:Double(center.y),width:Double(plane.planeExtent.width),length:Double(plane.planeExtent.height))
+            } : []
+            if let accepted=automaticFloor.observe(planes:planes,timestamp:frame.timestamp,
+                now:ProcessInfo.processInfo.systemUptime,cameraY:pose.position.y,
+                trackingNormal:normal && depthMap != nil,mountValid:Self.mountValid(pose)) {
+                floorY=accepted; grid.reset(); lastHint=nil
+                publishStatus("Floor calibrated automatically")
+            }
+        }
+        guard normal,Self.mountValid(pose),let map=depthMap else {
             if recorder.isActive { recorder.append(RecordedFrame(timestamp:frame.timestamp,trackingNormal:normal,pose:pose,floorY:floorY,depth:nil)) }
             lastTarget=nil; lastHint=nil; candidates=[]; generation += 1
             publish(PerceptionFrame(epoch:sessionEpoch,finderEpoch:finderEpoch,worldEpoch:worldEpoch,timestamp:frame.timestamp,tracking:false,distances:Array(repeating:nil,count:7),target:nil,pose:pose,floorY:floorY))
@@ -256,13 +283,16 @@ final class ARPerception: NSObject, ARSessionDelegate {
     }
     func sessionShouldAttemptRelocalization(_ session: ARSession) -> Bool { false }
     private func invalidate() {
-        lastTarget=nil; floorY=nil; grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil; generation += 1
+        lastTarget=nil; floorY=nil; automaticFloor.reset(); grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil; generation += 1
         let epoch=sessionEpoch
         DispatchQueue.main.async { self.onInvalidated?(epoch) }
     }
-    func sessionWasInterrupted(_ session: ARSession) { invalidate(); publishStatus("AR interrupted — recalibrate after restart") }
-    func sessionInterruptionEnded(_ session: ARSession) { _=start(epoch:sessionEpoch) }
-    func session(_ session: ARSession,didFailWithError error: Error) { invalidate(); publishStatus("AR error: \(error.localizedDescription)") }
+    func sessionWasInterrupted(_ session: ARSession) { isInterrupted=true; invalidate(); publishStatus("AR interrupted — recalibrate after restart") }
+    func sessionInterruptionEnded(_ session: ARSession) {
+        guard isRunning else { return }
+        runSession(epoch:sessionEpoch)
+    }
+    func session(_ session: ARSession,didFailWithError error: Error) { isRunning=false; invalidate(); publishStatus("AR error: \(error.localizedDescription)") }
 }
 
 extension DepthGrid {

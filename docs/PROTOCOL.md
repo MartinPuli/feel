@@ -59,8 +59,8 @@ targets outside that field into an edge column.
 
 Tracking must be normal and depth at most 250 ms old, with no future timestamps.
 Target estimates expire after 500 ms. This is a conservative prototype policy,
-not a sensor accuracy claim. Floor filtering requires the app's explicit reference
-calibration; world origin is not automatically the floor. Low-confidence and
+not a sensor accuracy claim. Floor filtering requires an accepted reference: a stable classified floor or
+a manual measured-height override; world origin is not automatically the floor. Low-confidence and
 missing depth never establish free space. Target guidance uses the same packet,
 retaining nearer obstacle requests; the app explains if the requested target is
 unavailable. See `ios/README.md` for detector, floor, and mount conventions.
