@@ -10,11 +10,45 @@ struct VoiceConfiguration: Codable, Equatable {
               url.user == nil, url.password == nil, url.fragment == nil, url.query == nil else { return nil }
         return url
     }
-    var isValid: Bool { url != nil && accessToken.count >= 32 && !accessToken.contains(where: { $0.isWhitespace }) }
+    var isValid: Bool {
+        url != nil && (32...4096).contains(accessToken.utf8.count)
+            && accessToken.utf8.allSatisfy { (33...126).contains($0) }
+            && !accessToken.hasPrefix("grok_") && !accessToken.hasPrefix("xai-")
+    }
 }
 
 struct VoiceConfigurationStore {
     private let service = "org.feel.hackharvard.voice"
+    func loadForLaunch() -> VoiceConfiguration? {
+        let process = ProcessInfo.processInfo
+        guard !process.arguments.contains("--uitesting") else { return nil }
+        #if DEBUG
+        if process.environment["FEEL_PROVISION_VOICE"] == "1" {
+            // A failed explicit setup must not silently reconnect to an older service.
+            // Returning nil keeps the normal spoken setup recovery available.
+            return try? Self.provision(environment: process.environment, arguments: process.arguments, save: save)
+        }
+        #endif
+        return load()
+    }
+
+    #if DEBUG
+    /// A paired developer launch can provision Keychain without embedding credentials in the app.
+    /// Only the separate token-service credential belongs here, never the provider API key.
+    static func provision(environment: [String: String], arguments: [String],
+                          save: (VoiceConfiguration) throws -> Void) throws -> VoiceConfiguration? {
+        guard !arguments.contains("--uitesting"), environment["FEEL_PROVISION_VOICE"] == "1" else { return nil }
+        guard let endpoint = environment["FEEL_VOICE_ENDPOINT"],
+              let token = environment["FEEL_VOICE_ACCESS_TOKEN"] else {
+            throw StoreError.invalid
+        }
+        let configuration = VoiceConfiguration(endpoint: endpoint, accessToken: token)
+        guard configuration.isValid else { throw StoreError.invalid }
+        try save(configuration)
+        return configuration
+    }
+    #endif
+
     func load() -> VoiceConfiguration? {
         let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service, kSecAttrAccount as String: "token-service",

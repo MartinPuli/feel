@@ -27,6 +27,33 @@ final class GrokVoiceTests: XCTestCase {
         XCTAssertFalse(VoiceConfiguration(endpoint: config.endpoint, accessToken: "short").isValid)
     }
 
+    #if DEBUG
+    func testDeveloperProvisioningRequiresOptInAndPersistsValidatedServiceCredential() throws {
+        var environment = ["FEEL_VOICE_ENDPOINT": config.endpoint, "FEEL_VOICE_ACCESS_TOKEN": config.accessToken]
+        var saved: VoiceConfiguration?
+        XCTAssertNil(try VoiceConfigurationStore.provision(environment: environment, arguments: [], save: { saved = $0 }))
+        XCTAssertNil(saved)
+        environment["FEEL_PROVISION_VOICE"] = "1"
+        XCTAssertEqual(try VoiceConfigurationStore.provision(environment: environment, arguments: [], save: { saved = $0 }), config)
+        XCTAssertEqual(saved, config)
+        saved = nil
+        XCTAssertNil(try VoiceConfigurationStore.provision(environment: environment, arguments: ["--uitesting"], save: { saved = $0 }))
+        XCTAssertNil(saved)
+        for invalid in ["short", "grok_" + String(repeating: "x", count: 40), "xai-" + String(repeating: "x", count: 40),
+                        String(repeating: "x", count: 32) + "\u{01}", String(repeating: "x", count: 4097)] {
+            environment["FEEL_VOICE_ACCESS_TOKEN"] = invalid
+            XCTAssertThrowsError(try VoiceConfigurationStore.provision(environment: environment, arguments: [], save: { saved = $0 }))
+            XCTAssertNil(saved)
+        }
+        environment["FEEL_VOICE_ACCESS_TOKEN"] = config.accessToken
+        environment["FEEL_VOICE_ENDPOINT"] = "http://voice.example/session"
+        XCTAssertThrowsError(try VoiceConfigurationStore.provision(environment: environment, arguments: [], save: { saved = $0 }))
+        XCTAssertNil(saved)
+        environment["FEEL_VOICE_ENDPOINT"] = config.endpoint
+        XCTAssertThrowsError(try VoiceConfigurationStore.provision(environment: environment, arguments: [], save: { _ in throw VoiceConfigurationStore.StoreError.unavailable }))
+    }
+    #endif
+
     func testStopCancelsPermissionAndTokenCallbacks() {
         var permission: ((Bool) -> Void)?
         let token = FakeVoiceToken(), transport = FakeVoiceTransport(), audio = FakeVoiceAudio()
