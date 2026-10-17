@@ -53,14 +53,14 @@ final class LanternModel:ObservableObject {
     }
     func startSimulation() {
         stop(); mode = .simulation; simulatedAt=ProcessInfo.processInfo.systemUptime
-        status="SIMULATION — synthetic scene, no simulated BLE movement"; calibrated=false; beginTimer()
+        status="SIMULATION: synthetic scene, no simulated BLE movement"; calibrated=false; beginTimer()
     }
     func calibrate() { guard mode == .live else { return }; perception.calibrate(cameraHeight:cameraHeight) }
     func stop() {
         startGeneration += 1; timer?.invalidate(); timer=nil; frame=nil; calibrated=false
         perception.stop(); peer.stop(); mode = .stopped; guidanceState = .stopped
         sequence &+= 1; packet = .neutral(sequence:sequence); puck.send(packet)
-        status="Stopped — neutral command sent if connected"; targetDescription="No guidance"
+        status="Stopped. Neutral command sent if connected"; targetDescription="No guidance"
         UIApplication.shared.isIdleTimerDisabled=false
     }
     private func beginTimer() {
@@ -76,7 +76,7 @@ final class LanternModel:ObservableObject {
             let target=TargetObservation(bearingDegrees:sin(phase/2)*40,distance:1.3,timestamp:now,label:"SIMULATED target")
             let output=TactileEncoder.encode(sequence:sequence,now:now,frameTimestamp:now,tracking:tracking,distances:[0.7,1.1,nil,2,3.5,nil,nil],target:target)
             packet=output.packet; guidanceState=output.state == .live ? .simulation : output.state
-            targetDescription=tracking ? "SIMULATED target sweeping left to right" : "SIMULATED tracking loss — all pins neutral"
+            targetDescription=tracking ? "SIMULATED target sweeping left to right" : "SIMULATED tracking loss. All pins neutral"
             return
         }
         guard mode == .live,let frame else {
@@ -87,7 +87,7 @@ final class LanternModel:ObservableObject {
         let output=TactileEncoder.encode(sequence:sequence,now:now,frameTimestamp:frame.timestamp,tracking:frame.tracking,distances:frame.distances,target:target,floorCalibrated:frame.floorY != nil)
         packet=output.packet; guidanceState=output.state; puck.send(packet)
         if let target,target.valid(at:now),output.state == .live {
-            targetDescription=String(format:"%@ · %.1f m · %.0f°",target.label,target.distance,target.bearingDegrees)
-        } else { targetDescription=finder == .none ? "Obstacle sensing" : "Target unavailable — no directional highlight" }
+            targetDescription=String(format:"%@, %.1f m, %.0f°",target.label,target.distance,target.bearingDegrees)
+        } else { targetDescription=finder == .none ? "Obstacle sensing" : "Target unavailable. No directional highlight" }
     }
 }

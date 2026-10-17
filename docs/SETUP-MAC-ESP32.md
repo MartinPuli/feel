@@ -43,7 +43,7 @@ first check whether you have local changes:
 cd ~/Projects/feel
 git status
 git fetch origin
-git switch feel/v1-foundation
+git switch main
 git pull --ff-only
 ```
 

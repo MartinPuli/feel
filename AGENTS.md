@@ -5,6 +5,11 @@
 
 # Current user directive — October 16, 2026
 
+**Canonical branch: `main` is V1.** The user requested all current V1 work on
+`main`, including the latest foundation and app redesign. Base new V1 work on
+`main`; preserve the older development branches. V2 and V3 remain isolated and
+must not be included in V1 without a new explicit request.
+
 The latest user request supersedes the historical version labels and source assumptions below.
 The repository was empty of production source. HANDOFF-v7.md is a specification/reference,
 not evidence of implemented code. Recreate missing functionality; never wait for original code.

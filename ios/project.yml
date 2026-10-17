@@ -95,6 +95,15 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+  BeaconUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [BeaconUITests]
+    dependencies:
+      - target: Beacon
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   Lantern:
     build:
@@ -109,3 +118,6 @@ schemes:
     build:
       targets:
         Beacon: all
+        BeaconUITests: [test]
+    test:
+      targets: [BeaconUITests]

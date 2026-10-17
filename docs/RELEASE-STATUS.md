@@ -1,5 +1,21 @@
 # Current V1 release candidate
 
+## V1 consolidation on main
+
+The user designated `main` as V1 on October 16, 2026. The integration preserves
+the existing `main` planning document, incorporates foundation `2df1c07`, and
+includes app design commit `da12787`. V2 and V3 remain separate.
+The app redesign passed local simulator builds and 46 distinct tests (38 shared
+core, 3 Lantern integration, 3 Lantern UI, 2 Beacon UI). See
+[app design evidence](evidence/v1-design/validation.txt). The integration is
+published with `[skip ci]` because of the existing Actions billing blocker;
+no hosted validation result is claimed for this merge.
+
+Post-merge local checks passed: source presence, 7 tooling tests, 51 reference
+model tests, production firmware host/adapter/demo/bench checks, and 2,634
+cross-layer assertions across 558 firmware states. No board was flashed during
+the consolidation. [Integration log](evidence/v1-main-integration.log).
+
 The design uses nominal FS0307 **120°** travel, not a measured endpoint.
 Default ESP32/ESP32-S3 firmware keeps seven-servo output disabled until measured
 pulse limits are supplied. The separately selected `esp32-single-demo` uses only

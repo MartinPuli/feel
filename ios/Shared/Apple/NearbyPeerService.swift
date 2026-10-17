@@ -27,7 +27,7 @@ final class NearbyPeerService: NSObject, ObservableObject, MCNearbyServiceBrowse
     private var remoteToken:NIDiscoveryToken?
     private var worldTarget:CapturedTarget?
     private var invitation:((Bool,MCSession?)->Void)?
-    private var running=false
+    @Published private(set) var running=false
     private var rangingActive=false
     private var rangingSuspended=false
     init(role:Role) { self.role=role; super.init() }
@@ -40,7 +40,7 @@ final class NearbyPeerService: NSObject, ObservableObject, MCNearbyServiceBrowse
         if role == .seeker {
             let b=MCNearbyServiceBrowser(peer:localPeer,serviceType:"feel-beacon"); browser=b; b.delegate=self; b.startBrowsingForPeers(); status="Choose your teammate's Beacon phone"
         } else {
-            let a=MCNearbyServiceAdvertiser(peer:localPeer,discoveryInfo:["feel":"v1"],serviceType:"feel-beacon"); advertiser=a; a.delegate=self; a.startAdvertisingPeer(); status="Ready — accept a Lantern request below"
+            let a=MCNearbyServiceAdvertiser(peer:localPeer,discoveryInfo:["feel":"v1"],serviceType:"feel-beacon"); advertiser=a; a.delegate=self; a.startAdvertisingPeer(); status="Ready. Waiting for a Lantern request"
         }
     }
     func stop() {
@@ -67,7 +67,7 @@ final class NearbyPeerService: NSObject, ObservableObject, MCNearbyServiceBrowse
         guard running,!rangingSuspended,let peer=selected,network?.connectedPeers.contains(peer)==true,let token=remoteToken,let nearby else { return }
         let config=NINearbyPeerConfiguration(peerToken:token)
         if let arSession { config.isCameraAssistanceEnabled=true; nearby.setARSession(arSession) }
-        rangingActive=true; nearby.run(config); status="Ranging — keep both apps foreground"
+        rangingActive=true; nearby.run(config); status="Ranging. Keep both apps foreground"
     }
     func browser(_ browser:MCNearbyServiceBrowser,foundPeer peerID:MCPeerID,withDiscoveryInfo info:[String:String]?) {
         DispatchQueue.main.async { guard browser === self.browser,self.running,info?["feel"]=="v1" else { return }; if !self.peers.contains(peerID) { self.peers.append(peerID) } }
@@ -87,7 +87,7 @@ final class NearbyPeerService: NSObject, ObservableObject, MCNearbyServiceBrowse
             if state == .connected { self.connectedName=peerID.displayName; self.sendToken() }
             else if state == .notConnected {
                 self.target=nil; self.worldTarget=nil; self.distance=nil; self.connectedName=nil; self.remoteToken=nil; self.selected=nil
-                self.rangingActive=false; self.replaceRangingSession(); self.status="Peer disconnected — select again"
+                self.rangingActive=false; self.replaceRangingSession(); self.status="Peer disconnected. Select again"
             }
         }
     }
@@ -110,7 +110,7 @@ final class NearbyPeerService: NSObject, ObservableObject, MCNearbyServiceBrowse
         guard let arSession,let frame=arSession.currentFrame,case .normal=frame.camera.trackingState,
               ProcessInfo.processInfo.systemUptime-frame.timestamp<=0.25,
               let transform=session.worldTransform(for:object) else {
-            status=object.distance == nil ? "Peer range unavailable" : "Range available; waiting for a reliable AR direction"
+            status=object.distance == nil ? "Peer range unavailable" : (role == .beacon ? "Distance available. Your teammate's phone determines direction." : "Range available; waiting for a reliable AR direction")
             return
         }
         let relative=simd_inverse(frame.camera.transform)*transform.columns.3
