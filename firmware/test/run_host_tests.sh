@@ -21,3 +21,14 @@ python3 "$firmware_dir/test/test_bench_validation.py"
   -I "$firmware_dir/include" "$firmware_dir/src/controller.cpp" \
   "$firmware_dir/test/single_demo_tests.cpp" -o "$firmware_dir/build/single-demo-tests"
 "$firmware_dir/build/single-demo-tests"
+
+"$compiler" -std=c++11 -Wall -Wextra -Werror -Wpedantic -O2 \
+  -I "$firmware_dir/include" "$firmware_dir/src/controller.cpp" \
+  "$firmware_dir/src/commands.cpp" "$firmware_dir/test/adapter_tests.cpp" \
+  -o "$firmware_dir/build/adapter-tests"
+"$firmware_dir/build/adapter-tests"
+
+"$compiler" -std=c++17 -Wall -Wextra -Werror -Wpedantic -O2 \
+  -I "$firmware_dir/bench-single/include" "$firmware_dir/bench-single/test/state_test.cpp" \
+  -o "$firmware_dir/build/single-bench-tests"
+"$firmware_dir/build/single-bench-tests"

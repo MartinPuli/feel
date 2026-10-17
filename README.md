@@ -1,6 +1,7 @@
 > **FS0307 120° revision:** current CAD and firmware use 0/40/80/120° band positions.
 > See [design and validation](docs/FS0307-120-DESIGN.md). Old 175° shafts/calibration
-> are superseded. Physical servo output remains disabled and untested.
+> are superseded. Default seven-servo PWM is disabled pending measured limits.
+> The opt-in [single-servo iPhone demo](docs/SINGLE-SERVO-IPHONE.md) has user-reported live motion.
 
 # FEEL
 
@@ -18,10 +19,10 @@ verification of this repository. The earlier preparation work is preserved on
 | `feel/v2-spatial-memory` | Remember / Recall / Return, created only after V1 validation |
 | `feel/v3-advanced` | Optional advanced work, only after V1 and V2 |
 
-Para preparar la placa en tu Mac, empieza por [SETUP-MAC-ESP32.md](docs/SETUP-MAC-ESP32.md).
+To set up the board on your Mac, start with [SETUP-MAC-ESP32.md](docs/SETUP-MAC-ESP32.md).
 
 See [release status](docs/RELEASE-STATUS.md) for actual checks and blockers.
-**No real hardware has been tested in this build environment.**
+**One-servo motion has been observed; full travel, seven-servo mechanics and sensing accuracy remain unverified.**
 
 ## Run software checks
 

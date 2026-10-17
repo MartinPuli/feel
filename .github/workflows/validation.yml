@@ -1,7 +1,7 @@
 name: FEEL greenfield software validation
 on:
   push:
-    branches: [main, 'feel/**']
+    branches: [main, 'feel/**', 'codex/**']
   pull_request:
   workflow_dispatch:
 permissions:
@@ -23,6 +23,11 @@ jobs:
       - run: swift --version && sh ios/scripts/test_portable.sh
       - run: swift build --package-path ios/Shared/FeelCore
       - run: sh firmware/test/run_host_tests.sh
+      - name: Standalone single-servo bench state tests
+        run: |
+          mkdir -p firmware/build
+          c++ -std=c++11 -Wall -Wextra -Werror -Wpedantic -O2 -I firmware/bench-single/include firmware/bench-single/test/state_test.cpp -o firmware/build/single-bench-tests
+          firmware/build/single-bench-tests
       - run: python3 validation/production/run.py
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -38,6 +43,10 @@ jobs:
         with: {persist-credentials: false}
       - run: python3 -m pip install platformio==6.1.18
       - run: pio run -j 2 --project-dir firmware
+      - name: Single-servo BLE demo compile (no upload)
+        run: pio run -j 2 --project-dir firmware -e esp32-single-demo
+      - name: Standalone single-servo bench compile (no upload)
+        run: pio run -j 2 --project-dir firmware/bench-single -e esp32-single-center
       - run: sh firmware/test/build_output_paths.sh
       - run: sh firmware/test/run_host_tests.sh
   cad:

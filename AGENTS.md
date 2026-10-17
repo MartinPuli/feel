@@ -1,6 +1,6 @@
 > October 16 update: the user explicitly selected the FS0307 nominal **120°** design.
 > Current CAD/firmware/protocol supersede historical 175° / 650–2500 µs instructions.
-> Assume 120° for design; do not describe it as a physical measurement. PWM stays off.
+> Assume 120° for design; do not describe it as a physical measurement. Default seven-servo PWM stays off; the opt-in GPIO32 midpoint demo has user-reported motion.
 > See `docs/FS0307-120-DESIGN.md` for the new layout and verification.
 
 # Current user directive — October 16, 2026
@@ -16,6 +16,13 @@ not evidence of implemented code. Recreate missing functionality; never wait for
 - Missing physical measurements and device tests remain pending and must be recorded honestly.
 
 The engineering, bounded-agent, independent-review and physical-safety procedures below still apply.
+
+## Repository language
+
+Write source identifiers, comments, documentation, interface text, logs and new
+commit messages in English. English is the default interface and voice-command
+language. Keep protocol tokens and intentional multilingual input grammar or
+Unicode test fixtures unchanged when they are required for existing behavior.
 
 ---
 

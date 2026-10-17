@@ -2,6 +2,7 @@
 #include <NimBLEDevice.h>
 #include <Preferences.h>
 #include <esp_arduino_version.h>
+#include <driver/ledc.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
@@ -12,8 +13,9 @@
 #include "feel/commands.hpp"
 #include "feel/calibration.hpp"
 #include "feel/output_guard.hpp"
+#include "feel/pwm.hpp"
+#include "feel/serial_line.hpp"
 #if FEEL_SINGLE_SERVO_DEMO
-#include <driver/ledc.h>
 #include "feel/single_demo.hpp"
 #endif
 
@@ -26,8 +28,8 @@ bool preferencesReady = false;
 bool pwmReady = false;
 feel::OutputGuard outputGuard(FEEL_ENABLE_SERVO_OUTPUT != 0,
     FEEL_VERIFIED_PULSE_MIN_US, FEEL_VERIFIED_PULSE_MAX_US);
-constexpr uint8_t kPwmBits = 14; // S3 supports 14, not classic's optional 20.
-constexpr uint32_t kPwmFrequency = 50;
+constexpr uint8_t kPwmBits = feel::kServoPwmBits;
+constexpr uint32_t kPwmFrequency = feel::kServoPwmHz;
 uint16_t lastPulse[feel::kColumns]{};
 std::atomic<bool> queueFault{false};
 std::atomic<int> peerHandle{-1};
@@ -41,6 +43,26 @@ struct Event {
     uint8_t bytes[feel::kPacketBytes];
 };
 QueueHandle_t events = nullptr;
+
+// Arduino AUTO can choose the 1 MHz reference clock on classic ESP32, yielding
+// 49.920 Hz at 14 bits. APB has an exact nominal divider of 25000/256 for 50 Hz.
+// Channels 0..6 share timers in pairs on both supported targets. This project
+// does not enable dynamic frequency scaling or sleep.
+#if SOC_LEDC_SUPPORT_HS_MODE
+constexpr ledc_mode_t kPwmMode = LEDC_HIGH_SPEED_MODE;
+#else
+constexpr ledc_mode_t kPwmMode = LEDC_LOW_SPEED_MODE;
+#endif
+bool configurePwmTimer(uint8_t index) {
+    ledc_timer_config_t timer = {};
+    timer.speed_mode = kPwmMode;
+    timer.duty_resolution = LEDC_TIMER_14_BIT;
+    timer.timer_num = static_cast<ledc_timer_t>(index);
+    timer.freq_hz = kPwmFrequency;
+    timer.clk_cfg = LEDC_USE_APB_CLK;
+    return ledc_timer_config(&timer) == ESP_OK &&
+        ledc_get_freq(kPwmMode, timer.timer_num) == kPwmFrequency;
+}
 
 #if FEEL_SINGLE_SERVO_DEMO
 constexpr uint8_t kDemoPin = 32;
@@ -62,14 +84,8 @@ void detachDemo() {
 void setupDemo() {
     detachDemo();
     const bool initialized = ledcSetup(0, kPwmFrequency, kPwmBits) != 0;
-    ledc_timer_config_t timer = {};
-    timer.speed_mode = LEDC_HIGH_SPEED_MODE;
-    timer.duty_resolution = LEDC_TIMER_14_BIT;
-    timer.timer_num = LEDC_TIMER_0;
-    timer.freq_hz = kPwmFrequency;
-    timer.clk_cfg = LEDC_USE_APB_CLK;
-    const bool configured = initialized && ledc_timer_config(&timer) == ESP_OK;
-    demoTimerHz = configured ? ledc_get_freq(LEDC_HIGH_SPEED_MODE, LEDC_TIMER_0) : 0;
+    const bool configured = initialized && configurePwmTimer(0);
+    demoTimerHz = configured ? ledc_get_freq(kPwmMode, LEDC_TIMER_0) : 0;
     demoReady = configured && demoTimerHz == kPwmFrequency;
     ledcWrite(0, 0);
     Serial.println("ONE SERVO DEMO: center sector3 -> GPIO32, nominal1450..1550us; boot output OFF; cam mapping NOT enabled");
@@ -77,7 +93,8 @@ void setupDemo() {
 void writeDemo() {
     const uint16_t pulse = feel::singleDemoPulse(controller.snapshot());
     if (!demoReady || pulse == 0) { detachDemo(); return; }
-    if (pulse < 1450 || pulse > 1550) {
+    uint32_t duty = 0;
+    if (!feel::servoDuty(pulse, 1450, 1550, duty)) {
         demoReady = false;
         detachDemo();
         return;
@@ -88,7 +105,6 @@ void writeDemo() {
         demoAttached = true;
     }
     if (demoPulse != pulse) {
-        const uint32_t duty = (static_cast<uint32_t>(pulse) * (1UL << kPwmBits) + 10000UL) / 20000UL;
         ledcWrite(0, duty);
         demoPulse = pulse;
     }
@@ -185,9 +201,20 @@ void writePWM() {
         Serial.println("ERROR commanded pulse outside measured range; all outputs detached; remove servo power");
         return;
     }
+    uint32_t duties[feel::kColumns]{};
+    // Validate every quantized pulse before updating any channel.
+    for (std::size_t i = 0; i < feel::kColumns; ++i) {
+        if (!feel::servoDuty(state.pulses[i], FEEL_VERIFIED_PULSE_MIN_US,
+                             FEEL_VERIFIED_PULSE_MAX_US, duties[i])) {
+            disablePWM();
+            controller.stop(millis());
+            Serial.println("ERROR pulse interval cannot be represented; all outputs detached");
+            return;
+        }
+    }
     for (std::size_t i = 0; i < feel::kColumns; ++i) {
         if (state.pulses[i] == lastPulse[i]) continue;
-        const uint32_t duty = (static_cast<uint32_t>(state.pulses[i]) * ((1UL << kPwmBits) - 1UL) + 10000UL) / 20000UL;
+        const uint32_t duty = duties[i];
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
         if (!ledcWrite(kServoPins[i], duty)) {
             disablePWM();
@@ -220,17 +247,31 @@ void setupPWM() {
     pwmReady = true;
     for (std::size_t i = 0; i < feel::kColumns; ++i) {
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
-        if (!ledcAttachChannel(kServoPins[i], kPwmFrequency, kPwmBits, static_cast<int8_t>(i))) pwmReady = false;
+        if (!ledcAttachChannel(kServoPins[i], kPwmFrequency, kPwmBits, static_cast<int8_t>(i)) ||
+            !ledcWrite(kServoPins[i], 0)) pwmReady = false;
 #else
+        // Initialize Arduino channel metadata while outputs remain detached.
         if (ledcSetup(static_cast<uint8_t>(i), kPwmFrequency, kPwmBits) == 0) pwmReady = false;
-        ledcAttachPin(kServoPins[i], static_cast<uint8_t>(i));
+        ledcWrite(static_cast<uint8_t>(i), 0);
 #endif
+    }
+    // Override AUTO only after every channel is initialized: initializing its
+    // sibling channel would otherwise overwrite that shared timer's clock.
+    if (pwmReady) {
+        for (uint8_t timer = 0; timer < (feel::kColumns + 1) / 2; ++timer) {
+            if (!configurePwmTimer(timer)) pwmReady = false;
+        }
     }
     if (!pwmReady) {
         disablePWM();
         Serial.println("ERROR PWM setup failed; outputs detached; remove servo power");
         return;
     }
+#if ESP_ARDUINO_VERSION_MAJOR < 3
+    for (std::size_t i = 0; i < feel::kColumns; ++i) {
+        ledcAttachPin(kServoPins[i], static_cast<uint8_t>(i));
+    }
+#endif
     writePWM();
 }
 
@@ -295,22 +336,20 @@ void serialCommand(const char* line, uint32_t now) {
 }
 
 void readSerial(uint32_t now) {
-    static char line[96]{};
-    static std::size_t used = 0;
-    static bool overflow = false;
+    static feel::SerialLine input;
     // Bound work per loop; serial flooding cannot starve packet expiry.
     for (int budget = 0; budget < 96 && Serial.available(); ++budget) {
-        const char c = static_cast<char>(Serial.read());
-        if (c == '\n') {
-            if (!overflow) { line[used] = '\0'; serialCommand(line, now); }
-            else Serial.println("bad_command (line too long)");
-            used = 0;
-            overflow = false;
+        const auto event = input.push(static_cast<uint8_t>(Serial.read()));
+        if (event == feel::SerialLine::Event::Fault) {
+            controller.stop(millis());
+            writePWM();
+            Serial.println("bad_command (invalid byte or line too long); stopped");
+            return;
+        }
+        if (event == feel::SerialLine::Event::Line) {
+            serialCommand(input.line(), now);
             return; // At most one command per loop.
         }
-        if (c == '\r') continue;
-        if (used < sizeof(line) - 1 && !overflow) line[used++] = c;
-        else overflow = true;
     }
 }
 

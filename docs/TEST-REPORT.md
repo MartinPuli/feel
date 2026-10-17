@@ -1,18 +1,34 @@
-# Current 120° revision
+# Current V1 release candidate
 
-The user selected nominal FS0307 120° travel on October 16, 2026.
-Current source and executed checks are recorded in [FS0307-120-DESIGN.md](FS0307-120-DESIGN.md).
-The earlier local Mac session installed FEEL and verified actual Bluetooth packet
-reception with the previous PWM-disabled firmware; the 120° revision has not
-been flashed or physically tested. Camera UI response was user-reported.
+The design uses nominal FS0307 **120°** travel, not a measured endpoint.
+Default ESP32/ESP32-S3 firmware keeps seven-servo output disabled until measured
+pulse limits are supplied. The separately selected `esp32-single-demo` uses only
+GPIO32 and the center camera sector, within nominal1450–1550 µs. It is the version
+last installed on the user's board; it does not operate the seven-column cam.
+
+A signed iPhone installation and BLE packet receipt were verified locally. The
+user reported successful five-second bench motion and then small live app-driven
+servo motion. Boot readback confirmed the demo timer ready and output detached.
+See [single-servo evidence](SINGLE-SERVO-IPHONE-VALIDATION.md) and
+[bench evidence](../firmware/bench-single/VALIDATION.md). These observations do not
+measure pulse width, angle, power under load, sensing accuracy or stop latency.
+
+Release hardening adds explicit50 Hz APB timer configuration,14-bit duty
+quantization within supplied pulse limits, malformed serial-line rejection, and
+CI coverage for both single-servo builds. Physical validation of full120° travel,
+seven actuators, printed mechanics and tactile use remains **NOT VERIFIED**.
+Current release test results will be recorded separately from the historical
+foundation evidence below. No claim of production hardware readiness is made.
 
 ## Historical foundation evidence (before the 120° revision)
 
 # Executed V1 tests
 
 October 16, 2026; Linux, Swift 6.1.3, OpenSCAD 2021.01, PlatformIO 6.1.18.
-The final sequential run has **14 PASS and one BLOCKED** check. No physical device
-was operated. Each log is under `docs/evidence/v1/`.
+The final Linux run has **14 PASS and one BLOCKED** check. Hosted macOS subsequently
+closed the Apple-platform gate: all four jobs in [run 38972250150](https://github.com/MartinPuli/hackharvard/actions/runs/38972250150)
+passed for commit `f6244379e7e8e9dad81f84fb4cd8886f9e77c7ee`.
+No physical device was operated. Logs and hosted result metadata are under `docs/evidence/v1/`.
 
 | Command / suite | Observed result |
 |---|---|
@@ -30,7 +46,7 @@ was operated. Each log is under `docs/evidence/v1/`.
 | `python3 cad/tools/cam_sim.py` | 78/78 geometric checks PASS using actual cam polygon vertices |
 | `python3 -m unittest discover -s cad/test -v` | 13 PASS, including collision/print gate and concurrent writer rejection |
 | `python3 scripts/fetch_model.py` | Pinned genuine model: 62,200,325 bytes; SHA-256 PASS |
-| `bash scripts/check_ios.sh` | BLOCKED: no Xcode, XcodeGen or iOS simulator on Linux |
+| `bash scripts/check_ios.sh` | PASS on hosted Xcode 16.4: 3 app unit + 1 UI tests; both simulator and unsigned device builds. Locally BLOCKED on Linux. |
 
 Protocol tests cover all 65,536 sequence pairs and 10,000 seeded corruption steps.
 Production cross-layer replay uses seed 20261016, five valid and eight invalid
@@ -59,7 +75,8 @@ newly tested CAD output lock, and completed sequentially. Linux Swift requires
 restrict subprocess monitoring; final build and all assertions completed. Raw
 logs preserve their own timestamps and source-parent/dirty-state metadata.
 
-Apple source syntax and independent API review are not Xcode typechecking.
-No CoreML inference, simulator UI suite, signed app, BLE radio, LiDAR, UWB,
-physical PWM, servo/print, electrical or human tactile test passed here: all remain
-unperformed. See `HARDWARE-BRINGUP.md` for the physical gates.
+Hosted Xcode typechecking, simulator execution and unsigned device builds passed;
+the test/build completion lines are in `evidence/v1/ios-ci-excerpt.log`.
+No CoreML inference, signed app installation, BLE radio, LiDAR, UWB, physical PWM,
+servo/print, electrical or human tactile test was performed. See
+`HARDWARE-BRINGUP.md` for the physical gates.

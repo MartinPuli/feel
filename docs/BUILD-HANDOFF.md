@@ -1,6 +1,6 @@
 > October 16 update: the user explicitly selected the FS0307 nominal **120°** design.
 > Current CAD/firmware/protocol supersede historical 175° / 650–2500 µs instructions.
-> Assume 120° for design; do not describe it as a physical measurement. PWM stays off.
+> Assume 120° for design; do not describe it as a physical measurement. Default seven-servo PWM stays off; the opt-in GPIO32 midpoint demo has user-reported motion.
 > See `docs/FS0307-120-DESIGN.md` for the new layout and verification.
 
 # FEEL greenfield build handoff

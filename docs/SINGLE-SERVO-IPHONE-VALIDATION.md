@@ -9,7 +9,7 @@ Recorded UTC: 2026-10-17T02:57:02.186764+00:00
 - Upload to connected ESP32-D0WD-V3 rev3.1: PASS, flash hashes verified by uploader.
 - Boot timer readiness and output detached: PASS via serial readback below.
 - Physical voltage/current/pulse measurements: NOT DONE.
-- Live iPhone-to-servo integration: pending user connection and observation.
+- Live iPhone-to-servo integration: USER-REPORTED MOTION. After connection, the user reported that the servo moves slightly. This is consistent with the limited1450–1550 µs demo; it is not a measured angle, waveform, distance accuracy or seven-servo test.
 - Attempt to launch existing installed iPhone app from Mac failed because the device was not available through CoreDevice; user can open app directly without a cable to Mac.
 
 Firmware SHA256: `c568b732c8cbee99b81ade26baeefb8cbe4b49050a843f3054f93fe4e56bf55e`
