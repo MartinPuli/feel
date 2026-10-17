@@ -12,6 +12,18 @@ final class WhereIsSetupUITests: XCTestCase {
         return app
     }
 
+    func testVoiceProviderPickerOffersOpenAI() {
+        let app = openAssistantPanel()
+        let picker = app.segmentedControls["voiceProvider"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["voiceProviderNote"].label.contains("Grok"))
+        picker.buttons["OpenAI"].tap()
+        XCTAssertTrue(app.staticTexts["voiceProviderNote"].label.contains("OpenAI"))
+        app.buttons["saveVoiceSetup"].tap()
+        XCTAssertTrue(app.staticTexts["voiceSetupError"].waitForExistence(timeout: 3), "An empty key must be refused")
+        XCTAssertTrue(app.staticTexts["voiceSetupError"].label.contains("OpenAI API key"))
+    }
+
     func testWhereIsSetupValidatesAndSaves() {
         let app = openAssistantPanel()
         XCTAssertEqual(app.staticTexts["whereIsStatus"].label, "Where-is not set up")

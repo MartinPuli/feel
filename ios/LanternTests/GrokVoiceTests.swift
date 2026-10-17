@@ -362,7 +362,7 @@ private final class FakeVoiceTransport: VoiceTransport {
     var openCount = 0
     var sent: [[String: Any]] = []
     var holdSends = false
-    func open(token: String) { openCount += 1 }
+    func open(url: URL, token: String) { openCount += 1 }
     func send(_ event: [String: Any], completion: @escaping (Bool) -> Void) { sent.append(event); if !holdSends { completion(true) } }
     func close() {}
     func emit(_ event: [String: Any]) { onEvent?(event) }

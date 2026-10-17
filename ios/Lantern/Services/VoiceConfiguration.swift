@@ -1,19 +1,74 @@
 import Foundation
 import Security
 
+/// Which realtime speech service the assistant talks to. Both speak the same event protocol.
+enum VoiceProvider: String, Codable, CaseIterable {
+    case grok, openai
+
+    var displayName: String { self == .grok ? "Grok" : "OpenAI" }
+    var realtimeURL: URL {
+        switch self {
+        case .grok: return URL(string: "wss://api.x.ai/v1/realtime?model=grok-voice-latest")!
+        case .openai: return URL(string: "wss://api.openai.com/v1/realtime?model=gpt-realtime-2.1")!
+        }
+    }
+    /// The session.update payload. xAI keeps the older top-level shape; OpenAI's GA API nests audio settings.
+    func sessionUpdate(instructions: String, tools: [[String: Any]]) -> [String: Any] {
+        let format: [String: Any] = ["type": "audio/pcm", "rate": 24000]
+        switch self {
+        case .grok:
+            return ["voice": "sal", "instructions": instructions, "turn_detection": ["type": "server_vad"], "tools": tools,
+                    "audio": ["input": ["format": format], "output": ["format": format]]]
+        case .openai:
+            return ["type": "realtime", "model": "gpt-realtime-2.1", "output_modalities": ["audio"], "instructions": instructions, "tools": tools,
+                    "audio": ["input": ["format": format, "turn_detection": ["type": "server_vad"]],
+                              "output": ["format": format, "voice": "marin"]]]
+        }
+    }
+    /// Speak exact app text without a user turn.
+    func announcement(_ text: String) -> [String: Any] {
+        switch self {
+        case .grok:
+            return ["type": "conversation.item.create", "item": ["type": "force_message", "role": "assistant",
+                     "content": [["type": "output_text", "text": text]]]]
+        case .openai:
+            return ["type": "response.create", "response": ["instructions": "Say exactly this, and nothing else: \(text)",
+                                                             "output_modalities": ["audio"]]]
+        }
+    }
+}
+
 struct VoiceConfiguration: Codable, Equatable {
+    var provider: VoiceProvider = .grok
     let endpoint: String
     let accessToken: String
+
+    init(provider: VoiceProvider = .grok, endpoint: String, accessToken: String) {
+        self.provider = provider; self.endpoint = endpoint; self.accessToken = accessToken
+    }
+    // Records saved before providers existed have no `provider`; they are Grok.
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        provider = try values.decodeIfPresent(VoiceProvider.self, forKey: .provider) ?? .grok
+        endpoint = try values.decode(String.self, forKey: .endpoint)
+        accessToken = try values.decode(String.self, forKey: .accessToken)
+    }
 
     var url: URL? {
         guard let url = URL(string: endpoint), url.scheme == "https", let host = url.host, !host.isEmpty,
               url.user == nil, url.password == nil, url.fragment == nil, url.query == nil else { return nil }
         return url
     }
+    /// OpenAI can be reached with the API key itself (no token service). Grok always needs the service,
+    /// and the service credential must never be a raw provider key.
+    var usesDirectKey: Bool { provider == .openai && endpoint.isEmpty }
+    private var tokenLooksValid: Bool {
+        (32...4096).contains(accessToken.utf8.count) && accessToken.utf8.allSatisfy { (33...126).contains($0) }
+    }
     var isValid: Bool {
-        url != nil && (32...4096).contains(accessToken.utf8.count)
-            && accessToken.utf8.allSatisfy { (33...126).contains($0) }
-            && !accessToken.hasPrefix("grok_") && !accessToken.hasPrefix("xai-")
+        guard tokenLooksValid else { return false }
+        if usesDirectKey { return true }
+        return url != nil && !accessToken.hasPrefix("grok_") && !accessToken.hasPrefix("xai-") && !accessToken.hasPrefix("sk-")
     }
 }
 
@@ -38,11 +93,9 @@ struct VoiceConfigurationStore {
     static func provision(environment: [String: String], arguments: [String],
                           save: (VoiceConfiguration) throws -> Void) throws -> VoiceConfiguration? {
         guard !arguments.contains("--uitesting"), environment["FEEL_PROVISION_VOICE"] == "1" else { return nil }
-        guard let endpoint = environment["FEEL_VOICE_ENDPOINT"],
-              let token = environment["FEEL_VOICE_ACCESS_TOKEN"] else {
-            throw StoreError.invalid
-        }
-        let configuration = VoiceConfiguration(endpoint: endpoint, accessToken: token)
+        guard let token = environment["FEEL_VOICE_ACCESS_TOKEN"] else { throw StoreError.invalid }
+        let provider = VoiceProvider(rawValue: environment["FEEL_VOICE_PROVIDER"] ?? "grok") ?? .grok
+        let configuration = VoiceConfiguration(provider: provider, endpoint: environment["FEEL_VOICE_ENDPOINT"] ?? "", accessToken: token)
         guard configuration.isValid else { throw StoreError.invalid }
         try save(configuration)
         return configuration

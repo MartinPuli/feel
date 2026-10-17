@@ -26,10 +26,12 @@ struct VoiceControl: View {
 struct VoiceSetup: View {
     @ObservedObject var voice: GrokVoiceSession
     let close: () -> Void
+    @State private var provider: VoiceProvider = .grok
     @State private var endpoint = ""
     @State private var accessToken = ""
     @State private var setupError = ""
     @State private var showSetup = false
+    @State private var typedRequest = ""
     @Environment(\.openURL) private var openURL
 
     var body: some View {
@@ -41,6 +43,20 @@ struct VoiceSetup: View {
             } else if !voice.caption.isEmpty {
                 Text(voice.caption).font(FeelTypography.body)
                     .accessibilityIdentifier("voiceCaption")
+            }
+            if voice.isActive {
+                HStack(spacing: 10) {
+                    TextField("Type a request", text: $typedRequest)
+                        .textFieldStyle(.roundedBorder).submitLabel(.send)
+                        .onSubmit { sendTyped() }
+                        .accessibilityLabel("Type a request")
+                        .accessibilityHint("The same as saying it. Useful in a loud room or with a keyboard.")
+                        .accessibilityIdentifier("voiceTypedRequest")
+                    Button("Send") { sendTyped() }
+                        .buttonStyle(FeelSecondaryButtonStyle()).frame(width: 96)
+                        .disabled(typedRequest.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .accessibilityIdentifier("voiceSend")
+                }
             }
             Text("FEEL listens while the app is open. Say what you need.")
                 .font(FeelTypography.body)
@@ -67,22 +83,35 @@ struct VoiceSetup: View {
             } else {
                 Text("One-time assistant setup")
                     .font(FeelTypography.headline).accessibilityAddTraits(.isHeader)
-                Text("Enter your FEEL voice service address and access code. Your xAI API key stays on the server.")
+                Picker("Voice service", selection: $provider) {
+                    Text("Grok").tag(VoiceProvider.grok)
+                    Text("OpenAI").tag(VoiceProvider.openai)
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("voiceProvider")
+                Text(provider == .grok
+                     ? "Grok through your FEEL voice service: enter its address and access code. Your xAI API key stays on the server."
+                     : "OpenAI Realtime. Enter your OpenAI API key; it stays in this phone's Keychain. Or enter a token service address and its access code instead.")
                     .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
-                TextField("https://your-service/session", text: $endpoint)
+                    .accessibilityIdentifier("voiceProviderNote")
+                TextField(provider == .grok ? "https://your-service/session" : "Token service address (optional)", text: $endpoint)
                     .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
                     .textFieldStyle(.roundedBorder).accessibilityLabel("Voice service address")
                     .accessibilityIdentifier("voiceEndpoint")
-                SecureField("Access code", text: $accessToken)
+                SecureField(provider == .grok ? "Access code" : (endpoint.isEmpty ? "OpenAI API key" : "Access code"), text: $accessToken)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
                     .textFieldStyle(.roundedBorder).accessibilityIdentifier("voiceAccessCode")
                 if !setupError.isEmpty { Text(setupError).font(FeelTypography.footnote).accessibilityIdentifier("voiceSetupError") }
                 Button("Enable assistant") {
                     let token = accessToken.isEmpty && endpoint == voice.configuration?.endpoint ? voice.configuration?.accessToken ?? "" : accessToken
                     do {
-                        try voice.saveConfiguration(endpoint: endpoint, accessToken: token)
+                        try voice.saveConfiguration(provider: provider, endpoint: endpoint, accessToken: token)
                         accessToken = ""; voice.resumeAssistant(); close()
-                    } catch { setupError = "Use an HTTPS service address and an access code of at least 32 characters." }
+                    } catch {
+                        setupError = provider == .grok
+                            ? "Use an HTTPS service address and an access code of at least 32 characters, not a raw API key."
+                            : "Enter an OpenAI API key of at least 32 characters, or an HTTPS token service address with its access code."
+                    }
                 }
                 .buttonStyle(FeelPrimaryButtonStyle())
                 .accessibilityIdentifier("saveVoiceSetup")
@@ -92,9 +121,16 @@ struct VoiceSetup: View {
                     }.frame(minHeight: 44)
                 }
             }
-            Text("Grok receives microphone audio and the app status needed to answer while FEEL is open. Camera images stay on your phone. Listening pauses in the background and resumes when you return, unless you pause the assistant.")
+            Text("\(voice.configuration?.provider.displayName ?? provider.displayName) receives microphone audio and the app status needed to answer while FEEL is open. Camera images leave the phone only for a Where-is request. Listening pauses in the background and resumes when you return, unless you pause the assistant.")
                 .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
         }
-        .onAppear { endpoint = voice.configuration?.endpoint ?? "" }
+        .onAppear {
+            endpoint = voice.configuration?.endpoint ?? ""
+            provider = voice.configuration?.provider ?? .grok
+        }
+    }
+
+    private func sendTyped() {
+        if voice.sendText(typedRequest) { typedRequest = "" }
     }
 }

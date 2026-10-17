@@ -23,6 +23,18 @@ settings once under Assistant settings → Where-is setup; they stay in Keychain
 photo leaves the phone only for this request. The result is a model's reading of
 one photo, not a confirmed object.
 
+**Two voice services.** Assistant settings offer Grok (through the FEEL voice token
+service, as before) or OpenAI Realtime (`gpt-realtime-2.1`, voice Marin). OpenAI can
+be used with an API key entered once on the phone (Keychain), or through a token
+service like Grok. Both services receive the same tools and instructions; the app
+adapts the session and announcement payloads to each API. A developer launch can
+provision OpenAI with `FEEL_PROVISION_VOICE=1`, `FEEL_VOICE_PROVIDER=openai` and
+`FEEL_VOICE_ACCESS_TOKEN`.
+
+**Typed requests.** While the assistant is active, the Assistant panel has a "Type a
+request" field. Text takes the same path as speech (a user item, then a response), so
+a loud room or a Bluetooth keyboard with VoiceOver still works.
+
 “Stop” stops sensing and sends neutral tactile output while the assistant keeps
 listening. “Pause assistant” or “stop listening” ends microphone capture. The
 VoiceOver-accessible status control can resume it. Each modal exposes separate

@@ -1,3 +1,7 @@
+> **V4 on `feel/v4-chalk` (2026-10-17 02:30): Where-is through Chalk's Model Gateway and a second
+> voice service (OpenAI Realtime). Software checks PASS on this Mac and in the iOS Simulator.
+> Physical camera, LiDAR, puck and live speech: NOT RUN here.** Details at the end of this file.
+
 > Seven-servo preparation: `esp32-production` and its English setup guide are
 > ready in source. Host/configuration tests, enabled-output compile fixtures and
 > 2,634 cross-layer assertions passed. Real deployment is still gated on the
@@ -143,3 +147,43 @@ Primary hardware is the team's classic ESP32-WROOM. Servo PWM defaults OFF.
 Published FS0307 travel/voltage differs from the handoff's 175°/650–2500 µs
 assumption. Identify and measure the actual units before enabling output. Nominal
 CAD clearances, horn fit, thin-guide stiffness and foam return are unverified.
+
+## V4: Where-is through Chalk, two voice services (2026-10-17)
+
+| Check | Result | How |
+|---|---|---|
+| Swift core (portable) | PASS, 54 tests incl. held target, depth grid, placement | `sh ios/scripts/test_portable.sh` |
+| App unit tests (simulator) | PASS: gateway, Where-is service, `where_is` command, voice providers, existing suites | `xcodebuild … -only-testing:LanternTests` |
+| UI tests | PASS: existing suite with the restyle, Where-is setup, provider picker | `bash scripts/check_ios.sh` |
+| Chalk gateway from this Mac | PASS: text and image requests on `openai/gpt-6.1-sol`, 2.6–3.7 s | `chalk/check_connection.py --chat` |
+| Chalk gateway from the app | See the simulator self-test screenshots in the session notes | Assistant panel → Where-is setup → Test with a sample photo |
+| Chalk Evaluation run | BLOCKED: needs `chalk login` and venue photos | `chalk/README.md` → Run the evaluation |
+| Grok voice | NOT RUN here (an earlier entry above records a confirmed phone session) | — |
+| OpenAI Realtime voice | Protocol shapes unit-tested; live session NOT RUN here | — |
+| Where-is on the LiDAR iPhone | NOT RUN: checklist below | — |
+
+### Camera and LiDAR conventions, checked against Apple's documentation
+
+- `ARCamera.transform`: in camera space the x-axis points right when the device is in
+  `UIDeviceOrientation.landscapeLeft`, y points up, z points toward the screen side. The
+  app's landscape-left mount therefore gives +x right, +y up and −z forward, which is what
+  `CameraIntrinsics.unproject` and `TactileGeometry.bearing` assume.
+- `ARCamera.intrinsics`: fx, fy and the principal point are in pixels from the top-left of
+  the captured image; the app scales them to the 256×192 depth grid by the ratio of depth
+  size to `imageResolution` (`ARPerception.intrinsics`).
+- `ARDepthData.depthMap`: metres, `kCVPixelFormatType_DepthFloat32`; `confidenceMap` holds
+  `ARConfidenceLevel` low/medium/high (0/1/2) and only medium and high are used.
+- `ARFrame.capturedImage`: full-range YCbCr; `CIImage` converts it for the Where-is JPEG. It
+  shares the depth map's orientation, so the model's box maps to depth pixels unrotated.
+
+### Device checklist for the hardware session (not yet run)
+
+1. Install from `feel/v4-chalk`; in Assistant settings choose the voice service and enter the
+   Where-is gateway settings (or launch with the DEBUG provisioning variables).
+2. Start the camera, calibrate with the measured lens height, confirm `Where-is ready`.
+3. Say "where is the chair": confirmation within 1 s, spoken observation and pin within 6 s;
+   turn 90°, the pin follows; walk to it: "You're at the chair."
+4. Say "where is the refrigerator" with none present: "I couldn't see a refrigerator in the photo."; no pin change.
+5. Hold a target, cover the camera until tracking resets: "Lost tracking. Say it again."; pins neutral.
+6. Hold a target, turn your back to it: "chair is behind you." within 5 s; "stop": highlight off, obstacles still shown.
+7. Record PASS/FAIL per step here with the commit.

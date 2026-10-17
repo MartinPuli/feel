@@ -6,7 +6,7 @@ import UIKit
 protocol VoiceTransport: AnyObject {
     var onEvent: (([String: Any]) -> Void)? { get set }
     var onFailure: (() -> Void)? { get set }
-    func open(token: String)
+    func open(url: URL, token: String)
     func send(_ event: [String: Any], completion: @escaping (Bool) -> Void)
     func close()
 }
@@ -16,8 +16,8 @@ final class GrokWebSocket: VoiceTransport {
     var onFailure: (() -> Void)?
     private var socket: URLSessionWebSocketTask?
     private let session = URLSession(configuration: .ephemeral)
-    func open(token: String) {
-        var request = URLRequest(url: URL(string: "wss://api.x.ai/v1/realtime?model=grok-voice-latest")!)
+    func open(url: URL, token: String) {
+        var request = URLRequest(url: url)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         let socket = session.webSocketTask(with: request)
         socket.maximumMessageSize = 1_048_576
@@ -172,8 +172,8 @@ final class GrokVoiceSession: ObservableObject {
     }
     deinit { observers.forEach(NotificationCenter.default.removeObserver) }
 
-    func saveConfiguration(endpoint: String, accessToken: String) throws {
-        let config = VoiceConfiguration(endpoint: endpoint.trimmingCharacters(in: .whitespacesAndNewlines),
+    func saveConfiguration(provider: VoiceProvider = .grok, endpoint: String, accessToken: String) throws {
+        let config = VoiceConfiguration(provider: provider, endpoint: endpoint.trimmingCharacters(in: .whitespacesAndNewlines),
                                         accessToken: accessToken.trimmingCharacters(in: .whitespacesAndNewlines))
         try store.save(config)
         disconnect(); configuration = config; errorMessage = ""
@@ -217,7 +217,7 @@ final class GrokVoiceSession: ObservableObject {
         guard !isActive else { return }
         disconnect()
         guard let configuration, configuration.isValid else {
-            errorMessage = "Set up Grok Voice in Settings first."; phase = .failed; return
+            errorMessage = "Set up the voice service in Assistant settings first."; phase = .failed; return
         }
         lastAnnouncement = .distantPast
         phase = .connecting; caption = "Opening voice"; errorMessage = ""; needsMicrophoneSettings = false
@@ -230,27 +230,45 @@ final class GrokVoiceSession: ObservableObject {
                 self.speak("Microphone access is off. Enable it in iPhone Settings.")
                 return
             }
-            self.caption = "Connecting to Grok"
+            self.caption = "Connecting to \(configuration.provider.displayName)"
             self.armTimeout(id)
+            if configuration.usesDirectKey {
+                self.openTransport(url: configuration.provider.realtimeURL, token: configuration.accessToken, generation: id)
+                return
+            }
             self.tokenClient.fetch(configuration) { [weak self] result in
                 guard let self, self.generation == id, self.isActive else { return }
                 switch result {
                 case .failure: self.fail("Voice couldn't connect. Check your connection and voice setup, then retry.")
-                case .success(let token):
-                    let connection = self.transportFactory()
-                    self.transport = connection
-                    connection.onEvent = { [weak self] event in
-                        guard let self, self.generation == id, self.isActive else { return }
-                        self.receive(event)
-                    }
-                    connection.onFailure = { [weak self] in
-                        guard let self, self.generation == id, self.isActive else { return }
-                        self.fail("Voice disconnected. Tap to reconnect.")
-                    }
-                    connection.open(token: token)
+                case .success(let token): self.openTransport(url: configuration.provider.realtimeURL, token: token, generation: id)
                 }
             }
         }
+    }
+    private func openTransport(url: URL, token: String, generation id: UUID) {
+        let connection = transportFactory()
+        transport = connection
+        connection.onEvent = { [weak self] event in
+            guard let self, self.generation == id, self.isActive else { return }
+            self.receive(event)
+        }
+        connection.onFailure = { [weak self] in
+            guard let self, self.generation == id, self.isActive else { return }
+            self.fail("Voice disconnected. Tap to reconnect.")
+        }
+        connection.open(url: url, token: token)
+    }
+
+    /// A typed request takes the same path as speech: a user item, then a response.
+    /// Also the fallback for a loud room or a Bluetooth keyboard with VoiceOver.
+    @discardableResult func sendText(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard isActive, receivedConfiguration, !userSpeaking, (1...160).contains(trimmed.unicodeScalars.count) else { return false }
+        awaitingResponse = true; phase = .thinking; caption = String(trimmed.prefix(400))
+        enqueue(["type": "conversation.item.create", "item": ["type": "message", "role": "user",
+                 "content": [["type": "input_text", "text": trimmed]]]])
+        enqueue(["type": "response.create"])
+        return true
     }
 
     func disconnect() {
@@ -271,14 +289,13 @@ final class GrokVoiceSession: ObservableObject {
 
     /// Only exact, freshly produced app text may be announced without a user turn.
     @discardableResult func announce(_ text: String, automatic: Bool = true, sceneBound: Bool = false) -> Bool {
-        guard (!automatic || proactiveEnabled), !userSpeaking, phase == .listening, !responseRunning, !awaitingResponse, !discardNextResponse, !audio.pendingPlayback,
-              Date().timeIntervalSince(lastAnnouncement) > 5 else { return false }
+        guard let provider = configuration?.provider, (!automatic || proactiveEnabled), !userSpeaking, phase == .listening, !responseRunning,
+              !awaitingResponse, !discardNextResponse, !audio.pendingPlayback, Date().timeIntervalSince(lastAnnouncement) > 5 else { return false }
         lastAnnouncement = Date()
         awaitingResponse = true
         if sceneBound { bindSceneSpeech() }
         phase = .thinking
-        enqueue(["type": "conversation.item.create", "item": ["type": "force_message", "role": "assistant",
-                 "content": [["type": "output_text", "text": String(text.prefix(240))]]]])
+        enqueue(provider.announcement(String(text.prefix(240))))
         return isActive
     }
 
@@ -390,11 +407,8 @@ final class GrokVoiceSession: ObservableObject {
         switch type {
         case "session.created":
             guard !configured else { return }; configured = true
-            enqueue(["type": "session.update", "session": [
-                "voice": "sal", "instructions": VoiceCommand.instructions,
-                "turn_detection": ["type": "server_vad"], "tools": VoiceCommand.tools,
-                "audio": ["input": ["format": ["type": "audio/pcm", "rate": 24000]],
-                          "output": ["format": ["type": "audio/pcm", "rate": 24000]]]]])
+            let provider = configuration?.provider ?? .grok
+            enqueue(["type": "session.update", "session": provider.sessionUpdate(instructions: VoiceCommand.instructions, tools: VoiceCommand.tools)])
         case "session.updated":
             guard configured, !receivedConfiguration else { return }
             receivedConfiguration = true
