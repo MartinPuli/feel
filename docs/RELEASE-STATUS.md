@@ -1,3 +1,5 @@
+> **Chalk production setup (2026-10-17):** metadata-only trace policy saved; two synthetic image requests passed. Quota enforcement is disabled in the managed backend and has been escalated to Chalk with user authorization. Public production remains blocked. See [current gates](CHALK-PRODUCTION.md).
+
 > **Current Chalk environment follow-up (2026-10-17):** Feel production routing and two generic text requests passed. CLI login is configured; no dataset or hosted evaluation run exists yet. Earlier image/simulator results below are historical and do not validate the new key on the phone. See [current implementation and remaining checks](CHALK-IMPLEMENTATION.md).
 
 > **V4 on `feel/v4-chalk` (2026-10-17 03:40): Where-is through Chalk's Model Gateway with an on-device

@@ -1,5 +1,7 @@
 # FEEL Where-is with Chalk
 
+> Production setup follow-up: trace content logging is now disabled, support has received the quota-backend blocker, and a synthetic infrastructure evaluation has been created. See [current production gates](../docs/CHALK-PRODUCTION.md). Historical statuses below describe the earlier audit.
+
 Chalk routes the **photo Where-is** request to a vision model. FEEL's voice conversation uses OpenAI Realtime directly. V4 also has a separate Chalk-backed text interpretation service; that feature remains on its V4 branch.
 
 See [implementation status, architecture diagrams and evaluation plan](../docs/CHALK-IMPLEMENTATION.md) for the complete split.

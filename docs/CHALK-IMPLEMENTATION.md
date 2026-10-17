@@ -1,5 +1,7 @@
 # Chalk implementation and evaluation readiness
 
+> Production setup follow-up: trace content logging is now disabled, support has received the quota-backend blocker, and a synthetic infrastructure evaluation has been created. See [current production gates](CHALK-PRODUCTION.md). Historical statuses below describe the earlier audit.
+
 Updated October 17, 2026. Baseline: V1 `main` at `4f3f8e5`; V4 inspected at `5f0ff56`. Main was fetched and pulled before this audit. V2, V3 and V4 remain separate branches.
 
 ## What is implemented
