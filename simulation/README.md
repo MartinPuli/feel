@@ -17,7 +17,9 @@ python3 simulation/run.py --update-baselines # accept the current timelines as t
 python3 simulation/run.py simulation/scenarios/find-door.json   # one scenario
 ```
 
-Open `simulation/out/report.html`. It shows a band-per-column heatmap over time with label disagreements marked, and a scrubber that puts the depth frame each tick used next to the 7 × 4 pin grid it produced. Exit status is non-zero if a scenario fails or output is nondeterministic. Scenarios with `knownIssue` report `KNOWN` instead of failing. A changed baseline is reported, not failed.
+Then `cd web && npm run dev` and open http://127.0.0.1:3000/replay. Choose any session, simulated or recorded, and watch the camera recording beside the commanded pin grid and the LiDAR depth, all in sync (see [web/README.md](../web/README.md)). `--no-web` skips writing that data. The standalone `simulation/out/report.html` still works offline: it has the same heatmap and scrubber, without the camera view.
+
+Exit status is non-zero if a scenario fails or output is nondeterministic. Scenarios with `knownIssue` report `KNOWN` instead of failing. A changed baseline is reported, not failed.
 
 The Swift tests are in `ios/Shared/FeelCore/Tests/FeelSimTests`. They need full Xcode for XCTest: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test`.
 
@@ -34,15 +36,15 @@ Synthetic scenes are ideal geometry: a floor at y = 0, boxes and vertical cylind
 
 ## Record a real walk on the iPhone
 
-1. In Lantern, open the live controls and turn on **Record for replay → Record depth**. Recording stops when sensing stops. It saves depth, confidence, pose, floor height and the cached detection, and **no camera image**. The rate is about 2.5 MB/s, capped at 1.5 GB (about ten minutes).
+1. In Lantern, open the live controls and turn on **Record for replay → Record depth**. Recording stops when sensing stops. It saves depth, confidence, pose, floor height and the cached detection. **Include camera video** (on by default) also writes an H.264 `.mp4` and a `.video.json` timing file for the `/replay` page. Together that's about 3 MB/s, and the depth recording is capped at 1.5 GB (about ten minutes). Nothing leaves the phone until you share it.
 2. Walk the course. Note roughly when things happen (for example "door on the right at about 6 s"), or film the walk on a second phone for labelling.
-3. Copy the files off the phone, either from **Files → On My iPhone → FEEL → Recordings** (AirDrop to the Mac) or with:
+3. Copy the files off the phone (all three per session: `.feelrec`, `.mp4`, `.video.json`), either from **Files → On My iPhone → FEEL → Recordings** (AirDrop to the Mac) or with:
    ```sh
    xcrun devicectl device copy from --device <name|udid> --domain-type appDataContainer \
      --domain-identifier org.feel.hackharvard.lantern --source Documents/Recordings --destination simulation/recordings
    ```
-   `*.feelrec` in `simulation/recordings/` is git-ignored. Do not commit personal sensor recordings.
-4. Run once with no labels to see the timeline, then write labels from the report's time axis:
+   Everything in `simulation/recordings/` except this README is git-ignored. Do not commit personal sensor recordings or camera video.
+4. Run once with no labels and watch it on `/replay`, then write labels in seconds from the start of the recording (the page's clock):
    ```json
    {
      "title": "Hallway to room 101",

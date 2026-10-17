@@ -6,7 +6,9 @@
 > an obstacle, the tap drops out with ≥ 0.15 s detector latency, and single LiDAR
 > outliers raise pins. 8 FeelSim and 148 FeelCore tests pass; Lantern builds and its
 > 40 unit tests pass (1 skipped). No phone recording has been captured or replayed yet.
-> [Harness](../simulation/README.md).
+> [Harness](../simulation/README.md). The new FEEL site (`web/`, local only so far) adds
+> `/replay`: choose a simulated or phone session and watch the camera recording beside the
+> commanded pin grid and LiDAR depth. Phone camera video is recorded but untested on a device.
 
 > Direction arrows (October 17, supersedes the repeating guidance wave): a V hand sign
 > requests one tactile arrow along an A* route over a local LiDAR floor map to the
