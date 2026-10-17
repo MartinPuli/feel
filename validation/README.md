@@ -42,7 +42,7 @@ byte deterministic. The report includes the SHA-256 of the scenario file.
 - Nominal cam command phases: request a gap, request a band, assume a hold after
   a configurable elapsed time. No continuous angular travel is simulated. A servo
   moving between these requested angles could pass through other lobes.
-- Revised 120° design band angles 0° / 40° / 80° / 120°, derived gap midpoints, and a nominal
+- User-assumed 175° design band angles 0° / 58° / 116° / 174°, derived gap midpoints, and a nominal
   13° highlight dip hint. **Highlight is a tap request only; tap cadence,
   actuation, and physical tapping are not simulated.**
 - Already-sectorized synthetic depth, target bearing, tracking and freshness

@@ -129,7 +129,7 @@ enum VoiceCommand: Equatable {
             tool("find_target", "Select the target the user asks for. This does not confirm a detection or start the camera.", properties: ["target": ["type": "string", "enum": ["obstacles", "door", "exit", "chair", "person", "teammate"]]]),
             tool("where_is", "Find one thing the user names that is not in find_target's list, such as the registration desk, a water fountain or the stairs. Takes one camera photo and points the pins at it when found. Confirm once; the result arrives a few seconds later as an observation. Call get_status to check progress.", properties: ["thing": ["type": "string", "minLength": 1, "maxLength": 60]]),
             tool("venue_info", "Answer a question about this venue, such as an entrance, restroom or accessibility notice, from the reviewed venue pack downloaded on the phone. Works without internet. Read the returned answer as given, including its source date; never add details or call a path clear.", properties: ["question": ["type": "string", "minLength": 1, "maxLength": 200]]),
-            tool("calibrate_floor", "Calibrate only after the user supplies a measured lens height in meters and confirms the phone is mounted upright with rear camera forward and top edge to their left. Never guess height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
+            tool("calibrate_floor", "Manual override for automatic floor calibration. Use only after the user supplies a measured lens height in meters and confirms the phone is mounted upright with rear camera forward and top edge to their left. Never guess height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
             tool("set_camera_height", "Set the measured camera lens height without calibrating. Ask the user for their measurement in meters; never infer it from their body height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
             tool("start_simulation", "Start the synthetic demo only when requested. Always identify it as simulation, never live sensing."),
             tool("scan_pucks", "Begin Bluetooth discovery when the user asks to connect. Wait briefly, then list_pucks. Do not select a device yourself."),
@@ -178,8 +178,8 @@ enum VoiceCommand: Equatable {
     Do not give walking directions, promise safe passage, identify unobserved objects or invent distances.
     A rectangle candidate is only a possible door, never a confirmed door or safe opening.
     A where_is result is a model's reading of one photo, never a confirmed object.
-    Always call synthetic results simulation. Ask for a measured height before floor calibration.
-    Start the camera, calibrate and connect hardware only when requested. Ask which discovered puck to connect.
+    Always call synthetic results simulation. Floor calibration starts automatically with the camera and waits for a stable detected floor. Never claim it succeeded without get_status confirming calibrated. Ask for a measured height only when using the manual calibrate_floor override.
+    Start the camera, manually override calibration and connect hardware only when requested. Ask which discovered puck to connect.
     Discovering teammate phones never authorizes an invitation. List them, ask the user to choose, then request that exact phone and wait for its owner's consent.
     If a tool reports pending permission, a request or a failure, preserve that uncertainty.
     Do not invent abilities or suggest unsupported actions. Never read device IDs or internal status tokens aloud.

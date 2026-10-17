@@ -15,7 +15,12 @@
 #include "feel/output_guard.hpp"
 #include "feel/pwm.hpp"
 #include "feel/serial_line.hpp"
-#if FEEL_SINGLE_SERVO_LIVE
+#if FEEL_SEVEN_SERVO_LIVE
+#include "feel/seven_live.hpp"
+#if ESP_ARDUINO_VERSION_MAJOR != 2
+#error "Seven-live requires the pinned Arduino-ESP32 2 toolchain"
+#endif
+#elif FEEL_SINGLE_SERVO_LIVE
 #include "feel/single_live.hpp"
 #elif FEEL_SINGLE_SERVO_DEMO
 #include "feel/single_demo.hpp"
@@ -69,12 +74,21 @@ bool configurePwmTimer(uint8_t index) {
 #if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
 constexpr uint8_t kDemoPin = 32;
 #if FEEL_SINGLE_SERVO_LIVE
-constexpr const char* kAdvertisedName = "FEEL Center Live";
-constexpr const char* kSingleMode = "LIVE120";
-constexpr uint16_t kSingleMinimumUs = feel::kMinPulseUs;
-constexpr uint16_t kSingleMaximumUs = feel::kMaxPulseUs;
+#if FEEL_SINGLE_SERVO_WIDE
+constexpr const char* kAdvertisedName = "FEEL Wide TEST";
+constexpr const char* kSingleMode = "WIDE_UNVERIFIED";
+constexpr uint16_t kSingleMinimumUs = 650;
+constexpr uint16_t kSingleMaximumUs = feel::kSingleLiveMaximumUs;
 constexpr std::size_t kSingleSector = feel::kSingleLiveSector;
-constexpr const char* kSingleHelp = "ONE SERVO LIVE120: center sector3 production band/gap/tap/calibration -> GPIO32, nominal900..2100us; NOT measured travel; STATUS or STOP; no serial motion/calibration";
+constexpr const char* kSingleHelp = "EXPERIMENTAL ONE UNLOADED SERVO GPIO32:650..2648us; NOT verified travel or production; app may command endpoints; zero bands -> gap; serial STOP/disconnect detaches";
+#else
+constexpr const char* kAdvertisedName = "FEEL Puck";
+constexpr const char* kSingleMode = "LIVE189_UNVERIFIED";
+constexpr uint16_t kSingleMinimumUs = feel::kMinPulseUs;
+constexpr uint16_t kSingleMaximumUs = feel::kSingleLiveMaximumUs;
+constexpr std::size_t kSingleSector = feel::kSingleLiveSector;
+constexpr const char* kSingleHelp = "ONE SERVO189 EXPERIMENT: center sector3 production band/gap/tap/calibration -> GPIO32, assumed650..2648us; NOT measured travel; STATUS or STOP; no serial motion/calibration";
+#endif
 #else
 constexpr const char* kAdvertisedName = "FEEL Center Demo";
 constexpr const char* kSingleMode = "DEMO";
@@ -113,7 +127,11 @@ void setupDemo() {
 }
 void writeDemo() {
 #if FEEL_SINGLE_SERVO_LIVE
+    #if FEEL_SINGLE_SERVO_WIDE
+    const uint16_t pulse = feel::singleWidePulse(controller.snapshot());
+#else
     const uint16_t pulse = feel::singleLivePulse(controller.snapshot());
+#endif
 #else
     const uint16_t pulse = feel::singleDemoPulse(controller.snapshot());
 #endif
@@ -137,8 +155,66 @@ void writeDemo() {
 #else
 constexpr const char* kAdvertisedName = "FEEL Puck";
 #endif
+#if FEEL_SEVEN_SERVO_LIVE
+bool sevenReady = false;
+bool sevenAttached = false;
+constexpr const char* kSevenHelp = "SEVEN LIVE189 EXPERIMENT: GPIO32,33,25,26,27,14,13; +159us trim capped2648us; NOT measured safe travel; zero bands -> nearest gap; STATUS/HELP/STOP only";
+void detachSeven() {
+    for (std::size_t column = 0; column < feel::kColumns; ++column) {
+        if (sevenAttached) {
+            ledcWrite(static_cast<uint8_t>(column), 0);
+            ledcDetachPin(kServoPins[column]);
+        }
+        pinMode(kServoPins[column], OUTPUT);
+        digitalWrite(kServoPins[column], LOW);
+        lastPulse[column] = 0;
+    }
+    sevenAttached = false;
+}
+void setupSeven() {
+    detachSeven();
+    sevenReady = true;
+    for (std::size_t column = 0; column < feel::kColumns; ++column) {
+        if (ledcSetup(static_cast<uint8_t>(column), kPwmFrequency, kPwmBits) == 0) sevenReady = false;
+        ledcWrite(static_cast<uint8_t>(column), 0);
+    }
+    // Configure shared timers only after all sibling channels are initialized.
+    for (uint8_t timer = 0; timer < (feel::kColumns + 1) / 2; ++timer) {
+        if (!configurePwmTimer(timer)) sevenReady = false;
+    }
+    detachSeven();
+    Serial.println(kSevenHelp);
+    Serial.println(sevenReady ? "Seven-live ready; boot outputs detached; physical validation pending" : "ERROR seven-live timer setup; outputs detached");
+}
+void writeSeven() {
+    if (!sevenReady) { detachSeven(); return; }
+    feel::SevenLivePlan plan;
+    const auto result = feel::sevenLivePlan(controller.snapshot(), plan);
+    if (result != feel::SevenLiveResult::Ready) {
+        if (result == feel::SevenLiveResult::Invalid) sevenReady = false; // Latched until reboot.
+        detachSeven();
+        return;
+    }
+    // All seven commands and quantized duties are validated before attachment.
+    if (!sevenAttached) {
+        for (std::size_t column = 0; column < feel::kColumns; ++column) {
+            ledcWrite(static_cast<uint8_t>(column), 0);
+            ledcAttachPin(kServoPins[column], static_cast<uint8_t>(column));
+        }
+        sevenAttached = true;
+    }
+    for (std::size_t column = 0; column < feel::kColumns; ++column) {
+        if (lastPulse[column] != plan.pulses[column]) {
+            ledcWrite(static_cast<uint8_t>(column), plan.duties[column]);
+            lastPulse[column] = plan.pulses[column];
+        }
+    }
+}
+#endif
 uint8_t reportedOutputState() {
-#if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
+#if FEEL_SEVEN_SERVO_LIVE
+    return sevenReady ? 1 : 2;
+#elif FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
     return demoReady ? 1 : 2;
 #else
     return static_cast<uint8_t>(outputGuard.state());
@@ -192,7 +268,11 @@ ServerCallbacks serverCallbacks;
 CommandCallbacks commandCallbacks;
 
 void disablePWM() {
-#if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
+#if FEEL_SEVEN_SERVO_LIVE
+    sevenReady = false;
+    detachSeven();
+    return;
+#elif FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
     demoReady = false;
     detachDemo();
     return;
@@ -214,7 +294,10 @@ void disablePWM() {
 }
 
 void writePWM() {
-#if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
+#if FEEL_SEVEN_SERVO_LIVE
+    writeSeven();
+    return;
+#elif FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
     writeDemo();
     return;
 #endif
@@ -255,7 +338,10 @@ void writePWM() {
 }
 
 void setupPWM() {
-#if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
+#if FEEL_SEVEN_SERVO_LIVE
+    setupSeven();
+    return;
+#elif FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
     setupDemo();
     return;
 #endif
@@ -312,7 +398,16 @@ void sendStatus(bool serial) {
         if (s.connected) statusCharacteristic->notify();
     }
     if (serial) {
-#if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
+#if FEEL_SEVEN_SERVO_LIVE
+        Serial.printf("SEVEN_LIVE189_UNVERIFIED connected=%u active=%u ready=%u attached=%u accepted=%lu rejected=%lu timeouts=%lu\n",
+            s.connected, s.active, sevenReady, sevenAttached,
+            static_cast<unsigned long>(s.accepted), static_cast<unsigned long>(s.rejected), static_cast<unsigned long>(s.timeouts));
+        for (std::size_t column = 0; column < feel::kColumns; ++column) {
+            Serial.printf("c%u gpio=%u band=%u pulseUs=%u timerHz=%lu\n", static_cast<unsigned>(column), kServoPins[column], s.bands[column], lastPulse[column],
+                static_cast<unsigned long>(ledc_get_freq(kPwmMode, static_cast<ledc_timer_t>(column / 2))));
+        }
+        return;
+#elif FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
         Serial.printf("%s connected=%u active=%u ready=%u attached=%u gpio=32 sector=3 band=%u pulseUs=%u timerHz=%lu accepted=%lu rejected=%lu timeouts=%lu\n",
             kSingleMode, s.connected, s.active, demoReady, demoAttached, s.bands[kSingleSector], demoPulse,
             static_cast<unsigned long>(demoTimerHz), static_cast<unsigned long>(s.accepted),
@@ -329,15 +424,19 @@ void sendStatus(bool serial) {
 
 void serialCommand(const char* line, uint32_t now) {
     const auto command = feel::parseCommand(line);
-#if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
+#if FEEL_SEVEN_SERVO_LIVE || FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
     if (command.kind != feel::CommandKind::Status && command.kind != feel::CommandKind::Stop && command.kind != feel::CommandKind::Help) {
         controller.stop(now);
         writePWM();
-        Serial.println("ERROR single-servo adapter accepts only STATUS, STOP, HELP; motion comes from live BLE");
+        Serial.println("ERROR live adapter accepts only STATUS, STOP, HELP; motion comes from live BLE");
         return;
     }
     if (command.kind == feel::CommandKind::Help) {
+#if FEEL_SEVEN_SERVO_LIVE
+        Serial.println(kSevenHelp);
+#else
         Serial.println(kSingleHelp);
+#endif
         return;
     }
 #endif
@@ -413,7 +512,7 @@ void setup() {
         feel::CalibrationRecord record;
         if (preferences.getBytes(feel::kCalibrationKey, &record, sizeof(record)) != sizeof(record) ||
             !feel::loadCalibration(controller, record)) {
-            Serial.println("ERROR stored 120-degree calibration invalid; all offsets default to0");
+            Serial.println("ERROR stored 175-degree calibration invalid; all offsets default to0");
         }
     }
     controller.tick(millis());

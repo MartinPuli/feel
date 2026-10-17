@@ -2,6 +2,21 @@
 
 This is a **new implementation of the v7 specification**, not recovered or reproduced original CAD. All generated STL results are geometry checks. No part has been printed, fitted to a real servo, or tested on a hand by this build. Start with the manual single-column rig. Do not print the full powered mechanism as an established design.
 
+## Current 175° working assumption — October 17
+
+The user selected **175° assumed usable travel**, not measured calibration. Reference
+cam bands are now 0°/58°/116°/174°, gaps 29°/87°/145°, and taps
+13°/45°/103°/161°. The 12° lobe half-width and all physical dimensions are retained;
+no measured fit or mechanical performance is implied. Firmware maps this assumed
+total 0–175° angle range linearly to 650–2500 µs; the last band at 174°
+commands 2489 µs. Nearest-gap ties select the lower gap. PWM remains gated separately.
+
+**Existing exported STL files, viewer payloads and older evidence are stale** for
+this angular layout. Rebuild before printing; never combine the prior 120° shafts
+with the new mapping. The full geometry/contact rerun currently needs OpenSCAD,
+which was unavailable in this session. Measurement and horn-fit flags remain false.
+The separate `cad/production/` tree is not automatically certified by this change.
+
 ## Build and inspect
 
 Requires Python 3.10+ and OpenSCAD. The 120° redesign is validated with official OpenSCAD 2026.10.15 (Apple Silicon); the earlier 175° baseline used 2021.01. No third-party Python package is needed for builds, mesh checks or cam checks.
@@ -31,8 +46,8 @@ Open `cad/test_column.scad`, `cad/puck.scad`, or `cad/viewer.scad` in OpenSCAD. 
 | Actuation | One camshaft and one servo per column; only one of its four pins is selected at a time |
 | Pin indexing | Band 1 wrist → band 4 fingers; rows Y = −8, 4, 16, 28 mm |
 | Shaft axis | Along Y at Z=17.5 mm; positive control rotation matches the specified band angles |
-| Cam angles | Bands 0°, 40°, 80°, 120°; down gaps 20°, 60°, 100° |
-| Tap angles | Nearest gap, lower gap on a tie: 13°, 27°, 67°, 107° |
+| Cam angles | Bands 0°, 58°, 116°, 174°; down gaps 29°, 87°, 145° |
+| Tap angles | Nearest gap, lower gap on a tie: 13°, 45°, 103°, 161° |
 | Profile | Actual sampled radial polygon; base radius 3.8 mm, peak 5.8 mm, 12° half-width, 1° polygon step |
 | Stroke / tips | 2 mm ideal lift; 0.6 mm flat foot; “30° cone” interpreted as half-angle from axis, 60° included |
 | Variants | A exponent 2.2; H 2.5 flatter crest; G 1.6 gentler flank. Names are geometric intent, not measured holding force |
@@ -43,17 +58,17 @@ Open `cad/test_column.scad`, `cad/puck.scad`, or `cad/viewer.scad` in OpenSCAD. 
 | New layout decisions | Pin grid shifted toward fingers to clear the nominal wrist-side servo bodies; split shaft bearings closed by lower guide; removable servo spacer comb |
 | Inactive options | Finger scallops, lower servo tab, second strap disabled. v7's “off” prose wins over its contradictory `second_strap=true` example |
 
-The contact simulation exports the **same vertices used to make the cams** via OpenSCAD. It computes where the polygon contacts the finite-width conical follower, including points inside polygon edges. It does not just equate radial radius to pin lift. It tests band isolation, all three neutral gaps, the actual firmware tap angles, and a 0.1° sampled sweep. The A/H/G profiles retain 2 mm selection and give approximately 1.059 / 0.985 / 1.249 mm tap drops in this ideal model. It contains no friction, elastic deflection, foam, backlash, tolerance, motor torque or sensory model. Sampling is not a continuous collision proof.
+The contact simulation exports the **same vertices used to make the cams** via OpenSCAD. It computes where the polygon contacts the finite-width conical follower, including points inside polygon edges. It does not just equate radial radius to pin lift. It tests band isolation, all three neutral gaps, the actual firmware tap angles, and a 0.1° sampled sweep. The previous 120° A/H/G contact run retained 2 mm selection and gave approximately 1.059 / 0.985 / 1.249 mm tap drops in this ideal model. It contains no friction, elastic deflection, foam, backlash, tolerance, motor torque or sensory model. Sampling is not a continuous collision proof.
 
 `fit_probe.scad` checks selected nominal envelopes (servo case versus floor/inner rounded walls, cone versus lower guide, collar versus guide/face, adjacent cam bounding circles) and emits each pin's length. It is **not** a full assembly collision detector. Current ideal cone-to-guide clearance is **0.282 mm**; verify that the cone never rubs the guide, and adjust `guide_z`, `guide_t` and collar clearance together if needed. The **1.2 mm lower guide** and relocated 0.5 mm collar are greenfield assumptions; guide stiffness and the 0.1 mm collar clearance need physical checking. They provide **4.0 → 2.0 mm** foam space through a stroke. A 3+2 mm stack therefore compresses **20% at rest and 60% at full lift**: it is a material-dependent test candidate, not an approved return spring. A single 2 mm strip leaves a dead zone and cannot provide return to rest upside-down. Foam load/return remains a physical release blocker.
 
-## 120° FS0307 cam redesign
+## Historical 120° FS0307 cam redesign (superseded angles)
 
-This branch uses four band centers at 0°/40°/80°/120°, three neutral gaps at 20°/60°/100°, and a 13° tap toward the nearest gap (lower gap wins a tie). The radial lobe half-width is reduced from 24° to **12°**; base radius 3.8 mm, full 2 mm lift, the 0.6 mm follower foot and 30° cone remain unchanged. The ideal contact model includes the cone and the interiors of polygon edges. Keeping the old 24° lobe with these centers would lift **both** adjacent pins by over 0.8 mm at a nominal neutral gap. A 14° lobe also fails the strict neutral limit for A/H. The narrower 12° profile clears the gaps without reducing stroke. No contact or isolation acceptance threshold was relaxed.
+The previous revision used four band centers at 0°/40°/80°/120°, three neutral gaps at 20°/60°/100°, and a 13° tap toward the nearest gap (lower gap wins a tie). The radial lobe half-width is reduced from 24° to **12°**; base radius 3.8 mm, full 2 mm lift, the 0.6 mm follower foot and 30° cone remain unchanged. The ideal contact model includes the cone and the interiors of polygon edges. Keeping the old 24° lobe with these centers would lift **both** adjacent pins by over 0.8 mm at a nominal neutral gap. A 14° lobe also fails the strict neutral limit for A/H. The narrower 12° profile clears the gaps without reducing stroke. No contact or isolation acceptance threshold was relaxed.
 
 The geometric tradeoff is steeper, narrower flanks: higher side loading, required torque, wear and sensitivity to print finishing are possible. These are unmeasured; repeat manual P1–P5 and unloaded servo characterization before powered integration. A/H/G remain experimental profiles, not ranked force/performance results.
 
-The [manufacturer FS0307 page](https://www.feetechrc.com/en/6v-06kg-analog-steering-gear-fs0307.html) lists 120° at 900–2100 µs. Those are the new nominal firmware mapping, **not measured safe endpoints for the received servo**. The actual unit's voltage variant, usable travel, unloaded safe pulse range and loaded behavior remain unverified. Keep physical PWM disabled until measured limits are recorded; never use the superseded 175° / 650–2500 µs design with these cams. If the received unit cannot provide the required usable travel, revise the design from measured limits before coupling it.
+The [manufacturer FS0307 page](https://www.feetechrc.com/en/6v-06kg-analog-steering-gear-fs0307.html) lists 120° at 900–2100 µs. Those were the prior nominal firmware mapping, **not measured safe endpoints for the received servo**. The actual unit's voltage variant, usable travel, unloaded safe pulse range and loaded behavior remain unverified. Keep physical PWM disabled until measured limits are recorded; do not mix old 120° exported cams with the current 175° mapping. If the received unit cannot provide the required usable travel, revise the design from measured limits before coupling it.
 
 Published 20 × 8.3 × 17.3 mm overall dimensions and 20T spline do not specify every mating surface. The case-only axial depth of 13.3 mm, axis offset, ear and horn values in `params.scad` are **UNMEASURED placeholders**. The nominal body envelope is checked, but the real body can differ.
 

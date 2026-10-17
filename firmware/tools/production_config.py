@@ -9,8 +9,8 @@ import json
 from pathlib import Path
 
 GPIO_BY_COLUMN = (32, 33, 25, 26, 27, 14, 13)
-NOMINAL_MIN_US = 900
-NOMINAL_MAX_US = 2100
+NOMINAL_MIN_US = 650
+NOMINAL_MAX_US = 2500
 CONFIG_NAME = "production-measurements.local.json"
 
 
@@ -39,8 +39,10 @@ def evidence(value, base, label):
 
 def validate_document(document, base):
     require(isinstance(document, dict), "measurement document must be an object")
-    require(type(document.get("schema_version")) is int and document["schema_version"] == 1,
-            "schema_version must be1")
+    require(type(document.get("schema_version")) is int and document["schema_version"] == 2,
+            "schema_version must be2 for the175-degree design")
+    require(document.get("design_profile") == "fs0307-assumed175-even-v4",
+            "design_profile must be fs0307-assumed175-even-v4; previous records require new verification")
     require(document.get("board") == "esp32-classic", "board must be esp32-classic")
     require(document.get("verified") is True, "verified must be true after the actual physical checks")
     text(document.get("verified_by"), "verified_by")
@@ -74,7 +76,7 @@ def validate_document(document, base):
                 label + " needs measured integer pulse limits, not null or assumed values")
         require(0 < minimum < maximum < 20000, label + " measured pulse limits are invalid")
         require(minimum <= NOMINAL_MIN_US and maximum >= NOMINAL_MAX_US,
-                label + " measured safe range must include the full nominal900..2100us service envelope")
+                label + " measured safe range must include the full assumed650..2500us service envelope")
         evidence(record.get("evidence_file"), base, label + " evidence_file")
     require(columns == set(range(7)), "measured columns0..6 must all be present")
     return {"minimum_us": NOMINAL_MIN_US, "maximum_us": NOMINAL_MAX_US, "columns": 7}

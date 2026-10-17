@@ -12,17 +12,17 @@ constexpr uint32_t kWatchdogMs = 500;
 constexpr uint32_t kTapPeriodMs = 600;
 constexpr uint32_t kTapDipMs = 100;
 constexpr uint32_t kBenchArmMs = 30000;
-// FS0307 120-degree design assumption; actual travel remains unmeasured.
+// FS0307 175-degree design assumption; actual travel remains unmeasured.
 constexpr float kMinAngleDeg = 0.0F;
-constexpr float kMaxAngleDeg = 120.0F;
+constexpr float kMaxAngleDeg = 175.0F;
 constexpr float kAngleSpanDeg = kMaxAngleDeg - kMinAngleDeg;
-constexpr float kBandAnglesDeg[] = {0.0F, 40.0F, 80.0F, 120.0F};
-constexpr float kGapAnglesDeg[] = {20.0F, 60.0F, 100.0F};
+constexpr float kBandAnglesDeg[] = {0.0F, 58.0F, 116.0F, 174.0F};
+constexpr float kGapAnglesDeg[] = {29.0F, 87.0F, 145.0F};
 constexpr float kDefaultNeutralDeg = kGapAnglesDeg[0];
 constexpr float kTapAngleDeg = 13.0F;
 constexpr float kMaxCalibrationOffsetDeg = 5.0F;
-constexpr uint16_t kMinPulseUs = 900;
-constexpr uint16_t kMaxPulseUs = 2100;
+constexpr uint16_t kMinPulseUs = 650;
+constexpr uint16_t kMaxPulseUs = 2500;
 
 struct Packet {
     uint8_t sequence = 0;

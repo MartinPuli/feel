@@ -89,6 +89,8 @@ The offline assistant needs local spoken results as well as local command recogn
 
 ## Detailed evidence
 
+- [Applied agent assessment, live inventory and implementation order](CHALK-AGENT-ASSESSMENT.md)
+
 - [Production configuration and blockers](CHALK-PRODUCTION.md)
 - [Product opportunities](CHALK-PRODUCT-OPPORTUNITIES.md)
 - [Evaluation and model-selection research](CHALK-EVAL-RESEARCH.md)

@@ -1,0 +1,1152 @@
+/private/tmp/feel-travel-pio/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Processing esp32 (board: esp32dev; platform: espressif32@6.9.0; framework: arduino)
+--------------------------------------------------------------------------------
+Library Manager: Installing h2zero/NimBLE-Arduino @ 2.3.6
+Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+Library Manager: NimBLE-Arduino@2.3.6 has been installed!
+/private/tmp/feel-travel-pio/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+PLATFORM: Espressif 32 (6.9.0) > Espressif ESP32 Dev Module
+HARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+DEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+ - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 34 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- NimBLE-Arduino @ 2.3.6
+|-- Preferences @ 2.0.0
+Building in release mode
+Compiling .pio/build/esp32/src/commands.cpp.o
+Compiling .pio/build/esp32/src/controller.cpp.o
+Compiling .pio/build/esp32/src/main.cpp.o
+Building .pio/build/esp32/bootloader.bin
+esptool.py v4.5.1
+Creating esp32 image...
+Merged 1 ELF section
+Successfully created esp32 image.
+Generating partitions .pio/build/esp32/partitions.bin
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLE2904.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEAddress.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEAdvertisedDevice.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEAdvertisementData.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEAdvertising.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEAttValue.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEBeacon.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLECharacteristic.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEClient.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEDescriptor.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEDevice.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEEddystoneTLM.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEExtAdvertising.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEHIDDevice.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEL2CAPChannel.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEL2CAPServer.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLERemoteCharacteristic.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLERemoteDescriptor.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLERemoteService.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLERemoteValueAttribute.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEScan.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEServer.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEService.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEUUID.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/NimBLEUtils.cpp.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/esp_port/esp-hci/src/esp_nimble_hci.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/esp_port/esp-hci/src/na_hci_driver.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/esp_port/esp-hci/src/na_hci_transport.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/esp_port/port/src/exp_nimble_mem.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/aes_decrypt.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/aes_encrypt.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/cbc_mode.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/ccm_mode.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/cmac_mode.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/ctr_mode.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/ctr_prng.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_dh.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_dsa.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_platform_specific.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/hmac.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/hmac_prng.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/sha256.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/ext/tinycrypt/src/utils.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_adv.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_conn.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_conn_hci.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_crypto.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_ctrl.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_dtm.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_ev.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_supp_cmd.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_vs.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_iso.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_iso_big.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_isoal.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_pdu.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_rand.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_resolv.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_rfmgmt.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_scan.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_scan_aux.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_sched.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_sync.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_trace.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_utils.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_whitelist.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/drivers/nrf51/src/ble_hw.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/drivers/nrf51/src/ble_phy.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_hw.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_phy.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_phy_trace.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/nrf52/phy.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/nrf53/phy.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/access.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv_ext.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv_legacy.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/aes-ccm.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/app_keys.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/beacon.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/cdb.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg_cli.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg_srv.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/crypto.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/friend.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/glue.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/health_cli.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/health_srv.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/heartbeat.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/light_model.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/lpn.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/mesh.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/model_cli.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/model_srv.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/msg.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/net.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_adv.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_gatt.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_gatt_srv.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/prov.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/prov_device.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/provisioner.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy_msg.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy_srv.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/rpl.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/settings.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/shell.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/subnet.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/testing.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/mesh/src/transport.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/services/gap/src/ble_svc_gap.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/services/gatt/src/ble_svc_gatt.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_aes_ccm.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_att.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_att_clt.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_att_cmd.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_att_svr.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_dtm.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_ead.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_eatt.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_eddystone.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_gap.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc_cache.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc_cache_conn.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_gatts.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_gatts_lcl.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_adv.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_atomic.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_cfg.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_conn.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_flow.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_cmd.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_evt.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_util.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_id.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_log.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_mbuf.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_misc.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_mqueue.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_periodic_sync.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_pvcy.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_resolv.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_shutdown.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_startup.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_stop.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_ibeacon.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_coc.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_sig.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_sig_cmd.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_sm.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_alg.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_cmd.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_lgcy.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_sc.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_store.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_store_util.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/src/ble_uuid.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_config.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_config_conf.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_nvs.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/store/ram/src/ble_store_ram.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/host/util/src/addr.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/transport/common/hci_h4/src/hci_h4.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/transport/common/hci_ipc/src/hci_ipc.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/transport/esp_ipc/src/hci_esp_ipc.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/transport/esp_ipc_legacy/src/hci_esp_ipc_legacy.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/transport/nrf5340/src/nrf5340_ble_hci.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/nimble/transport/src/transport.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/porting/nimble/src/endian.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/porting/nimble/src/hal_timer.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/porting/nimble/src/mem.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/porting/nimble/src/nimble_port.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/porting/nimble/src/os_cputime.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/porting/nimble/src/os_cputime_pwr2.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/porting/nimble/src/os_mbuf.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/porting/nimble/src/os_mempool.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/porting/nimble/src/os_msys_init.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/porting/npl/freertos/src/nimble_port_freertos.c.o
+Compiling .pio/build/esp32/libe04/NimBLE-Arduino/nimble/porting/npl/freertos/src/npl_os_freertos.c.o
+Compiling .pio/build/esp32/lib43e/Preferences/Preferences.cpp.o
+Archiving .pio/build/esp32/libe04/libNimBLE-Arduino.a
+Indexing .pio/build/esp32/libe04/libNimBLE-Arduino.a
+Compiling .pio/build/esp32/FrameworkArduino/Esp.cpp.o
+Archiving .pio/build/esp32/lib43e/libPreferences.a
+Indexing .pio/build/esp32/lib43e/libPreferences.a
+Compiling .pio/build/esp32/FrameworkArduino/FirmwareMSC.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/FunctionalInterrupt.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/HWCDC.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/HardwareSerial.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/IPAddress.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/IPv6Address.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/MD5Builder.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/Print.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/Stream.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/StreamString.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/Tone.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/USB.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/USBCDC.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/USBMSC.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/WMath.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/WString.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/base64.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/cbuf.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-adc.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-bt.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-cpu.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-dac.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-gpio.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-i2c-slave.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-i2c.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-ledc.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-matrix.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-misc.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-psram.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-rgb-led.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-rmt.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-sigmadelta.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-spi.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-time.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-timer.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-tinyusb.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-touch.c.o
+Compiling .pio/build/esp32/FrameworkArduino/esp32-hal-uart.c.o
+Compiling .pio/build/esp32/FrameworkArduino/firmware_msc_fat.c.o
+Compiling .pio/build/esp32/FrameworkArduino/libb64/cdecode.c.o
+Compiling .pio/build/esp32/FrameworkArduino/libb64/cencode.c.o
+Compiling .pio/build/esp32/FrameworkArduino/main.cpp.o
+Compiling .pio/build/esp32/FrameworkArduino/stdlib_noniso.c.o
+Compiling .pio/build/esp32/FrameworkArduino/wiring_pulse.c.o
+Compiling .pio/build/esp32/FrameworkArduino/wiring_shift.c.o
+Archiving .pio/build/esp32/libFrameworkArduino.a
+Indexing .pio/build/esp32/libFrameworkArduino.a
+Linking .pio/build/esp32/firmware.elf
+Retrieving maximum program size .pio/build/esp32/firmware.elf
+Checking size .pio/build/esp32/firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [=         ]  11.0% (used 35900 bytes from 327680 bytes)
+Flash: [=====     ]  46.0% (used 602821 bytes from 1310720 bytes)
+Building .pio/build/esp32/firmware.bin
+esptool.py v4.5.1
+Creating esp32 image...
+Merged 27 ELF sections
+Successfully created esp32 image.
+========================= [SUCCESS] Took 22.84 seconds =========================
+
+Processing esp32-compilecheck (board: esp32dev; platform: espressif32@6.9.0; framework: arduino)
+--------------------------------------------------------------------------------
+Library Manager: Installing h2zero/NimBLE-Arduino @ 2.3.6
+Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+Library Manager: NimBLE-Arduino@2.3.6 has been installed!
+/private/tmp/feel-travel-pio/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Verbose mode can be enabled via `-v, --verbose` option
+FEEL SOFTWARE COMPILE CHECK ONLY: output path enabled using UNMEASURED test constants; no upload permitted
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+PLATFORM: Espressif 32 (6.9.0) > Espressif ESP32 Dev Module
+HARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+DEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+ - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 34 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- NimBLE-Arduino @ 2.3.6
+|-- Preferences @ 2.0.0
+Building in release mode
+Compiling .pio/build/esp32-compilecheck/src/commands.cpp.o
+Compiling .pio/build/esp32-compilecheck/src/controller.cpp.o
+Compiling .pio/build/esp32-compilecheck/src/main.cpp.o
+Building .pio/build/esp32-compilecheck/bootloader.bin
+esptool.py v4.5.1
+Creating esp32 image...
+Merged 1 ELF section
+Successfully created esp32 image.
+Generating partitions .pio/build/esp32-compilecheck/partitions.bin
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLE2904.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEAddress.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEAdvertisedDevice.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEAdvertisementData.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEAdvertising.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEAttValue.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEBeacon.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLECharacteristic.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEClient.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEDescriptor.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEDevice.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEEddystoneTLM.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEExtAdvertising.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEHIDDevice.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEL2CAPChannel.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEL2CAPServer.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLERemoteCharacteristic.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLERemoteDescriptor.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLERemoteService.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLERemoteValueAttribute.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEScan.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEServer.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEService.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEUUID.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/NimBLEUtils.cpp.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/esp_port/esp-hci/src/esp_nimble_hci.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/esp_port/esp-hci/src/na_hci_driver.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/esp_port/esp-hci/src/na_hci_transport.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/esp_port/port/src/exp_nimble_mem.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/aes_decrypt.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/aes_encrypt.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/cbc_mode.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/ccm_mode.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/cmac_mode.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/ctr_mode.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/ctr_prng.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_dh.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_dsa.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_platform_specific.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/hmac.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/hmac_prng.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/sha256.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/ext/tinycrypt/src/utils.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_adv.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_conn.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_conn_hci.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_crypto.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_ctrl.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_dtm.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_ev.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_supp_cmd.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_vs.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_iso.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_iso_big.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_isoal.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_pdu.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_rand.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_resolv.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_rfmgmt.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_scan.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_scan_aux.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_sched.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_sync.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_trace.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_utils.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_whitelist.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/drivers/nrf51/src/ble_hw.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/drivers/nrf51/src/ble_phy.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_hw.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_phy.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_phy_trace.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/nrf52/phy.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/nrf53/phy.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/access.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv_ext.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv_legacy.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/aes-ccm.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/app_keys.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/beacon.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/cdb.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg_cli.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg_srv.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/crypto.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/friend.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/glue.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/health_cli.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/health_srv.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/heartbeat.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/light_model.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/lpn.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/mesh.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/model_cli.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/model_srv.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/msg.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/net.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_adv.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_gatt.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_gatt_srv.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/prov.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/prov_device.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/provisioner.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy_msg.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy_srv.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/rpl.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/settings.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/shell.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/subnet.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/testing.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/mesh/src/transport.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/services/gap/src/ble_svc_gap.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/services/gatt/src/ble_svc_gatt.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_aes_ccm.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_att.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_att_clt.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_att_cmd.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_att_svr.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_dtm.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_ead.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_eatt.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_eddystone.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_gap.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc_cache.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc_cache_conn.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_gatts.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_gatts_lcl.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_adv.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_atomic.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_cfg.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_conn.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_flow.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_cmd.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_evt.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_util.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_id.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_log.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_mbuf.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_misc.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_mqueue.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_periodic_sync.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_pvcy.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_resolv.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_shutdown.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_startup.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_stop.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_ibeacon.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_coc.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_sig.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_sig_cmd.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_sm.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_alg.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_cmd.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_lgcy.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_sc.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_store.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_store_util.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/src/ble_uuid.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_config.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_config_conf.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_nvs.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/store/ram/src/ble_store_ram.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/host/util/src/addr.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/transport/common/hci_h4/src/hci_h4.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/transport/common/hci_ipc/src/hci_ipc.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/transport/esp_ipc/src/hci_esp_ipc.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/transport/esp_ipc_legacy/src/hci_esp_ipc_legacy.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/transport/nrf5340/src/nrf5340_ble_hci.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/nimble/transport/src/transport.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/porting/nimble/src/endian.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/porting/nimble/src/hal_timer.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/porting/nimble/src/mem.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/porting/nimble/src/nimble_port.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/porting/nimble/src/os_cputime.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/porting/nimble/src/os_cputime_pwr2.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/porting/nimble/src/os_mbuf.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/porting/nimble/src/os_mempool.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/porting/nimble/src/os_msys_init.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/porting/npl/freertos/src/nimble_port_freertos.c.o
+Compiling .pio/build/esp32-compilecheck/libfee/NimBLE-Arduino/nimble/porting/npl/freertos/src/npl_os_freertos.c.o
+Compiling .pio/build/esp32-compilecheck/lib43e/Preferences/Preferences.cpp.o
+Archiving .pio/build/esp32-compilecheck/libfee/libNimBLE-Arduino.a
+Indexing .pio/build/esp32-compilecheck/libfee/libNimBLE-Arduino.a
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/Esp.cpp.o
+Archiving .pio/build/esp32-compilecheck/lib43e/libPreferences.a
+Indexing .pio/build/esp32-compilecheck/lib43e/libPreferences.a
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/FirmwareMSC.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/FunctionalInterrupt.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/HWCDC.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/HardwareSerial.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/IPAddress.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/IPv6Address.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/MD5Builder.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/Print.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/Stream.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/StreamString.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/Tone.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/USB.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/USBCDC.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/USBMSC.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/WMath.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/WString.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/base64.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/cbuf.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-adc.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-bt.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-cpu.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-dac.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-gpio.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-i2c-slave.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-i2c.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-ledc.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-matrix.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-misc.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-psram.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-rgb-led.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-rmt.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-sigmadelta.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-spi.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-time.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-timer.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-tinyusb.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-touch.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/esp32-hal-uart.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/firmware_msc_fat.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/libb64/cdecode.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/libb64/cencode.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/main.cpp.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/stdlib_noniso.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/wiring_pulse.c.o
+Compiling .pio/build/esp32-compilecheck/FrameworkArduino/wiring_shift.c.o
+Archiving .pio/build/esp32-compilecheck/libFrameworkArduino.a
+Indexing .pio/build/esp32-compilecheck/libFrameworkArduino.a
+Linking .pio/build/esp32-compilecheck/firmware.elf
+Retrieving maximum program size .pio/build/esp32-compilecheck/firmware.elf
+Checking size .pio/build/esp32-compilecheck/firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [=         ]  11.0% (used 35916 bytes from 327680 bytes)
+Flash: [=====     ]  46.0% (used 603133 bytes from 1310720 bytes)
+Building .pio/build/esp32-compilecheck/firmware.bin
+esptool.py v4.5.1
+Creating esp32 image...
+Merged 27 ELF sections
+Successfully created esp32 image.
+========================= [SUCCESS] Took 21.68 seconds =========================
+
+Processing esp32-single-live (board: esp32dev; platform: espressif32@6.9.0; framework: arduino)
+--------------------------------------------------------------------------------
+/private/tmp/feel-travel-pio/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+PLATFORM: Espressif 32 (6.9.0) > Espressif ESP32 Dev Module
+HARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+DEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+ - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 34 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- NimBLE-Arduino @ 2.3.6
+|-- Preferences @ 2.0.0
+Building in release mode
+Compiling .pio/build/esp32-single-live/src/commands.cpp.o
+Compiling .pio/build/esp32-single-live/src/controller.cpp.o
+Compiling .pio/build/esp32-single-live/src/main.cpp.o
+Building .pio/build/esp32-single-live/bootloader.bin
+esptool.py v4.5.1
+Creating esp32 image...
+Merged 1 ELF section
+Successfully created esp32 image.
+Generating partitions .pio/build/esp32-single-live/partitions.bin
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLE2904.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEAddress.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEAdvertisedDevice.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEAdvertisementData.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEAdvertising.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEAttValue.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEBeacon.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLECharacteristic.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEClient.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEDescriptor.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEDevice.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEEddystoneTLM.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEExtAdvertising.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEHIDDevice.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEL2CAPChannel.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEL2CAPServer.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLERemoteCharacteristic.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLERemoteDescriptor.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLERemoteService.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLERemoteValueAttribute.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEScan.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEServer.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEService.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEUUID.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/NimBLEUtils.cpp.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/esp_port/esp-hci/src/esp_nimble_hci.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/esp_port/esp-hci/src/na_hci_driver.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/esp_port/esp-hci/src/na_hci_transport.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/esp_port/port/src/exp_nimble_mem.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/aes_decrypt.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/aes_encrypt.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/cbc_mode.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/ccm_mode.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/cmac_mode.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/ctr_mode.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/ctr_prng.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_dh.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_dsa.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_platform_specific.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/hmac.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/hmac_prng.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/sha256.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/ext/tinycrypt/src/utils.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_adv.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_conn.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_conn_hci.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_crypto.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_ctrl.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_dtm.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_ev.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_supp_cmd.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_vs.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_iso.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_iso_big.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_isoal.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_pdu.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_rand.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_resolv.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_rfmgmt.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_scan.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_scan_aux.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_sched.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_sync.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_trace.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_utils.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_whitelist.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/drivers/nrf51/src/ble_hw.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/drivers/nrf51/src/ble_phy.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_hw.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_phy.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_phy_trace.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/nrf52/phy.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/nrf53/phy.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/access.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv_ext.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv_legacy.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/aes-ccm.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/app_keys.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/beacon.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/cdb.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg_cli.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg_srv.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/crypto.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/friend.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/glue.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/health_cli.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/health_srv.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/heartbeat.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/light_model.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/lpn.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/mesh.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/model_cli.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/model_srv.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/msg.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/net.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_adv.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_gatt.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_gatt_srv.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/prov.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/prov_device.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/provisioner.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy_msg.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy_srv.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/rpl.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/settings.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/shell.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/subnet.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/testing.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/mesh/src/transport.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/services/gap/src/ble_svc_gap.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/services/gatt/src/ble_svc_gatt.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_aes_ccm.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_att.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_att_clt.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_att_cmd.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_att_svr.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_dtm.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_ead.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_eatt.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_eddystone.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_gap.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc_cache.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc_cache_conn.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_gatts.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_gatts_lcl.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_adv.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_atomic.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_cfg.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_conn.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_flow.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_cmd.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_evt.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_util.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_id.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_log.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_mbuf.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_misc.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_mqueue.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_periodic_sync.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_pvcy.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_resolv.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_shutdown.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_startup.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_stop.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_ibeacon.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_coc.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_sig.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_sig_cmd.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_sm.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_alg.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_cmd.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_lgcy.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_sc.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_store.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_store_util.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/src/ble_uuid.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_config.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_config_conf.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_nvs.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/store/ram/src/ble_store_ram.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/host/util/src/addr.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/transport/common/hci_h4/src/hci_h4.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/transport/common/hci_ipc/src/hci_ipc.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/transport/esp_ipc/src/hci_esp_ipc.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/transport/esp_ipc_legacy/src/hci_esp_ipc_legacy.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/transport/nrf5340/src/nrf5340_ble_hci.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/nimble/transport/src/transport.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/porting/nimble/src/endian.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/porting/nimble/src/hal_timer.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/porting/nimble/src/mem.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/porting/nimble/src/nimble_port.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/porting/nimble/src/os_cputime.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/porting/nimble/src/os_cputime_pwr2.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/porting/nimble/src/os_mbuf.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/porting/nimble/src/os_mempool.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/porting/nimble/src/os_msys_init.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/porting/npl/freertos/src/nimble_port_freertos.c.o
+Compiling .pio/build/esp32-single-live/libb05/NimBLE-Arduino/nimble/porting/npl/freertos/src/npl_os_freertos.c.o
+Compiling .pio/build/esp32-single-live/lib43e/Preferences/Preferences.cpp.o
+Archiving .pio/build/esp32-single-live/libb05/libNimBLE-Arduino.a
+Indexing .pio/build/esp32-single-live/libb05/libNimBLE-Arduino.a
+Compiling .pio/build/esp32-single-live/FrameworkArduino/Esp.cpp.o
+Archiving .pio/build/esp32-single-live/lib43e/libPreferences.a
+Indexing .pio/build/esp32-single-live/lib43e/libPreferences.a
+Compiling .pio/build/esp32-single-live/FrameworkArduino/FirmwareMSC.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/FunctionalInterrupt.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/HWCDC.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/HardwareSerial.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/IPAddress.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/IPv6Address.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/MD5Builder.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/Print.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/Stream.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/StreamString.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/Tone.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/USB.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/USBCDC.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/USBMSC.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/WMath.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/WString.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/base64.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/cbuf.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-adc.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-bt.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-cpu.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-dac.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-gpio.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-i2c-slave.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-i2c.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-ledc.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-matrix.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-misc.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-psram.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-rgb-led.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-rmt.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-sigmadelta.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-spi.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-time.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-timer.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-tinyusb.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-touch.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/esp32-hal-uart.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/firmware_msc_fat.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/libb64/cdecode.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/libb64/cencode.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/main.cpp.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/stdlib_noniso.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/wiring_pulse.c.o
+Compiling .pio/build/esp32-single-live/FrameworkArduino/wiring_shift.c.o
+Archiving .pio/build/esp32-single-live/libFrameworkArduino.a
+Indexing .pio/build/esp32-single-live/libFrameworkArduino.a
+Linking .pio/build/esp32-single-live/firmware.elf
+Retrieving maximum program size .pio/build/esp32-single-live/firmware.elf
+Checking size .pio/build/esp32-single-live/firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [=         ]  11.0% (used 35908 bytes from 327680 bytes)
+Flash: [=====     ]  46.0% (used 602941 bytes from 1310720 bytes)
+Building .pio/build/esp32-single-live/firmware.bin
+esptool.py v4.5.1
+Creating esp32 image...
+Merged 27 ELF sections
+Successfully created esp32 image.
+========================= [SUCCESS] Took 24.52 seconds =========================
+
+Processing esp32-single-wide-test (board: esp32dev; platform: espressif32@6.9.0; framework: arduino)
+--------------------------------------------------------------------------------
+/private/tmp/feel-travel-pio/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+PLATFORM: Espressif 32 (6.9.0) > Espressif ESP32 Dev Module
+HARDWARE: ESP32 240MHz, 320KB RAM, 4MB Flash
+DEBUG: Current (cmsis-dap) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 1.40501.0 (4.5.1) 
+ - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 34 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- NimBLE-Arduino @ 2.3.6
+|-- Preferences @ 2.0.0
+Building in release mode
+Compiling .pio/build/esp32-single-wide-test/src/commands.cpp.o
+Compiling .pio/build/esp32-single-wide-test/src/controller.cpp.o
+Compiling .pio/build/esp32-single-wide-test/src/main.cpp.o
+Building .pio/build/esp32-single-wide-test/bootloader.bin
+esptool.py v4.5.1
+Creating esp32 image...
+Merged 1 ELF section
+Successfully created esp32 image.
+Generating partitions .pio/build/esp32-single-wide-test/partitions.bin
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLE2904.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEAddress.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEAdvertisedDevice.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEAdvertisementData.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEAdvertising.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEAttValue.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEBeacon.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLECharacteristic.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEClient.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEDescriptor.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEDevice.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEEddystoneTLM.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEExtAdvertising.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEHIDDevice.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEL2CAPChannel.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEL2CAPServer.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLERemoteCharacteristic.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLERemoteDescriptor.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLERemoteService.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLERemoteValueAttribute.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEScan.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEServer.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEService.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEUUID.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/NimBLEUtils.cpp.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/esp_port/esp-hci/src/esp_nimble_hci.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/esp_port/esp-hci/src/na_hci_driver.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/esp_port/esp-hci/src/na_hci_transport.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/esp_port/port/src/exp_nimble_mem.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/aes_decrypt.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/aes_encrypt.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/cbc_mode.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/ccm_mode.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/cmac_mode.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/ctr_mode.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/ctr_prng.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_dh.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_dsa.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/ecc_platform_specific.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/hmac.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/hmac_prng.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/sha256.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/ext/tinycrypt/src/utils.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_adv.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_conn.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_conn_hci.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_crypto.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_ctrl.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_dtm.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_ev.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_supp_cmd.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_hci_vs.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_iso.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_iso_big.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_isoal.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_pdu.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_rand.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_resolv.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_rfmgmt.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_scan.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_scan_aux.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_sched.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_sync.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_trace.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_utils.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/controller/src/ble_ll_whitelist.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/drivers/nrf51/src/ble_hw.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/drivers/nrf51/src/ble_phy.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_hw.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_phy.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/ble_phy_trace.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/nrf52/phy.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/drivers/nrf5x/src/nrf53/phy.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/access.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv_ext.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/adv_legacy.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/aes-ccm.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/app_keys.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/beacon.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/cdb.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg_cli.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/cfg_srv.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/crypto.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/friend.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/glue.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/health_cli.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/health_srv.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/heartbeat.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/light_model.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/lpn.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/mesh.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/model_cli.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/model_srv.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/msg.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/net.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_adv.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_gatt.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/pb_gatt_srv.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/prov.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/prov_device.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/provisioner.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy_msg.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/proxy_srv.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/rpl.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/settings.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/shell.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/subnet.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/testing.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/mesh/src/transport.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/services/gap/src/ble_svc_gap.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/services/gatt/src/ble_svc_gatt.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_aes_ccm.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_att.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_att_clt.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_att_cmd.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_att_svr.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_dtm.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_ead.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_eatt.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_eddystone.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_gap.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc_cache.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_gattc_cache_conn.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_gatts.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_gatts_lcl.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_adv.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_atomic.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_cfg.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_conn.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_flow.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_cmd.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_evt.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_hci_util.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_id.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_log.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_mbuf.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_misc.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_mqueue.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_periodic_sync.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_pvcy.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_resolv.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_shutdown.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_startup.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_hs_stop.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_ibeacon.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_coc.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_sig.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_l2cap_sig_cmd.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_sm.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_alg.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_cmd.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_lgcy.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_sm_sc.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_store.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_store_util.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/src/ble_uuid.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_config.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_config_conf.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/store/config/src/ble_store_nvs.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/store/ram/src/ble_store_ram.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/host/util/src/addr.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/transport/common/hci_h4/src/hci_h4.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/transport/common/hci_ipc/src/hci_ipc.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/transport/esp_ipc/src/hci_esp_ipc.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/transport/esp_ipc_legacy/src/hci_esp_ipc_legacy.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/transport/nrf5340/src/nrf5340_ble_hci.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/nimble/transport/src/transport.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/porting/nimble/src/endian.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/porting/nimble/src/hal_timer.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/porting/nimble/src/mem.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/porting/nimble/src/nimble_port.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/porting/nimble/src/os_cputime.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/porting/nimble/src/os_cputime_pwr2.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/porting/nimble/src/os_mbuf.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/porting/nimble/src/os_mempool.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/porting/nimble/src/os_msys_init.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/porting/npl/freertos/src/nimble_port_freertos.c.o
+Compiling .pio/build/esp32-single-wide-test/libe28/NimBLE-Arduino/nimble/porting/npl/freertos/src/npl_os_freertos.c.o
+Compiling .pio/build/esp32-single-wide-test/lib43e/Preferences/Preferences.cpp.o
+Archiving .pio/build/esp32-single-wide-test/libe28/libNimBLE-Arduino.a
+Indexing .pio/build/esp32-single-wide-test/libe28/libNimBLE-Arduino.a
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/Esp.cpp.o
+Archiving .pio/build/esp32-single-wide-test/lib43e/libPreferences.a
+Indexing .pio/build/esp32-single-wide-test/lib43e/libPreferences.a
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/FirmwareMSC.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/FunctionalInterrupt.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/HWCDC.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/HardwareSerial.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/IPAddress.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/IPv6Address.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/MD5Builder.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/Print.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/Stream.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/StreamString.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/Tone.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/USB.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/USBCDC.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/USBMSC.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/WMath.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/WString.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/base64.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/cbuf.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-adc.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-bt.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-cpu.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-dac.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-gpio.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-i2c-slave.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-i2c.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-ledc.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-matrix.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-misc.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-psram.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-rgb-led.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-rmt.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-sigmadelta.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-spi.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-time.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-timer.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-tinyusb.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-touch.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/esp32-hal-uart.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/firmware_msc_fat.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/libb64/cdecode.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/libb64/cencode.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/main.cpp.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/stdlib_noniso.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/wiring_pulse.c.o
+Compiling .pio/build/esp32-single-wide-test/FrameworkArduino/wiring_shift.c.o
+Archiving .pio/build/esp32-single-wide-test/libFrameworkArduino.a
+Indexing .pio/build/esp32-single-wide-test/libFrameworkArduino.a
+Linking .pio/build/esp32-single-wide-test/firmware.elf
+Retrieving maximum program size .pio/build/esp32-single-wide-test/firmware.elf
+Checking size .pio/build/esp32-single-wide-test/firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [=         ]  11.0% (used 35908 bytes from 327680 bytes)
+Flash: [=====     ]  46.0% (used 602989 bytes from 1310720 bytes)
+Building .pio/build/esp32-single-wide-test/firmware.bin
+esptool.py v4.5.1
+Creating esp32 image...
+Merged 27 ELF sections
+Successfully created esp32 image.
+========================= [SUCCESS] Took 21.79 seconds =========================
+
+Environment             Status    Duration
+----------------------  --------  ------------
+esp32                   SUCCESS   00:00:22.840
+esp32-compilecheck      SUCCESS   00:00:21.676
+esp32-single-live       SUCCESS   00:00:24.523
+esp32-single-wide-test  SUCCESS   00:00:21.788
+========================= 4 succeeded in 00:01:30.827 =========================

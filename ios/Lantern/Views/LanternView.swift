@@ -171,7 +171,7 @@ struct LanternView: View {
         if model.mode == .live {
             HStack {
                 if !model.calibrated {
-                    Button("Calibrate") { presentedPanel = .settings }
+                    Button(model.automaticFloorCalibrationSupported ? "Finding floor…" : "Floor setup") { presentedPanel = .settings }
                         .font(FeelTypography.label).frame(minHeight: 44)
                         .padding(.horizontal, 16).foregroundStyle(FeelTheme.ink).feelBlock(shadow: 4)
                 } else if model.guidanceState != .live {
@@ -284,9 +284,9 @@ struct LanternView: View {
             }
             CameraGuidance(model: model, puck: model.puck)
             if model.mode == .live && !model.calibrated {
-                Button("Calibrate") { presentedPanel = .settings }
+                Button(model.automaticFloorCalibrationSupported ? "Finding floor…" : "Floor setup") { presentedPanel = .settings }
                     .buttonStyle(FeelSecondaryButtonStyle())
-                    .accessibilityHint("Enter the measured camera height before starting tactile guidance.")
+                    .accessibilityHint("Move slowly with the floor visible for automatic calibration. Open floor setup for the manual alternative.")
             }
         }
     }
@@ -318,7 +318,7 @@ struct LanternView: View {
             if model.mode == .live {
                 LiveSetup(model: model)
             } else {
-                Text("Start the camera to calibrate.")
+                Text("Start the camera to calibrate the floor automatically.")
                     .foregroundStyle(FeelTheme.secondary)
             }
             DirectionArrowSettings(model: model)
@@ -390,7 +390,7 @@ private struct CameraGuidance: View {
         case .trackingLost: return model.mode == .simulation ? "SIMULATION · Tracking lost" : "Tracking lost · Pins neutral"
         case .staleDepth: return "Waiting for depth · Pins neutral"
         case .invalidFrame: return "Depth unavailable · Pins neutral"
-        case .uncalibrated: return "Calibration required · Pins neutral"
+        case .uncalibrated: return "Finding floor · Pins neutral"
         }
     }
 
@@ -493,18 +493,22 @@ private struct LiveSetup: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             FeelSection(title: "Floor calibration", systemImage: "viewfinder") {
-                Label(model.calibrated ? "Floor calibrated" : "Calibration required", systemImage: model.calibrated ? "checkmark.circle" : "exclamationmark.circle")
+                Label(model.calibrated ? "Floor calibrated" : (model.automaticFloorCalibrationSupported ? "Looking for a stable floor" : "Measured height needed"), systemImage: model.calibrated ? "checkmark.circle" : "exclamationmark.circle")
                     .font(FeelTypography.label)
-                Text("Phone landscape-left, rear camera forward.")
+                Text(model.automaticFloorCalibrationSupported
+                     ? "Keep the phone landscape-left, rear camera forward, with some floor visible. Calibration happens automatically when a stable floor is detected."
+                     : "Automatic floor detection is unavailable on this device. Keep the phone landscape-left, rear camera forward, and enter its measured lens height.")
                     .font(FeelTypography.subheadline)
                 Stepper(value: $model.cameraHeight, in: 0.6...2.1, step: 0.05) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Camera height").font(FeelTypography.subheadline)
+                        Text("Manual camera height").font(FeelTypography.subheadline)
                         Text(model.cameraHeight, format: .number.precision(.fractionLength(2))) + Text(" m")
                     }.monospacedDigit()
                 }.accessibilityLabel("Camera height")
                     .accessibilityValue(String(format: "%.2f meters", model.cameraHeight))
-                Button(model.calibrated ? "Recalibrate floor" : "Calibrate floor") { model.calibrate() }
+                Text("If automatic calibration cannot find the floor, measure the lens height above it and use the manual option below.")
+                    .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                Button("Use measured height") { model.calibrate() }
                     .buttonStyle(FeelPrimaryButtonStyle())
                 Text(model.status)
                     .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)

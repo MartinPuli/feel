@@ -47,6 +47,10 @@ V1 keeps a scoped router key in the phone Keychain. Public distribution must not
 
 The V4 text service remains a separate single-user demo deployment. Public multiuser use needs authenticated ownership of every session, bounded HTTPS ingress/concurrency, a production server, persistent private storage, atomic request deduplication and sanitized failure telemetry. Its current shared token must not be treated as tenant isolation. V4 was not merged into V1 during account setup.
 
+## October 17 MCP follow-up
+
+Read-only inspection found no active feature deployment and only the generic smoke dataset/functions. Current [evaluation documentation](https://docs.chalk.ai/docs/compute/evaluations) requires Evaluations and the async Function queue to be enabled, plus an active deployment for a new environment. Confirm these prerequisites before another run. Existing-operation lookup returned not found and a query listing filtered by the run ID was empty; completion remains unverified, and neither result establishes the cause of the earlier timeout. See the [applied assessment](CHALK-AGENT-ASSESSMENT.md).
+
 ## Next actions
 
 1. Resolve the quota-backend support request, apply the proposed RPM/concurrency limits, and verify actual admission/rejection behavior.

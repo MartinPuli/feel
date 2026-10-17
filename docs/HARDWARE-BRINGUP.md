@@ -110,7 +110,7 @@ print settings, CAD commit, observations and video. P2 or P4 failure blocks expa
 7. Save calibration, power-cycle and verify it was retained. Follow [CALIBRATION.md](CALIBRATION.md).
 
 The v7 raw 650–2500 µs envelope is obsolete. The revised controller accepts only
-900–2100 µs; this nominal envelope is not an instruction to begin at either endpoint. Stop on heat, buzzing, unexpected motion or binding.
+650–2500 µs under the unmeasured175° assumption; this experimental envelope is not an instruction to begin at either endpoint. Stop on heat, buzzing, unexpected motion or binding.
 
 ## 5. Assemble the full puck only after one column passes
 
