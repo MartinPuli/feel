@@ -2,51 +2,24 @@ import SwiftUI
 
 struct VoiceControl: View {
     @ObservedObject var voice: GrokVoiceSession
-    var compact = false
-    var showCaption = true
     let openSetup: () -> Void
 
     var body: some View {
-        VStack(spacing: 6) {
-            Button {
-                if voice.isActive { voice.pauseAssistant() }
-                else if !voice.isConfigured { openSetup() }
-                else { voice.resumeAssistant() }
-            } label: {
-                HStack(spacing: 10) {
-                    if voice.phase == .connecting { ProgressView().tint(FeelTheme.accent) }
-                    else { Image(systemName: voice.isActive ? "mic.fill" : "mic.slash") }
-                    if !compact { Text(voice.label).font(FeelTypography.label) }
-                }
-                .frame(minWidth: compact ? 48 : 180, minHeight: 48)
-                .padding(.horizontal, compact ? 0 : 14)
-                .foregroundStyle(FeelTheme.accent)
-                .background(FeelTheme.inset, in: Capsule())
+        Button(action: openSetup) {
+            Group {
+                if voice.phase == .connecting { ProgressView().tint(FeelTheme.accent) }
+                else { Image(systemName: voice.isActive ? "mic.fill" : "mic.slash") }
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(voice.isActive ? "Pause assistant" : voice.isConfigured ? "Resume assistant" : "Assistant settings")
-            .accessibilityValue(voice.isActive ? voice.label : "Microphone off")
-            .accessibilityHint(voice.isActive ? "Pauses the microphone. You can also say pause assistant." : "The assistant listens automatically when FEEL is open after voice setup.")
-            .accessibilityIdentifier("voiceControl")
-            if showCaption && !compact {
-                if !voice.errorMessage.isEmpty {
-                    Button { openSetup() } label: {
-                        Text(voice.errorMessage).font(FeelTypography.footnote).lineLimit(2)
-                    }
-                    .accessibilityIdentifier("voiceRecovery")
-                } else if !voice.caption.isEmpty {
-                    Text(voice.caption).font(FeelTypography.footnote).lineLimit(2)
-                        .accessibilityIdentifier("voiceCaption")
-                }
-            }
+            .font(.system(size: 18, weight: .medium))
+            .frame(width: 48, height: 48)
+            .foregroundStyle(FeelTheme.accent)
+            .background(FeelTheme.inset, in: Circle())
         }
-        .frame(maxWidth: compact ? 48 : 420)
-        .padding(compact ? 0 : 8)
-        .background {
-            if !compact && showCaption && (!voice.caption.isEmpty || !voice.errorMessage.isEmpty) {
-                RoundedRectangle(cornerRadius: 20).fill(FeelTheme.surface)
-            }
-        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Assistant settings")
+        .accessibilityValue(voice.isActive ? voice.label : "Microphone off")
+        .accessibilityHint("Opens assistant status and pause or resume controls. You can also say pause assistant.")
+        .accessibilityIdentifier("voiceControl")
     }
 }
 
@@ -61,6 +34,14 @@ struct VoiceSetup: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            Text(voice.label).font(FeelTypography.headline)
+            if !voice.errorMessage.isEmpty {
+                Text(voice.errorMessage).font(FeelTypography.footnote)
+                    .accessibilityIdentifier("voiceRecovery")
+            } else if !voice.caption.isEmpty {
+                Text(voice.caption).font(FeelTypography.body)
+                    .accessibilityIdentifier("voiceCaption")
+            }
             Text("FEEL listens while the app is open. Say what you need.")
                 .font(FeelTypography.body)
             Text("Use your phone or headphones. Say find a door, check sensing, or stop. You can interrupt at any time.")

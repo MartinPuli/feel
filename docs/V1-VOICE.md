@@ -81,3 +81,23 @@ existing sensing/BLE implementation were retained. V2/V3 were not imported.
    commands, pause, VoiceOver access, and invalid-state recovery.
 3. Repeat with the intended headphones, including interruptions, disconnect,
    reconnection and locking. Test sensing/tactile behavior separately with supervision.
+
+## Build 7 voice refinement
+
+The assistant status control now lives as a 48-point icon in the top toolbar.
+Its modal contains captions, recovery and pause/resume controls. The camera
+center stays empty; automatic foreground listening remains unchanged.
+
+Grok uses Sal at its default speed. The prompt asks for result-first responses,
+usually one sentence of 3–12 words, with one follow-up question only when needed.
+Readiness is “I'm here.” Repeated introductions and offers to help are removed.
+Proactive observations use normal distance units and relative sides, preserve
+possible-door uncertainty and use past tense to acknowledge sample-to-speech
+latency. Local fallback prefers the highest-quality installed English voice.
+
+The [voice cases](evidence/v1-voice-polish/voice-cases.md) define expected behavior.
+These changes do not claim measured improvement to live audio. Official
+[voice options](https://docs.x.ai/developers/model-capabilities/audio/text-to-speech#voices)
+and [prompting guidance](https://docs.x.ai/developers/model-capabilities/audio/speech-to-speech/prompting-guide)
+were checked on October 17. The prompt controls wording; provider voice selection
+controls the voice itself. Physical listening evaluation remains necessary.

@@ -23,6 +23,7 @@ final class LanternModel:ObservableObject {
     let voice: GrokVoiceSession
     private var voiceSawTarget = false
     private var voiceTargetAvailable = false
+    private var voiceTargetPhrase: String?
     private var voiceLastGuidance: GuidanceState?
     private var voiceHadConnection = false
     private var voiceOwnsScan = false
@@ -142,6 +143,7 @@ final class LanternModel:ObservableObject {
                 "guidance": String(describing: guidanceState), "calibrated": calibrated,
                 "status": status, "target": valid ? targetDescription : "No current live target observation",
                 "scene_observation": valid && voiceTargetAvailable,
+                "spoken_observation": valid && voiceTargetAvailable ? voiceTargetPhrase ?? "No current target" : "No current target",
                 "selected_target": finder.rawValue, "puck_connected": puck.isConnected,
                 "connection": puck.status, "simulation": mode == .simulation,
                 "notice": "Neutral pins do not mean a clear path. No safe-route claim is available."]
@@ -155,7 +157,7 @@ final class LanternModel:ObservableObject {
         }
         if !targetAvailable || guidanceState != .live { voice.invalidateSceneSpeech() }
         if voiceHadConnection && !puck.isConnected {
-            if voice.announce("The puck disconnected. Check the connection before relying on tactile feedback.") { voiceHadConnection = false }
+            if voice.announce("The puck disconnected. Tactile feedback is unavailable.") { voiceHadConnection = false }
             return
         }
         voiceHadConnection = puck.isConnected
@@ -163,7 +165,7 @@ final class LanternModel:ObservableObject {
         if guidanceState != .live {
             voiceSawTarget = false
             if voiceLastGuidance != guidanceState {
-                let message = calibrated ? "Sensing is unavailable. Pins are neutral." : "The camera needs floor calibration. Tell me your measured camera height when it is mounted."
+                let message = calibrated ? "Sensing stopped. Pins are neutral." : "What's the measured camera height? I need it to calibrate."
                 if voice.announce(message) { voiceLastGuidance = guidanceState }
             }
             return
@@ -180,8 +182,8 @@ final class LanternModel:ObservableObject {
             }
         } else {
             voiceTargetLostAt = nil
-            if !voiceSawTarget,
-               voice.announce("At the last camera check. " + targetDescription, sceneBound: true) {
+            if !voiceSawTarget, let voiceTargetPhrase,
+               voice.announce(voiceTargetPhrase, sceneBound: true) {
                 voiceSawTarget = true
             }
         }
@@ -207,7 +209,11 @@ final class LanternModel:ObservableObject {
         packet=output.packet; guidanceState=output.state; puck.send(packet)
         if let target,target.valid(at:now),output.state == .live {
             targetDescription=String(format:"%@, %.1f m, %.0f°",target.label,target.distance,target.bearingDegrees)
-        } else { targetDescription=finder == .none ? "Obstacle sensing" : "Target unavailable. No directional highlight" }
+            voiceTargetPhrase = VoicePhrasing.observation(target, finder: finder, now: now)
+        } else {
+            voiceTargetPhrase = nil
+            targetDescription=finder == .none ? "Obstacle sensing" : "Target unavailable. No directional highlight"
+        }
         updateVoiceAwareness(targetAvailable: target?.valid(at: now) == true && output.state == .live)
     }
 }

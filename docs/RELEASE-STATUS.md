@@ -13,6 +13,16 @@
 
 # Current V1 release candidate
 
+## Current iPhone voice refinement
+
+Build 7 moves the assistant to a toolbar icon and keeps the camera center clear.
+It configures Sal, concise result-first responses, shorter readiness/recovery,
+and spoken observations with normal units and explicit candidate uncertainty.
+Thirty-nine simulator tests passed, with 32 unit tests rerun after the last
+wording adjustment. The signed update is installed and launched on iPhone.
+[Evidence](evidence/v1-voice-polish/validation.txt). Live xAI provisioning and
+subjective voice/headset evaluation remain blocked on the missing credential.
+
 ## Current iPhone assistant update
 
 V1 build 6 adds the [personal voice assistant](V1-VOICE.md). After provisioning,

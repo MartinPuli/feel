@@ -146,7 +146,7 @@ final class GrokVoiceSession: ObservableObject {
                     } else if reason == AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue, self.isActive {
                         self.waitingForHeadphones = true
                         self.disconnect(); self.caption = "Headphones disconnected. Assistant paused."
-                        self.speak("Headphones disconnected. Reconnect them to resume the assistant.")
+                        self.speak("Headphones disconnected. Reconnect them to resume.")
                     }
                     return
                 }
@@ -195,7 +195,7 @@ final class GrokVoiceSession: ObservableObject {
             errorMessage = "Voice setup is needed once before the assistant can listen."
             if !announcedMissingSetup {
                 announcedMissingSetup = true
-                speak("FEEL needs voice setup before I can listen. Open Assistant settings with VoiceOver.")
+                speak("Voice needs setup. Open Assistant settings.")
             }
             return
         }
@@ -227,7 +227,7 @@ final class GrokVoiceSession: ObservableObject {
             guard allowed else {
                 self.fail("Allow Microphone in iPhone Settings so the assistant can listen.", speak: false)
                 self.needsMicrophoneSettings = true
-                self.speak("Microphone access is off. Enable Microphone for FEEL in iPhone Settings so I can listen.")
+                self.speak("Microphone access is off. Enable it in iPhone Settings.")
                 return
             }
             self.caption = "Connecting to Grok"
@@ -318,7 +318,7 @@ final class GrokVoiceSession: ObservableObject {
 
     private func fail(_ message: String, speak shouldSpeak: Bool = true) {
         disconnect(); errorMessage = message; phase = .failed
-        if shouldSpeak { speak("Assistant disconnected. Camera controls still work.") }
+        if shouldSpeak { speak("Voice disconnected. The camera still works.") }
         guard shouldSpeak, automaticListening, foreground, !isPausedByUser, !waitingForHeadphones, retryCount < 3 else { return }
         retryCount += 1
         let id = generation
@@ -334,7 +334,14 @@ final class GrokVoiceSession: ObservableObject {
         // Local fallback feedback remains audible when the voice network fails.
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
         let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        // Prefer a higher-quality installed voice without requiring a download.
+        utterance.voice = AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language == "en-US" }
+            .max { $0.quality.rawValue < $1.quality.rawValue }
+            ?? AVSpeechSynthesisVoice(language: "en-US")
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+        utterance.preUtteranceDelay = 0
+        utterance.postUtteranceDelay = 0
         if speaker == nil { speaker = AVSpeechSynthesizer() }
         speaker?.speak(utterance)
     }
@@ -384,7 +391,7 @@ final class GrokVoiceSession: ObservableObject {
         case "session.created":
             guard !configured else { return }; configured = true
             enqueue(["type": "session.update", "session": [
-                "voice": "eve", "instructions": VoiceCommand.instructions,
+                "voice": "sal", "instructions": VoiceCommand.instructions,
                 "turn_detection": ["type": "server_vad"], "tools": VoiceCommand.tools,
                 "audio": ["input": ["format": ["type": "audio/pcm", "rate": 24000]],
                           "output": ["format": ["type": "audio/pcm", "rate": 24000]]]]])
@@ -403,7 +410,7 @@ final class GrokVoiceSession: ObservableObject {
                 })
                 phase = .listening; caption = "Ask me to find something"
                 scheduleSessionRenewal(id, after: 900)
-                announce("FEEL is ready. Tell me what to find. Say stop to stop the camera, or pause assistant to stop listening.", automatic: false)
+                announce("I'm here.", automatic: false)
             } catch { fail("The microphone couldn't start. Check your audio device and retry.") }
         case "input_audio_buffer.speech_started":
             let generationBeforeInterrupt = generation

@@ -30,9 +30,6 @@ struct LanternView: View {
                         header
                         if !controlsExpanded { compactAttention }
                         Spacer(minLength: 8)
-                        if !dynamicTypeSize.isAccessibilitySize {
-                            VoiceControl(voice: voice, showCaption: !controlsExpanded) { presentedPanel = .voice }
-                        }
                         controlDrawer(availableHeight: geometry.size.height)
                     }
                 }
@@ -244,9 +241,7 @@ struct LanternView: View {
             .frame(minHeight: 48)
             .shadow(color: .black.opacity(0.65), radius: 3, y: 1)
             Spacer(minLength: 0)
-            if dynamicTypeSize.isAccessibilitySize {
-                VoiceControl(voice: voice, compact: true) { presentedPanel = .voice }
-            }
+            VoiceControl(voice: voice) { presentedPanel = .voice }
             CameraConnectionButton(puck: model.puck) { presentedPanel = .connection }
             Button { presentedPanel = .settings } label: {
                 Image(systemName: "slider.horizontal.3").frame(width: 48, height: 48)

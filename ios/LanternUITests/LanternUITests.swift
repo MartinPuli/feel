@@ -45,6 +45,9 @@ final class LanternUITests: XCTestCase {
         let app = launch(expandControls: false)
         let voice = app.buttons["voiceControl"]
         XCTAssertTrue(voice.exists)
+        XCTAssertTrue(voice.isHittable)
+        XCTAssertLessThan(voice.frame.maxY, app.frame.midY, "Assistant belongs in the header, outside the central camera area")
+        XCTAssertFalse(voice.frame.intersects(app.buttons["cameraSettings"].frame))
         XCTAssertEqual(voice.value as? String, "Microphone off")
         voice.tap()
         XCTAssertTrue(app.textFields["voiceEndpoint"].waitForExistence(timeout: 5))

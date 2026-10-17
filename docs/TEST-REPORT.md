@@ -1,3 +1,9 @@
+## October 17 voice refinement
+
+39 distinct native tests passed; 32 unit/integration tests were rerun after the
+final spoken wording change. Build 7 is signed, installed and launched. Live
+voice quality is not verified. [Evidence](evidence/v1-voice-polish/validation.txt).
+
 ## October 17 V1 assistant update
 
 36 native tests and 10 token-service tests passed locally. The signed build 6
