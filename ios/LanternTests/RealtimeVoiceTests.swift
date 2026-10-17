@@ -592,6 +592,172 @@ final class RealtimeVoiceTests: XCTestCase {
         model.stop()
     }
 
+    private func deliveryReady() -> (RealtimeVoiceSession, FakeVoiceTransport, FakeVoiceAudio) {
+        let (voice, transport, audio) = connected()
+        // Skip the automatic greeting without waiting for its announcement throttle.
+        voice.setSpokenOutput(false)
+        transport.emit(["type": "session.created"])
+        transport.emit(["type": "session.updated"])
+        voice.setSpokenOutput(true)
+        return (voice, transport, audio)
+    }
+
+    func testAnnouncementDeliveryWaitsForCompletionAndDrainInEitherOrder() {
+        for drainFirst in [true, false] {
+            let (voice, transport, audio) = deliveryReady()
+            defer { voice.disconnect() }
+            var deliveries = 0
+            XCTAssertTrue(voice.announce("A chair was ahead.", automatic: false, onDelivered: { deliveries += 1 }))
+            XCTAssertEqual(deliveries, 0)
+            transport.emit(manualResponseCreated(transport, id: "notice"))
+            transport.emit(audioEvent("notice"))
+            if drainFirst { audio.drain() }
+            XCTAssertEqual(deliveries, 0)
+            transport.emit(["type": "response.done", "response": ["id": "notice", "status": "completed"]])
+            XCTAssertEqual(deliveries, drainFirst ? 1 : 0)
+            audio.drain()
+            transport.emit(["type": "response.done", "response": ["id": "notice", "status": "completed"]])
+            audio.drain()
+            XCTAssertEqual(deliveries, 1)
+        }
+    }
+
+    func testAnnouncementDeliveryRequiresFinalChunkToDrain() {
+        let (voice, transport, audio) = deliveryReady()
+        defer { voice.disconnect() }
+        var deliveries = 0
+        XCTAssertTrue(voice.announce("A chair was ahead.", automatic: false, onDelivered: { deliveries += 1 }))
+        transport.emit(manualResponseCreated(transport, id: "notice"))
+        transport.emit(audioEvent("notice")); audio.drain()
+        transport.emit(audioEvent("notice"))
+        transport.emit(["type": "response.done", "response": ["id": "notice", "status": "completed"]])
+        XCTAssertEqual(deliveries, 0)
+        audio.drain()
+        XCTAssertEqual(deliveries, 1)
+    }
+
+    func testAnnouncementWithoutAudioOrSuccessfulCompletionIsNotDelivered() {
+        for status in ["completed", "cancelled", "incomplete", "failed"] {
+            let (voice, transport, audio) = deliveryReady()
+            var deliveries = 0
+            XCTAssertTrue(voice.announce("A chair was ahead.", automatic: false, onDelivered: { deliveries += 1 }))
+            transport.emit(manualResponseCreated(transport, id: "notice"))
+            // The completed case deliberately produces captions only; other cases have audio.
+            if status != "completed" { transport.emit(audioEvent("notice")); audio.drain() }
+            transport.emit(["type": "response.done", "response": ["id": "notice", "status": status]])
+            audio.drain()
+            XCTAssertEqual(deliveries, 0, status)
+            voice.disconnect()
+        }
+    }
+
+    func testDelayedAnnouncementCancelledBeforeAudioIsNotDelivered() {
+        let (voice, transport, audio) = deliveryReady()
+        defer { voice.disconnect() }
+        var deliveries = 0
+        XCTAssertTrue(voice.announce("A chair was ahead.", automatic: false, sceneBound: true, onDelivered: { deliveries += 1 }))
+        let delayed = manualResponseCreated(transport, id: "delayed")
+        voice.invalidateSceneSpeech()
+        transport.emit(delayed)
+        transport.emit(audioEvent("delayed"))
+        transport.emit(["type": "response.done", "response": ["id": "delayed", "status": "completed"]])
+        audio.drain()
+        XCTAssertEqual(deliveries, 0)
+        XCTAssertEqual(audio.playCount, 0)
+    }
+
+    func testMuteDiscardsAnnouncementDeliveryWhileCaptureContinues() {
+        let (voice, transport, audio) = deliveryReady()
+        defer { voice.disconnect() }
+        var deliveries = 0
+        XCTAssertTrue(voice.announce("A chair was ahead.", automatic: false, onDelivered: { deliveries += 1 }))
+        transport.emit(manualResponseCreated(transport, id: "notice"))
+        transport.emit(audioEvent("notice"))
+        voice.setSpokenOutput(false)
+        voice.setSpokenOutput(true)
+        transport.emit(audioEvent("notice"))
+        transport.emit(["type": "response.done", "response": ["id": "notice", "status": "completed"]])
+        audio.drain()
+        XCTAssertEqual(deliveries, 0)
+        XCTAssertTrue(audio.running)
+        audio.onInput?(Data([1, 0]))
+        XCTAssertEqual(transport.sent.last?["type"] as? String, "input_audio_buffer.append")
+    }
+
+    func testInterruptedOrReplacedAnnouncementCannotReportUserResponseAsDelivery() {
+        for interrupt in [true, false] {
+            let (voice, transport, audio) = deliveryReady()
+            var deliveries = 0
+            XCTAssertTrue(voice.announce("A chair was ahead.", automatic: false, onDelivered: { deliveries += 1 }))
+            transport.emit(manualResponseCreated(transport, id: "notice"))
+            transport.emit(audioEvent("notice"))
+            if interrupt {
+                transport.emit(["type": "input_audio_buffer.speech_started"])
+                transport.emit(["type": "input_audio_buffer.speech_stopped"])
+            }
+            transport.emit(["type": "response.created", "response": ["id": "user-answer"]])
+            transport.emit(["type": "response.done", "response": ["id": "notice", "status": "completed"]])
+            transport.emit(audioEvent("user-answer"))
+            transport.emit(["type": "response.done", "response": ["id": "user-answer", "status": "completed"]])
+            audio.drain()
+            XCTAssertEqual(deliveries, 0)
+            voice.disconnect()
+        }
+    }
+
+    func testOldResponseCannotConsumeNewAnnouncementDeliveryAfterReconnect() {
+        let token = FakeVoiceToken(), transport = FakeVoiceTransport(), audio = FakeVoiceAudio()
+        let voice = makeVoice(token, transport, audio)
+        defer { voice.disconnect() }
+        func configure() {
+            voice.setSpokenOutput(false)
+            voice.start(); token.complete(.success("ephemeral-test-token"))
+            transport.emit(["type": "session.created"])
+            transport.emit(["type": "session.updated"])
+            voice.setSpokenOutput(true)
+        }
+        configure()
+        var oldDeliveries = 0, newDeliveries = 0
+        XCTAssertTrue(voice.announce("Old observation.", automatic: false, onDelivered: { oldDeliveries += 1 }))
+        let old = manualResponseCreated(transport, id: "old")
+        XCTAssertTrue(voice.hasPendingAnnouncementDelivery)
+        voice.disconnect()
+        XCTAssertFalse(voice.hasPendingAnnouncementDelivery)
+        configure()
+        XCTAssertTrue(voice.announce("New observation.", automatic: false, onDelivered: {
+            XCTAssertFalse(voice.hasPendingAnnouncementDelivery)
+            newDeliveries += 1
+        }))
+        let fresh = manualResponseCreated(transport, id: "fresh")
+        transport.emit(old)
+        transport.emit(audioEvent("old"))
+        transport.emit(["type": "response.done", "response": ["id": "old", "status": "completed"]])
+        audio.drain()
+        XCTAssertEqual(newDeliveries, 0)
+        XCTAssertTrue(voice.hasPendingAnnouncementDelivery)
+        transport.emit(fresh); transport.emit(audioEvent("fresh"))
+        transport.emit(["type": "response.done", "response": ["id": "fresh", "status": "completed"]])
+        audio.drain()
+        XCTAssertEqual(newDeliveries, 1)
+        XCTAssertEqual(oldDeliveries, 0)
+    }
+
+    func testSceneExpiryDiscardsUndeliveredAnnouncementCallback() {
+        let (voice, transport, audio) = deliveryReady()
+        defer { voice.disconnect() }
+        var deliveries = 0
+        XCTAssertTrue(voice.announce("A chair was ahead.", automatic: false, sceneBound: true, onDelivered: { deliveries += 1 }))
+        transport.emit(manualResponseCreated(transport, id: "notice"))
+        transport.emit(audioEvent("notice"))
+        transport.emit(["type": "response.done", "response": ["id": "notice", "status": "completed"]])
+        let expired = expectation(description: "Undelivered announcement expired")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.2) { expired.fulfill() }
+        wait(for: [expired], timeout: 4)
+        XCTAssertFalse(voice.hasPendingAnnouncementDelivery)
+        audio.drain()
+        XCTAssertEqual(deliveries, 0)
+    }
+
     private func makeVoice(_ token: FakeVoiceToken, _ transport: FakeVoiceTransport, _ audio: FakeVoiceAudio,
                            permission: @escaping (@escaping (Bool) -> Void) -> Void = { $0(true) }) -> RealtimeVoiceSession {
         RealtimeVoiceSession(tokenClient: token, audio: audio, transportFactory: { transport },

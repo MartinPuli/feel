@@ -30,7 +30,7 @@ final class LanternModel:ObservableObject {
     }
     @Published private(set) var recordingStatus: String?
     @Published var cameraHeight=1.2
-    @Published var finder:FinderMode = .none { didSet { voice.invalidateSceneSpeech(); proactiveVoice.reset(); voiceNotice = nil; voiceSawTarget = false; heldTarget = nil; finderEpoch += 1; perception.setFinder(finder,epoch:finderEpoch); frame=nil; resetGuidance(); targetDescription="Searching: \(finder.rawValue)" } }
+    @Published var finder:FinderMode = .none { didSet { voice.invalidateSceneSpeech(); proactiveVoice.reset(); voiceNotice = nil; voiceSawTarget = false; cancelWhereIs(); finderEpoch += 1; perception.setFinder(finder,epoch:finderEpoch); frame=nil; resetGuidance(); targetDescription="Searching: \(finder.rawValue)" } }
     /// Direction arrows on request: a V sign plays one arrow along the route to the visible target,
     /// then only noticeable route changes play again. Obstacles within 0.9 m always override it.
     @Published var arrowsEnabled = UserDefaults.standard.object(forKey: "directionArrowsEnabled") as? Bool ?? true {
@@ -69,6 +69,8 @@ final class LanternModel:ObservableObject {
     var whereIsAvailable: Bool { mode == .live && guidanceState == .live }
     private var proactiveVoice = ProactiveVoicePolicy()
     private var voiceNotice: ProactiveVoicePolicy.Notice?
+    private enum VoiceStateNotice: Equatable { case guidance(GuidanceState), targetLost, puckDisconnected }
+    private var voiceStateNotice: VoiceStateNotice?
     private var voiceSawTarget = false
     private var voiceTargetAvailable = false
     private var voiceTargetPhrase: String?
@@ -138,7 +140,7 @@ final class LanternModel:ObservableObject {
             if let status, status.hasPrefix("Recording stopped") || status.hasPrefix("Recording failed") { self.recordingDepth=false }
         }
         perception.onFrame={ [weak self] frame in guard let self,self.mode == .live,frame.epoch==self.startGeneration,frame.finderEpoch==self.finderEpoch else { return }; self.frame=frame; self.calibrated=frame.floorY != nil }
-        perception.onInvalidated={ [weak self] epoch in guard let self,epoch==self.startGeneration else { return }; self.frame=nil; self.calibrated=false; self.clearHeldTarget(spokenLine: "Lost tracking. Say it again."); self.tick() }
+        perception.onInvalidated={ [weak self] epoch in guard let self,epoch==self.startGeneration else { return }; self.frame=nil; self.calibrated=false; self.clearHeldTarget(spokenLine: "Lost tracking. Say it again."); self.resetDirections(); self.pointing.reset(); self.pointingHighlight=nil; self.tick() }
         perception.onStatus={ [weak self] text in guard let self,self.mode == .live else { return }; self.status=text }
         perception.onModelStatus={ [weak self] text,available in self?.detectorStatus=text; self?.detectorAvailable=available }
         perception.onPointing={ [weak self] epoch,observation in self?.handlePointing(observation,epoch:epoch) }
@@ -175,7 +177,7 @@ final class LanternModel:ObservableObject {
         voice.invalidateSceneSpeech()
         if stopVoice { voice.disconnect() }
         isStarting=false; startGeneration += 1; timer?.invalidate(); timer=nil; frame=nil; calibrated=false
-        heldTarget = nil; whereIsService?.cancel(); whereIsNotice = nil; unspokenLine = nil
+        cancelWhereIs()
         resetDirections()
         pointing.reset(); targetColumns=nil; pointingSpeech.stopSpeaking(at:.immediate)
         recordingDepth=false
@@ -211,7 +213,7 @@ final class LanternModel:ObservableObject {
             return ["status": "Looking for the \(thing) with one camera photo. The result arrives as an observation in a few seconds; call get_status to check.",
                     "pending": true]
         case .find(let target):
-            heldTarget = nil
+            cancelWhereIs()
             guard mode == .live else { return ["error": "Camera is not live. Ask the user whether to start it."] }
             guard target != .chair || detectorAvailable else { return ["error": detectorStatus] }
             finder = target; voiceSawTarget = false
@@ -290,6 +292,33 @@ final class LanternModel:ObservableObject {
         case .openSettings:
             voicePanel = .settings
             return ["status": "Settings opened."]
+        case .setDirectionArrows(let enabled):
+            arrowsEnabled = enabled
+            return ["status": enabled ? "Direction arrows enabled." : "Direction arrows disabled. Camera sensing continues."]
+        case .startDirections:
+            return startRequestedDirections()
+        case .stopDirections:
+            resetDirections(); pointingHighlight = nil
+            tick()
+            return ["status": "Direction arrows stopped. Camera sensing continues."]
+        case .startRecording(let includeVideo):
+            guard mode == .live else { return ["error": "Start the live camera before recording."] }
+            guard !recordingDepth else { return ["status": "Recording is already running. Stop it before changing video inclusion."] }
+            recordingVideo = includeVideo
+            recordingDepth = true
+            return ["status": "Recording startup requested. Check recording status before confirming it started.", "pending": true]
+        case .stopRecording:
+            recordingDepth = false
+            return ["status": "Recording stop requested. Camera sensing remains active."]
+        case .setRecordingVideo(let enabled):
+            guard !recordingDepth else { return ["error": "Stop recording before changing video inclusion."] }
+            recordingVideo = enabled
+            return ["status": enabled ? "The next recording will include camera video." : "The next recording will contain depth without camera video."]
+        case .simulateDirectionSign:
+            guard mode == .simulation else { return ["error": "Start simulation before simulating a V sign."] }
+            guard arrowsEnabled else { return ["error": "Enable direction arrows first."] }
+            simulateSign(); tick()
+            return ["status": "Simulated direction sign requested. Synthetic scene only.", "simulation": true]
         case .chooseTarget(let option):
             let actions=request.chose(option-1,now:ProcessInfo.processInfo.systemUptime)
             guard !actions.isEmpty else { return ["error": "No choice is pending, or that option doesn't exist."] }
@@ -303,10 +332,12 @@ final class LanternModel:ObservableObject {
     func saveChalkConfiguration(_ configuration: ChalkConfiguration) throws {
         guard configuration.isValid else { throw KeychainStoreError.invalid }
         try chalkStore.save(configuration)
-        chalkConfiguration = configuration; whereIsService?.cancel(); whereIsService = nil   // a lookup in flight must not answer through the old settings
+        cancelWhereIs()
+        chalkConfiguration = configuration; whereIsService = nil   // a lookup in flight must not answer through the old settings
     }
     func forgetChalkConfiguration() {
-        chalkStore.clear(); chalkConfiguration = nil; whereIsService?.cancel(); whereIsService = nil
+        cancelWhereIs()
+        chalkStore.clear(); chalkConfiguration = nil; whereIsService = nil
     }
     /// Sends the bundled sample photo through the real request path (gateway, parser, placement)
     /// with a synthetic depth grid. It never touches the live camera or the held target.
@@ -341,11 +372,10 @@ final class LanternModel:ObservableObject {
     }
     /// A new ask replaces everything from the previous one: the held target, a lookup in flight, a finder target.
     func beginWhereIs(_ thing: String) {
-        whereIsNotice = nil; unspokenLine = nil
+        cancelWhereIs()
+        resetDirections()
+        pointing.reset(); pointingHighlight = nil
         if finder != .none { finder = .none }
-        clearHeldTarget(spokenLine: nil)
-        whereIsService?.cancel()
-        whereIsRequest += 1
         startWhereIs(thing)
     }
     private func startWhereIs(_ thing: String) {
@@ -385,10 +415,19 @@ final class LanternModel:ObservableObject {
         case .failed: say("I couldn't look just now. Try again.")
         }
     }
+    private func cancelWhereIs() {
+        whereIsRequest += 1
+        whereIsService?.cancel()
+        heldTarget = nil; whereIsNotice = nil; unspokenLine = nil
+        voiceSawTarget = false; voiceTargetLostAt = nil
+        voiceTargetAvailable = false; voiceTargetPhrase = nil
+        clearPointingRoute()
+        voice.invalidateSceneSpeech()
+    }
     func clearHeldTarget(spokenLine: String?) {
-        guard heldTarget != nil else { return }
-        heldTarget = nil; voiceSawTarget = false; clearPointingRoute()
-        if let spokenLine { say(spokenLine) }
+        let wasHolding = heldTarget != nil
+        cancelWhereIs()
+        if wasHolding, let spokenLine { say(spokenLine) }
     }
     private func say(_ line: String, sceneBound: Bool = false) {
         whereIsNotice = line
@@ -410,9 +449,13 @@ final class LanternModel:ObservableObject {
                 "status": status, "target": valid ? targetDescription : "No current live target observation",
                 "scene_observation": valid && voiceTargetAvailable,
                 "spoken_observation": valid && voiceTargetAvailable ? voiceTargetPhrase ?? "No current target" : "No current target",
-                "selected_target": finder.rawValue, "direction_arrows": arrowsEnabled ? (guiding ? "guiding" : "waiting for V sign") : "off", "puck_connected": puck.isConnected,
+                "selected_target": finder.rawValue, "direction_status": directionReadout, "direction_arrows": arrowsEnabled ? (guiding ? "guiding" : "ready for a voice request or V sign") : "off", "puck_connected": puck.isConnected,
                 "where_is_available": whereIsAvailable, "held_target": heldTarget?.label ?? "none", "where_is": whereIsNotice ?? "none",
                 "connection": puck.status, "simulation": mode == .simulation,
+                "direction_arrows_enabled": arrowsEnabled, "directions_active": guiding,
+                "directions_pending": request.isBusy || pointingRouteSetAt != nil || pendingSign,
+                "recording_requested": recordingDepth, "recording_includes_video": recordingVideo,
+                "recording_status": recordingStatus ?? "Recording is off.",
                 "spoken_replies": voice.spokenOutputEnabled, "useful_updates": voice.proactiveEnabled,
                 "notice": "Neutral pins do not mean a clear path. No safe-route claim is available."]
     }
@@ -422,21 +465,33 @@ final class LanternModel:ObservableObject {
         voiceTargetAvailable = targetAvailable
         guard voice.isActive else {
             voiceSawTarget = false; voiceLastGuidance = nil; voiceHadConnection = puck.isConnected
-            proactiveVoice.reset(); voiceNotice = nil
+            proactiveVoice.reset(); voiceNotice = nil; voiceStateNotice = nil
             return
         }
-        if guidanceState != .live || (voiceNotice.map {
+        if !voice.hasPendingAnnouncementDelivery { voiceStateNotice = nil }
+        if let state = voiceStateNotice {
+            let supported: Bool
+            switch state {
+            case .guidance(let expected): supported = mode == .live && guidanceState == expected
+            case .targetLost: supported = mode == .live && guidanceState == .live && !targetAvailable && heldTarget == nil
+            case .puckDisconnected: supported = !puck.isConnected
+            }
+            if !supported { voice.invalidateSceneSpeech(); voiceStateNotice = nil }
+        }
+        if voiceStateNotice == nil && (guidanceState != .live || (voiceNotice.map {
             !$0.isSupported(target: target, finder: finder, distances: distances, now: now)
-        } ?? !targetAvailable) {
+        } ?? !targetAvailable)) {
             voice.invalidateSceneSpeech(); voiceNotice = nil
         }
         if voiceHadConnection && !puck.isConnected {
-            if voice.announce("The puck disconnected. Tactile feedback is unavailable.") { voiceHadConnection = false }
+            _ = announceState("The puck disconnected. Tactile feedback is unavailable.", state: .puckDisconnected) { [weak self] in
+                self?.voiceHadConnection = false
+            }
             return
         }
         voiceHadConnection = puck.isConnected
         guard mode == .live else {
-            voiceSawTarget = false; voiceLastGuidance = nil; proactiveVoice.reset(); voiceNotice = nil
+            voiceSawTarget = false; voiceLastGuidance = nil; proactiveVoice.reset(); voiceNotice = nil; voiceStateNotice = nil
             return
         }
         if guidanceState != .live {
@@ -448,34 +503,48 @@ final class LanternModel:ObservableObject {
                 case .trackingLost: message = "Tracking lost. Sensing is unavailable."
                 default: message = "Sensing is unavailable. Pins are neutral."
                 }
-                if voice.announce(message) { voiceLastGuidance = guidanceState }
+                let expected = guidanceState
+                _ = announceState(message, state: .guidance(expected)) { [weak self] in self?.voiceLastGuidance = expected }
             }
             return
         }
         // A successful recovery is worth hearing without asking for status again.
         if let previous = voiceLastGuidance, previous != .live {
-            if voice.announce("Sensing is back.") { voiceLastGuidance = .live }
+            _ = announceState("Sensing is back.", state: .guidance(.live)) { [weak self] in self?.voiceLastGuidance = .live }
             return
         }
         voiceLastGuidance = .live
         let notice = proactiveVoice.propose(target: target, finder: finder, distances: distances, now: now)
-        if let notice, notice.kind == .obstacle,
-           voice.announce(notice.text, sceneBound: true) {
-            proactiveVoice.acknowledge(notice, now: now); voiceNotice = notice
-            return
-        }
+        if let notice, notice.kind == .obstacle, announceObservation(notice) { return }
         if !targetAvailable {
             if HeldTargetGuidance.announcesTargetLost(sawTarget: voiceSawTarget, holding: heldTarget != nil) {
                 if voiceTargetLostAt == nil { voiceTargetLostAt = now }
-                if now - (voiceTargetLostAt ?? now) >= 0.6,
-                   voice.announce("I no longer see your target.") { voiceSawTarget = false }
+                if now - (voiceTargetLostAt ?? now) >= 0.6 {
+                    _ = announceState("I no longer see your target.", state: .targetLost) { [weak self] in self?.voiceSawTarget = false }
+                }
             }
         } else { voiceTargetLostAt = nil }
-        if let notice, voice.announce(notice.text, sceneBound: true) {
-            proactiveVoice.acknowledge(notice, now: now)
-            voiceNotice = notice
-            if notice.kind == .target { voiceSawTarget = true }
+        if let notice { _ = announceObservation(notice) }
+    }
+
+    private func announceObservation(_ notice: ProactiveVoicePolicy.Notice) -> Bool {
+        let accepted = voice.announce(notice.text, sceneBound: true) { [weak self] in
+            guard let self, self.voiceNotice?.key == notice.key else { return }
+            self.proactiveVoice.acknowledge(notice, now: ProcessInfo.processInfo.systemUptime)
+            if notice.kind == .target { self.voiceSawTarget = true }
         }
+        if accepted { voiceNotice = notice }
+        return accepted
+    }
+
+    private func announceState(_ text: String, state: VoiceStateNotice, onDelivered: @escaping () -> Void) -> Bool {
+        let accepted = voice.announce(text, sceneBound: true) { [weak self] in
+            guard let self, self.voiceStateNotice == state else { return }
+            self.voiceStateNotice = nil
+            onDelivered()
+        }
+        if accepted { voiceStateNotice = state }
+        return accepted
     }
 
     private func handlePointing(_ observation:PointingObservation,epoch:Int) {
@@ -536,6 +605,7 @@ final class LanternModel:ObservableObject {
 
     /// Hand a two-finger goal to the route planner; arrows start once a route to it exists.
     private func startPointingRoute(_ route:PointingRoute) {
+        cancelWhereIs()
         guard arrowsEnabled else { speakLocal("Direction arrows are turned off in settings."); return }
         perception.setRouteGoal(route.goal,label:route.label)
         pointingRouteSetAt=ProcessInfo.processInfo.systemUptime; pointingRouteActive=true
@@ -590,13 +660,40 @@ final class LanternModel:ObservableObject {
         return "Pointing: "+parts.joined(separator:" · ")
     }
 
+    static func directionsRefusal(mode: RunMode, guidance: GuidanceState, arrowsEnabled: Bool, hasTarget: Bool) -> String? {
+        guard mode == .live else { return "Start the live camera before requesting directions." }
+        guard guidance == .live else { return "Fresh tracking and floor calibration are required for direction arrows." }
+        guard arrowsEnabled else { return "Enable direction arrows first." }
+        guard hasTarget else { return "Choose a target first, then ask for direction arrows." }
+        return nil
+    }
+
+    private func startRequestedDirections() -> [String: Any] {
+        tick()
+        let selected = Self.word(finder)
+        if let refusal = Self.directionsRefusal(mode: mode, guidance: guidanceState, arrowsEnabled: arrowsEnabled,
+                                              hasTarget: heldTarget != nil || selected != nil) { return ["error": refusal] }
+        resetDirections(); pointing.reset(); pointingHighlight = nil
+        if let heldTarget {
+            startHeldRoute(heldTarget)
+        } else if let selected {
+            cancelWhereIs()
+            let now = ProcessInfo.processInfo.systemUptime
+            // Reuse the V-sign request state machine without opening its keyword microphone.
+            _ = request.handBegan(now: now)
+            _ = request.heardWord(selected, now: now, selected: selected)
+            perform(request.signFired(now: now, selected: selected))
+        }
+        return ["status": "Direction arrows requested. Waiting for a current target and route.", "pending": true]
+    }
+
     /// Simulation stand-in for the hand sign: no word, guide to the synthetic target.
     func simulateSign() { guard mode == .simulation else { return }; pendingSign=true }
 
     /// Ends guidance (finder change); a request in flight keeps going.
     private func resetGuidance() {
         guide.reset(); cuePlayer.reset(); pendingSign=false; targetLocked=false; askedChoices=[]
-        if pointingRouteActive { perception.setRouteGoal(nil) }; pointingRouteSetAt=nil; pointingRouteActive=false
+        if pointingRouteActive { perception.setRouteGoal(nil) }; pointingRouteSetAt=nil; pointingRouteActive=false; heldRoute=false
         if guidanceCue != nil { guidanceCue=nil }
         if guiding { guiding=false }
     }
@@ -625,7 +722,7 @@ final class LanternModel:ObservableObject {
         let wasHolding=signTrigger.holding
         let fired=signTrigger.update(observation)
         // Start listening as soon as the sign appears, so "[V] exit" said together is heard.
-        if !wasHolding && signTrigger.holding { perform(request.handBegan(now:now)) }
+        if !wasHolding && signTrigger.holding { cancelWhereIs(); perform(request.handBegan(now:now)) }
         if fired {
             request.listenSeconds=listener.isAvailable ? 2.5 : 0
             perform(request.signFired(now:now,selected:Self.word(finder)))
@@ -652,6 +749,12 @@ final class LanternModel:ObservableObject {
                 if mode == .chair && !detectorAvailable { request.reset(); chime.play(.failure); return }
                 if finder != mode { finder=mode }
             case .ask(let choices):
+                guard voice.spokenOutputEnabled else {
+                    request.reset(); askedChoices=[]; listener.stop()
+                    directionReadout="Multiple targets. Say speak again, then request directions."
+                    chime.play(.failure)
+                    continue
+                }
                 askedChoices=lastChoices
                 if !voice.ask(TargetChoice.question(choices,word:request.heard)) {
                     // No assistant to ask: take the one most straight ahead.
@@ -750,7 +853,7 @@ final class LanternModel:ObservableObject {
             switch HeldTargetGuidance.event(target: heldTarget, pose: frame.pose, worldEpoch: frame.worldEpoch, now: now, live: output.state == .live, inField: held != nil, lastSpokenAt: lastDirectionSpokenAt) {
             case .lostTracking: clearHeldTarget(spokenLine: "Lost tracking. Say it again.")
             case .reached: clearHeldTarget(spokenLine: "You're at the \(heldTarget.label).")
-            case .speak(let direction): if voice.announce(direction, automatic: false) { lastDirectionSpokenAt = now; whereIsNotice = direction }
+            case .speak(let direction): if voice.announce(direction, sceneBound: true) { lastDirectionSpokenAt = now; whereIsNotice = direction }
             case .keep: break
             }
         }

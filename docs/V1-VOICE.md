@@ -98,7 +98,7 @@ a server-only OpenAI API key for short-lived Realtime tokens. Deploy it behind a
 trusted HTTPS proxy, configure its separate phone access token, then enter the
 service /session URL and that access token in Assistant settings. Neither the
 OpenAI key nor any usable credential is bundled with the app. Both phone settings
-are stored in Keychain. Audio streams directly to OpenAI; camera images stay local.
+are stored in Keychain. Audio streams directly to OpenAI. Optional Where-is requests can send one camera photo through the separately configured Chalk gateway.
 
 The production token endpoint is `https://feel-v1-voice.vercel.app/session`.
 OpenAI Realtime uses `gpt-realtime-2.1` and Cedar with 24 kHz PCM audio.
@@ -167,3 +167,24 @@ App announcements run outside conversational history with tools disabled. Every
 manual response has a unique request identifier, so a late canceled announcement
 cannot replace a newer user request. Debug diagnostics contain only bounded event
 names and error categories, never credentials, microphone audio or transcripts.
+
+## October 17 voice control completion
+
+Voice now enables/disables arrows, requests directions without a V sign, stops
+arrows independently of camera sensing, and plays an explicitly synthetic cue.
+It also starts/stops local depth recording and chooses camera-video inclusion.
+The assistant asks whether to include video when unspecified; that preference
+cannot change during a recording. Startup is reported as pending until the
+recorder reports progress. Camera recording never includes microphone audio.
+
+Choosing another target, changing photo setup or losing tracking cancels an
+older Where-is request. Delayed photos and answers cannot restore that target.
+Repeated held-target direction reminders now respect automatic-update settings.
+A muted assistant does not queue an unheard choice question or silently pick a
+target in that choice path; the status explains how to resume spoken selection.
+
+Automatic observations are acknowledged only after a completed response and
+audio playback drain. Interrupted, expired or muted requests remain eligible
+for a fresh retry. State-dependent loss/recovery messages are canceled if their
+supporting state changes before playback. This is software evidence; hearing
+quality and real headset behavior still require device acceptance.

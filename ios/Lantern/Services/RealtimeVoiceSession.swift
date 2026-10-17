@@ -110,8 +110,18 @@ final class RealtimeVoiceSession: ObservableObject {
     private var sceneBound = false
     private var pendingRequestID: String?
     private var invalidatedRequestIDs = Set<String>()
+    private struct AnnouncementDelivery {
+        let requestID: String
+        let callback: () -> Void
+        var responseID: String?
+        var receivedAudio = false
+        var drained = false
+        var completed = false
+    }
+    private var announcementDelivery: AnnouncementDelivery?
+    var hasPendingAnnouncementDelivery: Bool { announcementDelivery != nil }
     private let speaksLocally: Bool
-    /// While another listener borrows the microphone, nothing is sent to Grok.
+    /// While another listener borrows the microphone, nothing is sent to OpenAI.
     private var uplinkMuted = false
 
     var isActive: Bool { phase != .idle && phase != .failed }
@@ -228,6 +238,7 @@ final class RealtimeVoiceSession: ObservableObject {
         guard spokenOutputEnabled != enabled else { return }
         spokenOutputEnabled = enabled
         if !enabled {
+            announcementDelivery = nil
             audio.interruptPlayback()
             speaker?.stopSpeaking(at: .immediate)
             if phase == .speaking { phase = responseRunning ? .thinking : .listening }
@@ -297,6 +308,7 @@ final class RealtimeVoiceSession: ObservableObject {
     }
 
     func disconnect() {
+        announcementDelivery = nil
         generation = UUID()
         retryWork?.cancel(); retryWork = nil
         connectionTimeout?.cancel(); connectionTimeout = nil
@@ -326,7 +338,7 @@ final class RealtimeVoiceSession: ObservableObject {
     /// targets to guide to). In the conversation, not out-of-band, so the answer can be matched to
     /// `choose_target`; not throttled like scene announcements.
     @discardableResult func ask(_ text: String) -> Bool {
-        guard isActive, receivedConfiguration, phase == .listening, !userSpeaking, !responseRunning,
+        guard spokenOutputEnabled, isActive, receivedConfiguration, phase == .listening, !userSpeaking, !responseRunning,
               pendingRequestID == nil, !audio.pendingPlayback else { return false }
         lastAnnouncement = Date()
         phase = .thinking
@@ -335,7 +347,10 @@ final class RealtimeVoiceSession: ObservableObject {
     }
 
     /// Only exact, freshly produced app text may be announced without a user turn.
-    @discardableResult func announce(_ text: String, automatic: Bool = true, sceneBound: Bool = false) -> Bool {
+    /// Delivery is reported once only after successful completion and audible playback drain.
+    /// Muting, interruption, expiry or replacement discards the delivery callback.
+    @discardableResult func announce(_ text: String, automatic: Bool = true, sceneBound: Bool = false,
+                                    onDelivered: (() -> Void)? = nil) -> Bool {
         guard spokenOutputEnabled, (!automatic || proactiveEnabled), !userSpeaking, phase == .listening, !responseRunning, pendingRequestID == nil, !audio.pendingPlayback,
               Date().timeIntervalSince(lastAnnouncement) > 5 else { return false }
         lastAnnouncement = Date()
@@ -346,7 +361,7 @@ final class RealtimeVoiceSession: ObservableObject {
         requestResponse(["conversation": "none", "input": [],
                  "tools": [], "output_modalities": ["audio"], "max_output_tokens": 160,
                  "metadata": ["feel_announcement": "true"],
-                 "instructions": "Speak only the following app status, naturally and briefly. Do not add advice or call tools: " + String(text.prefix(240))])
+                 "instructions": "Speak only the following app status, naturally and briefly. Do not add advice or call tools: " + String(text.prefix(240))], onDelivered: onDelivered)
         return isActive
     }
 
@@ -361,6 +376,7 @@ final class RealtimeVoiceSession: ObservableObject {
 
     func invalidateSceneSpeech() {
         guard sceneBound else { return }
+        announcementDelivery = nil
         let generationBeforeCancel = generation
         sceneExpiry?.cancel(); sceneExpiry = nil; sceneBound = false
         guard invalidatePendingRequest() else { return }
@@ -378,9 +394,10 @@ final class RealtimeVoiceSession: ObservableObject {
         phase = .listening
     }
 
-    private func requestResponse(_ parameters: [String: Any]) {
+    private func requestResponse(_ parameters: [String: Any], onDelivered: (() -> Void)? = nil) {
         let requestID = UUID().uuidString
         pendingRequestID = requestID
+        announcementDelivery = onDelivered.map { AnnouncementDelivery(requestID: requestID, callback: $0) }
         var parameters = parameters
         var metadata = parameters["metadata"] as? [String: String] ?? [:]
         metadata["feel_request_id"] = requestID
@@ -390,6 +407,7 @@ final class RealtimeVoiceSession: ObservableObject {
 
     @discardableResult private func invalidatePendingRequest() -> Bool {
         guard let requestID = pendingRequestID else { return true }
+        if announcementDelivery?.requestID == requestID { announcementDelivery = nil }
         pendingRequestID = nil
         invalidatedRequestIDs.insert(requestID)
         guard invalidatedRequestIDs.count <= 128 else {
@@ -519,6 +537,10 @@ final class RealtimeVoiceSession: ObservableObject {
                     self.enqueue(["type": "input_audio_buffer.append", "audio": data.base64EncodedString()])
                 }, onPlaybackDrained: { [weak self] in
                     guard let self, self.generation == id, self.isActive else { return }
+                    if !self.audio.pendingPlayback, let delivery = self.announcementDelivery,
+                       delivery.responseID == self.responseID, delivery.receivedAudio {
+                        self.announcementDelivery?.drained = true
+                    }
                     self.finishTurnIfReady()
                 })
                 phase = .listening; caption = "Ask me to find something"
@@ -527,6 +549,7 @@ final class RealtimeVoiceSession: ObservableObject {
                 announce("I'm here.", automatic: false)
             } catch { fail("The microphone couldn't start. Check your audio device and retry.") }
         case "input_audio_buffer.speech_started":
+            announcementDelivery = nil
             let generationBeforeInterrupt = generation
             userSpeaking = true
             sceneExpiry?.cancel(); sceneExpiry = nil; sceneBound = false
@@ -581,8 +604,10 @@ final class RealtimeVoiceSession: ObservableObject {
             }
             if let previousID = responseID { rejectResponse(previousID, cancel: responseRunning) }
             guard generation == generationBeforeReplacement, isActive else { return }
+            if announcementDelivery?.requestID != requestID { announcementDelivery = nil }
             audio.interruptPlayback()
             responseID = id; responseRunning = true; assistantItemID = nil; caption = ""
+            announcementDelivery?.responseID = id
             responseIsAnnouncement = isAnnouncement
             phase = .thinking
         case "response.output_audio.delta", "response.audio.delta":
@@ -591,8 +616,15 @@ final class RealtimeVoiceSession: ObservableObject {
             guard spokenOutputEnabled else { return }
             // Out-of-band announcements do not have a default-history item to truncate.
             assistantItemID = responseIsAnnouncement ? nil : event["item_id"] as? String
-            do { try audio.play(data); phase = .speaking }
+            do {
+                if !data.isEmpty, announcementDelivery?.responseID == responseID {
+                    announcementDelivery?.receivedAudio = true
+                    announcementDelivery?.drained = false
+                }
+                try audio.play(data); phase = .speaking
+            }
             catch VoiceAudioError.notRunning where Self.runsInSimulator {
+                announcementDelivery = nil
                 // The simulator has no audio engine: keep the conversation going through captions and tools.
                 // On a phone a stopped engine is a real failure and takes the recovery path below.
                 VoiceDiagnostics.record("playback_failure", detail: "engine_not_running")
@@ -638,6 +670,10 @@ final class RealtimeVoiceSession: ObservableObject {
             if response["status"] as? String == "failed" {
                 fail("OpenAI couldn't complete the response. Check voice service access and retry."); return
             }
+            if announcementDelivery?.responseID == id {
+                if response["status"] as? String == "completed" { announcementDelivery?.completed = true }
+                else { announcementDelivery = nil }
+            }
             responseRunning = false
             finishTurnIfReady()
         case "error":
@@ -660,10 +696,15 @@ final class RealtimeVoiceSession: ObservableObject {
             continuationPending = false; phase = .thinking
             requestResponse([:])
         } else {
+            let delivery = announcementDelivery
+            announcementDelivery = nil
+            let delivered = delivery?.responseID == responseID && delivery?.completed == true &&
+                delivery?.receivedAudio == true && delivery?.drained == true && spokenOutputEnabled
             sceneExpiry?.cancel(); sceneExpiry = nil; sceneBound = false
             // Completed audio no longer needs a truncation when the user next speaks.
             assistantItemID = nil; responseID = nil
             phase = .listening
+            if delivered { delivery?.callback() }
         }
     }
 }

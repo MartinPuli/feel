@@ -174,6 +174,24 @@ final class ProactiveVoicePolicyTests: XCTestCase {
         XCTAssertNotNil(policy.propose(target: target(at: 1.9), finder: .person, distances: empty, now: 1.9))
     }
 
+    func testDeliveryAfterFreshSamplesAcknowledgesTheSpokenObservation() throws {
+        var policy = ProactiveVoicePolicy()
+        _ = policy.propose(target: target(at: 0), finder: .person, distances: empty, now: 0)
+        let spoken = try XCTUnwrap(policy.propose(target: target(at: 0.8), finder: .person, distances: empty, now: 0.8))
+        _ = policy.propose(target: target(distance: 2.1, at: 1), finder: .person, distances: empty, now: 1)
+        policy.acknowledge(spoken, now: 1.1)
+        XCTAssertNil(policy.propose(target: target(distance: 2.1, at: 20), finder: .person, distances: empty, now: 20))
+    }
+
+    func testUndeliveredObservationRemainsEligibleAfterNetworkDelay() throws {
+        var policy = ProactiveVoicePolicy()
+        _ = policy.propose(target: target(at: 0), finder: .person, distances: empty, now: 0)
+        let first = try XCTUnwrap(policy.propose(target: target(at: 0.8), finder: .person, distances: empty, now: 0.8))
+        // A request canceled before playback never acknowledges the proposal.
+        let retried = try XCTUnwrap(policy.propose(target: target(at: 10), finder: .person, distances: empty, now: 10))
+        XCTAssertEqual(first.key, retried.key)
+    }
+
     private func target(distance: Double = 2, bearing: Double = 0, at now: TimeInterval) -> TargetObservation {
         TargetObservation(bearingDegrees: bearing, distance: distance, timestamp: now)
     }

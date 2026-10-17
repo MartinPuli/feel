@@ -16,6 +16,8 @@ enum VoiceCommand: Equatable {
     case openPanel(String), findTeammate(String)
     /// 1-based option from the app's "which one?" question.
     case chooseTarget(Int)
+    case setDirectionArrows(Bool), startDirections, stopDirections, simulateDirectionSign
+    case startRecording(Bool), stopRecording, setRecordingVideo(Bool)
 
     static func decode(name: String, arguments: String) throws -> VoiceCommand {
         guard arguments.utf8.count <= 2048,
@@ -37,6 +39,13 @@ enum VoiceCommand: Equatable {
             return height.doubleValue
         }
         switch name {
+        case "set_direction_arrows": return .setDirectionArrows(try boolean("enabled"))
+        case "start_directions": return try noArguments(.startDirections)
+        case "stop_directions": return try noArguments(.stopDirections)
+        case "simulate_direction_sign": return try noArguments(.simulateDirectionSign)
+        case "start_recording": return .startRecording(try boolean("include_video"))
+        case "stop_recording": return try noArguments(.stopRecording)
+        case "set_recording_video": return .setRecordingVideo(try boolean("enabled"))
         case "start_camera": return try noArguments(.startCamera)
         case "stop": return try noArguments(.stop)
         case "pause_assistant": return try noArguments(.pauseAssistant)
@@ -100,6 +109,13 @@ enum VoiceCommand: Equatable {
                             "required": properties.keys.sorted(), "additionalProperties": false]]
         }
         return [
+            tool("set_direction_arrows", "Enable or disable tactile direction arrows when requested. Enabling does not start guidance or prove a safe route.", properties: ["enabled": ["type": "boolean"]]),
+            tool("start_directions", "Start tactile arrows toward the currently selected target when requested, without requiring a hand sign. Select the requested target first if needed. Requires live sensing and arrows enabled. Report the returned pending or unavailable state; never promise safe passage."),
+            tool("stop_directions", "Stop tactile direction arrows while leaving camera obstacle sensing running. For an unqualified stop, use stop instead."),
+            tool("simulate_direction_sign", "Play a synthetic direction cue only in an already running simulation. Identify it as simulation; no hardware movement."),
+            tool("start_recording", "Start a local depth recording only when requested. Ask whether to include camera video if unspecified; include_video must reflect the user's explicit choice for this recording. No microphone audio is recorded. Files stay on the phone. Report pending startup honestly.", properties: ["include_video": ["type": "boolean"]]),
+            tool("stop_recording", "Stop the current local recording when requested, leaving camera sensing active."),
+            tool("set_recording_video", "Choose whether the next local recording includes camera video. Requires the user's explicit choice; cannot change an active recording. Does not start recording.", properties: ["enabled": ["type": "boolean"]]),
             tool("start_camera", "Start the camera only when the user asks. Report pending permission or failure honestly."),
             tool("stop", "Immediately stop camera and tactile output when the user says stop. Keep listening for their next request. No confirmation needed."),
             tool("pause_assistant", "Stop microphone capture only when the user explicitly asks to pause the assistant or stop listening. Resuming then requires touching the app. For silence or mute, use set_spoken_output instead. The camera is unchanged."),
@@ -145,6 +161,8 @@ enum VoiceCommand: Equatable {
     Say silence yourself, mute, be quiet, or silenciate: call set_spoken_output with enabled=false. Keep listening and executing requested actions while muted.
     Say speak again or unmute: call set_spoken_output with enabled=true. Muting voice is different from pausing microphone capture.
     Say stop automatic updates: call set_proactive_updates with enabled=false while continuing to answer direct questions.
+    For tactile directions, use start_directions after selecting the target. The user need not make a hand sign. Directions never establish a safe walking route.
+    For recording, ask whether to include camera video when unspecified, then pass that explicit choice to start_recording. Never enable recording proactively.
     For missing information, ask one short question and wait. Do not repeat a completed action.
     When you have just asked which of several targets to guide to, wait for the answer and call choose_target. Don't add anything after it; the app confirms with a sound.
 

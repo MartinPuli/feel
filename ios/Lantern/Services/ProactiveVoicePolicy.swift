@@ -114,9 +114,11 @@ struct ProactiveVoicePolicy {
         return nil
     }
 
-    /// Call only after the voice session accepts this exact proposal for delivery.
+    /// Call only after this proposal finishes playback while the same scene remains supported.
     mutating func acknowledge(_ notice: Notice, now: TimeInterval) {
-        guard now.isFinite, let lastTime, now >= lastTime, lastProposal == notice else { return }
+        guard now.isFinite, let lastTime, now >= lastTime,
+              let latest = lastProposal, latest.key == notice.key,
+              abs(latest.distance - notice.distance) < (notice.kind == .target ? 0.5 : 0.4) else { return }
         let observation = Observation(distance: notice.distance, side: notice.side)
         switch notice.kind {
         case .target:
