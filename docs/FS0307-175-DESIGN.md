@@ -98,3 +98,17 @@ Band0 requests the nearest gap:29° after pins1/2,87° after pin3,145° after pi
 Ties select the lower gap. Corresponding pulses are957/1570/2183µs. Startup
 neutral is29°. These commanded gaps are chosen between peaks; actual complete
 pin retraction still requires physical cam/return verification.
+
+## Current connected-servo trim: minus15°
+
+The user's subsequent alignment request adds -159µs (approximately -15°)
+once in the single-live adapter. It replaces the prior zero trim; adjustments
+are not cumulative. Shared pin centers remain0/58/116/174°. Actual adapter
+band pulses are650/1104/1717/2330µs, approximately0/43/101/159°. Empty-gap
+pulses are798/1411/2024µs (approximately14/72/130°). Band1 clips at650µs.
+This is one connected unit's alignment, not a seven-servo geometry revision.
+Physical pin return at these shifted positions must be observed.
+
+With this trim, the13° band1 highlight dip also clips to650µs: band1 has no
+physical highlight pulse movement at zero calibration. This is a known effect
+of the requested offset and lower bound, explicitly covered by a regression.

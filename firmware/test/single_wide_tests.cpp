@@ -14,17 +14,18 @@ int main() {
         s.pulses[3]=us;
         unsigned wide=feel::singleWidePulse(s);
         assert(wide>=650 && wide<=2500 && wide>=previous);
-        assert(feel::singleLivePulse(s)==us && wide==us); // Never double-expand.
+        assert(wide == (us < 809 ? 650 : us-159));
+        assert(feel::singleLivePulse(s)==wide); // Trim once.
         previous=wide;
     }
     s.pulses[3]=650; assert(feel::singleWidePulse(s)==650);
-    s.pulses[3]=1500; assert(feel::singleWidePulse(s)==1500);
-    s.pulses[3]=2500; assert(feel::singleWidePulse(s)==2500);
+    s.pulses[3]=1500; assert(feel::singleWidePulse(s)==1341);
+    s.pulses[3]=2500; assert(feel::singleWidePulse(s)==2341);
     s.pulses[3]=2501; assert(feel::singleWidePulse(s)==0);
     s.pulses[3]=649; assert(feel::singleWidePulse(s)==0);
     p.sequence=1; p.bands.fill(0); bytes=feel::encodePacket(p);
     assert(c.receive(bytes.data(),bytes.size(),2)==feel::Result::Ok);
-    assert(feel::singleWidePulse(c.snapshot())==957);
+    assert(feel::singleWidePulse(c.snapshot())==798);
     s=c.snapshot(); s.benchArmed=true; assert(feel::singleWidePulse(s)==0);
     s=c.snapshot(); s.rawPulse=true; assert(feel::singleWidePulse(s)==0);
     c.tick(502); assert(feel::singleWidePulse(c.snapshot())==0);
