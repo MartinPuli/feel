@@ -93,8 +93,16 @@ final class WhereIsServiceTests: XCTestCase {
         WhereIsService(gateway: nil, model: "", local: nil).find("exit", snapshot: snapshot()) { outcome = $0 }
         XCTAssertEqual(outcome, .failed)
     }
-    func testChalkWaitsAtMostTwelveSecondsBeforeTheFallback() {
-        XCTAssertEqual(WhereIsService.timeout, 12)
+    func testNoReplyByTheDeadlineFallsBackAndIgnoresTheLateReply() {
+        let gateway = StubChatGateway(), local = StubLocalFinder()
+        let service = WhereIsService(gateway: gateway, model: "m", local: local, deadline: 0.05)
+        let done = expectation(description: "fallback outcome")
+        var outcomes: [WhereIsOutcome] = []
+        service.find("exit", snapshot: snapshot()) { outcomes.append($0); done.fulfill() }
+        wait(for: [done], timeout: 2)
+        XCTAssertEqual(local.things, ["exit"])
+        gateway.reply(0, .success(found))
+        XCTAssertEqual(outcomes, [.notVisible])
     }
     func testSecondRequestCancelsFirst() {
         let gateway = StubChatGateway()

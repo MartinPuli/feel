@@ -12,26 +12,36 @@ enum WhereIsOutcome: Equatable {
 /// One Where-is lookup: Chalk first (photo + question through the gateway, strict parse, LiDAR placement);
 /// without Chalk, or when it cannot answer, the phone's own detector on the same photo.
 /// A newer request supersedes an older one; a late answer to a superseded request is dropped.
+/// Chalk gets one absolute deadline: an answer after it is dropped and the local finder answers instead.
 final class WhereIsService {
-    static let timeout: TimeInterval = 12
     private let gateway: ChatGateway?
     private let model: String
     private let local: LocalWhereIsFinding?
+    private let deadline: TimeInterval
     private var generation = 0
     private var task: URLSessionTask?
+    private var expiry: DispatchWorkItem?
 
-    init(gateway: ChatGateway?, model: String, local: LocalWhereIsFinding? = nil) { self.gateway = gateway; self.model = model; self.local = local }
+    init(gateway: ChatGateway?, model: String, local: LocalWhereIsFinding? = nil, deadline: TimeInterval = WhereIs.deadline) {
+        self.gateway = gateway; self.model = model; self.local = local; self.deadline = deadline
+    }
 
     func find(_ thing: String, snapshot: FrameSnapshot, completion: @escaping (WhereIsOutcome) -> Void) {
-        generation += 1
+        cancel()
         let id = generation
-        task?.cancel(); task = nil
         guard let gateway, let body = try? WhereIs.requestBody(model: model, question: "Where is the \(thing)?", jpegBase64: snapshot.jpegBase64) else {
             fallBack(thing, snapshot: snapshot, id: id, completion: completion); return
         }
-        task = gateway.complete(body: body, timeout: Self.timeout) { [weak self] result in
+        let expiry = DispatchWorkItem { [weak self] in
             guard let self, self.generation == id else { return }
-            self.task = nil
+            self.expiry = nil; self.task?.cancel(); self.task = nil
+            self.fallBack(thing, snapshot: snapshot, id: id, completion: completion)
+        }
+        self.expiry = expiry
+        DispatchQueue.main.asyncAfter(deadline: .now() + deadline, execute: expiry)
+        task = gateway.complete(body: body, timeout: deadline) { [weak self] result in
+            guard let self, self.generation == id, let pending = self.expiry else { return }
+            pending.cancel(); self.expiry = nil; self.task = nil
             let outcome = Self.outcome(of: result, thing: thing, snapshot: snapshot)
             if case .failed = outcome { self.fallBack(thing, snapshot: snapshot, id: id, completion: completion) } else { completion(outcome) }
         }
@@ -43,7 +53,7 @@ final class WhereIsService {
             completion(outcome)
         }
     }
-    func cancel() { generation += 1; task?.cancel(); task = nil }
+    func cancel() { generation += 1; expiry?.cancel(); expiry = nil; task?.cancel(); task = nil }
 
     static func outcome(of result: Result<String, Error>, thing: String, snapshot: FrameSnapshot) -> WhereIsOutcome {
         guard case .success(let text) = result, let answer = try? WhereIs.parse(text) else { return .failed }

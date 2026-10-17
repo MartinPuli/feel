@@ -1,5 +1,6 @@
 {
-  "comment": "Shared parser cases for the Where-is answer. Swift (FeelCore) and Python (chalk/feel_chalk) must agree on every case.",
+  "comment": "Shared Where-is contract. Swift (FeelCore) and Python (chalk/feel_chalk) must agree on every parser case and on the absolute deadline after which a reply is unusable.",
+  "deadline_seconds": 12,
   "cases": [
     {"name": "found", "text": "{\"found\": true, \"label\": \"registration desk\", \"box\": [0.6, 0.4, 0.9, 0.8], \"confidence\": 0.82}",
      "expect": {"found": true, "label": "registration desk", "box": [0.6, 0.4, 0.9, 0.8], "confidence": 0.82}},

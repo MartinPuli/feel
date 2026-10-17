@@ -27,6 +27,8 @@ public struct WhereIsAnswer: Equatable, Sendable {
 public enum WhereIsError: Error, Equatable { case malformed(String) }
 
 public enum WhereIs {
+    /// Seconds from sending the request after which a reply is unusable and the phone falls back.
+    public static let deadline: Double = 12
     public static let prompt = """
     You help a blind person find things using one photo from a chest-mounted phone camera.
     The user asks where something is. Look only at this photo.
