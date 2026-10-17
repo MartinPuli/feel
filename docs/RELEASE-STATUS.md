@@ -1,3 +1,11 @@
+> **`feel/chalk-track` (2026-10-17 evening):** Chalk context features (`chalk/feel_context`: Find, ObjectHistory, VenueEntry,
+> Venue with named queries `last_seen` and `venue_pack`), Postgres schema and seed, a standard-library query client, a `--local`
+> evaluation mode with a synthetic dataset (12-row run recorded in `docs/evidence/chalk-synthetic/`), the open-side finder
+> (FeelCore `OpenSide`: "more room to your left" in obstacle notices, `open_side` in status, one sweep cue under the arrows toggle)
+> and five SVG figures. Software checks on this Mac: FeelCore 208 tests, Lantern 143 unit tests, chalk 65 tests (3 skip without
+> chalkpy, which pass in a venv that has it). Not done: the Chalk deployment (needs the Postgres data source and the CLI), the
+> phone write path for finds, and any device test of the open-side cue.
+
 > **Chalk production setup (2026-10-17):** metadata-only trace policy saved; two synthetic image requests passed. Quota enforcement is disabled in the managed backend and has been escalated to Chalk with user authorization. Public production remains blocked. See [current gates](CHALK-PRODUCTION.md).
 
 > **Current Chalk environment follow-up (2026-10-17):** Feel production routing and two generic text requests passed. CLI login is configured; no dataset or hosted evaluation run exists yet. Earlier image/simulator results below are historical and do not validate the new key on the phone. See [current implementation and remaining checks](CHALK-IMPLEMENTATION.md).

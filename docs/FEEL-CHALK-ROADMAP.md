@@ -1,5 +1,9 @@
 # FEEL + Chalk
 
+Figures: [FEEL at a glance](diagrams/feel-system.svg) · [one Where-is request](diagrams/where-is-path.svg) ·
+[the evaluation loop](diagrams/chalk-eval-loop.svg) · [memory and venue knowledge](diagrams/chalk-context.svg) ·
+[sensing to pins](diagrams/sensing-to-pins.svg).
+
 ## Product direction
 
 FEEL is an assistive camera and voice app for blind people. Its assistant should speak briefly, act on permitted commands, recognize uncertainty and remain useful when connectivity fails.
@@ -30,9 +34,9 @@ No production model winner has been established. Physical sensing, headphone del
 |---|---|---|---|
 | First | Local voice controls and speech | Stop, mute, repeat and supported searches without internet | Local command grammar, microphone coordination, spoken results and device tests |
 | First | Comparable evaluations | Avoid regressions when changing prompts or models | Correct metrics, shared deadlines, independent test cases and error review |
-| Next | Agent context | Speak when relevant information changes without repeating cues | Authenticated context queries, timestamps and phone-side validity checks |
+| Next | Agent context | Speak when relevant information changes without repeating cues | Authenticated context queries, timestamps and phone-side validity checks. **Chalk side implemented** on `feel/chalk-track` (`chalk/feel_context`: features, resolvers, named queries, `feel_chalk/context.py`); waits for the Postgres data source |
 | Next | Downloadable venue information | Read previously downloaded accessibility information without internet | Reviewed sources, local storage, expiry and update handling |
-| Later | Consented object history | Explain where and when an object was last seen | Ownership, retention, deletion and uncertainty handling |
+| Later | Consented object history | Explain where and when an object was last seen | Ownership, retention, deletion and uncertainty handling. **`ObjectHistory` implemented** (latest confirmed find, relative-time sentence); the phone write path and the `last_seen` tool are pending |
 | Later | External services | Extend the personal assistant through selected tools | Per-user authorization and independent action checks |
 
 ## Evaluations and model selection
@@ -86,6 +90,8 @@ The offline assistant needs local spoken results as well as local command recogn
 3. Resolve hosted evaluation execution and quota enforcement; run the approved comparison dataset.
 4. Add reviewed venue packs and bounded agent context. **Venue pack implemented in software** on `feel/chalk-roadmap`: Python builder, hashed and validated format, expiry and restriction rules, atomic phone storage, HTTPS download, the `venue_info` voice tool and a VoiceOver list. Not yet done: reviewed real venue content, hosting, a Chalk scheduled query that prepares the source, agent context, and device tests.
 5. Select models from held-out results and validate on the phone before rollout.
+
+Added on `feel/chalk-track` (October 17, evening): a `--local` evaluation mode that runs the hosted task and scorers on a Mac through the gateway with the same report shape, a synthetic dataset generator, and a recorded 12-row local run ([evidence](evidence/chalk-synthetic/)). Chalk-built venue packs (`Venue.pack`) reuse the local builder, so both produce identical bytes.
 
 ## Detailed evidence
 

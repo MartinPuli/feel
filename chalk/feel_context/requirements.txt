@@ -1,0 +1,2 @@
+# Installed in the Chalk environment, not on this Mac: the resolvers only need the SDK's Postgres driver.
+chalkpy[postgresql]==2.163.1

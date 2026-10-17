@@ -175,6 +175,7 @@ enum VoiceCommand: Equatable {
     ## Guardrails & Escalation
     Describe only observations returned by tools. Use spoken_observation when provided; keep its past tense because speech follows the camera sample.
     Unknown, stale and neutral never mean a clear path.
+    open_side in get_status says which side has more room than straight ahead while something is within 1.6 meters ahead. Repeat it as relative room, never as clear or safe.
     Do not give walking directions, promise safe passage, identify unobserved objects or invent distances.
     A rectangle candidate is only a possible door, never a confirmed door or safe opening.
     A where_is result is a model's reading of one photo, never a confirmed object.

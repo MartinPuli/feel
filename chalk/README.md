@@ -6,6 +6,25 @@ Chalk routes the **photo Where-is** request to a vision model. FEEL's voice conv
 
 See [implementation status, architecture diagrams and evaluation plan](../docs/CHALK-IMPLEMENTATION.md) for the complete split.
 
+## Chalk in FEEL at a glance
+
+![FEEL at a glance](../docs/diagrams/feel-system.svg)
+
+| Chalk | Used for | Where |
+|---|---|---|
+| Model Gateway | The one photo of a Where-is question, behind a restricted key with a model allowlist and trace content logging off; the phone and the evaluation share one absolute 12 s deadline | `feel_chalk/gateway.py`, `../ios/Lantern/Services/ChalkGateway.swift` |
+| Evaluations | The same task and three scorers run locally (`--local`) or hosted; one report shape with explicit denominators, latency, usage and resolved model | `feel_chalk/where_is_eval.py`, `feel_chalk/eval_report.py` |
+| Features and named queries | Confirmed finds become `ObjectHistory` (latest find, spoken sentence); reviewed rows become `Venue.pack`, byte-identical to the local builder | `feel_context/`, `chalk.yaml`, `sql/` |
+| Context client | Token exchange and online queries from this Mac today, the phone next | `feel_chalk/context.py` |
+
+![One Where-is request](../docs/diagrams/where-is-path.svg)
+
+![The evaluation loop](../docs/diagrams/chalk-eval-loop.svg)
+
+![Memory and venue knowledge](../docs/diagrams/chalk-context.svg)
+
+The figures are drawn by `../docs/diagrams/make_diagrams.py`; edit it and rerun rather than the SVGs.
+
 ## Current status
 
 On October 17, 2026, Team **Feel**, project **Default**, environment **production** (`flnyc749e8d9`) has a working **FEEL OpenAI** provider connection. The app key allows only `openai/gpt-6.1-sol` and `openai/gpt-6-luna`. Both answered a previously authorized generic text request. A read-only follow-up passed both router checks and found no datasets or hosted evaluations.
@@ -30,7 +49,8 @@ The phone uses LiDAR depth and pose to place a returned box locally. A found box
 
 Use the existing Feel configuration on this machine. For a new checkout:
 
-1. Copy `.env.example` to `.env` and set the restricted gateway key, selected environment and model. Never commit `.env`.
+1. Copy `.env.example` to `.env` and set the restricted gateway key, selected environment and model. The service token
+   (`CHALK_CLIENT_ID`, `CHALK_CLIENT_SECRET`) is only needed for context queries and hosted evaluations. Never commit `.env`.
 2. Install the pinned requirements into a virtual environment using a compatible Python version.
 3. Sign into the Chalk CLI and select the same environment used in `.env`. The installed CLI may be at `~/.chalk/bin/chalk` rather than on `PATH`.
 4. Confirm access with the read-only check below. Only `--chat` requests inference.
@@ -70,6 +90,31 @@ Review and authorize the actual dataset before upload. The hosted runner sends n
 The scorers measure point correctness, valid reply structure and false-found count. The report's `metrics` give each rate with its numerator and denominator: present-target localization over present rows, absent accuracy and false-found over absent rows, well-formed replies and missing responses over all rows. A completed cloud job alone is not a quality pass. Photo scores do not validate LiDAR, speech delivery, BLE or physical tactile output.
 
 Each task row records its status, elapsed time, the model the gateway resolved and token usage. The phone and the evaluation share one absolute deadline, `deadline_seconds` in `protocol/where-is-cases.json` (12 s). A reply after it is unusable: the phone falls back to its local finder, and the evaluation scores the row as a missing response. Gateway errors leave the run incomplete. The report adds `latency_ms` (p50, p95, max), summed `usage` and `resolved_models`.
+
+## Synthetic dataset and a local run
+
+The pipeline can be exercised today without consented photos: `evals/make_synthetic.py` renders walls with an
+EXIT sign or a door drawn at a known place, or absent, in the exact label format. `--local` then runs the hosted
+pipeline's task and scorers on this Mac through the gateway and writes the same report. Nothing is uploaded.
+
+```sh
+cd chalk
+python3 evals/make_synthetic.py data/synthetic --rows 12 --seed 7
+python3 -m feel_chalk.where_is_eval data/synthetic/labels.jsonl --preflight --output data/synthetic/preflight.json
+python3 -m feel_chalk.where_is_eval data/synthetic/labels.jsonl --local --output data/synthetic/local-run.json
+```
+
+Recorded on October 17, 2026 in [docs/evidence/chalk-synthetic](../docs/evidence/chalk-synthetic/): 12 rows
+(8 present, 4 absent) through `openai/gpt-6.1-sol`, all 12 replies in time and well formed, present localization 8/8,
+absent accuracy 4/4, false found 0/4, latency p50 2.3 s and p95 3.4 s, 13,790 tokens. Synthetic rows prove the
+pipeline end to end, not a model: real venue photos are still required before a model is selected.
+
+## Context features: what the assistant remembers
+
+`feel_context/` defines the Chalk features behind "where did I last see my keys?" and the venue pack, with
+`sql/schema.sql` and `sql/seed.sql` for the Postgres they read and `feel_chalk/context.py` to query them.
+[feel_context/README.md](feel_context/README.md) explains what the Supabase values in `.env` are for, what Chalk
+needs instead (the database connection, registered as the `feel_finds` data source) and the deploy steps.
 
 ## Venue pack
 

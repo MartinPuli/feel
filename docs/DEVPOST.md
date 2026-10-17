@@ -34,6 +34,18 @@ output is disabled until the exact servo is characterized. The door candidate is
 a heuristic. LiDAR, Bluetooth, Nearby Interaction and human tactile interpretation
 must be checked on actual devices.
 
+## Chalk track
+
+Chalk carries every cloud step except voice audio. The Model Gateway answers the one-photo Where-is
+question behind a restricted key with a model allowlist and content logging off; the phone and the
+evaluation share one 12 s deadline, and a valid "not found" is an answer, not a failure. The same task
+and three scorers run locally or as a hosted Chalk evaluation and write one report with explicit
+denominators, so a model is picked by false-found rate first and latency and cost second. Chalk
+features turn confirmed finds in Postgres into "where did I last see my keys?" and turn reviewed venue
+rows into the hash-checked pack the phone answers from without internet. Figures:
+[system](diagrams/feel-system.svg), [Where-is path](diagrams/where-is-path.svg),
+[evaluation loop](diagrams/chalk-eval-loop.svg), [memory and venue knowledge](diagrams/chalk-context.svg).
+
 ## Validation — update with final results before submission
 
 Link the release report and exact commit. Paste only executed test counts. List
@@ -60,4 +72,5 @@ advanced interaction without replacing the preserved foundation.
 
 Team names (max 4), repository visibility/link, build video/photos, actual hardware
 results, current branch/commit, and organizer decision on pre-existing design/work.
-Primary intended track: Hardware for Good. No sponsor integration is claimed.
+Primary intended track: Hardware for Good. Sponsor integration: Chalk (Model Gateway, evaluations,
+feature pipelines and named queries); see the Chalk track section and `chalk/README.md`.

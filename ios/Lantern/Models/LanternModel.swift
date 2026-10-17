@@ -38,6 +38,10 @@ final class LanternModel:ObservableObject {
     }
     /// The last arrow played while guidance is on, for the on-screen title.
     @Published private(set) var guidanceCue: DirectionCue?
+    /// Which side has more room while something is within 1.6 m ahead; relative room, never a safe path.
+    @Published private(set) var openSide: OpenSide?
+    private var openSideFinder=OpenSideFinder()
+    private var lastOpenSideCue: (column: Int, at: TimeInterval)?
     @Published private(set) var guiding = false
     @Published private(set) var directionReadout = "Arrows: make a V sign close to the camera"
     /// Columns showing the target; several columns tap together.
@@ -459,11 +463,12 @@ final class LanternModel:ObservableObject {
                 "recording_requested": recordingDepth, "recording_includes_video": recordingVideo,
                 "recording_status": recordingStatus ?? "Recording is off.",
                 "spoken_replies": voice.spokenOutputEnabled, "useful_updates": voice.proactiveEnabled,
-                "notice": "Neutral pins do not mean a clear path. No safe-route claim is available."]
+                "notice": "Neutral pins do not mean a clear path. No safe-route claim is available.",
+                "open_side": openSide?.spoken ?? "Nothing within 1.6 meters ahead, or unknown."]
     }
 
     private func updateVoiceAwareness(targetAvailable: Bool, target: TargetObservation? = nil,
-                                      distances: [Double?] = [], now: TimeInterval = ProcessInfo.processInfo.systemUptime) {
+                                      distances: [Double?] = [], openSide: OpenSide? = nil, now: TimeInterval = ProcessInfo.processInfo.systemUptime) {
         voiceTargetAvailable = targetAvailable
         guard voice.isActive else {
             voiceSawTarget = false; voiceLastGuidance = nil; voiceHadConnection = puck.isConnected
@@ -516,7 +521,7 @@ final class LanternModel:ObservableObject {
             return
         }
         voiceLastGuidance = .live
-        let notice = proactiveVoice.propose(target: target, finder: finder, distances: distances, now: now)
+        let notice = proactiveVoice.propose(target: target, finder: finder, distances: distances, openSide: openSide, now: now)
         if let notice, notice.kind == .obstacle, announceObservation(notice) { return }
         if !targetAvailable {
             if HeldTargetGuidance.announcesTargetLost(sawTarget: voiceSawTarget, holding: heldTarget != nil) {
@@ -693,8 +698,17 @@ final class LanternModel:ObservableObject {
     func simulateSign() { guard mode == .simulation else { return }; pendingSign=true }
 
     /// Ends guidance (finder change); a request in flight keeps going.
+    /// One sweep toward the side with more room while something is within 1.4 m ahead and no route
+    /// arrow is playing. The cue player still holds it back while any pin is within 0.9 m.
+    private func playOpenSideCue(_ open: OpenSide?,now: TimeInterval) {
+        guard arrowsEnabled, !guiding, let open, open.side != .ahead, open.aheadRange <= 1.4, !cuePlayer.isAnimating else { return }
+        if let last=lastOpenSideCue, last.column == open.column, now-last.at < 6 { return }
+        cuePlayer.play(.bear(column:open.column),now:now); lastOpenSideCue=(open.column,now)
+    }
+
     private func resetGuidance() {
         guide.reset(); cuePlayer.reset(); pendingSign=false; targetLocked=false; askedChoices=[]
+        openSideFinder.reset(); lastOpenSideCue=nil; if openSide != nil { openSide=nil }
         if pointingRouteActive { perception.setRouteGoal(nil) }; pointingRouteSetAt=nil; pointingRouteActive=false; heldRoute=false
         if guidanceCue != nil { guidanceCue=nil }
         if guiding { guiding=false }
@@ -822,7 +836,7 @@ final class LanternModel:ObservableObject {
         }
         guard mode == .live,let frame else {
             packet = .neutral(sequence:sequence); guidanceState = mode == .live ? .staleDepth : .stopped
-            cuePlayer.reset(); targetColumns=nil
+            cuePlayer.reset(); targetColumns=nil; openSideFinder.reset(); if openSide != nil { openSide=nil }
             tickRequest(now:now,candidates:[],hint:nil)
             _=withDirections(.init(packet:packet,state:guidanceState),hint:nil,now:now)
             if mode == .live { puck.send(packet) }; updateVoiceAwareness(targetAvailable: false); return
@@ -836,6 +850,10 @@ final class LanternModel:ObservableObject {
         // While pointing, the pins hold the scene from before the hand came up; arrows pause.
         let frozen=encoded.state == .live ? pointing.frozenOutput(sequence:sequence) : nil
         if frozen != nil { cuePlayer.reset(); pendingSign=false } else { tickRequest(now:now,candidates:frame.candidates,hint:frame.routeHint); tickPointingRoute(now:now,hint:frame.routeHint) }
+        if encoded.state != .live || frozen != nil { openSideFinder.reset() }
+        let open=encoded.state == .live && frozen == nil ? openSideFinder.update(distances:frame.distances,now:now) : nil
+        if openSide != open { openSide=open }
+        playOpenSideCue(open,now:now)
         let output=frozen.map { EncoderOutput(packet:$0.packet,state:encoded.state,targetColumns:$0.targetColumns) } ?? withPointingHighlight(withDirections(encoded,hint:frame.routeHint,now:now),now:now)
         packet=output.packet; guidanceState=output.state; targetColumns=output.targetColumns; puck.send(packet)
         if pointing.isActive {
@@ -847,10 +865,10 @@ final class LanternModel:ObservableObject {
             voiceTargetPhrase = held != nil ? VoicePhrasing.observation(target, named: target.label, now: now) : VoicePhrasing.observation(target, finder: finder, now: now)
         } else {
             voiceTargetPhrase = nil
-            targetDescription=heldTarget != nil ? "Where-is target outside the pins' field" : finder == .none ? "Obstacle sensing" : "Target unavailable. No directional highlight"
+            targetDescription=heldTarget != nil ? "Where-is target outside the pins' field" : finder == .none ? "Obstacle sensing"+(open.map { " · "+$0.spoken } ?? "") : "Target unavailable. No directional highlight"
         }
         updateVoiceAwareness(targetAvailable: target?.valid(at: now) == true && output.state == .live,
-                             target: target, distances: frame.distances, now: now)
+                             target: target, distances: frame.distances, openSide: open, now: now)
         if let heldTarget {
             switch HeldTargetGuidance.event(target: heldTarget, pose: frame.pose, worldEpoch: frame.worldEpoch, now: now, live: output.state == .live, inField: held != nil, lastSpokenAt: lastDirectionSpokenAt) {
             case .lostTracking: clearHeldTarget(spokenLine: "Lost tracking. Say it again.")

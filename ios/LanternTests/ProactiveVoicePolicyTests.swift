@@ -5,6 +5,19 @@ import FeelCore
 final class ProactiveVoicePolicyTests: XCTestCase {
     private let empty = [Double?](repeating: nil, count: 7)
 
+    func testObstacleNoticeNamesTheSideWithMoreRoom() throws {
+        var policy = ProactiveVoicePolicy()
+        let wall: [Double?] = [3, 3, 0.8, 0.8, 0.8, 3, 0.8]
+        var finder = OpenSideFinder()
+        let open = finder.update(distances: wall, now: 0)
+        XCTAssertNil(policy.propose(target: nil, finder: .none, distances: wall, openSide: open, now: 0))
+        let notice = try XCTUnwrap(policy.propose(target: nil, finder: .none, distances: wall, openSide: open, now: 0.8))
+        XCTAssertEqual(notice.text, "An obstacle was about 0.8 meters ahead. More room to your left.")
+        XCTAssertTrue(notice.isSupported(target: nil, finder: .none, distances: wall, now: 0.9))
+        var open2 = OpenSideFinder()
+        XCTAssertNil(open2.update(distances: [0.8, 0.8, 3, 3, 3, 3, 3], now: 0), "an obstacle to the side with an open way ahead adds nothing")
+    }
+
     func testTargetRequiresStabilityAndUnchangedObservationStaysSilent() throws {
         var policy = ProactiveVoicePolicy()
         XCTAssertNil(policy.propose(target: target(at: 0), finder: .door, distances: empty, now: 0))

@@ -1,0 +1,60 @@
+"""Feature classes. Keys are strings the phone can build without a lookup:
+ObjectHistory.id is "<user_id>:<object name>", Venue.id is the venue slug the pack carries."""
+from __future__ import annotations
+from datetime import datetime
+
+from chalk.features import DataFrame, FeatureTime, Primary, features, has_many
+
+
+@features
+class Find:
+    """One confirmed find: the user said "found it" after Where-is or a finder pointed at something.
+    Rows are written by the phone to the confirmed_finds table (chalk/sql/schema.sql)."""
+    id: Primary[str]
+    user_id: str
+    object_name: str
+    place: str
+    confidence: float
+    found_at: FeatureTime
+    # "<user_id>:<object_name>": the ObjectHistory this find belongs to.
+    history_id: str
+
+
+@features
+class ObjectHistory:
+    """What FEEL knows about one object for one user."""
+    id: Primary[str]
+    user_id: str
+    object_name: str
+    finds: DataFrame[Find] = has_many(lambda: Find.history_id == ObjectHistory.id)
+    last_place: str | None
+    last_seen_at: datetime | None
+    finds_count: int
+    # The sentence the assistant reads out; it never claims the object is still there.
+    spoken: str
+
+
+@features
+class VenueEntry:
+    """One reviewed statement about a venue, from an official HTTPS source."""
+    id: Primary[str]
+    venue_id: str
+    kind: str
+    name: str
+    aliases: list[str]
+    text: str
+    source_url: str
+    retrieved_at: datetime
+    effective_from: datetime | None
+    effective_until: datetime | None
+    applies_to: str | None
+
+
+@features
+class Venue:
+    id: Primary[str]
+    name: str
+    entries: DataFrame[VenueEntry] = has_many(lambda: VenueEntry.venue_id == Venue.id)
+    # The downloadable pack (schema, sha256, payload) exactly as the phone validates it.
+    pack: str
+    pack_sha256: str
