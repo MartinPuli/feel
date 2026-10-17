@@ -32,5 +32,26 @@ int main() {
     assert(s.command("CENTER", 0xfffffff0u));
     assert(s.command("KEEP", 0x50u) && s.active);
     s.tick(0x14au); assert(!s.active); // watchdog across millis wrap
-    std::puts("PASS: boot off, arming, expiry, keepalive, absolute cap, invalid commands, STOP, rollover");
+    assert(s.command("ARM", 20000));
+    assert(s.command("TEST5", 20001));
+    assert(s.pulseUs(20001) == 1500);
+    for (uint32_t elapsed=100; elapsed<5000; elapsed+=100) {
+        assert(s.command("KEEP", 20001+elapsed));
+        unsigned expected = elapsed<500 || elapsed>=4500 ? 1500 : (elapsed/500)%2 ? 1450 : 1550;
+        assert(s.pulseUs(20001+elapsed) == expected);
+    }
+    assert(!s.command("KEEP", 25001) && !s.active && s.pulseUs(25001)==0);
+    for (const char* bad : {"ARM", "CENTER", "TEST5", "garbage"}) {
+        assert(s.command("ARM", 30000));
+        assert(s.command("TEST5", 30001));
+        assert(!s.command(bad, 30002) && !s.active && !s.armed);
+    }
+    assert(s.command("ARM", 40000));
+    assert(s.command("TEST5", 40001));
+    assert(!s.command("KEEP", 40251) && !s.active);
+    assert(s.command("ARM", 0xfffff000u));
+    assert(s.command("TEST5", 0xfffff001u));
+    for (uint32_t e=100; e<5000; e+=100) assert(s.command("KEEP", uint32_t(0xfffff001u+e)));
+    s.tick(uint32_t(0xfffff001u+5000));assert(!s.active);
+    std::puts("PASS: boot off, arming, expiry, keepalive, absolute cap, invalid commands, STOP, rollover, TEST5 phase sequence and caps");
 }

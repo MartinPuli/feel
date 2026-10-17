@@ -12,6 +12,7 @@ constexpr uint32_t kPeriodUs = 20000;
 constexpr uint8_t kBits = 14;
 single_servo::State state;
 bool attached = false;
+unsigned lastPulseUs = 0;
 bool timerReady = false;
 uint32_t timerHz = 0;
 char line[24];
@@ -19,18 +20,26 @@ size_t used = 0;
 bool discard = false;
 
 void applyOutput() {
-    if (state.active && timerReady && !attached) {
-        const uint32_t duty = (single_servo::kCenterUs * (1UL << kBits) + kPeriodUs / 2) / kPeriodUs;
-        ledcWrite(kChannel, 0);
-        ledcAttachPin(kPin, kChannel);
-        ledcWrite(kChannel, duty);
-        attached = true;
+    if (state.active && timerReady) {
+        const unsigned pulse = state.pulseUs(millis());
+        if (!attached) {
+            ledcWrite(kChannel, 0);
+            ledcAttachPin(kPin, kChannel);
+            attached = true;
+            lastPulseUs = 0;
+        }
+        if (pulse != lastPulseUs) {
+            const uint32_t duty = (pulse * (1UL << kBits) + kPeriodUs / 2) / kPeriodUs;
+            ledcWrite(kChannel, duty);
+            lastPulseUs = pulse;
+        }
     } else if (!state.active && attached) {
         ledcWrite(kChannel, 0);
         ledcDetachPin(kPin);
         pinMode(kPin, OUTPUT);
         digitalWrite(kPin, LOW);
         attached = false;
+        lastPulseUs = 0;
     }
 }
 void reply(const char* text) {
@@ -40,8 +49,8 @@ void reply(const char* text) {
 }
 void status() {
     char message[128];
-    snprintf(message, sizeof(message), "SINGLE_CENTER ready=%u armed=%u active=%u attached=%u gpio=32 nominalUs=1500 timerHz=%u\n",
-             timerReady, state.armed, state.active, attached, timerHz);
+    snprintf(message, sizeof(message), "SINGLE_BENCH ready=%u armed=%u active=%u attached=%u gpio=32 pulseUs=%u timerHz=%u\n",
+             timerReady, state.armed, state.active, attached, state.pulseUs(millis()), timerHz);
     reply(message);
 }
 void setup() {
@@ -62,7 +71,7 @@ void setup() {
     timerHz = configured ? ledc_get_freq(LEDC_HIGH_SPEED_MODE, LEDC_TIMER_0) : 0;
     timerReady = configured && timerHz == 50;
     ledcWrite(kChannel, 0); // Do not attach on boot.
-    Serial.println("FEEL SINGLE CENTER: output OFF; ARM then CENTER; STOP always available");
+    Serial.println("FEEL SINGLE BENCH: output OFF; ARM then CENTER or TEST5; STOP always available");
     status();
 }
 void loop() {
