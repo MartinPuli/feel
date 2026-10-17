@@ -1,4 +1,4 @@
-> October17 update: use [the175° design](FS0307-175-DESIGN.md). Production measurement records now require schema2 and design_profile `fs0307-assumed175-v3`; old120° records cannot enable this build.
+> October17 update: use [the175° design](FS0307-175-DESIGN.md). Production measurement records now require schema2 and design_profile `fs0307-assumed175-even-v4`; old120° records cannot enable this build.
 
 # V1 seven-servo production setup
 
@@ -65,8 +65,8 @@ The existing compile-only fixtures exercise the same seven-output code path
 without creating a deployable configuration. The actual connected board remains
 on its previously installed single-live firmware.
 
-The selected design assumes175°, with band angles0/58/117/175 and neutral
-gaps29/87.5/146. The experimental pulse envelope is650–2500µs. Every servo must physically
+The selected design assumes175°, with band angles0/58/116/174 and neutral
+gaps29/87/145. The experimental pulse envelope is650–2500µs. Every servo must physically
 support that envelope for this design; narrower travel needs design changes,
 not invented measurements or silently rescaled angles. Stored offsets are
 per-column, limited to±5°, and cannot add missing travel.

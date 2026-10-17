@@ -2,10 +2,10 @@
 #include "feel/controller.hpp"
 
 namespace feel {
-// New key AND schema prevent both historical 175 and 120-degree offsets from reuse.
+// New key AND schema prevent earlier geometry offsets (including the unequal 175-degree spacing) from reuse.
 // NVS keys are limited to 15 characters. Old geometry must be recalibrated.
-constexpr char kCalibrationKey[] = "offsets_175_v3";
-constexpr uint32_t kCalibrationVersion = 3;
+constexpr char kCalibrationKey[] = "offsets_175_v4";
+constexpr uint32_t kCalibrationVersion = 4;
 struct CalibrationRecord {
     uint32_t version = kCalibrationVersion;
     std::array<float, kColumns> offsets{};

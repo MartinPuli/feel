@@ -5,10 +5,11 @@ This is a **new implementation of the v7 specification**, not recovered or repro
 ## Current 175° working assumption — October 17
 
 The user selected **175° assumed usable travel**, not measured calibration. Reference
-cam bands are now 0°/58°/117°/175°, gaps 29°/87.5°/146°, and taps
-13°/45°/130°/162°. The 12° lobe half-width and all physical dimensions are retained;
+cam bands are now 0°/58°/116°/174°, gaps 29°/87°/145°, and taps
+13°/45°/103°/161°. The 12° lobe half-width and all physical dimensions are retained;
 no measured fit or mechanical performance is implied. Firmware maps this assumed
-angle range linearly to 650–2500 µs. PWM remains gated separately.
+total 0–175° angle range linearly to 650–2500 µs; the last band at 174°
+commands 2489 µs. Nearest-gap ties select the lower gap. PWM remains gated separately.
 
 **Existing exported STL files, viewer payloads and older evidence are stale** for
 this angular layout. Rebuild before printing; never combine the prior 120° shafts
@@ -45,8 +46,8 @@ Open `cad/test_column.scad`, `cad/puck.scad`, or `cad/viewer.scad` in OpenSCAD. 
 | Actuation | One camshaft and one servo per column; only one of its four pins is selected at a time |
 | Pin indexing | Band 1 wrist → band 4 fingers; rows Y = −8, 4, 16, 28 mm |
 | Shaft axis | Along Y at Z=17.5 mm; positive control rotation matches the specified band angles |
-| Cam angles | Bands 0°, 58°, 117°, 175°; down gaps 29°, 87.5°, 146° |
-| Tap angles | Nearest gap, lower gap on a tie: 13°, 45°, 130°, 162° |
+| Cam angles | Bands 0°, 58°, 116°, 174°; down gaps 29°, 87°, 145° |
+| Tap angles | Nearest gap, lower gap on a tie: 13°, 45°, 103°, 161° |
 | Profile | Actual sampled radial polygon; base radius 3.8 mm, peak 5.8 mm, 12° half-width, 1° polygon step |
 | Stroke / tips | 2 mm ideal lift; 0.6 mm flat foot; “30° cone” interpreted as half-angle from axis, 60° included |
 | Variants | A exponent 2.2; H 2.5 flatter crest; G 1.6 gentler flank. Names are geometric intent, not measured holding force |

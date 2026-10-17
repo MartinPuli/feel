@@ -26,13 +26,13 @@ GPIO assignment or electrical connection changes for this revision.
 
 | Setting | Assumed value |
 |---|---|
-| Band1–4 angles | 0°,58°,117°,175° |
-| Down gaps | 29°,87.5°,146° |
+| Band1–4 angles | 0°,58°,116°,174° |
+| Down gaps | 29°,87°,145° |
 | Startup neutral | 29° |
 | Highlight dip | 13° toward nearest gap; lower gap on a tie |
 | Pulse mapping | Linear650–2500µs across0–175° |
 | Midpoint | 87.5° =1575µs;1500µs is not the angular midpoint of this mapping |
-| Calibration | New schema3 / offsets_175_v3; old offsets ignored |
+| Calibration | New schema4 / offsets_175_v4; old offsets ignored |
 | Classic seven-column GPIOs | 32,33,25,26,27,14,13 |
 | Single-servo live adapter | Center camera sector3 routes to GPIO32 only |
 
@@ -87,12 +87,14 @@ seven-column controller, with center sector3 routed toGPIO32. The older
 to deploy for this setup. Seven-servo deployment still uses its measured-record
 profile; a Bluetooth name does not enable additional output pins.
 
-## Connected-unit alignment trim
+## Exact user-selected pin positions
 
-The user requested7° toward lower commanded angles. The single-live adapter
-applies -74µs once after the shared controller mapping (7° on the175° assumed
-scale), clamped to650–2500µs. Band commands become650/1189/1813/2426µs;
-the first empty gap becomes883µs. Band1 remains at the lower bound; this is
-not a rigid shift of every position and does not establish physical alignment.
-The trim is only for the connected GPIO32 unit, not all seven servos. Stored
-controller calibration still applies before this additional adapter trim.
+The user explicitly selected pin1=0°, pin2=58°, pin3=116°, pin4=174°.
+This supersedes the earlier0/58/117/175 arrangement and removes the temporary
+-7° single-unit trim. No additional adapter offset is applied. At zero stored
+calibration, pulses are650/1263/1876/2489µs on the unchanged0–175° envelope.
+
+Band0 requests the nearest gap:29° after pins1/2,87° after pin3,145° after pin4.
+Ties select the lower gap. Corresponding pulses are957/1570/2183µs. Startup
+neutral is29°. These commanded gaps are chosen between peaks; actual complete
+pin retraction still requires physical cam/return verification.

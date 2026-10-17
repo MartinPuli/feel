@@ -230,7 +230,7 @@ class ReceiverTests(unittest.TestCase):
         receiver.receive(wire(0, [4] * 7), 0)
         receiver.receive(wire(1, [0] * 7), 200)
         state = receiver.snapshot()
-        self.assertEqual(state["columns"][0]["nominal_command_degrees"], 146.0)
+        self.assertEqual(state["columns"][0]["nominal_command_degrees"], 145.0)
         self.assertEqual(state["columns"][0]["phase"], "neutral_requested")
         self.assertEqual(state["logical_pin_selection"], [[0] * 4] * 7)
 
@@ -243,8 +243,8 @@ class ReceiverTests(unittest.TestCase):
         self.assertIsNone(state["columns"][3]["nominal_tap_dip_degrees"])
 
     def test_nominal_angles_and_tap_directions_are_reference_only(self):
-        self.assertEqual([gap_for_band(b) for b in (1, 2, 3, 4)], [29.0, 29.0, 146.0, 146.0])
-        self.assertEqual([tap_dip_angle(b) for b in (1, 2, 3, 4)], [13.0, 45.0, 130.0, 162.0])
+        self.assertEqual([gap_for_band(b) for b in (1, 2, 3, 4)], [29.0, 29.0, 87.0, 145.0])
+        self.assertEqual([tap_dip_angle(b) for b in (1, 2, 3, 4)], [13.0, 45.0, 103.0, 161.0])
         with self.assertRaises(ValueError):
             tap_dip_angle(0)
 

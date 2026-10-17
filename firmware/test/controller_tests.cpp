@@ -98,15 +98,33 @@ TEST(empty_highlight_is_wire_legal_but_effective_off) {
 TEST(all_bands_map_to_expected_angles) {
     Controller c;
     c.connect(0);
-    const float expected[] = {0, 58, 117, 175};
+    const float expected[] = {0, 58, 116, 174};
     for (uint8_t b = 1; b <= 4; ++b) {
         CHECK(send(c, b, b, b * 10) == Result::Ok);
         for (float angle : c.snapshot().angles) CLOSE(angle, expected[b - 1]);
     }
 }
 
+TEST(even_band_commands_keep_175_degree_envelope_without_rescaling) {
+    // Independent expected pulse vectors:174 degrees must not become2500us.
+    const uint16_t bands[] = {650, 1263, 1876, 2489};
+    const uint16_t taps[] = {787, 1126, 1739, 2352};
+    const uint16_t gaps[] = {957, 957, 1570, 2183};
+    for (uint8_t band = 1; band <= 4; ++band) {
+        Controller c;
+        c.connect(0);
+        CHECK(send(c, 0, band, 1, 0) == Result::Ok);
+        CHECK(c.snapshot().pulses[0] == taps[band - 1]);
+        c.tick(101);
+        CHECK(c.snapshot().pulses[0] == bands[band - 1]);
+        CHECK(send(c, 1, 0, 102) == Result::Ok);
+        CHECK(c.snapshot().pulses[0] == gaps[band - 1]);
+    }
+    CHECK(feel::angleToPulse(175) == 2500);
+}
+
 TEST(disappearing_pin_uses_nearest_last_band_gap) {
-    const float gaps[] = {29, 29, 146, 146};
+    const float gaps[] = {29, 29, 87, 145};
     for (uint8_t b = 1; b <= 4; ++b) {
         Controller c;
         c.connect(0);
@@ -116,11 +134,11 @@ TEST(disappearing_pin_uses_nearest_last_band_gap) {
         CHECK(send(c, 2, 0, 3) == Result::Ok);
         for (float angle : c.snapshot().angles) CLOSE(angle, gaps[b - 1]);
     }
-    CLOSE(feel::nearestGap(87.5F), 87.5F);
-    CLOSE(feel::nearestGap(58.25F), 29);
-    CLOSE(feel::nearestGap(116.75F), 87.5F);
-    CLOSE(feel::nearestGap(58.26F), 87.5F);
-    CLOSE(feel::nearestGap(116.76F), 146);
+    CLOSE(feel::nearestGap(87), 87);
+    CLOSE(feel::nearestGap(58), 29);
+    CLOSE(feel::nearestGap(116), 87);
+    CLOSE(feel::nearestGap(58.01F), 87);
+    CLOSE(feel::nearestGap(116.01F), 145);
 }
 
 TEST(rejection_does_not_partially_apply_bands_or_highlight) {
@@ -142,7 +160,7 @@ TEST(duplicate_does_not_extend_watchdog) {
     CHECK(send(c, 10, 1, 400) == Result::Duplicate);
     c.tick(501);
     neutral(c);
-    CLOSE(c.snapshot().angles[0], 146);
+    CLOSE(c.snapshot().angles[0], 145);
 }
 
 TEST(stale_and_half_range_sequences_rejected) {
@@ -235,7 +253,7 @@ TEST(millis_rollover_preserves_watchdog_boundary) {
 }
 
 TEST(highlight_taps_toward_gap_for_all_bands) {
-    const float expected[] = {13, 45, 130, 162};
+    const float expected[] = {13, 45, 103, 161};
     for (uint8_t band = 1; band <= 4; ++band) {
         Controller c;
         c.connect(0);
@@ -306,7 +324,7 @@ TEST(calibration_clamps_both_servo_endpoints) {
     CLOSE(c.snapshot().angles[0], 0);
     CLOSE(c.snapshot().angles[1], 5);
     CHECK(send(c, 1, 4, 2) == Result::Ok);
-    CLOSE(c.snapshot().angles[0], 170);
+    CLOSE(c.snapshot().angles[0], 169);
     CLOSE(c.snapshot().angles[1], 175);
 }
 
@@ -317,7 +335,7 @@ TEST(calibration_does_not_extend_motion_watchdog) {
     CHECK(c.calibrate(0, 1, 400) == Result::Ok);
     c.tick(500);
     neutral(c);
-    CLOSE(c.snapshot().angles[0], 147);
+    CLOSE(c.snapshot().angles[0], 146);
 }
 
 TEST(raw_pulse_requires_arm_and_bounds) {
@@ -333,7 +351,7 @@ TEST(raw_pulse_requires_arm_and_bounds) {
     c.tick(504);
     neutral(c);
     CHECK(!c.snapshot().rawPulse);
-    CLOSE(c.snapshot().angles[0], 146);
+    CLOSE(c.snapshot().angles[0], 145);
 }
 
 TEST(raw_pulse_is_exclusive_and_stop_clears_it) {
@@ -342,7 +360,7 @@ TEST(raw_pulse_is_exclusive_and_stop_clears_it) {
     CHECK(c.benchBand(2, 4, 0) == Result::Ok);
     CHECK(c.benchPulse(0, 650, 10) == Result::Ok);
     for (auto band : c.snapshot().bands) CHECK(band == 0);
-    CLOSE(c.snapshot().angles[2], 146);
+    CLOSE(c.snapshot().angles[2], 145);
     c.stop(20);
     neutral(c);
     CHECK(!c.snapshot().benchArmed);
@@ -452,13 +470,16 @@ TEST(calibration_records_reject_old_schema_and_corruption_atomically) {
     Controller original;
     CHECK(original.loadOffset(0, 4) == Result::Ok);
     auto record = feel::calibrationRecord(original);
-    CHECK(std::string(feel::kCalibrationKey) == "offsets_175_v3");
+    CHECK(std::string(feel::kCalibrationKey) == "offsets_175_v4");
     CHECK(std::string(feel::kCalibrationKey).size() <= 15);
     Controller restored;
     record.version = 1;
     CHECK(!feel::loadCalibration(restored, record));
     for (auto offset : restored.snapshot().offsets) CLOSE(offset, 0);
     record.version = 2;
+    CHECK(!feel::loadCalibration(restored, record));
+    for (auto offset : restored.snapshot().offsets) CLOSE(offset, 0);
+    record.version = 3;
     CHECK(!feel::loadCalibration(restored, record));
     for (auto offset : restored.snapshot().offsets) CLOSE(offset, 0);
     record.version = feel::kCalibrationVersion;
@@ -488,15 +509,15 @@ TEST(raw_pulse_roundtrip_and_timeout_cover_entire_175_degree_range) {
         c.tick(501);
         neutral(c);
         const float angle = (pulse - 650) * 175.0F / 1850.0F;
-        const float gap = angle <= 58.25F ? 29 : angle <= 116.75F ? 87.5F : 146;
+        const float gap = angle <= 58 ? 29 : angle <= 116 ? 87 : 145;
         CLOSE(c.snapshot().angles[0], gap + 5);
         CHECK(c.snapshot().pulses[0] >= 650 && c.snapshot().pulses[0] <= 2500);
     }
 }
 
 TEST(calibrated_bands_taps_and_failure_paths_never_exceed_design_range) {
-    const float gaps[] = {29, 29, 146, 146};
-    const float taps[] = {13, 45, 130, 162};
+    const float gaps[] = {29, 29, 87, 145};
+    const float taps[] = {13, 45, 103, 161};
     for (int offset = -5; offset <= 5; ++offset) {
         for (uint8_t band = 1; band <= 4; ++band) {
             for (unsigned failure = 0; failure < 3; ++failure) {

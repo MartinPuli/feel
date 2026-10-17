@@ -47,8 +47,8 @@ farj_d = 4.0;
 bearing_fit = 0.2;
 
 // ---------------------------------------------------------------- cam
-band_angle = [0, 58, 117, 175];
-function gap_angle(i) = (band_angle[i] + band_angle[i + 1]) / 2;   // 29, 87.5, 146
+band_angle = [0, 58, 116, 174];
+function gap_angle(i) = (band_angle[i] + band_angle[i + 1]) / 2;   // 29, 87, 145
 cam_flat = 5;
 cam_ramp = 24;              // flat + ramp = 29 = half the band spacing
 stroke = 2.55;

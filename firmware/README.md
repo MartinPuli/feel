@@ -58,8 +58,8 @@ Do not transfer the classic pin list to an S3. Confirm the actual board, module 
 - Exactly 9 bytes; bands 0–4; highlight 0–6 or 255. Malformed packets apply no motion. Wire-legal highlight on a zero band is normalized to effective highlight 255.
 - First valid sequence is accepted. Subsequent modulo-256 delta 1–127 is accepted; delta 0 is duplicate, 128–255 is stale. Rejections do **not** refresh the watchdog. Disconnect and timeout clear the sequence baseline.
 - At `elapsed >= 500 ms` without an accepted packet or valid bench motion/keepalive, command all bands down into their previous nearest gaps. Unsigned subtraction handles the 32-bit `millis()` rollover.
-- Four band angles: **0°, 58°, 117°, 175°**. Gaps: **29°, 87.5°, 146°**. Last selected bands1/2 use29°, bands3/4 use146°; initially every column uses29°. Nearest-gap ties choose the lower angle. Raw bench positions use the same nearest-gap rule.
-- Highlight dips **13° toward that band's gap** (tap positions 13°, 45°, 130°, 162°) for the first **100 ms of a 600 ms cycle**. These durations are new tunable assumptions, not recovered handoff facts. Repeated 10 Hz packets do not restart a tap; changing the highlighted column/band does.
+- Four band angles, as explicitly selected: **0°, 58°, 116°, 174°**. The envelope remains175°, so174° commands2489µs rather than rescaling to2500µs. Gaps: **29°, 87°, 145°**. Last selected bands1/2 use29°, band3 uses87°, band4 uses145°; initially every column uses29°. Nearest-gap ties choose the lower angle. Raw bench positions use the same nearest-gap rule.
+- Highlight dips **13° toward that band's gap** (tap positions 13°, 45°, 103°, 161°) for the first **100 ms of a 600 ms cycle**. These durations are new tunable assumptions, not recovered handoff facts. Repeated 10 Hz packets do not restart a tap; changing the highlighted column/band does.
 - Calibration offsets are finite ±5°, added to every non-raw position and clamped to **0–175°**. The assumed linear pulse conversion is **650–2500 µs across 0–175°**, with **87.5° = 1575 µs**; real endpoints remain **unmeasured**. Raw `US` bypasses the offset. An endpoint offset may be clipped; it cannot create extra travel.
 - A jump between distant bands necessarily sweeps through intervening cam positions. This controller does **not** promise neighbor-free transient motion. CAD endpoint geometry is insufficient to establish physical P5.
 
@@ -99,7 +99,7 @@ Disconnect the phone first. No servo motion command is accepted until `ARM`. Arm
 | `STATUS` | Print commanded bands, angles, pulses, offsets and flags |
 | `HELP` | Print command syntax |
 
-Malformed/overlong lines, extra arguments, NaN/infinite offsets and out-of-range numbers are rejected. A 96-byte serial budget and one command per loop prevent unbounded serial parsing from starving the watchdog. NVS save uses a version-3 record under `offsets_175_v3`, validates its version and all offset values before applying any, and rejects invalid data atomically. The old `offsets_v1` and `offsets_120_v2` keys are never read or migrated: calibration for the previous geometry cannot be reused, so this revision starts at zero offsets until recalibrated. Invalid data keeps all default zero offsets. Saving never writes continuously to flash.
+Malformed/overlong lines, extra arguments, NaN/infinite offsets and out-of-range numbers are rejected. A 96-byte serial budget and one command per loop prevent unbounded serial parsing from starving the watchdog. NVS save uses a version-4 record under `offsets_175_v4`, validates its version and all offset values before applying any, and rejects invalid data atomically. The old `offsets_v1`, `offsets_120_v2`, and `offsets_175_v3` keys are never read or migrated: calibration for the previous geometry cannot be reused, so this revision starts at zero offsets until recalibrated. Invalid data keeps all default zero offsets. Saving never writes continuously to flash.
 
 One-column bring-up:
 
@@ -140,8 +140,8 @@ Handoff omissions resolved explicitly: UUIDs/status layout, modular sequence pol
 `esp32-single-live` is a separate classic-ESP32 environment for the explicitly
 selected **assumed175-degree** design. It advertises **FEEL Puck** and
 attaches only GPIO32. It reads production controller `pulses[3]` directly: the
-center sector's band positions, adjacent gaps, highlight taps and existing
-calibration offsets all apply within assumed650–2500 microseconds. This is not
+center sector's band positions, adjacent gaps, highlight taps and calibration
+offsets all apply within assumed650–2500 microseconds. This is not
 a measured-safe-range build or evidence of full physical175-degree travel.
 
 Boot, connection without a packet, disconnection and the existing500ms command
@@ -171,7 +171,7 @@ GPIOs32,33,25,26,27,14,13. It is explicitly gated by the ignored local file
 The tracked `production-measurements.example.json` contains false/null fields
 and cannot enable output. Fill a local copy only from actual physical records.
 
-The prebuild hook requires schema_version2 and design_profile `fs0307-assumed175-v3`, board `esp32-classic`, a true global
+The prebuild hook requires schema_version2 and design_profile `fs0307-assumed175-even-v4`, board `esp32-classic`, a true global
 verification attestation, verifier name, ISO8601 timestamp with timezone, and a
 nonempty local evidence file. All seven column records must have unique column
 and unit identifiers, the matching GPIO, a true verification attestation, a
@@ -219,3 +219,5 @@ sends bands rather than angles; all versions share the board-side mapping.
 Historical branch copies need this same firmware revision before claiming
 175° design compatibility. Calibration and measurement records must be renewed
 for the new design; old schema1 production records cannot enable it.
+
+The latest equal58° spacing revision uses0/58/116/174° bands and29/87/145° gaps. Nearest-gap ties choose the lower gap. Old unequal-spacing calibration records are rejected; the physical endpoints remain assumptions.

@@ -67,7 +67,7 @@ unavailable. See `ios/README.md` for detector, floor, and mount conventions.
 
 ## Cam commands
 
-FS0307 assumed 175° design (user decision October 17, 2026): band centres `0°, 58°, 117°, 175°`; down gaps `29°, 87.5°, 146°`. This is not measured travel.
+FS0307 assumed 175° design (user decision October 17, 2026): band centres `0°, 58°, 116°, 174°`; down gaps `29°, 87°, 145°`. This is not measured travel.
 When a pin disappears, command the nearest gap to its previous band (tie to lower
 gap), startup 29°. Highlight dips **13° toward that gap** and returns. Firmware
 implements a nominal 100 ms dip in a 600 ms cycle; these times are unmeasured

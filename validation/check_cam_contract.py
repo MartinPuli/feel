@@ -21,7 +21,7 @@ def main():
     args = parser.parse_args()
     params, profiles = load_geometry()
     bands, gaps, tap, base, stroke, pin_r, tip_r, half_angle, *_ = params
-    assert bands == [0, 58, 117, 175] and gaps == [29, 87.5, 146] and tap == 13
+    assert bands == [0, 58, 116, 174] and gaps == [29, 87, 145] and tap == 13
     checks = 0
 
     def check(condition, message):

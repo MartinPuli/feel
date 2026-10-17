@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "design_profile": "fs0307-assumed175-v3",
+  "design_profile": "fs0307-assumed175-even-v4",
   "board": "esp32-classic",
   "verified": false,
   "verified_by": null,

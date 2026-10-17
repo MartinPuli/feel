@@ -45,7 +45,7 @@ class ProductionConfigTests(unittest.TestCase):
         deployment = FIRMWARE / config.CONFIG_NAME
         self.deployment_before = hashlib.sha256(deployment.read_bytes()).hexdigest() if deployment.exists() else None
         self.record = {
-            "schema_version": 2, "design_profile": "fs0307-assumed175-v3", "board": "esp32-classic", "verified": True,
+            "schema_version": 2, "design_profile": "fs0307-assumed175-even-v4", "board": "esp32-classic", "verified": True,
             "verified_by": "SYNTHETIC_TEST_ONLY", "verified_at": "2026-10-16T12:00:00Z",
             "evidence_file": "SYNTHETIC-EVIDENCE.txt",
             "servos": [{"column": column, "gpio": gpio, "unit_id": "SYNTHETIC-" + str(column),
@@ -124,7 +124,7 @@ class ProductionConfigTests(unittest.TestCase):
         for field,value in (("verified",False),("verified",1),("verified_by",None),
                             ("verified_at",None),("verified_at","2026-10-16"),
                             ("verified_at","yesterday"),("board","esp32s3"),("schema_version",True),("schema_version",1),
-                            ("design_profile",None),("design_profile","fs0307-120-v2")):
+                            ("design_profile",None),("design_profile","fs0307-120-v2"),("design_profile","fs0307-assumed175-v3")):
             document = copy.deepcopy(self.record);document[field] = value
             with self.subTest(field=field,value=value): self.reject(document)
         document = copy.deepcopy(self.record);document["servos"][4]["verified"] = False

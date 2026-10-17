@@ -185,9 +185,9 @@ def run(replay):
     r.reset(4000)
     p=r.swift_call(op='encode',seq=1,bands=[1,2,3,4,0,0,0],highlight=0)
     r.packet(4000,p['hex'],'Band centres plus first highlight dip',accepted=True,
-             angles_deg=[13,58,117,175,29,29,29],tap_active=True)
-    r.command('TICK 4100','Tap returns after100ms',angles_deg=[0,58,117,175,29,29,29],tap_active=False)
-    r.command('TICK 4500','Timeout gaps by former band',angles_deg=[29,29,146,146,29,29,29],bands=[0]*7)
+             angles_deg=[13,58,116,174,29,29,29],tap_active=True)
+    r.command('TICK 4100','Tap returns after100ms',angles_deg=[0,58,116,174,29,29,29],tap_active=False)
+    r.command('TICK 4500','Timeout gaps by former band',angles_deg=[29,29,87,145,29,29,29],bands=[0]*7)
     r.reset(0xfffffff0)
     p=r.swift_call(op='encode',seq=42,bands=[1]*7,highlight=255)
     r.packet(0xfffffff0,p['hex'],'millis rollover baseline',accepted=True)

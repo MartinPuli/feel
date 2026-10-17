@@ -237,7 +237,7 @@
                 {
                   "target_band": 2,
                   "phase": "gap_requested",
-                  "nominal_command_degrees": 146.0,
+                  "nominal_command_degrees": 87.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": true,
                   "nominal_tap_dip_degrees": 45.0
@@ -245,7 +245,7 @@
                 {
                   "target_band": 1,
                   "phase": "gap_requested",
-                  "nominal_command_degrees": 146.0,
+                  "nominal_command_degrees": 145.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": false,
                   "nominal_tap_dip_degrees": null
@@ -269,7 +269,7 @@
                 {
                   "target_band": 0,
                   "phase": "neutral_requested",
-                  "nominal_command_degrees": 146.0,
+                  "nominal_command_degrees": 87.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": false,
                   "nominal_tap_dip_degrees": null
@@ -306,7 +306,7 @@
                 {
                   "target_band": 2,
                   "phase": "gap_requested",
-                  "nominal_command_degrees": 146.0,
+                  "nominal_command_degrees": 87.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": true,
                   "nominal_tap_dip_degrees": 45.0
@@ -314,7 +314,7 @@
                 {
                   "target_band": 1,
                   "phase": "gap_requested",
-                  "nominal_command_degrees": 146.0,
+                  "nominal_command_degrees": 145.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": false,
                   "nominal_tap_dip_degrees": null
@@ -338,7 +338,7 @@
                 {
                   "target_band": 0,
                   "phase": "neutral_requested",
-                  "nominal_command_degrees": 146.0,
+                  "nominal_command_degrees": 87.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": false,
                   "nominal_tap_dip_degrees": null
@@ -358,7 +358,7 @@
                 {
                   "target_band": 4,
                   "phase": "band_requested",
-                  "nominal_command_degrees": 175.0,
+                  "nominal_command_degrees": 174.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": false,
                   "nominal_tap_dip_degrees": null
@@ -366,7 +366,7 @@
                 {
                   "target_band": 3,
                   "phase": "band_requested",
-                  "nominal_command_degrees": 117.0,
+                  "nominal_command_degrees": 116.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": false,
                   "nominal_tap_dip_degrees": null
@@ -406,7 +406,7 @@
                 {
                   "target_band": 0,
                   "phase": "neutral_requested",
-                  "nominal_command_degrees": 146.0,
+                  "nominal_command_degrees": 87.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": false,
                   "nominal_tap_dip_degrees": null
@@ -426,7 +426,7 @@
                 {
                   "target_band": 4,
                   "phase": "hold_assumed",
-                  "nominal_command_degrees": 175.0,
+                  "nominal_command_degrees": 174.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": false,
                   "nominal_tap_dip_degrees": null
@@ -434,7 +434,7 @@
                 {
                   "target_band": 3,
                   "phase": "hold_assumed",
-                  "nominal_command_degrees": 117.0,
+                  "nominal_command_degrees": 116.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": false,
                   "nominal_tap_dip_degrees": null
@@ -474,7 +474,7 @@
                 {
                   "target_band": 0,
                   "phase": "neutral_requested",
-                  "nominal_command_degrees": 146.0,
+                  "nominal_command_degrees": 87.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": false,
                   "nominal_tap_dip_degrees": null
@@ -503,7 +503,7 @@
                 {
                   "target_band": 0,
                   "phase": "neutral_requested",
-                  "nominal_command_degrees": 146.0,
+                  "nominal_command_degrees": 145.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": false,
                   "nominal_tap_dip_degrees": null
@@ -511,15 +511,7 @@
                 {
                   "target_band": 0,
                   "phase": "neutral_requested",
-                  "nominal_command_degrees": 146.0,
-                  "physical_pin_state": "NOT MEASURED",
-                  "highlight_requested": false,
-                  "nominal_tap_dip_degrees": null
-                },
-                {
-                  "target_band": 0,
-                  "phase": "neutral_requested",
-                  "nominal_command_degrees": 29.0,
+                  "nominal_command_degrees": 87.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": false,
                   "nominal_tap_dip_degrees": null
@@ -551,7 +543,15 @@
                 {
                   "target_band": 0,
                   "phase": "neutral_requested",
-                  "nominal_command_degrees": 146.0,
+                  "nominal_command_degrees": 29.0,
+                  "physical_pin_state": "NOT MEASURED",
+                  "highlight_requested": false,
+                  "nominal_tap_dip_degrees": null
+                },
+                {
+                  "target_band": 0,
+                  "phase": "neutral_requested",
+                  "nominal_command_degrees": 87.0,
                   "physical_pin_state": "NOT MEASURED",
                   "highlight_requested": false,
                   "nominal_tap_dip_degrees": null

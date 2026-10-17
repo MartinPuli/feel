@@ -59,11 +59,11 @@ class FollowerChecks(unittest.TestCase):
         self.assertAlmostEqual(heights[1],2,places=4)
         self.assertTrue(all(abs(h)<.02 for b,h in enumerate(heights) if b!=1))
 
-    def test_175_degree_profile_keeps_full_stroke_and_neutral_gaps(self):
+    def test_174_degree_band_profile_keeps_full_stroke_and_neutral_gaps(self):
         params,profiles=load_geometry()
         bands,gaps,tap,base,stroke,pin_r,tip_r,half_angle,*_=params
-        self.assertEqual(bands,[0,58,117,175])
-        self.assertEqual(gaps,[29,87.5,146])
+        self.assertEqual(bands,[0,58,116,174])
+        self.assertEqual(gaps,[29,87,145])
         self.assertEqual(stroke,2)
         for variant in range(3):
             for band,angle in enumerate(bands):
