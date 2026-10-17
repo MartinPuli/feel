@@ -152,6 +152,7 @@ final class ChalkCommandTests:XCTestCase {
         let model=makeModel(); defer { model.stop() }; let id=model.spatialMemory.bookmarks[0].id
         ChalkStub.handler={ _ in throw URLError(.timedOut) }
         send(model); await settle(model); XCTAssertNil(model.spatialMemory.activeID)
+        XCTAssertTrue(model.cloudOffline); model.retryCloudConnection()
         ChalkStub.handler={ try Self.reply($0,id:id,delay:0.1) }
         send(model); model.cloudSharing=false
         try? await Task.sleep(nanoseconds:200_000_000)
@@ -188,4 +189,55 @@ final class ChalkCommandTests:XCTestCase {
         model.sendCloudFeedback(correct:false); await fulfillment(of:[sent],timeout:1)
         XCTAssertNil(model.spatialMemory.activeID)
     }
+    func testLocalParaphrasesNeverSendEvenWithCloudEnabled() {
+        let model=makeModel(); defer { model.stop() }
+        ChalkStub.handler={ _ in XCTFail("Local commands must never leave the phone"); return (200,Data(),0) }
+        model.commandText="Please take me to Entrance."; model.submitTypedCommand()
+        XCTAssertEqual(model.spatialMemory.activeID,model.spatialMemory.bookmarks[0].id)
+        XCTAssertFalse(model.cloudPending); XCTAssertNil(model.cloudLatency)
+        model.commandText="help me find chair"; model.submitTypedCommand()
+        XCTAssertEqual(model.finder,.chair)
+        model.commandText="please stop now!"; model.submitTypedCommand()
+        XCTAssertEqual(model.mode,.stopped)
+    }
+    func testOfflineTransitionKeepsLocalGuidanceAndRequiresExplicitCloudRetry() async {
+        let model=makeModel(); defer { model.stop() }
+        ChalkStub.handler={ _ in throw URLError(.notConnectedToInternet) }
+        send(model); await settle(model)
+        XCTAssertTrue(model.cloudOffline); XCTAssertNil(model.spatialMemory.activeID)
+        ChalkStub.handler={ _ in XCTFail("Offline mode must not retry automatically"); return (200,Data(),0) }
+        send(model); XCTAssertFalse(model.cloudPending)
+        model.commandText="take me to Entrance"; model.submitTypedCommand()
+        XCTAssertEqual(model.spatialMemory.activeID,model.spatialMemory.bookmarks[0].id)
+        model.retryCloudConnection(); XCTAssertFalse(model.cloudOffline); XCTAssertFalse(model.cloudPending)
+        let id=model.spatialMemory.bookmarks[0].id
+        ChalkStub.handler={ try Self.reply($0,id:id) }
+        send(model); await settle(model); XCTAssertNotNil(model.cloudLatency)
+    }
+    func testOfflineRecallStillRequiresTracking() {
+        let model=makeModel(); defer { model.stop() }
+        model.simulatedTracking=false
+        model.commandText="take me to Entrance"; model.submitTypedCommand()
+        XCTAssertNil(model.spatialMemory.activeID)
+        XCTAssertEqual(model.packet.bands,[0,0,0,0,0,0,0])
+    }
+    func testUnsafeLocalInputDoesNotEscalateToCloud() {
+        let model=makeModel(); defer { model.stop() }
+        ChalkStub.handler={ _ in XCTFail("Invalid commands must not reach cloud"); return (200,Data(),0) }
+        for text in ["take me to Entrance and stop", "recall Entrance; stop", "stop\n", String(repeating:"x",count:161)] {
+            model.commandText=text; model.submitTypedCommand()
+            XCTAssertFalse(model.cloudPending); XCTAssertNil(model.spatialMemory.activeID)
+        }
+    }
+
+    func testNaturalRememberStoresOnlyRequestedNameAndRecallsItOffline() {
+        let model=makeModel(); defer { model.stop() }
+        ChalkStub.handler={ _ in XCTFail("Supported phrases must stay local"); return (200,Data(),0) }
+        model.commandText="please remember this place as Desk."; model.submitTypedCommand()
+        XCTAssertTrue(model.spatialMemory.bookmarks.contains(where: { $0.name == "Desk" }))
+        XCTAssertFalse(model.spatialMemory.bookmarks.contains(where: { $0.name.contains("this place as") }))
+        model.commandText="take me to Desk"; model.submitTypedCommand()
+        XCTAssertEqual(model.spatialMemory.bookmarks.first(where: { $0.name == "Desk" })?.id,model.spatialMemory.activeID)
+    }
+
 }

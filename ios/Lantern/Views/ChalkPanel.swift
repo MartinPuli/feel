@@ -7,9 +7,9 @@ struct ChalkPanel: View {
         DisclosureGroup("Chalk understanding") {
             VStack(alignment:.leading,spacing:12) {
                 Toggle("Use Chalk for commands",isOn:$model.cloudEnabled).accessibilityIdentifier("cloudEnabled")
-                Text("Understand natural requests about your current places. Turn this off to use local finder commands. Direction and Stop remain on this phone.").font(.footnote)
+                Text("Supported commands run on this iPhone first, including finder commands and Stop. Only unresolved requests use Chalk. If the connection fails, FEEL keeps local commands available.").font(.footnote)
                 Toggle("Share command text and place names",isOn:$model.cloudSharing).accessibilityIdentifier("cloudSharing")
-                Text("Sends your final typed or spoken command, place IDs and names, language, session ID, return-point availability and tracking state to your FEEL server and its configured AI provider. No audio, camera frames, coordinates or AR maps are sent.").font(.footnote)
+                Text("For unresolved requests only, sends your final typed or spoken command, place IDs and names, language, session ID, return-point availability and tracking state to your FEEL server and its configured AI provider. No audio, camera frames, coordinates or AR maps are sent.").font(.footnote)
                 Toggle("Keep requests and corrections for evaluation",isOn:$model.cloudFeedbackConsent).accessibilityIdentifier("cloudRetention")
                 Text("Optional. Allows the server to retain these requests and your explicit feedback. Turning this off stops future command text and context retention; it does not delete previously retained records. Basic request IDs, action types and timing may still be stored. Ask the server operator to delete retained records.").font(.footnote)
                 DisclosureGroup("Connection") {
@@ -25,6 +25,10 @@ struct ChalkPanel: View {
                 if model.cloudPending {
                     ProgressView("Understanding…")
                     Button("Cancel request") { model.cancelCloud() }.buttonStyle(.bordered)
+                }
+                if model.cloudOffline {
+                    Text("Offline commands active").accessibilityIdentifier("cloudOffline")
+                    Button("Try cloud on next command") { model.retryCloudConnection() }.buttonStyle(.bordered)
                 }
                 Text(model.cloudNotice).accessibilityIdentifier("cloudNotice")
                 if let latency=model.cloudLatency { Text(String(format:"Request round trip: %.0f ms",latency)).font(.footnote).accessibilityIdentifier("cloudLatency") }

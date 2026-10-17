@@ -45,7 +45,8 @@ final class LanternModel:ObservableObject {
     @Published private(set) var restoreState:WorldMapRestoreState = .idle
     @Published private(set) var restoredMapSession=false
     @Published private(set) var mapBusy=false
-    @Published var cloudEnabled=false { didSet { cancelCloud() } }
+    @Published var cloudEnabled=false { didSet { cancelCloud(); cloudOffline=false } }
+    @Published private(set) var cloudOffline=false
     @Published var cloudSharing=false { didSet { cancelCloud() } }
     @Published var cloudFeedbackConsent=false { didSet { cancelCloud() } }
     @Published var cloudEndpoint=UserDefaults.standard.string(forKey:"feel.cloud.endpoint") ?? "" { didSet { cancelCloud() } }
@@ -275,18 +276,21 @@ final class LanternModel:ObservableObject {
     func readCommandResult() { voice.speak(commandNotice,localeIdentifier:speechLocale) }
     private func executeCommand(_ text:String) {
         cancelCloud()
-        // Stop is parsed locally before any network work, even with cloud enabled.
-        if let intent=try? VoiceIntentParser.parse(text:text,language:commandLanguage,isFinal:true), case .stop=intent {
-            stop(); commandNotice="Stopped. Guidance is neutral."; return
-        }
-        if cloudEnabled { submitCloudCommand(text); return }
         do {
-            let intent=try VoiceIntentParser.parse(text:text,language:commandLanguage,isFinal:true)
+            let intent=try LocalCommandInterpreter.parse(text,language:commandLanguage)
+            switch intent {
+            case .remember,.recall,.returnToPoint:
+                guard cloudTrackingValid else { commandNotice="Tracking is unavailable. No local memory action was applied."; return }
+            default: break
+            }
             switch intent {
             case .remember(let name): placeName=name; remember(); commandNotice=memoryNotice
             case .recall(let name):
                 let key=name.folding(options:[.caseInsensitive,.diacriticInsensitive],locale:Locale(identifier:"en_US_POSIX"))
-                guard let place=spatialMemory.bookmarks.first(where: { $0.name.folding(options:[.caseInsensitive,.diacriticInsensitive],locale:Locale(identifier:"en_US_POSIX"))==key }) else { throw SpatialMemoryError.unknownBookmark }
+                let matches=spatialMemory.bookmarks.filter { $0.name.folding(options:[.caseInsensitive,.diacriticInsensitive],locale:Locale(identifier:"en_US_POSIX"))==key }
+                guard !matches.isEmpty else { throw SpatialMemoryError.unknownBookmark }
+                guard matches.count == 1 else { commandNotice="More than one place has that name. Select the destination in My Places."; return }
+                let place=matches[0]
                 selectPlace(place.id); recall(); commandNotice=memoryNotice
             case .returnToPoint: returnToPoint(); commandNotice=memoryNotice
             case .stop: stop(); commandNotice="Stopped. Guidance is neutral."
@@ -296,7 +300,17 @@ final class LanternModel:ObservableObject {
                 let modes:[VoiceFindMode:FinderMode]=[.obstacles:.none,.door:.door,.exit:.exit,.chair:.chair,.person:.person,.teammate:.teammate,.barcode:.barcode]
                 finder=modes[mode] ?? .none; commandNotice="Finder selected: \(finder.rawValue). " + (self.mode == .live ? "" : "Start Live for camera perception.")
             }
+            cloudLatency=nil
+            cloudNotice=cloudOffline ? "Offline mode. Command handled on this iPhone." : "Command handled on this iPhone. No request sent."
+        } catch VoiceIntentError.unknownCommand {
+            if cloudEnabled && !cloudOffline { submitCloudCommand(text) }
+            else { commandNotice="Use a supported local command, such as recall Entrance, return, list places, or stop." }
         } catch { commandNotice=String(describing:error) }
+    }
+    /// Only future commands may use cloud again; never replay the failed request.
+    func retryCloudConnection() {
+        cancelCloud(); cloudOffline=false
+        cloudNotice="Cloud retry enabled for your next unresolved command. No command was replayed."
     }
     func saveCloudConnection(token:String) {
         cancelCloud()
@@ -371,8 +385,17 @@ final class LanternModel:ObservableObject {
                 }
             } catch {
                 guard self.cloudGeneration==generation,!Task.isCancelled else { return }
+                guard self.spatialMemory.session==session,self.cloudEnabled,self.cloudSharing,
+                      self.cloudEndpoint==endpoint,
+                      self.spatialMemory.bookmarks.map({ ChalkPlace(id:$0.id,name:$0.name) })==context.places else { self.cancelCloud(); return }
                 self.cloudPending=false; self.cloudTask=nil
-                self.cloudNotice="Could not understand the request. No cloud action applied. Check the connection or use local commands."
+                if LocalCommandInterpreter.isConnectivityFailure(error) {
+                    self.cloudOffline=true
+                    self.cloudNotice="Connection unavailable. Offline commands remain available. No cloud action applied and no command replayed."
+                    self.commandNotice="Please use a local command, such as recall Entrance, return, list places, or stop."
+                } else {
+                    self.cloudNotice="Could not understand the request. No cloud action applied. Check the connection or use local commands."
+                }
             }
         }
     }

@@ -113,3 +113,10 @@ If using Memory simulation, keep its label visible; it never drives physical BLE
 Actual model quality/latency and physical end-to-end movement have not been proven
 by mock tests. No automatic self-training, deployed prompt promotion, obstacle-free
 route planning or face recognition is implemented. No award is guaranteed.
+
+## Offline update
+
+Read [Offline commands](OFFLINE-COMMANDS.md). Supported local phrases now bypass
+Chalk even when enabled; use an unresolved phrase when demonstrating cloud
+feedback. Connectivity errors enter local-only mode with an explicit future-command
+retry button. This is a finite phrase grammar, not a trained local language model.

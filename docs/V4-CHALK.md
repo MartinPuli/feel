@@ -21,7 +21,8 @@ validation, correction policy, scoring and release decision.
 
 1. The user explicitly enables cloud commands and supplies the FEEL service
    endpoint and application token. The provider's Chalk key stays on the server.
-2. Typed text or a final on-device speech transcript is sent with the session ID,
+2. Supported local phrases execute on the phone first. Only unresolved typed text
+   or a final on-device speech transcript is sent with the session ID,
    place IDs/names, tracking validity, restoration state and run mode. No camera
    image, AR map bytes, audio recording or raw coordinates are required.
 3. The server calls Chalk with bounded context and validates the returned action.
@@ -35,8 +36,11 @@ validation, correction policy, scoring and release decision.
    place names. Silence is never labeled as positive feedback.
 
 Cloud failure never means an action succeeded. Simulation remains conspicuously
-labeled and never sends synthetic movement to Bluetooth. The local strict-command
-path remains available when cloud interpretation is disabled.
+labeled and never sends synthetic movement to Bluetooth. Local commands remain
+available regardless of the cloud toggle. Connectivity failure automatically
+pauses cloud attempts until explicit retry; no failed command is replayed. See
+[Offline commands](OFFLINE-COMMANDS.md) for the bounded EN/ES grammar and future
+on-device model plan.
 
 ## Hardware boundary
 
