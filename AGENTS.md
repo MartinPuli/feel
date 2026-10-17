@@ -4,6 +4,14 @@
 **Event:** HackHarvard 2026  
 **Purpose:** Finish and rigorously test the existing software before hardware arrives, then guide physical integration.
 
+## Repository language
+
+Write source identifiers, comments, documentation, interface text, logs and new
+commit messages in English. English is the default interface and voice-command
+language. Keep protocol tokens and intentional multilingual input grammar or
+Unicode test fixtures unchanged when they are required for existing behavior.
+
+
 ## 1. Your mission
 
 Act as the lead engineer. Inspect the real repository, implement missing functionality, run tests, fix failures, and leave clear evidence. **Do not stop at a plan.** Do not claim that simulations prove physical hardware works.
