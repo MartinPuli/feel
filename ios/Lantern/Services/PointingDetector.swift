@@ -11,10 +11,24 @@ final class PointingDetector {
     /// Sampling step on the sheet, mm.
     let step = 1.0
 
+    static func barcodeRequest() -> VNDetectBarcodesRequest {
+        let request=VNDetectBarcodesRequest(); request.symbologies=[.qr]
+        #if targetEnvironment(simulator)
+        // The simulator's default Vision backend can return no codes for valid
+        // fixtures. Match the verified CPU revision used by the barcode finder.
+        // Real devices keep the framework's default revision and compute policy.
+        if VNDetectBarcodesRequest.supportedRevisions.contains(VNDetectBarcodesRequestRevision2) {
+            request.revision=VNDetectBarcodesRequestRevision2
+            request.usesCPUOnly=true
+        }
+        #endif
+        return request
+    }
+
     func analyze(pixelBuffer: CVPixelBuffer, timestamp: Double) -> PointingObservation {
         let width=Double(CVPixelBufferGetWidth(pixelBuffer)), height=Double(CVPixelBufferGetHeight(pixelBuffer))
         let handler=VNImageRequestHandler(cvPixelBuffer:pixelBuffer,orientation:.up,options:[:])
-        let request=VNDetectBarcodesRequest(); request.symbologies=[.qr]
+        let request=Self.barcodeRequest()
         try? handler.perform([request])
         var sheet: [PlanePoint]=[], image: [PlanePoint]=[], seen=Set<String>()
         for code in request.results ?? [] {

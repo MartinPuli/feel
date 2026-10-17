@@ -4,14 +4,14 @@ import CoreVideo
 import FeelCore
 @testable import Lantern
 
-/// Runs the real detector on synthetic frames (see PointingSynthetic). The iOS simulator can't run
-/// Vision's barcode reader, so there this skips; scripts/pointing_harness.sh runs the same
-/// scenarios on the Mac, and a device run covers iOS.
+/// Runs the real detector on synthetic frames using the same request configuration
+/// as the app. Unsupported Vision environments skip explicitly; the Mac harness
+/// also exercises these scenarios without proving physical-device performance.
 final class PointingDetectorTests: XCTestCase {
     func testSyntheticScenarios() throws {
         let synthetic=PointingSynthetic()
         let probe=try synthetic.frame(for:PointingSynthetic.scenarios[0])
-        let request=VNDetectBarcodesRequest(); request.symbologies=[.qr]
+        let request=PointingDetector.barcodeRequest()
         do { try VNImageRequestHandler(cvPixelBuffer:probe,orientation:.up,options:[:]).perform([request]) }
         catch { throw XCTSkip("Vision barcode reader unavailable here (\(error.localizedDescription)); run ios/scripts/pointing_harness.sh on the Mac") }
         for scenario in PointingSynthetic.scenarios {
