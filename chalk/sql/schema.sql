@@ -38,12 +38,5 @@ create table if not exists public.venue_entries (
 );
 create index if not exists venue_entries_by_venue on public.venue_entries (venue_id);
 
--- Supabase only: a signed-in user sees and writes their own finds; venue rows are public reading.
--- Chalk connects as the database user you give its data source, which bypasses these policies.
--- alter table public.confirmed_finds enable row level security;
--- create policy "own finds" on public.confirmed_finds for all
---     using (auth.uid() = user_id) with check (auth.uid() = user_id);
--- alter table public.venues enable row level security;
--- create policy "venues are public" on public.venues for select using (true);
--- alter table public.venue_entries enable row level security;
--- create policy "venue entries are public" on public.venue_entries for select using (true);
+-- Access control (row-level security and the read-only role for Chalk) is in access.sql: run it once
+-- after this file, with the password replaced.

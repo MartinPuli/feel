@@ -24,21 +24,18 @@ address and anon key: what the phone will use (with a signed-in user) to write c
 through Supabase's REST API under row-level security.
 
 Chalk does not use either. Its PostgreSQL data source connects to the **database** behind that
-project, so it needs host, port, database name, user and password. On Supabase they are under
-Project Settings → Database → Connection string; use the **Session pooler** entry (IPv4, port 5432,
-user `postgres.<project ref>`) and the database password, not the publishable key. Preferably make
-Chalk its own read-only user first:
-
-```sql
-create role feel_chalk login password '<generate one>';
-grant usage on schema public to feel_chalk;
-grant select on public.confirmed_finds, public.venues, public.venue_entries to feel_chalk;
-```
+project, so it needs host, port, database name, user and password. On Supabase they are under the
+**Connect** button → **Session pooler** (IPv4, port 5432, database `postgres`); the user is written
+`<role>.<project ref>`. Give Chalk its own read-only role rather than `postgres`: `sql/access.sql`
+creates `feel_chalk`, grants it select, and adds the row-level-security policies it needs (a plain role
+is subject to RLS too, so without them Chalk would read zero finds).
 
 Then:
 
-1. Run `chalk/sql/schema.sql` in the Supabase SQL editor, then `chalk/sql/seed.sql` for the demo rows.
-2. In the Chalk dashboard, Data Sources → Add → PostgreSQL, **name `feel_finds`**, with the values above.
+1. Run `chalk/sql/schema.sql` in the Supabase SQL editor, then `chalk/sql/seed.sql` for the demo rows, then
+   `chalk/sql/access.sql` with a generated password in place of the placeholder.
+2. In the Chalk dashboard, Data Sources → Add → PostgreSQL, **name `feel_finds`**: the session pooler host and
+   port 5432, database `postgres`, user `feel_chalk.<project ref>`, that password.
    Chalk's "test connection" must pass before a deployment can resolve anything.
 3. Install the Chalk CLI (`curl -s -L https://api.chalk.ai/install.sh | sh`), `chalk login`,
    `chalk environment <CHALK_ENV_ID>`, then from `chalk/`: `chalk apply --branch feel-context` to try it,
