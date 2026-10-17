@@ -1,3 +1,8 @@
+> Current evidence: one unloaded GPIO32 servo moved during a bounded bench test
+> and the user subsequently reported small live iPhone-driven movement. The
+> complete seven-column device has not passed the physical gates below. See
+> [single-servo validation](SINGLE-SERVO-IPHONE-VALIDATION.md).
+
 # FEEL V1 — from printed parts to one working column
 
 **Physical status: NOT VERIFIED.** These are instructions for the newly created

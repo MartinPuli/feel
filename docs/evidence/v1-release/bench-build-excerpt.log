@@ -1,0 +1,6 @@
+Processing esp32-single-center (platform: espressif32@6.9.0; board: esp32dev; framework: arduino)
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32dev.html
+ - toolchain-xtensa-esp32 @ 8.4.0+2021r2-patch5
+Retrieving maximum program size .pio/build/esp32-single-center/firmware.elf
+Checking size .pio/build/esp32-single-center/firmware.elf
+========================= [SUCCESS] Took 1.08 seconds =========================

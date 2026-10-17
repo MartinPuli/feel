@@ -1,0 +1,20 @@
+test_120_degree_profile_keeps_full_stroke_and_neutral_gaps (test_geometry_tools.FollowerChecks) ... ok
+test_actual_cad_polygon_changes_by_band (test_geometry_tools.FollowerChecks) ... ok
+test_contact_checks_segment_interior (test_geometry_tools.FollowerChecks) ... ok
+test_old_wide_lobe_fails_120_degree_neutral_gap (test_geometry_tools.FollowerChecks) ... ok
+test_tip_width_changes_actual_contact (test_geometry_tools.FollowerChecks) ... ok
+test_disconnected_closed_parts_rejected (test_geometry_tools.MeshChecks) ... ok
+test_empty_rejected (test_geometry_tools.MeshChecks) ... ok
+test_floating_mesh_rejected (test_geometry_tools.MeshChecks) ... ok
+test_inverted_face_rejected (test_geometry_tools.MeshChecks) ... ok
+test_missing_triangle_rejected (test_geometry_tools.MeshChecks) ... ok
+test_watertight_positive_tetra_on_bed (test_geometry_tools.MeshChecks) ... ok
+test_concurrent_output_writer_is_rejected (test_geometry_tools.NominalFitChecks) ... ok
+test_declared_nominal_envelopes_fit (test_geometry_tools.NominalFitChecks) ... ok
+test_servo_intruding_wall_is_rejected (test_geometry_tools.NominalFitChecks) ... ok
+test_unmeasured_print_gate_is_closed (test_geometry_tools.NominalFitChecks) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.604s
+
+OK

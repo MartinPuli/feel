@@ -17,8 +17,14 @@ Release hardening adds explicit50 Hz APB timer configuration,14-bit duty
 quantization within supplied pulse limits, malformed serial-line rejection, and
 CI coverage for both single-servo builds. Physical validation of full120° travel,
 seven actuators, printed mechanics and tactile use remains **NOT VERIFIED**.
-Current release test results will be recorded separately from the historical
-foundation evidence below. No claim of production hardware readiness is made.
+Current local software checks **PASS** on source `5f3ded9`: five primary firmware
+variants plus the standalone bench build; complete host regressions;38 Swift core
+tests;2,634 cross-layer assertions;104 actual-CAD/controller contract checks;
+24 mesh exports;80 cam checks; model integrity; Xcode26.6 simulator tests
+(3 app tests and1 UI test), companion simulator build and both unsigned device
+builds. [Commands and evidence](evidence/v1-release/report.json) identify each
+check. Hosted CI for this revision is pending publication. The hardened firmware
+has not been flashed; the board retains the prior tested single-demo build. No claim of production hardware readiness is made.
 
 ## Historical foundation evidence (before the 120° revision)
 
