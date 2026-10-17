@@ -85,6 +85,46 @@ FEEL enables camera assistance with its existing AR session. Only an available, 
 
 Apple recommends portrait orientation for strongest NI performance; FEEL's fixed landscape prototype may reduce NI availability. Test the complete landscape mount with two real phones before promising this feature. Door/EXIT/person finding remains independent of the companion phone.
 
+## Direction arrows (V sign)
+
+**Settings → Direction arrows** (on by default) draws one tactile arrow toward the selected target when the wearer asks. It reuses the normal nine-byte packets at 10 Hz, with no firmware or protocol change. Source: `FeelCore/HandSign.swift`, `FloorGrid.swift`, `DirectionCues.swift`, `Lantern/Services/HandSignDetector.swift`; tests in `DirectionTests.swift`.
+
+- **Request sign:** a V, with index and middle fingers straight and spread, ring and little fingers folded, held about 0.5 s.
+  - Any rotation works: the check uses joint distances and angles only.
+  - The hand must look closer than 0.55 m, estimated from palm size, so bystanders' hands don't count.
+  - After firing, the sign must disappear for 0.8 s before it can fire again.
+  - It is not checked while the puck's point-to-describe codes are in view. It runs on the pointing queue with the same image, so no extra ARKit frame is retained.
+- **Floor map:**
+  - Medium/high-confidence LiDAR points become 10 cm cells.
+  - Anything 10 cm–2 m above the calibrated floor blocks a cell, including bags and chair legs below the 0.6 m sector window.
+  - Floor hits mark cells free and wear away old obstacle hits, so people who move away clear.
+  - Cells beyond 8 m are dropped.
+  - The map resets on start, stop, calibration, finder change and AR interruption.
+- **Route:**
+  - About 2.5 times a second, but only while the target is in view right now, A* runs from the wearer to any open cell within 0.7 m of the target.
+  - Cells within 0.3 m of an obstacle, and unknown cells, cost extra.
+  - The arrow aims at the route point 1.2 m ahead, relative to the camera's facing direction.
+- **Arrows** (fingers = forward):
+
+  | Cue | Bearing | Pattern |
+  |---|---|---|
+  | Straight | ≤ 15° | a V growing to `1234321` |
+  | Bear left/right | ≤ 50° | the finger row runs to the column |
+  | Turn left/right | ≤ 135° | ↰/↱: the centre pin climbs, then runs sideways |
+  | Turn around | > 135° | the middle columns step from fingers to wrist |
+  | Arrived | target within 1 m | two pulses of the middle columns |
+
+  Thresholds favour the previous cue by 5°.
+- **When an arrow plays:**
+  - On the sign, then only after a noticeable change that holds for 0.8 s, at least 1.5 s after the last arrow. Slight-turn drifts under two columns are ignored.
+  - The sign again replays the current arrow.
+  - Guidance ends on arrival, or 3 s without the target in view.
+  - Local speech names each arrow and failure ("No door in view", "No way through the mapped area").
+- **Override:** an obstacle within 0.9 m holds the arrow back. It restarts if the obstacle clears within 2 s; otherwise it is dropped.
+- **Simulation:** **Simulate V sign** plays arrows toward the synthetic target on screen. Simulation still sends nothing to the puck.
+- **Limits:** the map covers only what the camera has seen in the current room. Objects under 10 cm, glass, mirrors, dark surfaces and moving people can be missed. A suggested direction, not a safe route.
+- **Hardware:** untested on a real hand, phone or puck. Pin return speed decides whether arrows read as motion.
+
 ## Deterministic demo and limitations
 
 **Simulation** runs a12-second loop through obstacle bands, a moving synthetic target and a2-second tracking-loss interval. It is conspicuously labeled and never transmits simulated movement to BLE. Stop clears state, sends neutral if a puck is connected, pauses AR and stops peer ranging. Backgrounding the app also stops guidance; the board independently neutralizes on its timeout.

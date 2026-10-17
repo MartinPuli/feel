@@ -1,6 +1,7 @@
 import XCTest
 import UIKit
 import ARKit
+import AVFoundation
 import FeelCore
 @testable import Lantern
 
@@ -30,5 +31,17 @@ final class LanternTests:XCTestCase {
     func testLossClearsHighlight() {
         let output=TactileEncoder.encode(sequence:5,now:6,frameTimestamp:5,tracking:true,distances:Array(repeating:1,count:7),target:.init(bearingDegrees:0,distance:1,timestamp:6))
         XCTAssertEqual(output.state,.staleDepth); XCTAssertEqual(output.packet.effectiveHighlight,255)
+    }
+}
+
+final class ChimeTests: XCTestCase {
+    func testChimeIsAValidShortWav() throws {
+        let data = Chime.wav()
+        XCTAssertEqual(String(decoding: data.prefix(4), as: UTF8.self), "RIFF")
+        XCTAssertEqual(String(decoding: data[8..<12], as: UTF8.self), "WAVE")
+        // Two 110 ms notes at 44.1 kHz, 16-bit mono, plus a 44-byte header.
+        XCTAssertEqual(data.count, 44 + 2 * 4851 * 2)
+        let player = try AVAudioPlayer(data: data)
+        XCTAssertEqual(player.duration, 0.22, accuracy: 0.01)
     }
 }

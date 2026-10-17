@@ -68,12 +68,33 @@ public enum DepthProjector {
 public struct TargetObservation: Equatable, Codable, Sendable {
     public let bearingDegrees: Double, distance: Double, timestamp: Double, confidence: Double
     public let label: String
-    public init(bearingDegrees: Double,distance: Double,timestamp: Double,confidence: Double=1,label: String="target") {
+    /// Half the target's angular width (detection box edges). 0 = a point target, one column.
+    public let halfWidthDegrees: Double
+    /// A neighbouring column joins the span only if the target covers at least this much of it.
+    public static let spanMinOverlapDegrees = 3.0
+    public init(bearingDegrees: Double,distance: Double,timestamp: Double,confidence: Double=1,label: String="target",halfWidthDegrees: Double=0) {
         self.bearingDegrees=bearingDegrees; self.distance=distance; self.timestamp=timestamp; self.confidence=confidence; self.label=label
+        self.halfWidthDegrees=halfWidthDegrees.isFinite ? max(0,halfWidthDegrees) : 0
+    }
+    enum CodingKeys: String, CodingKey { case bearingDegrees,distance,timestamp,confidence,label,halfWidthDegrees }
+    public init(from decoder: Decoder) throws {
+        let c=try decoder.container(keyedBy:CodingKeys.self)
+        self.init(bearingDegrees:try c.decode(Double.self,forKey:.bearingDegrees),distance:try c.decode(Double.self,forKey:.distance),
+                  timestamp:try c.decode(Double.self,forKey:.timestamp),confidence:try c.decode(Double.self,forKey:.confidence),
+                  label:try c.decode(String.self,forKey:.label),halfWidthDegrees:try c.decodeIfPresent(Double.self,forKey:.halfWidthDegrees) ?? 0)
     }
     public func valid(at now: Double) -> Bool {
         now.isFinite && timestamp.isFinite && now>=timestamp && now-timestamp<=0.5 && confidence.isFinite && confidence>=0.5 && confidence<=1 &&
         TactileGeometry.column(bearingDegrees:bearingDegrees) != nil && TactileGeometry.band(distance:distance)>0
+    }
+    /// Columns the target covers, clipped to the field. Always contains the centre column.
+    public var columns: ClosedRange<Int>? {
+        guard let center=TactileGeometry.column(bearingDegrees:bearingDegrees) else { return nil }
+        let reach=halfWidthDegrees-Self.spanMinOverlapDegrees
+        guard reach>0 else { return center...center }
+        let low=TactileGeometry.column(bearingDegrees:max(-45,bearingDegrees-reach)) ?? center
+        let high=TactileGeometry.column(bearingDegrees:min(45,bearingDegrees+reach)) ?? center
+        return min(low,center)...max(high,center)
     }
 }
 
@@ -81,9 +102,15 @@ public enum GuidanceState: String, Codable, Sendable { case live, trackingLost, 
 public struct EncoderOutput: Equatable, Sendable {
     public let packet: FeelPacket
     public let state: GuidanceState
-    public init(packet: FeelPacket,state: GuidanceState) { self.packet=packet; self.state=state }
+    /// Columns showing the target (nil without a valid target). One column uses the firmware tap;
+    /// several tap together, timed by the phone.
+    public let targetColumns: ClosedRange<Int>?
+    public init(packet: FeelPacket,state: GuidanceState,targetColumns: ClosedRange<Int>?=nil) { self.packet=packet; self.state=state; self.targetColumns=targetColumns }
 }
 public enum TactileEncoder {
+    /// A multi-column target drops its pins for one packet in every `groupTapPeriod` (100 ms per 600 ms
+    /// at 10 Hz), matching the firmware's single-column tap rhythm. No firmware or protocol change.
+    public static let groupTapPeriod = 6
     public static func encode(sequence: UInt8, now: Double, frameTimestamp: Double, tracking: Bool, distances: [Double?], target: TargetObservation?=nil, floorCalibrated: Bool=true) -> EncoderOutput {
         func neutral(_ state: GuidanceState) -> EncoderOutput { .init(packet:.neutral(sequence:sequence),state:state) }
         guard tracking else { return neutral(.trackingLost) }
@@ -92,13 +119,16 @@ public enum TactileEncoder {
         guard now-frameTimestamp<=0.250 else { return neutral(.staleDepth) }
         var bands=distances.map { $0.map { TactileGeometry.band(distance:$0) } ?? 0 }
         var highlight: UInt8=255
-        if let target, target.valid(at:now), let column=TactileGeometry.column(bearingDegrees:target.bearingDegrees) {
+        var span: ClosedRange<Int>?
+        if let target, target.valid(at:now), let columns=target.columns {
             let targetBand=TactileGeometry.band(distance:target.distance)
             // Preserve a closer obstacle. Target tapping indicates bearing, not an obstacle-free route.
-            bands[column] = bands[column] == 0 ? targetBand : min(bands[column],targetBand)
-            if bands[column]>0 { highlight=UInt8(column) }
+            for column in columns { bands[column] = bands[column] == 0 ? targetBand : min(bands[column],targetBand) }
+            span=columns
+            if columns.count == 1 { if bands[columns.lowerBound]>0 { highlight=UInt8(columns.lowerBound) } }
+            else if Int(sequence) % groupTapPeriod == 0 { for column in columns { bands[column]=0 } }
         }
-        return .init(packet:try! FeelPacket(sequence:sequence,bands:bands,highlight:highlight),state:.live)
+        return .init(packet:try! FeelPacket(sequence:sequence,bands:bands,highlight:highlight),state:.live,targetColumns:span)
     }
 }
 
@@ -116,12 +146,19 @@ public enum TargetSelector {
 /// so a camera turn never reuses an old camera-relative direction.
 public struct CapturedTarget: Equatable, Sendable {
     public let position:Vector3, timestamp:Double, confidence:Double, label:String
-    public init(position:Vector3,timestamp:Double,confidence:Double=1,label:String="target") { self.position=position; self.timestamp=timestamp; self.confidence=confidence; self.label=label }
+    /// Half the physical width of the detection box at its depth, so the span stays right as the user moves.
+    public let halfWidthMeters:Double
+    public init(position:Vector3,timestamp:Double,confidence:Double=1,label:String="target",halfWidthMeters:Double=0) {
+        self.position=position; self.timestamp=timestamp; self.confidence=confidence; self.label=label
+        self.halfWidthMeters=halfWidthMeters.isFinite ? max(0,halfWidthMeters) : 0
+    }
     public func observation(pose:CameraPose,now:Double) -> TargetObservation? {
         guard pose.isValid,position.isFinite else { return nil }
         let point=pose.cameraPoint(world:position)
         guard let bearing=TactileGeometry.bearing(x:point.x,z:point.z) else { return nil }
-        let result=TargetObservation(bearingDegrees:bearing,distance:hypot(point.x,point.z),timestamp:timestamp,confidence:confidence,label:label)
+        let distance=hypot(point.x,point.z)
+        let halfWidth=distance>0 ? atan2(halfWidthMeters,distance)*180 / .pi : 0
+        let result=TargetObservation(bearingDegrees:bearing,distance:distance,timestamp:timestamp,confidence:confidence,label:label,halfWidthDegrees:halfWidth)
         return result.valid(at:now) ? result : nil
     }
 }

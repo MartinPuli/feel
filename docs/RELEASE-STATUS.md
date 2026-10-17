@@ -1,3 +1,11 @@
+> Direction arrows (October 17, supersedes the repeating guidance wave): a V hand sign
+> requests one tactile arrow along an A* route over a local LiDAR floor map to the
+> target in view. Later arrows play only on noticeable route changes or a repeated
+> sign. No firmware or protocol change. Local results: 118 FeelCore tests, 34
+> Lantern unit tests (1 pointing detector test skipped in the simulator), 8 UI tests
+> and the 11-scenario pointing harness passed. Both apps build. Not installed on the
+> phone. No real hand, LiDAR map, route or physical column tested.
+
 > Seven-servo preparation: `esp32-production` and its English setup guide are
 > ready in source. Host/configuration tests, enabled-output compile fixtures and
 > 2,634 cross-layer assertions passed. Real deployment is still gated on the
