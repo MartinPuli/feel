@@ -1,5 +1,8 @@
 # V1 app design review
 
+Current visual direction: [Vercel-inspired native refinement](V1-VERCEL-DESIGN.md).
+The blue-accent description below records the earlier iteration.
+
 October 16, 2026. Base: `feel/v1-foundation` at `cb4bf24`.
 Original work branch: `codex/v1-app-design`. The user subsequently designated
 `main` as V1 and requested this redesign be integrated there together with the
