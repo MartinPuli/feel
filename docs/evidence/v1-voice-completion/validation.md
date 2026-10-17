@@ -56,3 +56,27 @@ PASS: final recording-choice suites, 10 tests, zero failures. Log
 `/tmp/feel-voice-completion-build16.log`. Build 16 installed on the paired iPhone
 at 14:06 EDT and launched successfully at 14:07 EDT. Listening acceptance remains
 pending the user's response; successful launch does not establish audio quality.
+
+## Device-policy test correction and acceptance audit
+
+A separate physical V4 run exposed a test that incorrectly expected simulator
+caption fallback on the phone. The audio policy now has a test injection with
+unchanged defaults: simulator fallback only on simulators, device failure/recovery
+on iPhones. Both branches run in deterministic tests. The device-policy test
+checks capture shutdown, rejection of late tool events and successful reconnect.
+No production tolerance was enabled to make a test pass.
+
+PASS: 49 targeted tests (`RealtimeVoiceTests`, `TypedRequestTests`), zero failures;
+log `/tmp/feel-device-voice-policy-tests.log`. The command matches the simulator
+command above with those two suite selectors. Independent review found no P0/P1
+issue in the test seam or unchanged default policy. These remain injected tests,
+not a physical audio acceptance result. No replacement phone build was installed
+for this behavior-preserving test change; last installed V1 is dark UI build 17.
+
+Completion audit: concise wording and command dispatch have source/test evidence;
+proactive delivery/cancellation and mute have deterministic test evidence. Real
+pronunciation, perceived response latency, interruption timing, headset input and
+route recovery remain unverified for the current build. User listening feedback
+has remained pending through build 16, the dark build 17 update and this audit.
+The current device inventory reports the paired iPhone unavailable. No provider
+or local test result substitutes for those remaining acceptance checks.

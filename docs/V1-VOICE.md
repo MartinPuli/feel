@@ -34,9 +34,10 @@ the pins draw one arrow along the planned route to it, then again only when the 
 request" field. Text takes the same path as speech (a user item, then a response), so
 a loud room or a Bluetooth keyboard with VoiceOver still works.
 
-**No sound output.** If audio playback cannot run (the iOS Simulator, a dead output
-route), the session now stays alive: captions and tool calls continue and the panel says
-sound output is unavailable, instead of the assistant disconnecting.
+**No sound output.** The iOS Simulator can keep captions and tool calls running
+without an audio engine. On an iPhone, a playback failure closes the broken audio
+session and follows the bounded reconnect policy. It does not silently switch a
+blind user's assistant to captions only.
 
 “Stop” stops sensing and sends neutral tactile output while the assistant keeps
 listening. “Pause assistant” or “stop listening” ends microphone capture. The

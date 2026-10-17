@@ -121,6 +121,7 @@ final class RealtimeVoiceSession: ObservableObject {
     private var announcementDelivery: AnnouncementDelivery?
     var hasPendingAnnouncementDelivery: Bool { announcementDelivery != nil }
     private let speaksLocally: Bool
+    private let silentPlaybackFallback: Bool
     /// While another listener borrows the microphone, nothing is sent to OpenAI.
     private var uplinkMuted = false
 
@@ -139,7 +140,7 @@ final class RealtimeVoiceSession: ObservableObject {
 
     init(tokenClient: VoiceTokenFetching = VoiceTokenClient(), audio: VoiceAudioIO = DeviceVoiceAudio(),
          transportFactory: @escaping () -> VoiceTransport = { OpenAIVoiceWebSocket() },
-         configuration: VoiceConfiguration? = nil, speaksLocally: Bool = true,
+         configuration: VoiceConfiguration? = nil, speaksLocally: Bool = true, silentPlaybackFallback: Bool? = nil,
          requestPermission: @escaping (@escaping (Bool) -> Void) -> Void = { completion in
              AVAudioSession.sharedInstance().requestRecordPermission { allowed in
                  DispatchQueue.main.async { completion(allowed) }
@@ -148,6 +149,7 @@ final class RealtimeVoiceSession: ObservableObject {
         self.tokenClient = tokenClient; self.audio = audio; self.transportFactory = transportFactory
         self.configuration = configuration ?? store.loadForLaunch(); self.requestPermission = requestPermission
         self.speaksLocally = speaksLocally
+        self.silentPlaybackFallback = silentPlaybackFallback ?? Self.runsInSimulator
         for name in [AVAudioSession.interruptionNotification, AVAudioSession.routeChangeNotification,
                      AVAudioSession.mediaServicesWereResetNotification, UIApplication.didEnterBackgroundNotification] {
             observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] notification in
@@ -623,7 +625,7 @@ final class RealtimeVoiceSession: ObservableObject {
                 }
                 try audio.play(data); phase = .speaking
             }
-            catch VoiceAudioError.notRunning where Self.runsInSimulator {
+            catch VoiceAudioError.notRunning where silentPlaybackFallback {
                 announcementDelivery = nil
                 // The simulator has no audio engine: keep the conversation going through captions and tools.
                 // On a phone a stopped engine is a real failure and takes the recovery path below.
