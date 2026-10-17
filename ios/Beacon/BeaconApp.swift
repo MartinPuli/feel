@@ -34,33 +34,33 @@ private struct BeaconView: View {
                 FeelSection(title: "Connection", systemImage: "antenna.radiowaves.left.and.right") {
                     VStack(alignment: .leading, spacing: 16) {
                         Text(peer.status)
-                            .font(.headline)
+                            .font(FeelTypography.headline)
                             .fixedSize(horizontal: false, vertical: true)
                             .accessibilityIdentifier("beaconStatus")
 
                         if let name = peer.connectedName {
                             Label("Connected to \(name)", systemImage: "person.crop.circle.badge.checkmark")
-                                .font(.body)
+                                .font(FeelTypography.body)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
 
                         if let distance = peer.distance {
                             Text(String(format: "Measured distance: %.1f m", distance))
-                                .font(.title2.weight(.semibold))
+                                .font(FeelTypography.title2)
                                 .monospacedDigit()
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         if peer.running {
                             Text("If sharing fails or a connection stalls, tap Stop, then Start sharing to try again.")
-                                .font(.footnote).foregroundStyle(.secondary)
+                                .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
                         }
                     }
                 }
 
                 FeelSection(title: "Before you connect", systemImage: "hand.raised") {
                     Text("Requires compatible Ultra Wideband iPhones and local-network permission. Keep the rear cameras facing one another. No microphone, contact list, cloud account or location history is used.")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
+                        .font(FeelTypography.body)
+                        .foregroundStyle(FeelTheme.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -68,6 +68,8 @@ private struct BeaconView: View {
             .frame(maxWidth: .infinity)
             .padding(20)
         }
+        .font(FeelTypography.body)
+        .tint(FeelTheme.accent)
         .background(FeelTheme.canvas)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             sessionControls
@@ -81,17 +83,16 @@ private struct BeaconView: View {
     private var introduction: some View {
         VStack(alignment: .leading, spacing: 12) {
             Image(systemName: "dot.radiowaves.left.and.right")
-                .font(.system(size: 32, weight: .medium))
+                .font(.system(size: 24, weight: .medium))
                 .foregroundStyle(FeelTheme.accent)
-                .frame(width: 64, height: 64)
-                .background(FeelTheme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 16))
+                .padding(.bottom, 8)
                 .accessibilityHidden(true)
             Text("FEEL Beacon")
-                .font(.largeTitle.bold())
+                .font(FeelTypography.largeTitle)
                 .accessibilityAddTraits(.isHeader)
             Text("Let a teammate find this phone. Both people must keep their app open.")
-                .font(.body)
-                .foregroundStyle(.secondary)
+                .font(FeelTypography.body)
+                .foregroundStyle(FeelTheme.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -100,7 +101,7 @@ private struct BeaconView: View {
         FeelSection(title: "Connection request", systemImage: "person.crop.circle.badge.questionmark") {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Allow \(name) to find this phone?")
-                    .font(.title3.weight(.semibold))
+                    .font(FeelTypography.title3)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityFocused($invitationFocused)
 

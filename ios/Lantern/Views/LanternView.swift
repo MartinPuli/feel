@@ -34,19 +34,21 @@ struct LanternView: View {
             .safeAreaInset(edge: .bottom, spacing: 0) { SessionControls(model: model) }
             .toolbar(.hidden, for: .navigationBar)
         }
+        .font(FeelTypography.body)
         .tint(FeelTheme.accent)
     }
 
     private var header: some View {
         HStack(alignment: .center, spacing: 16) {
-            Text("FEEL").font(.title2.weight(.bold)).tracking(-0.5)
+            Text("FEEL").font(FeelTypography.title2).tracking(-0.5)
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 8)
             Label(model.mode.rawValue, systemImage: model.mode == .simulation ? "play.rectangle" : model.mode == .live ? "viewfinder" : "pause.circle")
-                .font(.subheadline.weight(.semibold))
+                .font(FeelTypography.label)
                 .padding(.horizontal, 12).padding(.vertical, 8)
                 .foregroundStyle(FeelTheme.accent)
-                .background(FeelTheme.accent.opacity(0.10), in: Capsule())
+                .background(FeelTheme.inset, in: RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(FeelTheme.border, lineWidth: 1))
                 .accessibilityIdentifier("sessionMode")
         }
     }
@@ -55,10 +57,10 @@ struct LanternView: View {
         VStack(alignment: .leading, spacing: 16) {
             PuckView(packet: model.packet)
             Text(model.targetDescription)
-                .font(.subheadline.weight(.medium))
+                .font(FeelTypography.label)
                 .accessibilityIdentifier("targetStatus")
             Text("Neutral pins do not mean the area is clear.")
-                .font(.footnote).foregroundStyle(.secondary)
+                .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
     }
@@ -68,9 +70,9 @@ struct LanternView: View {
             GuidanceSummary(state: model.guidanceState, mode: model.mode)
             if model.mode == .simulation {
                 Label("SIMULATION: Synthetic inputs. No simulated movement sent to hardware.", systemImage: "info.circle")
-                    .font(.subheadline).fixedSize(horizontal: false, vertical: true)
+                    .font(FeelTypography.subheadline).fixedSize(horizontal: false, vertical: true)
                     .padding(16)
-                    .background(FeelTheme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+                    .background(FeelTheme.inset, in: RoundedRectangle(cornerRadius: 8))
             }
             if model.mode == .live {
                 LiveSetup(model: model)
@@ -79,15 +81,15 @@ struct LanternView: View {
                     Text(model.mode == .simulation
                          ? "Watch the target move across seven columns. The loop also demonstrates tracking loss."
                          : "Connect your puck, start live sensing, then calibrate the floor before using depth estimates.")
-                        .font(.body)
+                        .font(FeelTypography.body)
                     if model.mode == .stopped {
                         Text("No puck nearby? Simulation lets you explore the pattern on screen.")
-                            .font(.subheadline).foregroundStyle(.secondary)
+                            .font(FeelTypography.subheadline).foregroundStyle(FeelTheme.secondary)
                     }
                 }
             }
             PuckConnectionPanel(puck: model.puck)
-            Text(model.status).font(.footnote).foregroundStyle(.secondary)
+            Text(model.status).font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
                 .accessibilityIdentifier("sessionStatus")
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -96,13 +98,14 @@ struct LanternView: View {
     private var diagnostics: some View {
         DisclosureGroup("Packet and test notes") {
             VStack(alignment: .leading, spacing: 12) {
-                Text(model.packet.hex).font(.system(.body, design: .monospaced)).textSelection(.enabled)
+                Text(model.packet.hex).font(FeelTypography.mono).textSelection(.enabled)
                 Text("Columns run left to right. Rows run near (wrist) to far (fingers). One pin per column. A highlighted pin indicates target bearing; it does not establish a safe path.")
                 Text("Unknown depth and lost tracking produce neutral pins. Neutral is not proof the area is clear. Indoor supervised prototype; use your usual mobility aid.")
-            }.font(.footnote).padding(.top, 12)
+            }.font(FeelTypography.footnote).padding(.top, 12)
         }
         .padding(20)
-        .background(FeelTheme.surface, in: RoundedRectangle(cornerRadius: 16))
+        .background(FeelTheme.surface, in: RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(FeelTheme.border, lineWidth: 1))
     }
 }
 
@@ -183,9 +186,9 @@ struct GuidanceSummary: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title).font(.title2.weight(.bold)).accessibilityAddTraits(.isHeader)
+            Text(title).font(FeelTypography.title2).accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier("guidanceTitle")
-            Text(detail).font(.body).foregroundStyle(.secondary)
+            Text(detail).font(FeelTypography.body).foregroundStyle(FeelTheme.secondary)
         }
         .fixedSize(horizontal: false, vertical: true)
     }
@@ -196,11 +199,11 @@ struct PuckView: View {
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 7)
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             HStack {
-                Text("Tactile view").font(.headline)
+                Text("Tactile view").font(FeelTypography.headline)
                 Spacer()
-                Text("Fingers / far").font(.caption).foregroundStyle(.secondary)
+                Text("Fingers / far").font(FeelTypography.caption).foregroundStyle(FeelTheme.secondary)
             }
             ForEach((1...4).reversed(), id: \.self) { band in
                 LazyVGrid(columns: columns, spacing: 10) {
@@ -208,7 +211,7 @@ struct PuckView: View {
                         let active = packet.bands[column] == UInt8(band)
                         let target = active && packet.effectiveHighlight == UInt8(column)
                         Circle()
-                            .fill(active ? FeelTheme.accent : Color(uiColor: .tertiarySystemFill))
+                            .fill(active ? FeelTheme.accent : FeelTheme.inactivePin)
                             .overlay {
                                 if target {
                                     Circle().strokeBorder(FeelTheme.onAccent, lineWidth: 3).padding(4)
@@ -225,13 +228,14 @@ struct PuckView: View {
                 Text("Wrist / near")
                 Spacer()
                 Text("Right")
-            }.font(.caption).foregroundStyle(.secondary)
+            }.font(FeelTypography.caption).foregroundStyle(FeelTheme.secondary)
             Divider()
-            Text("Filled pin: depth  •  Ringed pin: target bearing")
-                .font(.caption).foregroundStyle(.secondary)
+            Text("Filled: depth  •  Ring: target bearing")
+                .font(FeelTypography.caption).foregroundStyle(FeelTheme.secondary)
         }
         .padding(16)
-        .background(FeelTheme.surface, in: RoundedRectangle(cornerRadius: 16))
+        .background(FeelTheme.surface, in: RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(FeelTheme.border, lineWidth: 1))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Virtual puck")
         .accessibilityValue(packet.bands.enumerated().map { "Column \($0.offset + 1), band \($0.element)" }.joined(separator: ". ") + (packet.effectiveHighlight < 7 ? ". Target column \(Int(packet.effectiveHighlight) + 1)" : ". No target highlight"))
@@ -244,12 +248,12 @@ private struct LiveSetup: View {
         VStack(alignment: .leading, spacing: 16) {
             FeelSection(title: "Floor calibration", systemImage: "viewfinder") {
                 Label(model.calibrated ? "Floor calibrated" : "Calibration required", systemImage: model.calibrated ? "checkmark.circle" : "exclamationmark.circle")
-                    .font(.subheadline.weight(.semibold))
+                    .font(FeelTypography.label)
                 Text("Mount landscape-left: rear camera forward, top edge to your left; keep the phone upright. Measure lens height above the floor.")
-                    .font(.subheadline)
+                    .font(FeelTypography.subheadline)
                 Stepper(value: $model.cameraHeight, in: 0.6...2.1, step: 0.05) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Camera height").font(.subheadline)
+                        Text("Camera height").font(FeelTypography.subheadline)
                         Text(model.cameraHeight, format: .number.precision(.fractionLength(2))) + Text(" m")
                     }.monospacedDigit()
                 }.accessibilityLabel("Camera height")
@@ -269,9 +273,9 @@ private struct LiveSetup: View {
                         Text(mode.rawValue).tag(mode).disabled(mode == .chair && !model.detectorAvailable)
                     }
                 }.pickerStyle(.menu)
-                Text(model.detectorStatus).font(.footnote).foregroundStyle(.secondary)
+                Text(model.detectorStatus).font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
                 if model.finder == .door {
-                    Text("Door candidate uses rectangle shape. It cannot confirm a door or a safe opening.").font(.footnote)
+                    Text("Door candidate uses rectangle shape. It cannot confirm a door or a safe opening.").font(FeelTypography.footnote)
                 }
                 if model.finder == .teammate { PeerPanel(peer: model.peer) }
             }
@@ -295,10 +299,10 @@ struct PuckConnectionPanel: View {
     var body: some View {
         FeelSection(title: "Puck connection", systemImage: "antenna.radiowaves.left.and.right") {
             Label(puck.isConnected ? "Puck connected" : "No puck connected", systemImage: puck.isConnected ? "checkmark.circle" : "link")
-                .font(.subheadline.weight(.semibold))
+                .font(FeelTypography.label)
                 .accessibilityIdentifier("puckConnectionStatus")
-            Text(puck.status).font(.subheadline).foregroundStyle(.secondary)
-            if puck.isConnected { Text(puck.boardStatus).font(.footnote) }
+            Text(puck.status).font(FeelTypography.subheadline).foregroundStyle(FeelTheme.secondary)
+            if puck.isConnected { Text(puck.boardStatus).font(FeelTypography.footnote) }
             DisclosureGroup("Manage connection") {
                 VStack(alignment: .leading, spacing: 12) {
                     Button("Scan for puck") { puck.scan() }.buttonStyle(FeelSecondaryButtonStyle())
@@ -310,7 +314,7 @@ struct PuckConnectionPanel: View {
                     }
                     if puck.devices.isEmpty {
                         Text("Turn on your puck, then scan. Nearby FEEL pucks will appear here.")
-                            .font(.footnote).foregroundStyle(.secondary)
+                            .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
                     }
                 }.padding(.top, 12)
             }
@@ -322,18 +326,18 @@ struct PeerPanel: View {
     @ObservedObject var peer: NearbyPeerService
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(peer.status).font(.subheadline)
+            Text(peer.status).font(FeelTypography.subheadline)
             Button("Find Beacon phones") { peer.start() }
                 .buttonStyle(FeelSecondaryButtonStyle()).disabled(peer.running)
             Button("Stop finding") { peer.stop() }.buttonStyle(FeelSecondaryButtonStyle())
             if peer.running {
                 Text("If no phones appear or the connection fails, stop finding and try again.")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
             }
             ForEach(peer.peers, id: \.self) { person in
                 Button("Find \(person.displayName)") { peer.invite(person) }.buttonStyle(FeelSecondaryButtonStyle())
             }
-            Text("The teammate accepts on Beacon. Keep both apps foreground. Direction can be unavailable; no tactile target is sent without a current AR direction.").font(.footnote)
+            Text("The teammate accepts on Beacon. Keep both apps foreground. Direction can be unavailable; no tactile target is sent without a current AR direction.").font(FeelTypography.footnote)
         }
     }
 }
