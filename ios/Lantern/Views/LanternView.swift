@@ -48,7 +48,6 @@ struct LanternView: View {
         .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: presentedPanel)
         .font(FeelTypography.body)
         .tint(FeelTheme.accent)
-        .preferredColorScheme(.dark)
         .onChange(of: presentedPanel) { panel in modalFocused = panel != nil }
         .onChange(of: model.voicePanel) { panel in
             guard let panel else { return }
@@ -92,11 +91,11 @@ struct LanternView: View {
             ZStack {
                 Button { setControlsExpanded(!controlsExpanded) } label: {
                     Image(systemName: "chevron.up")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: 17, weight: .bold))
                         .rotationEffect(.degrees(controlsExpanded ? 180 : 0))
                         .frame(width: 76, height: 48)
-                        .background(FeelTheme.inset, in: Capsule())
-                        .overlay(Capsule().strokeBorder(FeelTheme.border, lineWidth: 1))
+                        .foregroundStyle(FeelTheme.ink)
+                        .feelBlock(shadow: 4)
                 }
                 .accessibilityLabel(controlsExpanded ? "Hide controls" : "Show controls")
                 .accessibilityValue(controlsExpanded ? "Expanded" : "Collapsed")
@@ -111,8 +110,8 @@ struct LanternView: View {
                         Spacer()
                         Button(role: .destructive) { model.stop() } label: {
                             Image(systemName: "stop.fill").frame(width: 48, height: 48)
-                                .background(FeelTheme.inset, in: Circle())
-                                .overlay(Circle().strokeBorder(FeelTheme.border, lineWidth: 1))
+                                .foregroundStyle(FeelTheme.ink)
+                                .feelBlock(Circle(), shadow: 4)
                         }
                         .accessibilityLabel("Stop")
                         .accessibilityIdentifier("stopSession")
@@ -146,11 +145,13 @@ struct LanternView: View {
         .frame(maxWidth: 800)
         .background {
             if controlsExpanded {
-                RoundedRectangle(cornerRadius: 24).fill(FeelTheme.surface)
-                    .overlay(RoundedRectangle(cornerRadius: 24).strokeBorder(FeelTheme.border, lineWidth: 1))
+                Rectangle().fill(FeelTheme.paper)
+                    .overlay(Rectangle().strokeBorder(FeelTheme.ink, lineWidth: FeelTheme.borderWidth))
+                    .background(Rectangle().fill(FeelTheme.ink).offset(x: 6, y: 6))
             }
         }
-        .padding(.horizontal, 16).padding(.bottom, 12)
+        .foregroundStyle(controlsExpanded ? FeelTheme.ink : Color.white)
+        .padding(.horizontal, 16).padding(.bottom, 18)
     }
 
     @ViewBuilder private var compactAttention: some View {
@@ -159,11 +160,11 @@ struct LanternView: View {
                 if !model.calibrated {
                     Button("Calibrate") { presentedPanel = .settings }
                         .font(FeelTypography.label).frame(minHeight: 44)
-                        .padding(.horizontal, 16).background(FeelTheme.inset, in: Capsule())
+                        .padding(.horizontal, 16).foregroundStyle(FeelTheme.ink).feelBlock(shadow: 4)
                 } else if model.guidanceState != .live {
                     Button("Check sensing") { setControlsExpanded(true) }
                         .font(FeelTypography.label).frame(minHeight: 44)
-                        .padding(.horizontal, 16).background(FeelTheme.inset, in: Capsule())
+                        .padding(.horizontal, 16).foregroundStyle(FeelTheme.ink).feelBlock(shadow: 4)
                         .accessibilityValue(model.status)
                 }
                 Spacer()
@@ -178,9 +179,9 @@ struct LanternView: View {
                     .font(FeelTypography.title3).accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 12)
                 Button { closePanel() } label: {
-                    Image(systemName: "xmark").font(.system(size: 15, weight: .semibold))
+                    Image(systemName: "xmark").font(.system(size: 15, weight: .bold))
                         .frame(width: 44, height: 44)
-                        .background(FeelTheme.inset, in: Circle())
+                        .feelBlock(Circle(), shadow: 3)
                 }
                 .accessibilityLabel("Close panel")
                 .accessibilityIdentifier("closeCameraPanel")
@@ -192,6 +193,7 @@ struct LanternView: View {
                         PuckConnectionPanel(puck: model.puck)
                     } else if panel == .voice {
                         VoiceSetup(voice: voice) { closePanel() }
+                        WhereIsSetup(model: model)
                     } else {
                         settings
                     }
@@ -216,10 +218,8 @@ struct LanternView: View {
                 }.padding(16)
             }
         }
-        .frame(width: min(540, availableSize.width - 32), height: availableSize.height - 24)
-        .background(FeelTheme.surface, in: RoundedRectangle(cornerRadius: 24))
-        .overlay(RoundedRectangle(cornerRadius: 24).strokeBorder(FeelTheme.border, lineWidth: 1))
-        .shadow(color: .black.opacity(0.35), radius: 24, y: 8)
+        .frame(width: min(540, availableSize.width - 40), height: availableSize.height - 32)
+        .feelBlock(shadow: 8)
         .accessibilityElement(children: .contain)
         .accessibilityAddTraits(.isModal)
         .accessibilityIdentifier("cameraFloatingPanel")
@@ -228,25 +228,29 @@ struct LanternView: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 if !dynamicTypeSize.isAccessibilitySize {
-                    Text("FEEL").font(FeelTypography.headline).accessibilityAddTraits(.isHeader)
+                    Text("FEEL").font(FeelTypography.title3).foregroundStyle(FeelTheme.ink)
+                        .padding(.horizontal, 12).frame(minHeight: 48)
+                        .feelBlock(shadow: 4)
+                        .accessibilityAddTraits(.isHeader)
                         .accessibilityIdentifier("feelWordmark")
                 }
                 if model.mode == .simulation {
-                    Text("SIMULATION").font(FeelTypography.caption)
+                    Text("SIMULATION").font(FeelTypography.label).foregroundStyle(.black)
+                        .padding(.horizontal, 10).frame(minHeight: 48)
+                        .feelBlock(fill: FeelTheme.notice, shadow: 4)
                         .accessibilityIdentifier("sessionMode")
                 }
             }
-            .frame(minHeight: 48)
-            .shadow(color: .black.opacity(0.65), radius: 3, y: 1)
             Spacer(minLength: 0)
             VoiceControl(voice: voice) { presentedPanel = .voice }
             CameraConnectionButton(puck: model.puck) { presentedPanel = .connection }
             Button { presentedPanel = .settings } label: {
-                Image(systemName: "slider.horizontal.3").frame(width: 48, height: 48)
+                Image(systemName: "slider.horizontal.3").font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(FeelTheme.ink).frame(width: 48, height: 48)
+                    .feelBlock(Circle(), shadow: 4)
             }
-            .background(FeelTheme.inset, in: Circle())
             .accessibilityLabel("Settings")
             .accessibilityIdentifier("cameraSettings")
         }
@@ -324,14 +328,13 @@ struct LanternView: View {
 private struct CameraPillButtonStyle: ButtonStyle {
     var primary = true
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(FeelTypography.headline)
-            .frame(maxWidth: .infinity, minHeight: 48)
-            .padding(.horizontal, 16).padding(.vertical, 6)
-            .foregroundStyle(primary ? FeelTheme.onAccent : FeelTheme.accent)
-            .background(primary ? FeelTheme.accent : FeelTheme.inset, in: Capsule())
-            .overlay(Capsule().strokeBorder(primary ? FeelTheme.accent : FeelTheme.border, lineWidth: 1))
-            .opacity(configuration.isPressed ? 0.7 : 1)
+        Group {
+            if primary {
+                FeelPrimaryButtonStyle().makeBody(configuration: configuration)
+            } else {
+                FeelSecondaryButtonStyle().makeBody(configuration: configuration)
+            }
+        }
     }
 }
 
@@ -343,9 +346,9 @@ private struct CameraConnectionButton: View {
         Button(action: open) {
             Label(puck.status.hasPrefix("Write error:") ? "Connection error" : puck.isConnected ? "Connected" : "Connect puck", systemImage: "link")
                 .labelStyle(CompactConnectionLabelStyle(compact: dynamicTypeSize.isAccessibilitySize))
-                .font(FeelTypography.label)
+                .font(FeelTypography.label).foregroundStyle(puck.isConnected ? .black : FeelTheme.ink)
                 .padding(.horizontal, 12).frame(minHeight: 48)
-                .background(FeelTheme.inset, in: Capsule())
+                .feelBlock(fill: puck.isConnected ? FeelTheme.pin : FeelTheme.paper, shadow: 4)
         }
         .accessibilityLabel(puck.isConnected ? "Connected puck" : "Connect puck")
         .accessibilityIdentifier("connectPuck")
@@ -403,14 +406,11 @@ struct PuckView: View {
                     ForEach(0..<7, id: \.self) { column in
                         let active = packet.bands[column] == UInt8(band)
                         let target = active && packet.effectiveHighlight == UInt8(column)
+                        // Raised pins are solid ink; the target is the one orange pin; down pins are rings.
                         Circle()
-                            .fill(active ? FeelTheme.accent : FeelTheme.inactivePin)
-                            .overlay {
-                                if target {
-                                    Circle().strokeBorder(FeelTheme.onAccent, lineWidth: compact ? 1.5 : 3).padding(compact ? 2 : 4)
-                                }
-                            }
-                            .frame(maxWidth: compact ? 12 : 22).aspectRatio(1, contentMode: .fit)
+                            .fill(target ? FeelTheme.pin : active ? FeelTheme.ink : FeelTheme.paper)
+                            .overlay(Circle().strokeBorder(FeelTheme.ink, lineWidth: compact ? 1.5 : 2.5))
+                            .frame(maxWidth: compact ? 13 : 24).aspectRatio(1, contentMode: .fit)
                             .frame(maxWidth: .infinity)
                     }
                 }

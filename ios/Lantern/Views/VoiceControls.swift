@@ -10,10 +10,10 @@ struct VoiceControl: View {
                 if voice.phase == .connecting { ProgressView().tint(FeelTheme.accent) }
                 else { Image(systemName: voice.isActive ? "mic.fill" : "mic.slash") }
             }
-            .font(.system(size: 18, weight: .medium))
+            .font(.system(size: 18, weight: .bold))
             .frame(width: 48, height: 48)
-            .foregroundStyle(FeelTheme.accent)
-            .background(FeelTheme.inset, in: Circle())
+            .foregroundStyle(voice.isActive ? .black : FeelTheme.ink)
+            .feelBlock(Circle(), fill: voice.isActive ? FeelTheme.pin : FeelTheme.paper, shadow: 4)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Assistant settings")

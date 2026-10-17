@@ -27,6 +27,9 @@ final class LanternModel:ObservableObject {
     private let chalkStore: ChalkConfigurationStoring
     private let gatewayFactory: (ChalkConfiguration) -> ChatGateway
     private var whereIsService: WhereIsService?
+    private var selfTestService: WhereIsService?
+    @Published private(set) var whereIsSelfTest = "Not run yet."
+    @Published private(set) var whereIsSelfTestRunning = false
     private var lastDirectionSpokenAt: TimeInterval = -.infinity
     var whereIsAvailable: Bool { chalkConfiguration?.isValid == true && mode == .live && guidanceState == .live }
     private var voiceSawTarget = false
@@ -46,7 +49,7 @@ final class LanternModel:ObservableObject {
     private var simulatedAt:TimeInterval=0
     private var startGeneration=0
     private var finderEpoch=0
-    init(voice: GrokVoiceSession = GrokVoiceSession(), chalkStore: ChalkConfigurationStoring = ChalkConfigurationStore(),
+    init(voice: GrokVoiceSession = GrokVoiceSession(), chalkStore: ChalkConfigurationStoring = defaultChalkConfigurationStore(),
          gatewayFactory: @escaping (ChalkConfiguration) -> ChatGateway = { ChalkGateway(configuration: $0) }) {
         self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory
         chalkConfiguration = chalkStore.loadForLaunch()
@@ -162,6 +165,31 @@ final class LanternModel:ObservableObject {
     }
     func forgetChalkConfiguration() {
         chalkStore.clear(); chalkConfiguration = nil; whereIsService?.cancel(); whereIsService = nil
+    }
+    /// Sends the bundled sample photo through the real request path (gateway, parser, placement)
+    /// with a synthetic depth grid. It never touches the live camera or the held target.
+    func runWhereIsSelfTest() {
+        guard let configuration = chalkConfiguration, !whereIsSelfTestRunning else { return }
+        guard let url = Bundle.main.url(forResource: "WhereIsSample", withExtension: "jpg"), let data = try? Data(contentsOf: url) else {
+            whereIsSelfTest = "The sample photo is missing from the app."; return
+        }
+        whereIsSelfTestRunning = true; whereIsSelfTest = "Asking \(configuration.model) about the sample photo…"
+        let grid = DepthGrid(width: 20, height: 10, depths: Array(repeating: 2, count: 200), confidence: Array(repeating: 2, count: 200))
+        let snapshot = FrameSnapshot(timestamp: 0, worldEpoch: -1, pose: .identity, intrinsics: CameraIntrinsics(fx: 10, fy: 10, cx: 10, cy: 5), depth: grid, jpegBase64: data.base64EncodedString())
+        let service = WhereIsService(gateway: gatewayFactory(configuration), model: configuration.model)
+        selfTestService = service
+        let started = Date()
+        service.find("3D puck model", snapshot: snapshot) { [weak self] outcome in
+            guard let self else { return }
+            self.whereIsSelfTestRunning = false; self.selfTestService = nil
+            let seconds = String(format: "%.1f", Date().timeIntervalSince(started))
+            switch outcome {
+            case .placed(let target): self.whereIsSelfTest = "Found “\(target.label)” in the sample photo and placed it, in \(seconds) s. The live camera path is tested separately."
+            case .notVisible: self.whereIsSelfTest = "The model answered “not visible” for the sample photo, in \(seconds) s."
+            case .noDepth: self.whereIsSelfTest = "Found it but could not place it, in \(seconds) s."
+            case .failed: self.whereIsSelfTest = "Failed after \(seconds) s. Check the key, environment ID, model name and network."
+            }
+        }
     }
     static func whereIsRefusal(mode: RunMode, configured: Bool, guidance: GuidanceState) -> String? {
         if mode != .live { return "Camera is not live. Ask the user whether to start it." }

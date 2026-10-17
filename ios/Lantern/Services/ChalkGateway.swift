@@ -26,6 +26,22 @@ protocol ChalkConfigurationStoring {
     func clear()
 }
 
+/// Process-lifetime storage for `--uitesting` runs, so UI tests never touch the simulator Keychain.
+final class MemoryChalkConfigurationStore: ChalkConfigurationStoring {
+    private var stored: ChalkConfiguration?
+    func loadForLaunch() -> ChalkConfiguration? { stored }
+    func save(_ configuration: ChalkConfiguration) throws {
+        guard configuration.isValid else { throw KeychainStoreError.invalid }
+        stored = configuration
+    }
+    func clear() { stored = nil }
+}
+
+/// The store the app uses: Keychain, except under `--uitesting`.
+func defaultChalkConfigurationStore() -> ChalkConfigurationStoring {
+    ProcessInfo.processInfo.arguments.contains("--uitesting") ? MemoryChalkConfigurationStore() : ChalkConfigurationStore()
+}
+
 struct ChalkConfigurationStore: ChalkConfigurationStoring {
     private let store = KeychainStore<ChalkConfiguration>(service: "org.feel.hackharvard.chalk", account: "gateway")
     func load() -> ChalkConfiguration? { store.load() }
