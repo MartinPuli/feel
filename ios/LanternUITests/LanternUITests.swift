@@ -174,6 +174,7 @@ final class LanternUITests: XCTestCase {
     }
     func testAdvancedPanelKeepsStopReachableAtLargestText() {
         let app = launch(extraArguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
+        simulate(app)
         app.buttons["cameraSettings"].tap()
         tapControl(app.buttons["Voice, saved map and feedback"])
         XCTAssertTrue(app.textFields["commandText"].exists)
