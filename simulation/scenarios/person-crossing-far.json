@@ -1,0 +1,1 @@
+{"title":"Person crossing far ahead","scene":{"duration":8,"path":[{"t":0,"x":0,"z":0}],"objects":[{"kind":"cylinder","center":[-1.3,-2.6],"radius":0.25,"height":1.75,"velocity":[0.38,0],"label":"person"}],"sensor":{"noise":0,"seed":30}},"expect":[{"from":3.35,"to":3.55,"columns":[3],"band":3,"label":"person crosses far ahead"}]}
