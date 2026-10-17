@@ -1,0 +1,15 @@
+{
+  "title": "Person moving away on the left",
+  "description": "A person starts close on the left and walks straight away from the phone.",
+  "scene": {
+    "duration": 6,
+    "path": [{"t": 0, "x": 0, "z": 0}],
+    "objects": [{"kind": "cylinder", "center": [-0.65, -0.55], "radius": 0.22, "height": 1.75, "velocity": [0, -0.45], "label": "person", "from": 0, "to": 6}],
+    "sensor": {"noise": 0, "seed": 11}
+  },
+  "expect": [
+    {"from": 0.9, "to": 1.2, "columns": [0, 1], "band": 2, "label": "person close on the left"},
+    {"from": 3.8, "to": 4.3, "columns": [1, 2], "band": 3, "label": "person has moved farther away"},
+    {"from": 5.2, "to": 6.0, "columns": [2], "band": 4, "label": "person is far away on the left"}
+  ]
+}
