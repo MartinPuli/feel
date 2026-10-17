@@ -1,9 +1,17 @@
 import XCTest
 import UIKit
+import ARKit
 import FeelCore
 @testable import Lantern
 
 final class LanternTests:XCTestCase {
+    func testCameraPreviewPreservesPerceptionSessionDelegate() {
+        let perception = ARPerception()
+        let preview = ARSCNView()
+        preview.session = perception.session
+        XCTAssertTrue(preview.session === perception.session)
+        XCTAssertTrue(perception.session.delegate === perception)
+    }
     func testBundledGeistFontsAreRegistered() {
         for name in ["Geist-Regular", "Geist-Medium", "Geist-SemiBold", "Geist-Bold", "GeistMono-Regular"] {
             XCTAssertNotNil(UIFont(name: name, size: 17), "Missing bundled font: \(name)")

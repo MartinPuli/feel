@@ -8,14 +8,14 @@
 
 ## Current iPhone visual update
 
-Lantern and Beacon now use the [Vercel-inspired Geist design](V1-VERCEL-DESIGN.md).
-All 47 distinct core/integration/UI tests passed locally, including repeated UI
-checks in light/dark appearances. The subsequent simpler revision passes 4 Lantern integration, 3 Lantern UI and
-2 Beacon UI tests. Both apps build and sign as 1.0.0 (3).
-[Current screenshots and checks](evidence/v1-simple/validation.txt).
-Installation of this visual update is pending: the paired iPhone is unavailable
-and the install attempt returned device-not-found. Earlier installation evidence
-below refers to the previous app build. [Validation](evidence/v1-vercel/validation.txt).
+Lantern now opens into the [camera-first interface](V1-CAMERA-UI.md), with a compact
+7×4 packet display, puck connection and persistent Stop. Settings holds target
+selection, measured-height calibration and simulation. Five integration tests
+and five UI tests passed locally. Both apps build and sign as 1.0.0 (4).
+[Current screenshots and checks](evidence/v1-camera/validation.txt).
+
+Installation of this update is pending: the paired iPhone remains unavailable.
+Earlier installation evidence below refers to the previous app build.
 
 ## V1 consolidation on main
 
