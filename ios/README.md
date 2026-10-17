@@ -34,6 +34,16 @@ Open `Lantern.xcodeproj`, select your own signing team for each application, and
 
 The generated Xcode project is disposable; edit `project.yml`. The `FeelCore` dependency is a local Swift package, so core builds require no package downloads.
 
+## Sign-in and accounts (Supabase)
+
+Lantern can require an account before anything else opens. The first screen has **Sign in** and **Create account**; **Settings → Sign out** returns to it and stops the camera, puck output and microphone. The screen uses Password AutoFill (saved logins fill with Face ID; new accounts can take a suggested strong password), labelled fields, Return to advance, no time limit or CAPTCHA, and spoken results.
+
+1. In Supabase, create a project. For a demo, turn off **Authentication → Sign In / Providers → Email → Confirm email** so a new account signs straight in. With it on, the app asks people to open the confirmation email and then sign in.
+2. Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (publishable/anon key only) to `chalk/.env`.
+3. Run `ios/scripts/supabase_config.sh` (or pass another env file), then rebuild.
+
+Without those settings, and in UI tests, the app opens without sign-in. Simulator builds forget the session on relaunch.
+
 ## Portable builds and production replay
 
 Swift 5.9+ is sufficient for the package (validated here with Swift 6.1.3 Linux).

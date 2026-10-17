@@ -5,9 +5,13 @@ import FeelCore
 struct LanternView: View {
     @ObservedObject var model: LanternModel
     @ObservedObject private var voice: RealtimeVoiceSession
-    init(model: LanternModel) {
+    private let signedInEmail: String?
+    private let onSignOut: (() -> Void)?
+    init(model: LanternModel, signedInEmail: String? = nil, onSignOut: (() -> Void)? = nil) {
         self.model = model
         self.voice = model.voice
+        self.signedInEmail = signedInEmail
+        self.onSignOut = onSignOut
     }
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var presentedPanel: CameraPanel?
@@ -329,6 +333,15 @@ struct LanternView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(model.packet.hex).font(FeelTypography.mono).textSelection(.enabled)
                 }.font(FeelTypography.footnote).padding(.top, 12)
+            }
+            if let onSignOut {
+                if let signedInEmail, !signedInEmail.isEmpty {
+                    Text("Signed in as \(signedInEmail)").foregroundStyle(FeelTheme.secondary)
+                }
+                Button("Sign out", role: .destructive) { presentedPanel = nil; onSignOut() }
+                    .buttonStyle(FeelSecondaryButtonStyle())
+                    .accessibilityHint("Stops the camera and assistant and returns to the sign-in screen.")
+                    .accessibilityIdentifier("signOut")
             }
         }
     }
