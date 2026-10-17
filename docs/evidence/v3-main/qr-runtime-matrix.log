@@ -1,0 +1,20 @@
+[QR diagnostic] runtime=Version 26.5 (Build 23F77), supportedRevisions=[1, 2, 3, 4], productionRevision=2, productionCPUOnly=false
+[QR diagnostic] fixture=350x350, pixelFormat=1111970369, bytesPerRow=1408
+[QR diagnostic] input=CGImage, revision=1, cpuOnly=false, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+[QR diagnostic] input=CVPixelBuffer, revision=1, cpuOnly=false, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+[QR diagnostic] input=CGImage, revision=1, cpuOnly=true, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+[QR diagnostic] input=CVPixelBuffer, revision=1, cpuOnly=true, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+[QR diagnostic] input=CGImage, revision=2, cpuOnly=false, orientation=up, error=com.apple.Vision:9 Could not create inference context
+[QR diagnostic] input=CVPixelBuffer, revision=2, cpuOnly=false, orientation=up, error=com.apple.Vision:9 Could not create inference context
+[QR diagnostic] input=CGImage, revision=2, cpuOnly=true, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+[QR diagnostic] input=CVPixelBuffer, revision=2, cpuOnly=true, orientation=up, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+[QR diagnostic] input=CGImage, revision=3, cpuOnly=false, orientation=up, observations=[]
+[QR diagnostic] input=CVPixelBuffer, revision=3, cpuOnly=false, orientation=up, observations=[]
+[QR diagnostic] input=CGImage, revision=3, cpuOnly=true, orientation=up, observations=[]
+[QR diagnostic] input=CVPixelBuffer, revision=3, cpuOnly=true, orientation=up, observations=[]
+[QR diagnostic] input=CGImage, revision=4, cpuOnly=false, orientation=up, observations=[]
+[QR diagnostic] input=CVPixelBuffer, revision=4, cpuOnly=false, orientation=up, observations=[]
+[QR diagnostic] input=CGImage, revision=4, cpuOnly=true, orientation=up, observations=[]
+[QR diagnostic] input=CVPixelBuffer, revision=4, cpuOnly=true, orientation=up, observations=[]
+[QR diagnostic] input=CGImage, revision=2, cpuOnly=false, orientation=upMirrored, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]
+[QR diagnostic] input=CVPixelBuffer, revision=2, cpuOnly=false, orientation=upMirrored, observations=[{symbology=VNBarcodeSymbologyQR, confidence=1.0, payload=Optional("FEEL test shelf"), box=(0.14285714285714285, 0.14285714285714285, 0.7142857142857142, 0.7142857142857142)}]

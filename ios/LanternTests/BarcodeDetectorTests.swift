@@ -68,7 +68,13 @@ final class BarcodeDetectorTests: XCTestCase {
         }()
         let fixture=XCTAttachment(image:UIImage(cgImage:rendered)); fixture.name="Actual QR pixel-buffer fixture"; fixture.lifetime = .keepAlways; add(fixture)
         // The base-address lock is released before Vision reads the same buffer.
-        let detections = try ObjectDetector().detect(pixelBuffer: pixelBuffer, mode: .barcode)
+        let detections: [ImageDetection]
+        do {
+            detections = try ObjectDetector().detect(pixelBuffer: pixelBuffer, mode: .barcode)
+        } catch {
+            attachBarcodeDiagnostics(pixelBuffer:pixelBuffer,cgImage:rendered)
+            throw error
+        }
         if !detections.contains(where: { $0.label == "Code: FEEL test shelf" }) {
             attachBarcodeDiagnostics(pixelBuffer:pixelBuffer,cgImage:rendered)
         }

@@ -132,7 +132,7 @@ Printed-code detection distance and latency must be measured on the real mounted
 
 Simulator builds select the documented barcode request revision 2 when the runtime
 reports it supported; otherwise they retain the framework default. Device builds retain
-the default revision. All builds use normal compute selection. The public revision 2
+the default revision. Simulator builds use CPU execution; physical-device builds retain normal compute selection. The public revision 2
 constant is available in the pinned SDK and iOS 16 target, though deprecated in iOS 18.
 
 This policy follows a retained diagnostic on the hosted iOS 26.2 simulator (build 23C54):
@@ -145,6 +145,16 @@ production assertion remains in the test; diagnostic successes never substitute 
 Neither the confidence threshold nor expected payload/bounds were relaxed. The retained
 fixture and independent decoder metadata are in `docs/evidence/v3/qr-fixture.png` and
 `qr-independent-decode.json`. Camera and printed-code performance still need device tests.
+
+The current iOS 26.5 simulator (23F77) also decoded the same fixture at confidence
+1.0 with revision 2 and CPU-only execution, through both CGImage and CVPixelBuffer.
+Revision 2 with default compute failed with Vision error 9 for the ordinary `.up`
+input; revisions 3/4 returned no observations. The retained matrix is
+[evidence/v3-main/qr-runtime-matrix.log](evidence/v3-main/qr-runtime-matrix.log).
+Only simulator revision-2 requests now opt into CPU execution. Physical-device
+requests, image orientation, confidence threshold and the production assertion
+remain unchanged. Apple documents the [CPU-only request option](https://developer.apple.com/documentation/vision/vnrequest/usescpuonly);
+it remains available for the iOS 16 deployment target, although deprecated in iOS 17.
 
 ## Portable replay API
 

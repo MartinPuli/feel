@@ -56,9 +56,11 @@ final class ObjectDetector {
         // The retained iOS 26.2 fixture decodes with revisions 1/2, but returns
         // no observations with 3/4 through either image input or CPU policy.
         // Select the verified revision only for simulator builds when supported.
-        // Device requests and normal compute selection retain framework defaults.
+        // iOS 26.5 requires CPU execution for this retained simulator fixture.
+        // Physical-device revision and compute selection retain framework defaults.
         if VNDetectBarcodesRequest.supportedRevisions.contains(VNDetectBarcodesRequestRevision2) {
             request.revision=VNDetectBarcodesRequestRevision2
+            request.usesCPUOnly=true
         }
         #endif
         return request

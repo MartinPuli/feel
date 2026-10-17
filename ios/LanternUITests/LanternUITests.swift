@@ -150,20 +150,35 @@ final class LanternUITests: XCTestCase {
     }
     func testTypedCommandFallbackRemembersWithoutMicrophone() {
         let app=launch()
-        tapControl(app.buttons["memoryPlaces"])
-        tapControl(app.buttons["memorySimulation"])
-        tapControl(app.buttons["closeCameraPanel"])
-        tapControl(app.buttons["cameraSettings"])
+        app.buttons["memoryPlaces"].tap()
+        XCTAssertTrue(app.buttons["memorySimulation"].waitForExistence(timeout: 5))
+        app.buttons["memorySimulation"].tap()
+        app.buttons["closeCameraPanel"].tap()
+        app.buttons["cameraSettings"].tap()
         tapControl(app.buttons["Voice, saved map and feedback"])
         let command=app.textFields["commandText"]
+        // Keep the field above the persistent Stop bar before focusing it.
+        let scroll = app.scrollViews["cameraSettingsScroll"]
+        for _ in 0..<10 {
+            if command.isHittable && command.frame.maxY < app.buttons["panelStop"].frame.minY { break }
+            let upward = command.frame.minY >= scroll.frame.minY
+            let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.65 : 0.35))
+            let end = scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: upward ? 0.35 : 0.65))
+            start.press(forDuration: 0.05, thenDragTo: end)
+        }
+        capture("advanced-field-position")
+        print("Command frame: \(command.frame); scroll: \(scroll.frame); Stop: \(app.buttons["panelStop"].frame)")
+        XCTAssertTrue(command.isHittable)
+        XCTAssertLessThan(command.frame.maxY, app.buttons["panelStop"].frame.minY)
+        capture("advanced-before-entry")
         enterText("remember Lab",in:command)
         tapControl(app.buttons["runCommand"])
         XCTAssertEqual(app.staticTexts["commandNotice"].label,"Remembered Lab.")
         capture("advanced-typed-command")
         XCTAssertFalse(app.buttons["Finish speaking"].isEnabled)
-        tapControl(app.buttons["closeCameraPanel"])
+        app.buttons["closeCameraPanel"].tap()
         XCTAssertEqual(app.staticTexts["sessionMode"].label,"SIMULATION")
-        tapControl(app.buttons["memoryPlaces"])
+        app.buttons["memoryPlaces"].tap()
         XCTAssertEqual(app.staticTexts["placesCount"].label,"1 places in this session")
     }
     private func tapControl(_ element:XCUIElement,file:StaticString=#filePath,line:UInt=#line) {
