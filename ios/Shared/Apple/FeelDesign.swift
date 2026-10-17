@@ -1,17 +1,16 @@
 import SwiftUI
 import UIKit
 
-/// Minimalist neobrutalism: paper and ink, 3-point borders, hard offset shadows, one loud
-/// accent. Paper and ink invert with system appearance; the accent does not. Status
-/// meaning never depends on color. Fonts are the official OFL-licensed Geist.
+/// Quiet neutral surfaces keep the camera dominant. Controls retain clear outlines,
+/// scalable Geist labels and an orange accent for tactile/connection state.
 enum FeelTheme {
     private static func dynamic(light: CGFloat, dark: CGFloat) -> Color {
         Color(uiColor: UIColor { traits in
             UIColor(white: traits.userInterfaceStyle == .dark ? dark : light, alpha: 1)
         })
     }
-    static let paper = dynamic(light: 1.0, dark: 0.0)
-    static let ink = dynamic(light: 0.0, dark: 1.0)
+    static let paper = dynamic(light: 1.0, dark: 0.065)
+    static let ink = dynamic(light: 0.06, dark: 0.94)
     /// The puck's target color, also the one accent: primary actions and live state.
     static let pin = Color(red: 1.0, green: 0.353, blue: 0.122)
     /// Simulation notices only.
@@ -19,14 +18,15 @@ enum FeelTheme {
 
     static let accent = ink
     static let onAccent = paper
-    static let canvas = paper
+    static let canvas = dynamic(light: 0.97, dark: 0.025)
     static let surface = paper
     static let inset = dynamic(light: 0.94, dark: 0.13)
-    static let border = ink
+    static let border = dynamic(light: 0.44, dark: 0.45)
+    static let divider = dynamic(light: 0.84, dark: 0.22)
     static let secondary = dynamic(light: 0.38, dark: 0.70)
-    static let inactivePin = paper
+    static let inactivePin = inset
 
-    static let borderWidth: CGFloat = 3
+    static let borderWidth: CGFloat = 1
 }
 
 enum FeelTypography {
@@ -42,7 +42,7 @@ enum FeelTypography {
     static let mono = Font.custom("GeistMono-Regular", size: 15, relativeTo: .body)
 }
 
-/// A bordered block with a hard offset shadow: the one structural device of this design.
+/// Solid surfaces remain legible over a bright camera feed without transparency.
 struct FeelBlock<S: InsettableShape>: ViewModifier {
     let shape: S
     var fill: Color = FeelTheme.paper
@@ -51,9 +51,7 @@ struct FeelBlock<S: InsettableShape>: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(shape.fill(fill))
-            .overlay(shape.strokeBorder(FeelTheme.ink, lineWidth: lineWidth))
-            .background(shape.fill(FeelTheme.ink).offset(x: shadow, y: shadow))
-            .padding(.trailing, shadow).padding(.bottom, shadow)
+            .overlay(shape.strokeBorder(FeelTheme.border, lineWidth: lineWidth))
     }
 }
 
@@ -62,19 +60,19 @@ extension View {
         modifier(FeelBlock(shape: shape, fill: fill, shadow: shadow))
     }
     func feelBlock(fill: Color = FeelTheme.paper, shadow: CGFloat = 6) -> some View {
-        modifier(FeelBlock(shape: Rectangle(), fill: fill, shadow: shadow))
+        modifier(FeelBlock(shape: RoundedRectangle(cornerRadius: 12, style: .continuous), fill: fill, shadow: shadow))
     }
 }
 
-/// Text fields are square, bordered boxes; no rounded system chrome.
+/// Inputs use the same quiet surface and visible outline as other controls.
 struct FeelFieldStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(FeelTypography.body)
             .padding(.horizontal, 12)
             .frame(minHeight: 48)
-            .background(FeelTheme.paper)
-            .overlay(Rectangle().strokeBorder(FeelTheme.ink, lineWidth: 2))
+            .background(FeelTheme.inset, in: RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(FeelTheme.border, lineWidth: 1))
     }
 }
 
@@ -82,7 +80,7 @@ extension View {
     func feelField() -> some View { textFieldStyle(.plain).modifier(FeelFieldStyle()) }
 }
 
-/// Buttons press into their own shadow instead of fading.
+/// Press feedback dims the control without moving its touch target.
 private struct FeelButtonBody: View {
     let label: AnyView
     let fill: Color
@@ -90,24 +88,21 @@ private struct FeelButtonBody: View {
     let enabled: Bool
     let pressed: Bool
     var body: some View {
-        let shadow: CGFloat = enabled && !pressed ? 5 : 0
         label
             .font(FeelTypography.headline)
             .frame(maxWidth: .infinity, minHeight: 50)
             .padding(.horizontal, 16).padding(.vertical, 4)
             .foregroundStyle(enabled ? foreground : FeelTheme.secondary)
-            .background(enabled ? fill : FeelTheme.inset)
-            .overlay(Rectangle().strokeBorder(enabled ? FeelTheme.ink : FeelTheme.secondary, lineWidth: FeelTheme.borderWidth))
-            .background(Rectangle().fill(FeelTheme.ink).offset(x: shadow, y: shadow))
-            .offset(x: pressed && enabled ? 5 : 0, y: pressed && enabled ? 5 : 0)
-            .padding(.trailing, 5).padding(.bottom, 5)
+            .background(pressed && enabled ? FeelTheme.inset : fill, in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(FeelTheme.border, lineWidth: 1))
+            .opacity(enabled ? (pressed ? 0.78 : 1) : 0.6)
     }
 }
 
 struct FeelPrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
     func makeBody(configuration: Configuration) -> some View {
-        FeelButtonBody(label: AnyView(configuration.label), fill: FeelTheme.pin, foreground: .black, enabled: isEnabled, pressed: configuration.isPressed)
+        FeelButtonBody(label: AnyView(configuration.label), fill: FeelTheme.inset, foreground: FeelTheme.ink, enabled: isEnabled, pressed: configuration.isPressed)
     }
 }
 
@@ -121,11 +116,11 @@ struct FeelSecondaryButtonStyle: ButtonStyle {
 struct FeelStopButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
     func makeBody(configuration: Configuration) -> some View {
-        FeelButtonBody(label: AnyView(configuration.label), fill: FeelTheme.ink, foreground: FeelTheme.paper, enabled: isEnabled, pressed: configuration.isPressed)
+        FeelButtonBody(label: AnyView(configuration.label), fill: FeelTheme.inset, foreground: FeelTheme.ink, enabled: isEnabled, pressed: configuration.isPressed)
     }
 }
 
-/// Sections are separated by one thick rule; the title is the only heavy element.
+/// Sections use a fine divider and a readable heading.
 struct FeelSection<Content: View>: View {
     let title: String
     var systemImage: String? = nil
@@ -138,6 +133,6 @@ struct FeelSection<Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 20)
-        .overlay(alignment: .top) { Rectangle().fill(FeelTheme.ink).frame(height: FeelTheme.borderWidth) }
+        .overlay(alignment: .top) { Rectangle().fill(FeelTheme.divider).frame(height: 1) }
     }
 }

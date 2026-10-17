@@ -45,6 +45,7 @@ struct LanternView: View {
             }
         }
         .background(Color.black.ignoresSafeArea())
+        .preferredColorScheme(.dark)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: presentedPanel)
         .font(FeelTypography.body)
         .tint(FeelTheme.accent)
@@ -154,9 +155,8 @@ struct LanternView: View {
         .frame(maxWidth: 800)
         .background {
             if controlsExpanded {
-                Rectangle().fill(FeelTheme.paper)
-                    .overlay(Rectangle().strokeBorder(FeelTheme.ink, lineWidth: FeelTheme.borderWidth))
-                    .background(Rectangle().fill(FeelTheme.ink).offset(x: 6, y: 6))
+                RoundedRectangle(cornerRadius: 24, style: .continuous).fill(FeelTheme.surface)
+                    .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(FeelTheme.divider, lineWidth: 1))
             }
         }
         .foregroundStyle(controlsExpanded ? FeelTheme.ink : Color.white)
@@ -229,7 +229,9 @@ struct LanternView: View {
             }
         }
         .frame(width: min(540, availableSize.width - 40), height: availableSize.height - 32)
-        .feelBlock(shadow: 8)
+        .foregroundStyle(FeelTheme.ink)
+        .background(FeelTheme.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(FeelTheme.divider, lineWidth: 1))
         .accessibilityElement(children: .contain)
         .accessibilityAddTraits(.isModal)
         .accessibilityIdentifier("cameraFloatingPanel")
@@ -431,7 +433,7 @@ struct PuckView: View {
                         // Raised pins are solid ink; target columns are orange; down pins are rings.
                         Circle()
                             .fill(target ? FeelTheme.pin : active ? FeelTheme.ink : FeelTheme.paper)
-                            .overlay(Circle().strokeBorder(FeelTheme.ink, lineWidth: compact ? 1.5 : 2.5))
+                            .overlay(Circle().strokeBorder(FeelTheme.border, lineWidth: 1))
                             .frame(maxWidth: compact ? 13 : 24).aspectRatio(1, contentMode: .fit)
                             .frame(maxWidth: .infinity)
                     }
