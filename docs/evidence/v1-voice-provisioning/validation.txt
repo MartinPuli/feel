@@ -1,0 +1,48 @@
+FEEL V1 voice provisioning — 2026-10-17 EDT
+
+PASS — native unit/integration suite, 33 tests, zero failures.
+Command: xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern -configuration Debug -destination platform=iOS\ Simulator,id=2CEF5AB6-CC8C-4F3F-898F-AB4A7335DFFD -derivedDataPath /tmp/feel-drawer-sim -parallel-testing-enabled NO -collect-test-diagnostics never -only-testing:LanternTests CODE_SIGNING_ALLOWED=NO test
+Log: /tmp/feel-voice-provisioning-tests-final.log
+An intermediate test compile failed on a malformed Unicode fixture; corrected before this passing run.
+
+PASS — npm test in services/voice-token: 18 tests, zero failures.
+The sandbox blocked local fixture sockets; rerun with local networking permitted passed.
+PASS — independent read-only review. Two provisioning P2 findings corrected and re-reviewed; no blocking findings remain.
+
+PASS — signed Debug build 1.0.0 (8), installed on paired iPhone 17 Pro.
+Build log: /tmp/feel-voice-provisioning-device.log
+Installation: /tmp/feel-voice-provisioning-install.json
+PASS — provisioning launch at 01:24:32 EDT after the user unlocked the iPhone.
+Earlier attempts at 01:16 and 01:18 were blocked by its locked screen.
+The Debug launch saved the HTTPS endpoint and separate client token to Keychain.
+Vercel recorded two POST /session requests with HTTP 200 after the device launch.
+The user confirmed: “Sí, me escucha y responde” (it hears me and responds).
+This establishes user-confirmed live phone voice input/output, not a full headset,
+interruption, barge-in or sensing acceptance test. A separate normal relaunch to
+verify persistence was not performed during the user's active conversation.
+
+PASS — Vercel production deployment:
+https://feel-v1-voice.vercel.app/session
+Deployment dpl_H7iMPxLBzEtUbFdDQMwnigBcfPiw
+Unauthorized empty POST: 401.
+Authorized empty POST without Content-Type: 200, ephemeral value/expires_at only.
+An empty form-encoded POST was rejected 400 by body validation; native app request is accepted.
+Provider and client credentials configured as sensitive production environment values.
+Deployment uploaded only six source/config files, no .env.
+
+PASS — xAI Grok Inference key, Voice endpoint only, 6 requests/minute, expires 2026-11-16.
+Creation/storage explicitly approved by user after automatic review requested confirmation.
+The initial user-provided Cursor/agent key failed xAI authentication; it was not deployed.
+
+PASS — native Foundation URLSession token request and WebSocket session:
+Sal; PCM16 24000 Hz mono; readiness transcript: I'm here.
+Received 45600 bytes of real provider audio (0.95 seconds).
+A separate Node WebSocket verification also returned readiness audio.
+An initial disposable Swift probe incorrectly sent binary JSON and timed out; corrected to text frames, matching the production app, and passed.
+Audio fixture: readiness.wav (generated provider greeting, no microphone recording).
+
+USER CONFIRMED — live iPhone microphone and spoken response after provisioning.
+NOT VERIFIED — cold relaunch, headset route, barge-in, subjective voice quality.
+No claim of physical sensing/tactile validation from these tests.
+Vercel rate limits are per instance, not a distributed global quota.
+Secrets are absent from source, evidence, app bundle and Git.

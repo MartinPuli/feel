@@ -4,6 +4,49 @@ Integration validation is recorded in [V2-MAIN-INTEGRATION.md](V2-MAIN-INTEGRATI
 The sections below retain prior V1 hardware and V2 software evidence; they do not
 represent new physical testing of this integration.
 
+## October 17 proactive voice and full app controls
+
+Build 14 is signed, installed and launched on the iPhone. All 60 native tests
+and 7 UI tests passed, including deterministic proactive observations, strict command decoding,
+mute preserving capture and tools, unmute, panel controls and simulation isolation.
+The phone accepted the expanded OpenAI session and recovered the audio engine.
+Physical spoken command evaluation and headphones remain pending.
+[Current evidence](evidence/v1-proactive-voice/validation.txt).
+
+## October 17 OpenAI migration and audio recovery
+
+The native OpenAI client and protected token service are implemented. Build 13
+is signed. All 40 native tests, 7 UI tests and 18 service tests passed. A live Cedar probe completed two readiness responses around 40 seconds
+of streamed silent PCM with no provider or send errors. This probe is synthetic
+input, not evidence of physical microphone or headphone performance.
+
+An iPhone diagnostic captured `engine_not_running` on first playback. Guarded
+engine restart and request-specific cancellation were independently reviewed.
+The iPhone became unavailable before the final updated installation; real-device
+recovery remains pending. [Current evidence](evidence/v1-openai-voice/validation.txt).
+
+## October 17 V1 live voice provisioning
+
+33 native unit/integration tests and 18 service tests passed. Build 8 was signed
+and installed. Vercel authentication and real xAI ephemeral issuance passed.
+Native URLSession/WebSocket received Sal readiness audio, 45600 PCM bytes with
+transcript “I'm here.” Phone provisioning and launch succeeded at 01:24 EDT after unlocking.
+The user confirmed live microphone input and spoken responses. Cold relaunch,
+headset behavior and subjective voice quality remain unverified. [Evidence](evidence/v1-voice-provisioning/validation.txt).
+
+## October 17 voice refinement
+
+39 distinct native tests passed; 32 unit/integration tests were rerun after the
+final spoken wording change. Build 7 is signed, installed and launched. Live
+voice quality is not verified. [Evidence](evidence/v1-voice-polish/validation.txt).
+
+## October 17 V1 assistant update
+
+36 native tests and 10 token-service tests passed locally. The signed build 6
+was installed and launched on iPhone 17 Pro after unlocking the phone. Live
+Grok and physical headset checks remain pending. See [voice evidence](evidence/v1-voice/validation.txt)
+and [behavior/provisioning](V1-VOICE.md).
+
 > Seven-servo preparation: `esp32-production` and its English setup guide are
 > ready in source. Host/configuration tests, enabled-output compile fixtures and
 > 2,634 cross-layer assertions passed. Real deployment is still gated on the

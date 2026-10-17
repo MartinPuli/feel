@@ -42,6 +42,29 @@ final class LanternUITests: XCTestCase {
         for column in 1...7 { XCTAssertTrue(value.contains("Column \(column), band 0")) }
     }
 
+    func testVoiceSetupKeepsCameraAndMicrophoneUnderUserControl() {
+        let app = launch(expandControls: false)
+        let voice = app.buttons["voiceControl"]
+        XCTAssertTrue(voice.exists)
+        XCTAssertTrue(voice.isHittable)
+        XCTAssertLessThan(voice.frame.maxY, app.frame.midY, "Assistant belongs in the header, outside the central camera area")
+        XCTAssertFalse(voice.frame.intersects(app.buttons["cameraSettings"].frame))
+        XCTAssertEqual(voice.value as? String, "Microphone off")
+        voice.tap()
+        XCTAssertTrue(app.textFields["voiceEndpoint"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["controlsToggle"].exists)
+        let save = app.buttons["saveVoiceSetup"]
+        for _ in 0..<4 where !save.isHittable { app.scrollViews["cameraSettingsScroll"].swipeUp() }
+        save.tap()
+        XCTAssertTrue(app.staticTexts["voiceSetupError"].exists)
+        capture("voice-setup")
+        app.buttons["closeCameraPanel"].tap()
+        XCTAssertEqual(app.buttons["voiceControl"].value as? String, "Microphone off")
+        XCTAssertTrue(app.staticTexts["feelWordmark"].exists)
+        XCTAssertFalse(app.staticTexts["sessionMode"].exists)
+        capture("voice-camera")
+    }
+
     func testDrawerAndFloatingPanels() {
         let app = launch(expandControls: false)
         XCTAssertFalse(app.buttons["startCamera"].exists)

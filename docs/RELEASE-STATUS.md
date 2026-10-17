@@ -19,6 +19,34 @@ represent new physical testing of this integration.
 
 ## Inherited V1 release evidence (before this V2 integration)
 
+## Current proactive voice update — October 17
+
+Build 14 is signed, installed and launched on the paired iPhone at 01:48 EDT.
+OpenAI accepted the expanded voice tool set; phone diagnostics show readiness
+and successful audio-engine recovery. Spoken action checks with the user and
+headset behavior remain pending. The production token service retains provider
+credentials on Vercel. The FEEL wordmark has a matching control background.
+
+V1 adds event-driven nearby-obstacle and target-movement notices, sensing
+recovery, and spoken access to the app's operational controls. “Silence yourself”
+mutes speech while preserving microphone capture and commands; “speak again”
+unmutes. “Stop listening” ends capture and requires touch to resume. iOS permission
+choices and credential entry remain manual. The phone still pauses capture when
+backgrounded or locked. [Evidence](evidence/v1-proactive-voice/validation.txt).
+
+All 60 native unit/integration tests and 7 UI tests passed.
+Independent review identified a sub-0.3 m filtering issue, fixed with regression
+coverage. Earlier [OpenAI migration evidence](evidence/v1-openai-voice/validation.txt)
+records the prior 40 native tests, 7 UI tests and 18 service tests.
+
+## Prior iPhone voice provisioning
+
+Build 8 used Grok/Sal. The user confirmed live voice input and spoken responses,
+then reported disconnections. Its historical activation evidence is preserved
+in [the provisioning record](evidence/v1-voice-provisioning/validation.txt).
+Build 6 introduced foreground listening and accessible Assistant controls.
+Backgrounding or locking pauses microphone capture; camera images remain local.
+
 ## Current iPhone visual update
 
 Lantern now uses a chevron drawer in the [camera-first interface](V1-CAMERA-UI.md).
