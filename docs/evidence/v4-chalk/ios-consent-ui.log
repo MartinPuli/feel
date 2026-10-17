@@ -1,0 +1,157 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern -destination "platform=iOS Simulator,id=59201D1D-43CE-4207-AED8-D536FB4F31FA" -parallel-testing-enabled NO "-only-testing:LanternUITests/LanternUITests/testChalkSharingDefaultsOffAndStopStaysReachable" -collect-test-diagnostics on-failure -resultBundlePath .artifacts/ios/v4-consent.xcresult -derivedDataPath .artifacts/ios/DerivedData CODE_SIGNING_ALLOWED=NO test-without-building
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = NO
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  FeelCore: /tmp/feel-v4-chalk/ios/Shared/FeelCore
+
+Writing result bundle at path:
+	/private/tmp/feel-v4-chalk/.artifacts/ios/v4-consent.xcresult
+
+2026-10-17 01:14:58.387925-0400 LanternUITests-Runner[40879:1126845] [Default] Running tests...
+2026-10-17 01:14:58.474256-0400 LanternUITests-Runner[40879:1126949] [General] Failed to send CA Event for app launch measurements for ca_event_type: 0 event_name: com.apple.app_launch_measurement.FirstFramePresentationMetric
+2026-10-17 01:14:58.516536-0400 LanternUITests-Runner[40879:1126950] [General] Failed to send CA Event for app launch measurements for ca_event_type: 1 event_name: com.apple.app_launch_measurement.ExtendedLaunchMetrics
+objc[40879]: Class UIAccessibilityLoaderWebShared is implemented in both /Library/Developer/CoreSimulator/Volumes/iOS_23F77/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.5.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebCore.axbundle/WebCore (0x10b9b4310) and /Library/Developer/CoreSimulator/Volumes/iOS_23F77/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.5.simruntime/Contents/Resources/RuntimeRoot/System/Library/AccessibilityBundles/WebKit.axbundle/WebKit (0x10ae04398). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'Selected tests' started at 2026-10-17 01:15:02.404.
+Test Suite 'LanternUITests.xctest' started at 2026-10-17 01:15:02.404.
+Test Suite 'LanternUITests' started at 2026-10-17 01:15:02.404.
+Test Case '-[LanternUITests.LanternUITests testChalkSharingDefaultsOffAndStopStaysReachable]' started.
+    t =     0.00s Start Test at 2026-10-17 01:15:02.405
+    t =     0.39s Set Up
+    t =     0.39s Setting device orientation to Landscape Left
+    t =     0.40s     Device orientation changed to Landscape Left
+    t =     0.45s     Wait for com.apple.springboard to idle
+    t =     0.51s Open org.feel.hackharvard.lantern
+    t =     0.51s     Launch org.feel.hackharvard.lantern
+2026-10-17 01:15:03.473 xcodebuild[40565:1123714] [MT] IDELaunchParametersSnapshot: The operation couldn’t be completed. (DebuggerLLDB.DebuggerVersionStore.StoreError error 0.)
+2026-10-17 01:15:03.474 xcodebuild[40565:1123714] [MT] IDELaunchParametersSnapshot: no debugger version
+    t =     4.00s         Setting up automation session
+    t =     4.33s             Interface orientation changed to Landscape Right
+    t =     5.44s         Wait for org.feel.hackharvard.lantern to idle
+    t =     7.27s Waiting 10.0s for "controlsToggle" Button to exist
+    t =     8.31s     Checking `Expect predicate `existsNoRetry == 1` for object "controlsToggle" Button`
+    t =     8.31s         Checking existence of `"controlsToggle" Button`
+    t =     8.41s Tap "controlsToggle" Button
+    t =     8.41s     Wait for org.feel.hackharvard.lantern to idle
+    t =     8.42s     Find the "controlsToggle" Button
+    t =     8.43s     Check for interrupting elements affecting "controlsToggle" Button
+    t =     8.46s     Synthesize event
+    t =     8.88s     Wait for org.feel.hackharvard.lantern to idle
+    t =     8.88s Waiting 5.0s for "startCamera" Button to exist
+    t =     9.92s     Checking `Expect predicate `existsNoRetry == 1` for object "startCamera" Button`
+    t =     9.92s         Checking existence of `"startCamera" Button`
+    t =     9.94s Tap "cameraSettings" Button
+    t =     9.94s     Wait for org.feel.hackharvard.lantern to idle
+    t =     9.95s     Find the "cameraSettings" Button
+    t =     9.96s     Check for interrupting elements affecting "cameraSettings" Button
+    t =     9.98s     Synthesize event
+    t =    10.27s     Wait for org.feel.hackharvard.lantern to idle
+    t =    10.27s Waiting 5.0s for "Simulation" Button to exist
+    t =    11.32s     Checking `Expect predicate `existsNoRetry == 1` for object "Simulation" Button`
+    t =    11.32s         Checking existence of `"Simulation" Button`
+    t =    11.34s Find the "Simulation" Button
+    t =    11.37s Find the "Simulation" Button
+    t =    11.39s Find the "Simulation" Button
+    t =    11.41s Find the "Simulation" Button
+    t =    11.43s Tap "Simulation" Button
+    t =    11.44s     Wait for org.feel.hackharvard.lantern to idle
+    t =    11.44s     Find the "Simulation" Button
+    t =    11.45s     Check for interrupting elements affecting "Simulation" Button
+    t =    11.48s     Synthesize event
+    t =    11.78s     Wait for org.feel.hackharvard.lantern to idle
+    t =    11.78s Waiting 5.0s for "stopSession" Button to exist
+    t =    12.81s     Checking `Expect predicate `existsNoRetry == 1` for object "stopSession" Button`
+    t =    12.82s         Checking existence of `"stopSession" Button`
+    t =    12.83s Tap "cameraSettings" Button
+    t =    12.83s     Wait for org.feel.hackharvard.lantern to idle
+    t =    12.83s     Find the "cameraSettings" Button
+    t =    12.85s     Check for interrupting elements affecting "cameraSettings" Button
+    t =    12.86s     Synthesize event
+    t =    13.16s     Wait for org.feel.hackharvard.lantern to idle
+    t =    13.16s Tap "Voice, saved map and feedback" Button
+    t =    13.16s     Wait for org.feel.hackharvard.lantern to idle
+    t =    13.16s     Find the "Voice, saved map and feedback" Button
+    t =    13.18s     Check for interrupting elements affecting "Voice, saved map and feedback" Button
+    t =    13.20s     Synthesize event
+    t =    13.50s     Wait for org.feel.hackharvard.lantern to idle
+    t =    13.50s Waiting 5.0s for "Chalk understanding" Button to exist
+    t =    14.53s     Checking `Expect predicate `existsNoRetry == 1` for object "Chalk understanding" Button`
+    t =    14.53s         Checking existence of `"Chalk understanding" Button`
+    t =    14.57s Find the "Chalk understanding" Button
+    t =    14.64s Find the "Chalk understanding" Button
+    t =    14.66s Find the "cameraSettingsScroll" ScrollView
+    t =    14.69s Press "cameraSettingsScroll" ScrollView[0.50, 0.70] for 0.1 seconds, then drag to "cameraSettingsScroll" ScrollView[0.50, 0.30] with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    14.69s     Wait for org.feel.hackharvard.lantern to idle
+    t =    14.70s     Find the "cameraSettingsScroll" ScrollView
+    t =    14.72s     Check for interrupting elements affecting "cameraSettingsScroll" ScrollView
+    t =    14.76s     Synthesize event
+    t =    14.76s         Find the "cameraSettingsScroll" ScrollView
+    t =    14.79s         Find the "cameraSettingsScroll" ScrollView
+    t =    14.82s         Find the "cameraSettingsScroll" ScrollView
+    t =    14.85s         Find the "cameraSettingsScroll" ScrollView
+    t =    14.88s         Find the "cameraSettingsScroll" ScrollView
+    t =    15.37s     Wait for org.feel.hackharvard.lantern to idle
+    t =    17.08s Find the "Chalk understanding" Button
+    t =    17.12s Find the "Chalk understanding" Button
+    t =    17.15s Find the "cameraSettingsScroll" ScrollView
+    t =    17.18s Press "cameraSettingsScroll" ScrollView[0.50, 0.70] for 0.1 seconds, then drag to "cameraSettingsScroll" ScrollView[0.50, 0.30] with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    17.18s     Wait for org.feel.hackharvard.lantern to idle
+    t =    17.18s     Find the "cameraSettingsScroll" ScrollView
+    t =    17.21s     Check for interrupting elements affecting "cameraSettingsScroll" ScrollView
+    t =    17.24s     Synthesize event
+    t =    17.24s         Find the "cameraSettingsScroll" ScrollView
+    t =    17.27s         Find the "cameraSettingsScroll" ScrollView
+    t =    17.31s         Find the "cameraSettingsScroll" ScrollView
+    t =    17.33s         Find the "cameraSettingsScroll" ScrollView
+    t =    17.38s         Find the "cameraSettingsScroll" ScrollView
+    t =    17.88s     Wait for org.feel.hackharvard.lantern to idle
+    t =    19.58s Find the "Chalk understanding" Button
+    t =    19.62s Find the "Chalk understanding" Button
+    t =    19.65s Find the "panelStop" Button
+    t =    19.67s Find the "Chalk understanding" Button
+    t =    19.72s Find the "Chalk understanding" Button
+    t =    19.74s Find the "panelStop" Button
+    t =    19.77s Tap "Chalk understanding" Button
+    t =    19.77s     Wait for org.feel.hackharvard.lantern to idle
+    t =    19.77s     Find the "Chalk understanding" Button
+    t =    19.81s     Check for interrupting elements affecting "Chalk understanding" Button
+    t =    19.84s     Synthesize event
+    t =    20.14s     Wait for org.feel.hackharvard.lantern to idle
+    t =    20.14s Find the "cloudEnabled" Switch
+    t =    20.17s Find the "cloudSharing" Switch
+    t =    20.20s Find the "cloudRetention" Switch
+    t =    20.23s Find the "panelStop" Button
+    t =    20.42s Added attachment named 'chalk-consent-defaults'
+    t =    20.42s Tap "panelStop" Button
+    t =    20.42s     Wait for org.feel.hackharvard.lantern to idle
+    t =    20.42s     Find the "panelStop" Button
+    t =    20.45s     Check for interrupting elements affecting "panelStop" Button
+    t =    20.50s     Synthesize event
+    t =    20.79s     Wait for org.feel.hackharvard.lantern to idle
+    t =    20.80s Waiting 5.0s for "controlsToggle" Button to exist
+    t =    21.83s     Checking `Expect predicate `existsNoRetry == 1` for object "controlsToggle" Button`
+    t =    21.84s         Checking existence of `"controlsToggle" Button`
+    t =    21.85s Tear Down
+Test Case '-[LanternUITests.LanternUITests testChalkSharingDefaultsOffAndStopStaysReachable]' passed (22.218 seconds).
+Test Suite 'LanternUITests' passed at 2026-10-17 01:15:24.624.
+	 Executed 1 test, with 0 failures (0 unexpected) in 22.218 (22.219) seconds
+Test Suite 'LanternUITests.xctest' passed at 2026-10-17 01:15:24.624.
+	 Executed 1 test, with 0 failures (0 unexpected) in 22.218 (22.220) seconds
+Test Suite 'Selected tests' passed at 2026-10-17 01:15:24.624.
+	 Executed 1 test, with 0 failures (0 unexpected) in 22.218 (22.221) seconds
+2026-10-17 01:15:25.039 xcodebuild[40565:1123714] [MT] IDETestOperationsObserverDebug: 52.647 elapsed -- Testing started completed.
+2026-10-17 01:15:25.039 xcodebuild[40565:1123714] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-17 01:15:25.039 xcodebuild[40565:1123714] [MT] IDETestOperationsObserverDebug: 52.647 sec, +52.647 sec -- end
+
+Test session results, code coverage, and logs:
+	/tmp/feel-v4-chalk/.artifacts/ios/v4-consent.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started

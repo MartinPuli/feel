@@ -56,5 +56,14 @@
   "physical_hardware": "NOT_VERIFIED; no flashing/installation/electrical changes",
   "independent_review": "Backend author reviewed iOS and parent report; iOS author reviewed backend schema. Parent separately reran backend and tooling checks. Return-point mismatch and mixed mock/live comparison were corrected.",
   "publication": "Target branch: feel/v4-chalk; verify GitHub head against this release commit.",
-  "handoff": "User requested Benjamin continue live account setup and validation."
+  "handoff": "User requested Benjamin continue live account setup and validation.",
+  "consent_ui_followup": {
+    "status": "PASS",
+    "tests": 1,
+    "exit_code": 0,
+    "source": "c9086f2",
+    "log": "ios-consent-ui.log",
+    "screenshot": "chalk-consent-defaults.png",
+    "reason": "Full result screenshot export was empty; one focused run recovered visual evidence without source changes."
+  }
 }
