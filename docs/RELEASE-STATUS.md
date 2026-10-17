@@ -6,6 +6,15 @@
 
 # Current V1 release candidate
 
+## Current iPhone visual update
+
+Lantern and Beacon now use the [Vercel-inspired Geist design](V1-VERCEL-DESIGN.md).
+All 47 distinct core/integration/UI tests passed locally, including repeated UI
+checks in light/dark appearances. Both apps build and sign as 1.0.0 (2).
+Installation of this visual update is pending: the paired iPhone is unavailable
+and the install attempt returned device-not-found. Earlier installation evidence
+below refers to the previous app build. [Validation](evidence/v1-vercel/validation.txt).
+
 ## V1 consolidation on main
 
 The user designated `main` as V1 on October 16, 2026. The integration preserves
