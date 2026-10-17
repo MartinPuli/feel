@@ -30,11 +30,22 @@ final class AdvancedCoordinatorTests:XCTestCase {
         model.startSimulation(memory:true); model.saveMap()
         XCTAssertFalse(model.mapBusy); XCTAssertTrue(model.mapNotice.contains("live session"))
         model.loadMap(); XCTAssertEqual(model.restoreState,.idle); XCTAssertEqual(model.mode,.simulation)
-        XCTAssertFalse(model.voice.isListening)
+        XCTAssertFalse(model.localVoice.isListening)
     }
+    func testGlobalMuteAlsoSilencesLocalCommandReadback() {
+        let model = LanternModel(voice: RealtimeVoiceSession(speaksLocally: false))
+        defer { model.stop() }
+        model.voice.setSpokenOutput(false)
+        let initial = model.localVoice.status
+        model.readCommandResult()
+        XCTAssertEqual(model.localVoice.status, initial)
+        XCTAssertFalse(model.localVoice.isListening)
+        XCTAssertFalse(model.voice.spokenOutputEnabled)
+    }
+
     func testStopCancelsVoiceAndClearsRestoreState() {
         let model=LanternModel(); model.startSimulation(memory:true); model.stop()
-        XCTAssertFalse(model.voice.isListening); XCTAssertEqual(model.restoreState,.idle)
+        XCTAssertFalse(model.localVoice.isListening); XCTAssertEqual(model.restoreState,.idle)
         XCTAssertFalse(model.restoredMapSession); XCTAssertFalse(model.mapBusy)
     }
 }

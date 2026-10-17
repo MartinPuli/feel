@@ -7,7 +7,12 @@ struct LanternApp:App {
     var body:some Scene {
         WindowGroup {
             LanternView(model:model)
-                .onChange(of:scenePhase) { phase in if phase == .background { model.stop() } }
+                .onChange(of: scenePhase) { phase in
+                    if phase == .background { model.stop(); model.voice.enterBackground() }
+                    if phase == .active && !ProcessInfo.processInfo.arguments.contains("--uitesting") {
+                        model.voice.enterForeground()
+                    }
+                }
         }
     }
 }

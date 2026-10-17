@@ -78,7 +78,7 @@ private final class VoiceAudioPipe {
 
 /// Explicit push-to-talk only. No permission request, microphone capture or
 /// speech occurs during initialization. All observable state stays on main.
-final class VoiceControl: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
+final class LocalVoiceControl: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     @Published private(set) var status = "Voice idle. Tap Speak command to listen on this device."
     @Published private(set) var transcript = ""
     @Published private(set) var isListening = false
@@ -137,6 +137,15 @@ final class VoiceControl: NSObject, ObservableObject, AVSpeechSynthesizerDelegat
     /// Invalidates permission replies and late results before releasing audio.
     func cancel() { onMain { $0.cancelInternal(status: "Voice canceled.") } }
 
+    /// Mute only output; an explicit on-device recognition attempt keeps running.
+    func stopReadback() {
+        onMain { control in
+            control.synthesizer.stopSpeaking(at: .immediate)
+            control.speakingUtterance = nil
+            control.speakingGeneration = nil
+        }
+    }
+
     /// Readback is an explicit action and never starts or resumes listening.
     func speak(_ text: String, localeIdentifier: String) {
         onMain { control in
@@ -157,7 +166,7 @@ final class VoiceControl: NSObject, ObservableObject, AVSpeechSynthesizerDelegat
         }
     }
 
-    private func onMain(_ body: @escaping (VoiceControl) -> Void) {
+    private func onMain(_ body: @escaping (LocalVoiceControl) -> Void) {
         if Thread.isMainThread { body(self) }
         else { DispatchQueue.main.async { [weak self] in if let self { body(self) } } }
     }

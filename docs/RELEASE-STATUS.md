@@ -1,3 +1,8 @@
+# Current voice synchronization
+
+See [VERSION-VOICE-SYNC.md](VERSION-VOICE-SYNC.md) for the current integration.
+The following records describe earlier revisions. No V3 phone installation is claimed.
+
 # FEEL V3 — current integration
 
 V3 integrates V1 main `b780519` through updated V2, retaining explicit voice

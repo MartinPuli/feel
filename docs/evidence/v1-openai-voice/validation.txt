@@ -1,0 +1,56 @@
+FEEL V1 OpenAI voice migration — October 17, 2026 EDT
+
+Changes
+- OpenAI Realtime gpt-realtime-2.1, Cedar, PCM16 mono 24 kHz.
+- Provider key stays in Vercel. Phone keeps its existing service access token.
+- Same protected /session route, five-minute ephemeral credentials only.
+- Request UUIDs prevent stale notices/continuations replacing newer user commands.
+- Native stopped-engine recovery verifies the microphone format before restarting.
+- Input queue coalesces short send stalls with one-second PCM bound.
+- FEEL logo uses matching capsule background and border.
+
+Observed failure
+Build 11 phone diagnostics: session_ready followed by playback_failure
+engine_not_running, twice. Token issuance succeeded. No credential failure found.
+Build 12 recovery update installed and launched at 01:32 EDT; device subsequently
+became unavailable. No physical recovery result is claimed.
+
+Live provider probe
+OpenAI ephemeral mint HTTP 200. Cedar session accepted. First response completed.
+40 seconds, 1906 synthetic silent PCM chunks, zero send errors, zero provider
+errors, one handled WebSocket ping, connection remained open. A second response
+completed. Readiness audio 40800 bytes / 20400 frames. Production tools omitted.
+
+Production
+Deployment dpl_ECjPQE2j6XczSASrGjmySVKys57m, READY.
+https://feel-v1-voice.vercel.app/session
+Unauthorized POST: 401. Authorized POST: 200, only value/expires_at, 300 seconds.
+No key, access token, user audio or transcript is included in this evidence.
+
+Review
+Independent review found no P0/P1 in request ownership and guarded audio recovery.
+Silent engine changes without subsequent playback still need physical validation.
+
+Commands and results
+npm test in services/voice-token: PASS, 18 tests. Sandboxed first attempt could
+not bind localhost (EPERM); permitted local run passed.
+xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern -configuration Debug
+  -destination 'generic/platform=iOS' -derivedDataPath /tmp/feel-camera-install
+  DEVELOPMENT_TEAM=39D23XHM5Z -allowProvisioningUpdates build: PASS, build 13.
+Focused RealtimeVoiceTests: PASS, 28 tests, zero failures.
+Final full run: PASS, 40 native unit/integration tests and 7 UI tests, zero failures.
+xcodebuild -project ios/Lantern.xcodeproj -scheme Lantern -configuration Debug
+  -destination 'platform=iOS Simulator,id=2CEF5AB6-CC8C-4F3F-898F-AB4A7335DFFD'
+  -derivedDataPath /tmp/feel-drawer-sim -parallel-testing-enabled NO
+  -collect-test-diagnostics never -only-testing:LanternTests
+  -only-testing:LanternUITests CODE_SIGNING_ALLOWED=NO test
+Result: /tmp/feel-drawer-sim/Logs/Test/Test-Lantern-2026.10.17_01-38-46--0400.xcresult
+Completed 01:40:35 EDT. Credential scan of tracked/nonignored files passed.
+Rendered camera-logo.png reviewed: capsule background/border visible, header
+controls separated, camera center unobstructed. Screenshot is simulator UI.
+
+Physical checks pending
+1. Reconnect and unlock iPhone; install build 13.
+2. Confirm readiness and spoken Start/Stop commands after a normal relaunch.
+3. Check intended headset, interruption, disconnect/reconnect and lock behavior.
+Older Grok builds cannot use the migrated OpenAI endpoint.
