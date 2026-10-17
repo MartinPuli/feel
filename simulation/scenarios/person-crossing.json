@@ -1,0 +1,20 @@
+{
+  "title": "Person crossing left to right",
+  "description": "Standing still; a person (0.25 m radius, 1.75 m tall) walks across 1.5 m ahead at 0.5 m/s. The obstacle sweeps column 2 → 3 → 4 in band 2. The camera sees only ±33.5°, so the person is invisible beyond about 1.4 m to either side.",
+  "scene": {
+    "duration": 8,
+    "path": [{"t": 0, "x": 0, "z": 0}],
+    "objects": [{"kind": "cylinder", "center": [-2, -1.5], "radius": 0.25, "height": 1.75, "velocity": [0.5, 0], "label": "person"}],
+    "sensor": {"noise": 0.005, "seed": 3}
+  },
+  "expect": [
+    {"from": 0.3, "to": 1.0, "columns": "all", "band": 0, "label": "person outside the camera's view"},
+    {"from": 3.2, "to": 3.5, "columns": [2], "band": 2, "label": "person left of centre"},
+    {"from": 3.2, "to": 3.5, "columns": [4, 5, 6], "band": 0},
+    {"from": 3.95, "to": 4.15, "columns": [3], "band": 2, "label": "person straight ahead"},
+    {"from": 3.95, "to": 4.15, "columns": [0, 1, 5, 6], "band": 0},
+    {"from": 4.6, "to": 4.9, "columns": [4], "band": 2, "label": "person right of centre"},
+    {"from": 4.6, "to": 4.9, "columns": [0, 1, 2], "band": 0},
+    {"from": 7.2, "to": 8.0, "columns": "all", "band": 0, "label": "person gone"}
+  ]
+}

@@ -45,6 +45,8 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private var grid=FloorGrid()
     private var lastPlan: TimeInterval = -.infinity
     private var lastHint: RouteHint?
+    /// Explicit world goal from two-finger pointing. While set, routes go there instead of the visible target.
+    private var routeGoal: (point: Vector3, label: String)?
     /// Distinct detections from the latest Vision pass (≥ 1 m apart).
     private var candidates: [CapturedTarget] = []
     /// When set, guidance follows the detection nearest this point instead of the most confident.
@@ -62,6 +64,8 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private var lastVision: TimeInterval = -.infinity
     private var visionBusy=false
     private var lastTarget: CapturedTarget?
+    /// Optional depth recording for offline replay; idle unless the user turns it on.
+    let recorder=SessionRecorder()
     override init() {
         super.init(); session.delegate=self; session.delegateQueue=queue
         visionQueue.async { [weak self] in
@@ -75,16 +79,20 @@ final class ARPerception: NSObject, ARSessionDelegate {
         queue.async {
             self.sessionEpoch=epoch; self.earliestFrame=ProcessInfo.processInfo.systemUptime
             self.floorY=nil; self.lastTarget=nil; self.generation += 1; self.lastProcessed = -.infinity
-            self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil
+            self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil
             let config=ARWorldTrackingConfiguration(); config.frameSemantics=[.sceneDepth]; config.worldAlignment = .gravity
             self.session.run(config,options:[.resetTracking,.removeExistingAnchors]); self.publishStatus("Move slowly, then calibrate measured camera height")
         }
         return true
     }
     func stop() {
-        queue.async { self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.publishStatus("Stopped") }
+        queue.async { self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.publishStatus("Stopped") }
     }
-    func setFinder(_ mode: FinderMode,epoch:Int) { queue.async { self.finder=mode; self.finderEpoch=epoch; self.lastTarget=nil; self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.generation += 1 } }
+    func setFinder(_ mode: FinderMode,epoch:Int) { queue.async { self.finder=mode; self.finderEpoch=epoch; self.lastTarget=nil; self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.generation += 1 } }
+    /// Route to a fixed world point (two fingers on a puck column) until cleared with nil.
+    func setRouteGoal(_ point: Vector3?, label: String = "") {
+        queue.async { self.routeGoal=point.map { ($0,label) }; self.lastHint=nil; self.lastPlan = -.infinity }
+    }
     /// Follow the target nearest `position` (one of several in view) until the finder changes.
     func lockTarget(at position: Vector3) {
         queue.async {
@@ -106,7 +114,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
             self.floorY=pose.position.y-cameraHeight; self.grid.reset(); self.lastHint=nil; self.publishStatus("Floor calibrated from measured camera height")
         }
     }
-    private static func mountValid(_ pose: CameraPose) -> Bool { pose.isValid && pose.up.y>0.7 && abs(pose.right.y)<0.35 }
+    private static func mountValid(_ pose: CameraPose) -> Bool { DepthFrameProcessor.mountValid(pose) }
     private static func pose(_ matrix: simd_float4x4) -> CameraPose {
         func v(_ p: SIMD4<Float>) -> Vector3 { Vector3(Double(p.x),Double(p.y),Double(p.z)) }
         return CameraPose(position:v(matrix.columns.3),right:v(matrix.columns.0),up:v(matrix.columns.1),back:v(matrix.columns.2))
@@ -133,32 +141,29 @@ final class ARPerception: NSObject, ARSessionDelegate {
             }
         }
         let normal: Bool; if case .normal=frame.camera.trackingState { normal=true } else { normal=false }
-        guard normal,Self.mountValid(pose),let depth=frame.sceneDepth,let map=DepthCopy(depth) else {
+        guard normal,Self.mountValid(pose),let depth=frame.sceneDepth,let map=DepthFrame(depth,camera:frame.camera) else {
+            if recorder.isActive { recorder.append(RecordedFrame(timestamp:frame.timestamp,trackingNormal:normal,pose:pose,floorY:floorY,depth:nil)) }
             lastTarget=nil; lastHint=nil; candidates=[]; generation += 1
             publish(PerceptionFrame(epoch:sessionEpoch,finderEpoch:finderEpoch,timestamp:frame.timestamp,tracking:false,distances:Array(repeating:nil,count:7),target:nil,pose:pose,floorY:floorY))
             publishStatus(normal ? "Depth missing or mounting orientation invalid — guidance neutral" : "Tracking uncertain — guidance neutral")
             return
         }
-        let raw=frame.camera.intrinsics
-        let k=CameraIntrinsics(fx:Double(raw.columns.0.x),fy:Double(raw.columns.1.y),cx:Double(raw.columns.2.x),cy:Double(raw.columns.2.y))
-            .scaled(x:Double(map.width)/Double(frame.camera.imageResolution.width),y:Double(map.height)/Double(frame.camera.imageResolution.height))
-        var samples:[DepthSample]=[]; samples.reserveCapacity(map.width*map.height/9)
-        var mapPoints:[Vector3]=[]; mapPoints.reserveCapacity(map.width*map.height/36)
-        for y in stride(from:0,to:map.height,by:3) {
-            for x in stride(from:0,to:map.width,by:3) {
-                let i=y*map.width+x
-                if let point=k.unproject(x:Double(x),y:Double(y),depth:map.depths[i]) {
-                    samples.append(.init(cameraPoint:point,confidence:map.confidence[i]))
-                    // Every sixth pixel feeds the floor map; low-confidence depth never does.
-                    if x%6==0, y%6==0, map.confidence[i]>=1, map.confidence[i]<=2 { mapPoints.append(pose.worldPoint(camera:point)) }
-                }
+        let k=map.intrinsics
+        // Shared with offline replay (simulation/run.py), so recordings score exactly what the app computes.
+        if recorder.isActive { recorder.append(RecordedFrame(timestamp:frame.timestamp,trackingNormal:true,pose:pose,floorY:floorY,target:lastTarget,depth:map)) }
+        let processed=DepthFrameProcessor.process(map,pose:pose,floorY:floorY)
+        let distances=processed.distances
+        let target=lastTarget?.observation(pose:pose,now:frame.timestamp)
+        if let floorY { grid.integrate(points:processed.mapPoints,floorY:floorY,camera:pose.position) }
+        // A pointing goal is a fixed world point, so it needs no target in view. Otherwise route only
+        // to a target that is in view right now. Either way, a few times a second.
+        if let goal=routeGoal {
+            if floorY != nil, frame.timestamp-lastPlan>=0.4 {
+                lastPlan=frame.timestamp
+                lastHint=RouteHint.make(path:grid.route(from:pose.position,to:goal.point),pose:pose,target:goal.point,timestamp:frame.timestamp,label:goal.label)
             }
         }
-        let distances=DepthProjector.sectors(samples:samples,pose:pose,floorY:floorY)
-        let target=lastTarget?.observation(pose:pose,now:frame.timestamp)
-        if let floorY { grid.integrate(points:mapPoints,floorY:floorY,camera:pose.position) }
-        // Route only to a target that is in view right now, a few times a second.
-        if target == nil { lastHint=nil }
+        else if target == nil { lastHint=nil }
         else if let goal=lastTarget, floorY != nil, frame.timestamp-lastPlan>=0.4 {
             lastPlan=frame.timestamp
             lastHint=RouteHint.make(path:grid.route(from:pose.position,to:goal.position),pose:pose,target:goal.position,timestamp:frame.timestamp,label:goal.label)
@@ -205,7 +210,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
     }
     func sessionShouldAttemptRelocalization(_ session: ARSession) -> Bool { false }
     private func invalidate() {
-        lastTarget=nil; floorY=nil; grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; generation += 1
+        lastTarget=nil; floorY=nil; grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil; generation += 1
         let epoch=sessionEpoch
         DispatchQueue.main.async { self.onInvalidated?(epoch) }
     }
@@ -214,33 +219,25 @@ final class ARPerception: NSObject, ARSessionDelegate {
     func session(_ session: ARSession,didFailWithError error: Error) { invalidate(); publishStatus("AR error: \(error.localizedDescription)") }
 }
 
-private struct DepthCopy {
-    let width: Int,height: Int,depths: [Double],confidence: [UInt8]
-    init?(_ data: ARDepthData) {
+extension DepthFrame {
+    /// Copies ARKit's Float32 depth and confidence maps; intrinsics are scaled to the depth resolution.
+    init?(_ data: ARDepthData, camera: ARCamera) {
         let map=data.depthMap
         guard CVPixelBufferGetPixelFormatType(map)==kCVPixelFormatType_DepthFloat32,let confidenceMap=data.confidenceMap else { return nil }
-        width=CVPixelBufferGetWidth(map); height=CVPixelBufferGetHeight(map)
+        let width=CVPixelBufferGetWidth(map), height=CVPixelBufferGetHeight(map)
         guard CVPixelBufferGetWidth(confidenceMap)==width,CVPixelBufferGetHeight(confidenceMap)==height else { return nil }
         CVPixelBufferLockBaseAddress(map,.readOnly); CVPixelBufferLockBaseAddress(confidenceMap,.readOnly)
         defer { CVPixelBufferUnlockBaseAddress(map,.readOnly); CVPixelBufferUnlockBaseAddress(confidenceMap,.readOnly) }
         guard let base=CVPixelBufferGetBaseAddress(map),let confidenceBase=CVPixelBufferGetBaseAddress(confidenceMap) else { return nil }
-        var values:[Double]=[]; var confidences:[UInt8]=[]; values.reserveCapacity(width*height); confidences.reserveCapacity(width*height)
+        var values:[Float]=[]; var confidences:[UInt8]=[]; values.reserveCapacity(width*height); confidences.reserveCapacity(width*height)
         for y in 0..<height {
             let row=base.advanced(by:y*CVPixelBufferGetBytesPerRow(map)).assumingMemoryBound(to:Float.self)
             let confidenceRow=confidenceBase.advanced(by:y*CVPixelBufferGetBytesPerRow(confidenceMap)).assumingMemoryBound(to:UInt8.self)
-            for x in 0..<width { values.append(Double(row[x])); confidences.append(confidenceRow[x]) }
+            for x in 0..<width { values.append(row[x]); confidences.append(confidenceRow[x]) }
         }
-        depths=values; confidence=confidences
-    }
-    func medianDepth(x:Double,y:Double)->Double? {
-        guard x.isFinite,y.isFinite,x>=0,y>=0,x<Double(width),y<Double(height) else { return nil }
-        var values:[Double]=[]
-        for yy in max(0,Int(y)-2)...min(height-1,Int(y)+2) {
-            for xx in max(0,Int(x)-2)...min(width-1,Int(x)+2) {
-                let i=yy*width+xx,value=depths[i]
-                if confidence[i]>=1,confidence[i]<=2,value.isFinite,value>0,value<=4 { values.append(value) }
-            }
-        }
-        guard values.count>=3 else { return nil }; values.sort(); return values[values.count/2]
+        let raw=camera.intrinsics
+        let k=CameraIntrinsics(fx:Double(raw.columns.0.x),fy:Double(raw.columns.1.y),cx:Double(raw.columns.2.x),cy:Double(raw.columns.2.y))
+            .scaled(x:Double(width)/Double(camera.imageResolution.width),y:Double(height)/Double(camera.imageResolution.height))
+        self.init(width:width,height:height,depths:values,confidence:confidences,intrinsics:k)
     }
 }

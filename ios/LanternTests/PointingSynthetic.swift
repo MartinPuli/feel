@@ -10,12 +10,17 @@ import FeelCore
 /// Vision's corner order only: not real lighting, blur, hands or tape.
 struct PointingSynthetic {
     struct Failure: Error, CustomStringConvertible { let description: String }
-    enum Expect { case cell(PuckCell, codes: Int), uprightRejected, noFingertip }
+    enum Expect { case cell(PuckCell, codes: Int), uprightRejected, noFingertip, twoFingers(column: Int?) }
+    static let black=CGColor(gray:0.05,alpha:1), blue=CGColor(red:0.1,green:0.3,blue:0.85,alpha:1)
     struct Scenario {
         let name: String, tip: PuckCell?, angle: Double, hide: Set<String>, format: OSType, tipColor: CGColor, expect: Expect
+        /// Second fingertip as an offset (mm) from the first, and its tape; band radius in mm.
+        let second: PlanePoint?, secondColor: CGColor, tipRadius: Double
         init(_ name: String, tip: PuckCell?, angle: Double = 180, hide: Set<String> = [], format: OSType = kCVPixelFormatType_32BGRA,
-             tipColor: CGColor = CGColor(gray:0.05,alpha:1), expect: Expect) {
+             tipColor: CGColor = PointingSynthetic.black, second: PlanePoint? = nil, secondColor: CGColor = PointingSynthetic.blue,
+             tipRadius: Double = 6, expect: Expect) {
             self.name=name; self.tip=tip; self.angle=angle; self.hide=hide; self.format=format; self.tipColor=tipColor; self.expect=expect
+            self.second=second; self.secondColor=secondColor; self.tipRadius=tipRadius
         }
     }
     static let scenarios: [Scenario] = {
@@ -29,6 +34,11 @@ struct PointingSynthetic {
             Scenario("ARKit YCbCr buffer, C4 B3",tip:PuckCell(column:4,band:3),format:kCVPixelFormatType_420YpCbCr8BiPlanarFullRange,expect:.cell(PuckCell(column:4,band:3),codes:3)),
             Scenario("fingers up: gate rejects",tip:PuckCell(column:3,band:2),angle:90,expect:.uprightRejected),
             Scenario("no finger",tip:nil,expect:.noFingertip),
+            // Two fingers laid along a column (the hand comes in from the side) ask for a route.
+            Scenario("two fingers, black + blue, column 2",tip:PuckCell(column:2,band:2),second:PlanePoint(0,16),expect:.twoFingers(column:2)),
+            Scenario("two fingers, both black, apart, column 5",tip:PuckCell(column:5,band:2),second:PlanePoint(1,18),secondColor:PointingSynthetic.black,expect:.twoFingers(column:5)),
+            Scenario("two fingers, both black, pressed together, column 4",tip:PuckCell(column:4,band:2),second:PlanePoint(0,13),secondColor:PointingSynthetic.black,tipRadius:7,expect:.twoFingers(column:4)),
+            Scenario("two fingers straddling columns: no column",tip:PuckCell(column:3,band:3),second:PlanePoint(-16,0),expect:.twoFingers(column:nil)),
         ]
         return list
     }()
@@ -45,7 +55,7 @@ struct PointingSynthetic {
     func require<T>(_ value: T?, _ what: String) throws -> T { guard let value else { throw Failure(description:what) }; return value }
 
     /// The sheet drawn flat; CG's bottom-left origin is (sheetMinU, sheetMinV), v up.
-    func sheetImage(tip: PlanePoint?, hide: Set<String>, tipColor: CGColor) throws -> CGImage {
+    func sheetImage(tip: PlanePoint?, hide: Set<String>, tipColor: CGColor, second: PlanePoint? = nil, secondColor: CGColor = PointingSynthetic.blue, radius: Double = 6) throws -> CGImage {
         let L=PuckBackLayout.self
         let w=Int((L.sheetMaxU-L.sheetMinU)*pxPerMM), h=Int((L.sheetMaxV-L.sheetMinV)*pxPerMM)
         let ctx=try require(CGContext(data:nil,width:w,height:h,bitsPerComponent:8,bytesPerRow:0,space:CGColorSpaceCreateDeviceRGB(),
@@ -62,11 +72,10 @@ struct PointingSynthetic {
             let s=L.codeSize/2
             ctx.draw(try qrSymbol(code.payload),in:rect(code.centerU-s,L.codeCenterV-s,code.centerU+s,L.codeCenterV+s))
         }
-        if let tip {
-            // A skin-coloured finger coming in from the side, tape on its tip.
-            ctx.setFillColor(CGColor(red:0.85,green:0.62,blue:0.5,alpha:1)); ctx.fill(rect(tip.x,tip.y-7,L.sheetMaxU+1,tip.y+7))
-            ctx.setFillColor(tipColor); ctx.fillEllipse(in:rect(tip.x-6,tip.y-6,tip.x+6,tip.y+6))
-        }
+        // Skin-coloured fingers coming in from the side, tape on their tips.
+        let fingers=[tip.map { ($0,tipColor) },second.map { ($0,secondColor) }].compactMap { $0 }
+        for (p,_) in fingers { ctx.setFillColor(CGColor(red:0.85,green:0.62,blue:0.5,alpha:1)); ctx.fill(rect(p.x,p.y-7,L.sheetMaxU+1,p.y+7)) }
+        for (p,color) in fingers { ctx.setFillColor(color); ctx.fillEllipse(in:rect(p.x-radius,p.y-radius,p.x+radius,p.y+radius)) }
         return try require(ctx.makeImage(),"sheet image")
     }
 
@@ -106,7 +115,9 @@ struct PointingSynthetic {
     }
 
     func frame(for s: Scenario) throws -> CVPixelBuffer {
-        try cameraFrame(try sheetImage(tip:s.tip.map(PuckBackLayout.center(of:)),hide:s.hide,tipColor:s.tipColor),view(angle:s.angle),format:s.format)
+        let tip=s.tip.map(PuckBackLayout.center(of:))
+        let second=tip.flatMap { t in s.second.map { PlanePoint(t.x+$0.x,t.y+$0.y) } }
+        return try cameraFrame(try sheetImage(tip:tip,hide:s.hide,tipColor:s.tipColor,second:second,secondColor:s.secondColor,radius:s.tipRadius),view(angle:s.angle),format:s.format)
     }
 
     /// Nil if the observation matches the expectation, else what went wrong.
@@ -125,6 +136,11 @@ struct PointingSynthetic {
         case .noFingertip:
             if o.gate?.ok != true { return "gate \(o.gate?.reason ?? "no fit")" }
             if o.fingertip != nil { return "phantom fingertip at \(o.fingertip!)" }
+        case .twoFingers(let column):
+            if o.gate?.ok != true { return "gate \(o.gate?.reason ?? "no fit")" }
+            if o.fingers != 2 { return "saw \(o.fingers) finger(s)" }
+            if o.routeColumn != column { return "column \(String(describing:o.routeColumn)), expected \(String(describing:column))" }
+            if o.cell != nil { return "two fingers still produced a cell" }
         }
         return nil
     }

@@ -46,6 +46,8 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationLandscapeRight]
         UIRequiresFullScreen: true
         ITSAppUsesNonExemptEncryption: false
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
     dependencies:
       - package: FeelCore
       - sdk: ARKit.framework

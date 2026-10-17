@@ -1,0 +1,92 @@
+# Replay harness: score the pin grid against labelled depth over time
+
+Feeds the same depth recordings through the production pipeline again and again, then checks what the pins were commanded to do against labels you wrote:
+
+```
+.feelrec frames ──► DepthFrameProcessor (FeelCore, same code as the app)
+                ──► LanternModel's 10 Hz tick → TactileEncoder → 9-byte packet   (feel-replay session)
+                ──► production C++ controller: decoder, watchdog, tap            (firmware/build/feel-sim)
+                ──► score against labelled windows → timeline, summary, report.html
+```
+
+```sh
+python3 simulation/run.py                    # build, run every scenario, write simulation/out/report.html
+python3 simulation/run.py --repeat 3         # also require identical output on every run
+python3 simulation/run.py --watch            # rebuild and rerun whenever code, scenarios or recordings change
+python3 simulation/run.py --update-baselines # accept the current timelines as the regression baseline
+python3 simulation/run.py simulation/scenarios/find-door.json   # one scenario
+```
+
+Open `simulation/out/report.html`. It shows a band-per-column heatmap over time with label disagreements marked, and a scrubber that puts the depth frame each tick used next to the 7 × 4 pin grid it produced. Exit status is non-zero if a scenario fails or output is nondeterministic. Scenarios with `knownIssue` report `KNOWN` instead of failing. A changed baseline is reported, not failed.
+
+The Swift tests are in `ios/Shared/FeelCore/Tests/FeelSimTests`. They need full Xcode for XCTest: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test`.
+
+## What is and is not modelled
+
+| Real | Modelled or absent |
+|---|---|
+| Depth step, encoder, packet bytes, sequence numbers, staleness and tracking gates | Tick timing: 10 Hz, first tick 50 ms after the first frame, frames usable 20 ms after capture |
+| Firmware decoder, 500 ms watchdog, effective highlight and tap | Servo motion, torque, friction, power sag, and how it **feels** |
+| Recorded detections (from the phone) are replayed exactly | The detector is never re-run. Synthetic detections use ARPerception's cadence (≥ 0.35 s, one in flight) with a configurable latency |
+| | Point-to-describe freezing, direction arrows, teammate (UWB) targets, BLE radio |
+
+Synthetic scenes are ideal geometry: a floor at y = 0, boxes and vertical cylinders, iPhone wide-camera intrinsics (±33.5° horizontal view), and optional Gaussian noise and random outliers. They are not a model of real LiDAR behaviour on glass, black surfaces or edges. That is what phone recordings are for.
+
+## Record a real walk on the iPhone
+
+1. In Lantern, open the live controls and turn on **Record for replay → Record depth**. Recording stops when sensing stops. It saves depth, confidence, pose, floor height and the cached detection, and **no camera image**. The rate is about 2.5 MB/s, capped at 1.5 GB (about ten minutes).
+2. Walk the course. Note roughly when things happen (for example "door on the right at about 6 s"), or film the walk on a second phone for labelling.
+3. Copy the files off the phone, either from **Files → On My iPhone → FEEL → Recordings** (AirDrop to the Mac) or with:
+   ```sh
+   xcrun devicectl device copy from --device <name|udid> --domain-type appDataContainer \
+     --domain-identifier org.feel.hackharvard.lantern --source Documents/Recordings --destination simulation/recordings
+   ```
+   `*.feelrec` in `simulation/recordings/` is git-ignored. Do not commit personal sensor recordings.
+4. Run once with no labels to see the timeline, then write labels from the report's time axis:
+   ```json
+   {
+     "title": "Hallway to room 101",
+     "recording": "../recordings/feel-2026-10-17T15-02-11Z.feelrec",
+     "expect": [
+       {"from": 4.0, "to": 6.5, "columns": [5, 6], "bands": [2, 3], "label": "doorframe on the right"},
+       {"from": 8.0, "to": 9.0, "columns": "all", "band": 0, "label": "open lobby"},
+       {"from": 6.0, "to": 7.5, "highlight": 5, "label": "door taps column 5"}
+     ],
+     "pass": {"minAccuracy": 0.9}
+   }
+   ```
+   Save it in `simulation/scenarios/`. A scenario whose recording is missing is skipped, not failed.
+
+## Scenario format
+
+- `scene` (synthetic) or `recording` (a path relative to the scenario file).
+  - Scene fields: `duration`, `path` keyframes `{t, x, z, yaw}` (yaw 0 faces −z, positive turns right), `cameraHeight` (default 1.2), `pitch`, `objects` (`box` with `min`/`max`, or `cylinder` with `center` [x, z], `radius`, `height`; optional `velocity` [vx, vz], `from`, `to`), `target` (`position`, `label`, `halfWidth`, `from`, `to`, `period`, `latency`), `sensor` (`noise`, `outlierRate`, `outlierConfidence`, `seed`), `trackingLost` and `frameGaps` (`[[from, to]]`), `floorCalibrated`.
+- `expect`: windows `{from, to}` with any of the following:
+  - `columns` (list or `"all"`) plus `band` or `bands` (allowed values; 0 means the pin is down)
+  - `highlight` (a column, or `null` for none)
+  - `state` (the phone's guidance state)
+  - `source: "phone"` checks the packet the phone sent instead of what the firmware applied
+  - `grace` skips the first seconds of the window
+- `faults.packetLoss`: `[{from, to, rate}]` with `faults.seed`. A dropped packet becomes a firmware `TICK`, so the watchdog runs.
+- `replay`: `tickOffset`, `latency`, `tail` (seconds).
+- `pass`: `minAccuracy` (default 0.95, applied to **every** window on its own) and optional `maxFlicker`.
+- `knownIssue`: text. A failure is then reported as `KNOWN` and does not fail the run.
+
+The synthetic labels were derived from geometry before running, not fitted to the output. For a wall at distance D, a column's range is D divided by the cosine of its innermost bearing. Each window leaves out ±0.35 s around every predicted transition.
+
+## Metrics
+
+- **Label agreement**: share of (tick × column) checks inside labelled windows that match.
+- **Phantom / missed**: checks where a labelled-clear column showed a pin, or a labelled obstacle column showed none.
+- **Live band changes per column per second**: flicker between consecutive live ticks. Going neutral on a fault does not count.
+- **Modelled frame age**: how old the depth frame behind each live command was. This follows from the simulated tick phase; it is not a phone measurement.
+- **Deterministic / baseline**: identical output across `--repeat` runs, and a diff against `simulation/baselines/`.
+
+## Findings from the shipped synthetic scenarios (October 17)
+
+These are software findings on idealised scenes. None of them has been confirmed on the phone.
+
+1. **Doorways read as blocked.** The obstacle height window is 0.6–2.1 m. A standard 2.03 m door head is inside it, so the centre of an open door shows band 3 at 2 m (`doorway-with-lintel`).
+2. **The tap can drop out when detection is slow.** A detection counts for 0.5 s. A new one starts at most every ~0.4 s at 10 Hz. With 0.2 s inference, the tap misses about a quarter of ticks (`find-door-slow-detector`); with 0.1 s it is steady (`find-door`).
+3. **One stray pixel raises a pin.** Each column takes the single nearest medium- or high-confidence sample. At an outlier rate of 2 in 10,000 pixels, an empty room flickers at about 1.4 changes per column per second (`lidar-outliers`).
+4. **The outer columns are nearly blind.** The camera sees ±33.5° but columns 0 and 6 span 32.1–45°, so they see a 1.4° sliver. A person beyond about 1.4 m to the side at 1.5 m distance is invisible (`person-crossing`).

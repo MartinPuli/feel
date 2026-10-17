@@ -221,7 +221,7 @@ final class PointingControllerTests: XCTestCase {
         var c=controller()
         _=run(&c,[obs(1.4),obs(1.9)])
         XCTAssertEqual(c.tick(now:2.4),[])
-        XCTAssertEqual(c.tick(now:2.6),[.released]); XCTAssertNil(c.frozenOutput(sequence:1))
+        XCTAssertEqual(c.tick(now:2.6),[.released(nil)]); XCTAssertNil(c.frozenOutput(sequence:1))
     }
     func testFlickerIsIgnoredSteadyCellDescribedOnce() {
         var c=controller()
@@ -243,5 +243,116 @@ final class PointingDescriberTests: XCTestCase {
         let s=CachedScene(timestamp:1,pose:.identity,tracking:true,distances:[nil,1.2,nil,nil,nil,nil,nil],target:t)
         XCTAssertEqual(PointingDescriber.describe(PuckCell(column:1,band:3),in:s,targetName:"Possible door"),
                        "Left: Possible door, 2.1 meters. Nearest reading 1.2 meters. The raised pin is closer than where you're pointing.")
+    }
+}
+
+final class TwoFingerTests: XCTestCase {
+    func disc(_ colors: inout [FingertipMarker.Color?], width: Int, cx: Int, cy: Int, r: Int, color: FingertipMarker.Color) {
+        for y in (cy-r)...(cy+r) { for x in (cx-r)...(cx+r) where (x-cx)*(x-cx)+(y-cy)*(y-cy)<=r*r { colors[y*width+x]=color } }
+    }
+    func reading(_ discs: [(Int,Int,Int,FingertipMarker.Color)]) -> FingerReading {
+        var colors=[FingertipMarker.Color?](repeating:nil,count:80*60)
+        for d in discs { disc(&colors,width:80,cx:d.0,cy:d.1,r:d.2,color:d.3) }
+        return FingerCounter.read(FingertipMarker.blobs(colors,width:80,height:60,minU:0,minV:0,step:1))
+    }
+    func testOneRoundBandIsOneFinger() { XCTAssertEqual(reading([(30,30,6,.dark)]),.one(PlanePoint(30,30))) }
+    func testBlackAndBlueTouchingStaySeparate() {
+        guard case .two(let a,let b)=reading([(30,22,7,.dark),(30,36,7,.colored)]) else { return XCTFail() }
+        XCTAssertEqual(Set([a.y,b.y].map { $0.rounded() }),[22,36])
+    }
+    func testSameColourPressedTogetherReadsAsTwo() {
+        guard case .two(let a,let b)=reading([(30,23,7,.dark),(30,36,7,.dark)]) else { return XCTFail("merged blob not split") }
+        XCTAssertEqual(a.x,30,accuracy:0.5); XCTAssertEqual(abs(a.y-b.y),13,accuracy:4)
+    }
+    func testFarStrayBlobIgnored() { if case .one=reading([(10,30,6,.dark),(70,30,5,.dark)]) {} else { XCTFail() } }
+    func testColourClasses() {
+        XCTAssertEqual(FingertipMarker.color(r:0.05,g:0.05,b:0.05),.dark)
+        XCTAssertEqual(FingertipMarker.color(r:0.1,g:0.3,b:0.85),.colored)
+        XCTAssertNil(FingertipMarker.color(r:0.85,g:0.62,b:0.5))
+    }
+    func obs(_ a: PlanePoint?, _ b: PlanePoint? = nil, t: Double = 1) -> PointingObservation {
+        .init(timestamp:t,codesSeen:3,gate:.init(faceOn:true,upright:true,closeEnough:true),fingertip:a,method:a == nil ? nil : .marker,secondTip:b)
+    }
+    func testRouteColumnNeedsFingersAlongTheColumn() {
+        let c2=PuckBackLayout.center(of:PuckCell(column:2,band:2))
+        let along=obs(c2,PlanePoint(c2.x+3,c2.y+16)), across=obs(c2,PlanePoint(c2.x-16,c2.y))
+        XCTAssertEqual(along.fingers,2); XCTAssertEqual(along.routeColumn,2); XCTAssertNil(along.cell)
+        XCTAssertNil(across.routeColumn)
+        XCTAssertEqual(obs(c2).routeColumn,nil); XCTAssertEqual(obs(c2).cell,PuckCell(column:2,band:2))
+        XCTAssertEqual(obs(nil,c2).fingers,0)
+    }
+}
+
+final class PointingRouterTests: XCTestCase {
+    let ahead=CameraPose(position:Vector3(1,1.2,2))
+    func scene(_ distances: [Double?], target: TargetObservation? = nil, pose: CameraPose? = nil) -> CachedScene {
+        CachedScene(timestamp:10,pose:pose ?? ahead,tracking:true,distances:distances,target:target)
+    }
+    func testWorldPointFollowsHeading() throws {
+        let p=try XCTUnwrap(PointingRouter.worldPoint(bearing:0,distance:2,pose:ahead))
+        XCTAssertEqual(p.x,1,accuracy:1e-9); XCTAssertEqual(p.z,0,accuracy:1e-9)          // ARKit forward is -z
+        let right=try XCTUnwrap(PointingRouter.worldPoint(bearing:90,distance:2,pose:ahead))
+        XCTAssertEqual(right.x,3,accuracy:1e-9); XCTAssertEqual(right.z,2,accuracy:1e-9)
+        // Facing +x (turned 90° right): straight ahead is +x.
+        let turned=CameraPose(position:.zero,right:Vector3(0,0,1),up:Vector3(0,1,0),back:Vector3(-1,0,0))
+        let q=try XCTUnwrap(PointingRouter.worldPoint(bearing:0,distance:3,pose:turned))
+        XCTAssertEqual(q.x,3,accuracy:1e-9); XCTAssertEqual(q.z,0,accuracy:1e-9)
+    }
+    func testTargetInColumnIsTheGoal() {
+        let t=TargetObservation(bearingDegrees:-19,distance:2.5,timestamp:10,label:"Door candidate",halfWidthDegrees:8)
+        guard case .route(let r,let spoken)=PointingRouter.plan(column:1,scene:scene([nil,1.5,nil,nil,nil,nil,nil],target:t),targetName:"Possible door") else { return XCTFail() }
+        XCTAssertTrue(r.toTarget); XCTAssertEqual(r.distance,2.5)
+        let expected=PointingRouter.worldPoint(bearing:-19,distance:2.5,pose:ahead)!
+        XCTAssertEqual(r.goal.x,expected.x,accuracy:1e-9); XCTAssertEqual(r.goal.z,expected.z,accuracy:1e-9)
+        XCTAssertEqual(spoken,"Route set to possible door, left, 2.5 meters. Lower the puck to start.")
+    }
+    func testObstacleStopsShort() {
+        guard case .route(let r,let spoken)=PointingRouter.plan(column:4,scene:scene([nil,nil,nil,nil,3,nil,nil]),targetName:nil) else { return XCTFail() }
+        XCTAssertFalse(r.toTarget); XCTAssertEqual(r.distance,2.5)
+        XCTAssertEqual(spoken,"Route set slightly right, about 2.5 meters, stopping short of what's there. Lower the puck to start.")
+    }
+    func testNothingMeasuredOrTooCloseRefuses() {
+        if case .route=PointingRouter.plan(column:3,scene:scene(Array(repeating:nil,count:7)),targetName:nil) { XCTFail("routed into the unknown") }
+        // 1.7 m reading → goal 1.2 m: not beyond the guide's 1 m arrival + 0.3 m, so no route.
+        if case .route=PointingRouter.plan(column:3,scene:scene([nil,nil,nil,1.7,nil,nil,nil]),targetName:nil) { XCTFail("route would arrive at once") }
+        if case .route=PointingRouter.plan(column:3,scene:scene([nil,nil,nil,1.9,nil,nil,nil]),targetName:nil) {} else { XCTFail("1.4 m goal should route") }
+    }
+}
+
+final class TwoFingerControllerTests: XCTestCase {
+    func run(_ c: inout PointingController, _ o: [PointingObservation]) -> [PointingEvent] {
+        o.flatMap { c.update($0,targetName:nil) { cell,s in PointingDescriber.describe(cell,in:s) } }
+    }
+    func armed() -> PointingController {
+        var c=PointingController()
+        for i in 0...20 { let t=Double(i)/10; c.record(CachedScene(timestamp:t,pose:CameraPose(position:Vector3(0,1.2,0)),tracking:true,distances:[nil,nil,2.5,1.2,nil,nil,nil],target:nil)) }
+        _=run(&c,[o(1.4,nil),o(1.9,nil)])
+        return c
+    }
+    func o(_ t: Double, _ column: Int?, single: Bool = false) -> PointingObservation {
+        let tip=column.map { PuckBackLayout.center(of:PuckCell(column:$0,band:2)) }
+        return .init(timestamp:t,codesSeen:3,gate:.init(faceOn:true,upright:true,closeEnough:true),fingertip:tip,method:tip == nil ? nil : .marker,
+                     secondTip:single ? nil : tip.map { PlanePoint($0.x,$0.y+16) })
+    }
+    func testTwoFingersHeldSetRouteOnceAndHandItOverOnRelease() {
+        var c=armed()
+        let events=run(&c,[o(2.0,2),o(2.3,2),o(2.6,2),o(2.8,2)])
+        let routes=events.compactMap { e -> PointingRoute? in if case .routeSet(let r,_)=e { return r }; return nil }
+        XCTAssertEqual(routes.map(\.column),[2]); XCTAssertEqual(routes.first?.distance ?? 0,2.0,accuracy:1e-9)
+        XCTAssertEqual(c.pendingRoute?.column,2)
+        XCTAssertEqual(c.tick(now:3.5),[.released(routes.first)]); XCTAssertNil(c.pendingRoute)
+    }
+    func testTooShortHoldDoesNothingAndOneFingerStillDescribes() {
+        var c=armed()
+        XCTAssertEqual(run(&c,[o(2.0,2),o(2.4,2)]).count,0)          // 0.4 s < 0.6 s
+        let events=run(&c,[o(2.5,3,single:true),o(2.9,3,single:true)])
+        if case .described(let cell,_)=events.last { XCTAssertEqual(cell,PuckCell(column:3,band:2)) } else { XCTFail("\(events)") }
+    }
+    func testRefusedRouteKeepsPointing() {
+        var c=armed()
+        let events=run(&c,[o(2.0,5),o(2.6,5)])                       // column 5: nothing measured
+        if case .refused=events.last {} else { XCTFail("\(events)") }
+        if case .armed=c.phase {} else { XCTFail("phase \(c.phase)") }
+        XCTAssertNil(c.pendingRoute)
     }
 }

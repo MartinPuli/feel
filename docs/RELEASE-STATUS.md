@@ -1,3 +1,13 @@
+> Replay harness (October 17): `python3 simulation/run.py` replays labelled depth
+> recordings (12 synthetic scenes now; iPhone recordings via the new Lantern
+> **Record depth** toggle) through the shared FeelCore depth step, the production
+> encoder and the production C++ controller, and scores the commanded pin grid over
+> time. 9 scenes pass and 3 KNOWN issues are reported: a 2.03 m door head reads as
+> an obstacle, the tap drops out with ≥ 0.15 s detector latency, and single LiDAR
+> outliers raise pins. 8 FeelSim and 148 FeelCore tests pass; Lantern builds and its
+> 40 unit tests pass (1 skipped). No phone recording has been captured or replayed yet.
+> [Harness](../simulation/README.md).
+
 > Direction arrows (October 17, supersedes the repeating guidance wave): a V hand sign
 > requests one tactile arrow along an A* route over a local LiDAR floor map to the
 > target in view. Later arrows play only on noticeable route changes or a repeated

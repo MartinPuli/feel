@@ -179,7 +179,7 @@ public struct DirectionGuide: Sendable {
             return (nil,[.noTarget])
         }
         guard active else { return (nil,[]) }
-        guard let fresh else {
+        guard fresh != nil else {
             if now-lastFresh>=lostSeconds-1e-6 { reset(); return (nil,[.lost]) }
             return (nil,[])
         }

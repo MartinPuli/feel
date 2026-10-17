@@ -493,6 +493,15 @@ private struct LiveSetup: View {
                     .accessibilityIdentifier("calibrationStatus")
 
             }
+            FeelSection(title: "Record for replay", systemImage: "record.circle") {
+                Toggle("Record depth", isOn: $model.recordingDepth)
+                    .font(FeelTypography.label)
+                    .accessibilityIdentifier("recordDepthToggle")
+                Text(model.recordingStatus ?? "Saves LiDAR depth, pose and detections (no camera image) to Files › On My iPhone › FEEL › Recordings, for scoring the pins offline with simulation/run.py. About 2.5 MB per second.")
+                    .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("recordingStatus")
+            }
             FeelSection(title: "Find a target", systemImage: "scope") {
                 Picker("Find", selection: $model.finder) {
                     ForEach(FinderMode.allCases) { mode in

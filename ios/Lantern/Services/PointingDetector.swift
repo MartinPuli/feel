@@ -24,34 +24,38 @@ final class PointingDetector {
             sheet+=corners
             image+=[code.topLeft,code.topRight,code.bottomRight,code.bottomLeft].map { PlanePoint(Double($0.x)*width,(1-Double($0.y))*height) }
         }
-        func result(_ gate: PointingGateResult?=nil,_ tip: PlanePoint?=nil,_ method: FingertipMethod?=nil) -> PointingObservation {
-            .init(timestamp:timestamp,codesSeen:seen.count,gate:gate,fingertip:tip,method:method)
+        func result(_ gate: PointingGateResult?=nil,_ tip: PlanePoint?=nil,_ method: FingertipMethod?=nil,_ second: PlanePoint?=nil) -> PointingObservation {
+            .init(timestamp:timestamp,codesSeen:seen.count,gate:gate,fingertip:tip,method:method,secondTip:second)
         }
         guard !seen.isEmpty, let toImage=Homography.fit(from:sheet,to:image), let toSheet=toImage.inverse,
               let gate=PointingGate.evaluate(toImage,imageWidth:width) else { return result() }
         guard gate.ok else { return result(gate) }
-        if let tip=markerTip(pixelBuffer,toImage) { return result(gate,tip,.marker) }
+        switch markerReading(pixelBuffer,toImage) {
+        case .one(let tip): return result(gate,tip,.marker)
+        case .two(let a, let b): return result(gate,a,.marker,b)
+        case .none: break
+        }
         if useHandPoseFallback, let tip=handTip(handler,toSheet,width,height) { return result(gate,tip,.handPose) }
         return result(gate)
     }
 
-    /// Samples the sheet's pin area every `step` mm and takes the largest marker-coloured blob.
-    private func markerTip(_ buffer: CVPixelBuffer, _ toImage: Homography) -> PlanePoint? {
+    /// Samples the sheet's pin area every `step` mm, groups tape colours into blobs, counts fingers.
+    private func markerReading(_ buffer: CVPixelBuffer, _ toImage: Homography) -> FingerReading {
         let L=PuckBackLayout.self
         let w=Int(((L.searchMaxU-L.searchMinU)/step).rounded(.down))+1, h=Int(((L.searchMaxV-L.searchMinV)/step).rounded(.down))+1
-        guard let mask=PixelReader.read(buffer, { reader -> [Bool] in
-            var mask=[Bool](repeating:false,count:w*h)
+        guard let colors=PixelReader.read(buffer, { reader -> [FingertipMarker.Color?] in
+            var colors=[FingertipMarker.Color?](repeating:nil,count:w*h)
             for j in 0..<h { for i in 0..<w {
                 guard let p=toImage.apply(PlanePoint(L.searchMinU+Double(i)*step,L.searchMinV+Double(j)*step)),
                       let c=reader.rgb(x:Int(p.x.rounded()),y:Int(p.y.rounded())) else { continue }
-                mask[j*w+i]=FingertipMarker.isMarker(r:c.r,g:c.g,b:c.b)
+                colors[j*w+i]=FingertipMarker.color(r:c.r,g:c.g,b:c.b)
             } }
-            return mask
-        }) else { return nil }
-        return FingertipMarker.locate(mask,width:w,height:h,minU:L.searchMinU,minV:L.searchMinV,step:step)
+            return colors
+        }) else { return .none }
+        return FingerCounter.read(FingertipMarker.blobs(colors,width:w,height:h,minU:L.searchMinU,minV:L.searchMinV,step:step))
     }
 
-    /// Index fingertip of whichever detected hand points inside the pin grid.
+    /// Index fingertip of whichever detected hand points inside the pin grid (one finger only).
     private func handTip(_ handler: VNImageRequestHandler, _ toSheet: Homography, _ width: Double, _ height: Double) -> PlanePoint? {
         let request=VNDetectHumanHandPoseRequest(); request.maximumHandCount=2
         guard (try? handler.perform([request])) != nil else { return nil }

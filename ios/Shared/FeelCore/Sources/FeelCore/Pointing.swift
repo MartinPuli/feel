@@ -118,6 +118,12 @@ public enum PuckBackLayout {
         guard (0..<7).contains(c), (0..<4).contains(r) else { return nil }
         return PuckCell(column:c,band:UInt8(r+1))
     }
+    /// Column under a sheet u coordinate, ignoring the row.
+    public static func column(atU u: Double) -> Int? {
+        guard u.isFinite else { return nil }
+        let c=Int(floor((-u+3.5*columnPitch)/columnPitch))
+        return (0..<7).contains(c) ? c : nil
+    }
     /// Distance in mm from the point to the nearest edge of its cell (0 = on a boundary).
     public static func edgeMargin(at p: PlanePoint) -> Double? {
         guard let cell=cell(at:p) else { return nil }
@@ -159,20 +165,58 @@ public enum PointingGate {
     }
 }
 
-/// Fingertip marker: black, blue or green tape around the pointing fingertip.
+/// Fingertip marker: a short band of black, blue or green tape around each pointing fingertip.
+/// Index black and middle blue keeps two fingers apart even when they touch.
 public enum FingertipMarker {
     public static var minArea = 20, maxArea = 900   // samples at 1 mm spacing ≈ mm²
+    public enum Color: Equatable, Sendable { case dark, colored }
     /// Rejects white paper, grey print, skin and red/orange/yellow (skin-like hues).
-    public static func isMarker(r: Double, g: Double, b: Double) -> Bool {
+    public static func color(r: Double, g: Double, b: Double) -> Color? {
         let luma=0.299*r+0.587*g+0.114*b
-        if luma<0.2 { return true }
+        if luma<0.2 { return .dark }
         let hi=max(r,g,b), lo=min(r,g,b)
-        guard hi>=0.2, (hi-lo)/hi>=0.45 else { return false }
+        guard hi>=0.2, (hi-lo)/hi>=0.45 else { return nil }
         let hue: Double
         if hi == r { hue=60*(((g-b)/(hi-lo)).truncatingRemainder(dividingBy:6)) }
         else if hi == g { hue=60*((b-r)/(hi-lo)+2) } else { hue=60*((r-g)/(hi-lo)+4) }
         let h=hue<0 ? hue+360 : hue
-        return h>=90 && h<=270
+        return h>=90 && h<=270 ? .colored : nil
+    }
+    public static func isMarker(r: Double, g: Double, b: Double) -> Bool { color(r:r,g:g,b:b) != nil }
+
+    /// A connected patch of one tape colour, in sheet mm.
+    public struct Blob: Equatable, Sendable {
+        public let centroid: PlanePoint, area: Int, color: Color
+        /// Lengths of an equivalent uniform rectangle along and across its main axis, and that axis.
+        public let majorLength: Double, minorLength: Double, axis: PlanePoint
+    }
+    /// Same-colour 4-connected blobs within [minArea, maxArea], largest first. Sample (i, j) of the
+    /// `width`×`height` grid is at sheet point (minU + i·step, minV + j·step).
+    public static func blobs(_ colors: [Color?], width: Int, height: Int, minU: Double, minV: Double, step: Double) -> [Blob] {
+        guard width>0, height>0, colors.count == width*height else { return [] }
+        var seen=[Bool](repeating:false,count:colors.count), found: [Blob] = []
+        for start in colors.indices {
+            guard let color=colors[start], !seen[start] else { continue }
+            var blob=[start], k=0; seen[start]=true
+            while k<blob.count {
+                let i=blob[k]; k+=1
+                let x=i%width, y=i/width
+                for (nx,ny) in [(x-1,y),(x+1,y),(x,y-1),(x,y+1)] where nx>=0 && ny>=0 && nx<width && ny<height {
+                    let n=ny*width+nx
+                    if colors[n] == color && !seen[n] { seen[n]=true; blob.append(n) }
+                }
+            }
+            guard blob.count>=minArea, blob.count<=maxArea else { continue }
+            let pts=blob.map { PlanePoint(minU+step*Double($0%width),minV+step*Double($0/width)) }
+            let n=Double(pts.count), mx=pts.map(\.x).reduce(0,+)/n, my=pts.map(\.y).reduce(0,+)/n
+            let sxx=pts.map { ($0.x-mx)*($0.x-mx) }.reduce(0,+)/n, syy=pts.map { ($0.y-my)*($0.y-my) }.reduce(0,+)/n
+            let sxy=pts.map { ($0.x-mx)*($0.y-my) }.reduce(0,+)/n
+            let mid=(sxx+syy)/2, spread=(((sxx-syy)/2)*((sxx-syy)/2)+sxy*sxy).squareRoot()
+            let theta=0.5*atan2(2*sxy,sxx-syy)
+            found.append(Blob(centroid:PlanePoint(mx,my),area:blob.count,color:color,majorLength:(12*(mid+spread)).squareRoot(),
+                              minorLength:(12*max(0,mid-spread)).squareRoot(),axis:PlanePoint(cos(theta),sin(theta))))
+        }
+        return found.sorted { $0.area>$1.area }
     }
     /// Centroid of the largest 4-connected marker blob on a `width`×`height` grid whose sample (i, j)
     /// is at sheet point (minU + i·step, minV + j·step). Nil if the blob is missing, tiny or huge.
@@ -197,6 +241,26 @@ public enum FingertipMarker {
     }
 }
 
+/// One finger describes a cell; two fingers laid along a column ask for a route that way.
+public enum FingerReading: Equatable, Sendable {
+    case none, one(PlanePoint), two(PlanePoint, PlanePoint)
+}
+public enum FingerCounter {
+    /// Two separate taped tips are about a finger's width apart.
+    public static var pairDistance = 8.0...40.0
+    /// Two same-colour fingers pressed together merge into one long blob; a single band is roundish.
+    public static var mergedMinLength = 22.0, mergedMinAspect = 1.6
+    public static func read(_ blobs: [FingertipMarker.Blob]) -> FingerReading {
+        guard let a=blobs.first else { return .none }
+        if blobs.count>=2, pairDistance.contains(a.centroid.distance(to:blobs[1].centroid)) { return .two(a.centroid,blobs[1].centroid) }
+        if a.majorLength>=mergedMinLength, a.minorLength>0, a.majorLength/a.minorLength>=mergedMinAspect {
+            let half=(a.majorLength-a.minorLength)/2
+            return .two(PlanePoint(a.centroid.x+a.axis.x*half,a.centroid.y+a.axis.y*half),PlanePoint(a.centroid.x-a.axis.x*half,a.centroid.y-a.axis.y*half))
+        }
+        return .one(a.centroid)
+    }
+}
+
 public enum FingertipMethod: String, Codable, Sendable { case marker, handPose }
 /// One analysed camera frame.
 public struct PointingObservation: Equatable, Sendable {
@@ -205,11 +269,23 @@ public struct PointingObservation: Equatable, Sendable {
     public let gate: PointingGateResult?
     /// Fingertip on the sheet, mm.
     public let fingertip: PlanePoint?
+    /// The second fingertip when two fingers point.
+    public let secondTip: PlanePoint?
     public let method: FingertipMethod?
-    public init(timestamp: Double, codesSeen: Int, gate: PointingGateResult?, fingertip: PlanePoint?, method: FingertipMethod?) {
+    public init(timestamp: Double, codesSeen: Int, gate: PointingGateResult?, fingertip: PlanePoint?, method: FingertipMethod?, secondTip: PlanePoint? = nil) {
         self.timestamp=timestamp; self.codesSeen=codesSeen; self.gate=gate; self.fingertip=fingertip; self.method=method
+        self.secondTip=fingertip == nil ? nil : secondTip
     }
-    public var cell: PuckCell? { fingertip.flatMap(PuckBackLayout.cell(at:)) }
+    public var fingers: Int { fingertip == nil ? 0 : secondTip == nil ? 1 : 2 }
+    /// One finger: the cell under it.
+    public var cell: PuckCell? { secondTip == nil ? fingertip.flatMap(PuckBackLayout.cell(at:)) : nil }
+    /// Most sideways offset (mm) two fingertips may have and still mark one column.
+    public static var columnAlignment = 7.0
+    /// Two fingers laid along one column: that column. Nil when they straddle columns.
+    public var routeColumn: Int? {
+        guard let a=fingertip, let b=secondTip, abs(a.x-b.x)<=Self.columnAlignment else { return nil }
+        return PuckBackLayout.column(atU:(a.x+b.x)/2)
+    }
 }
 
 /// What the pins showed at one moment, enough to re-encode it.
@@ -246,15 +322,19 @@ public enum PointingEvent: Equatable, Sendable {
     case armed
     case described(PuckCell, String)
     case refused(String)
+    /// Two fingers held on a column: a route goal was set, with what to say.
+    case routeSet(PointingRoute, String)
     /// The cached scene got too old to describe.
     case expired
-    /// The puck was lowered.
-    case released
+    /// The puck was lowered; carries the route to start, if one was set.
+    case released(PointingRoute?)
 }
 
 public struct PointingController: Sendable {
     public enum Phase: Equatable, Sendable { case idle, armed(CachedScene), expired, refused }
     public var armSeconds = 0.5, releaseSeconds = 0.6, dwellSeconds = 0.4
+    /// Two fingers must hold a column a little longer, so the switch from one finger doesn't route.
+    public var twoFingerSeconds = 0.6
     /// The user chose 2–3 s; matches the app's 3 s rule for spoken scene descriptions.
     public var maxReferenceAge = 3.0
     public var maxHeadingChangeDegrees = 10.0
@@ -266,6 +346,9 @@ public struct PointingController: Sendable {
     public private(set) var lastObservation: PointingObservation?
     private var firstSeen: Double?, lastCodes: Double?, gateSince: Double?, lastGateOK: Double?
     private var dwellCell: PuckCell?, dwellSince: Double?, lastDescribed: PuckCell?
+    private var routeColumn: Int?, routeSince: Double?, lastRouted: Int?
+    /// Route set during this gesture, handed over when the puck is lowered.
+    public private(set) var pendingRoute: PointingRoute?
     private var trackedPose: (pose: CameraPose, time: Double)?
     public init() {}
     public var isActive: Bool { phase != .idle }
@@ -275,6 +358,7 @@ public struct PointingController: Sendable {
     }
     private mutating func clearGesture() {
         firstSeen=nil; lastCodes=nil; gateSince=nil; lastGateOK=nil; dwellCell=nil; dwellSince=nil; lastDescribed=nil
+        routeColumn=nil; routeSince=nil; lastRouted=nil; pendingRoute=nil
     }
     /// Feed every live perception frame (10 Hz).
     public mutating func record(_ scene: CachedScene) {
@@ -295,8 +379,9 @@ public struct PointingController: Sendable {
         return nil
     }
 
-    /// Feed every analysed camera frame. `describe` turns a cell and the cached scene into speech.
-    public mutating func update(_ o: PointingObservation, describe: (PuckCell, CachedScene) -> String) -> [PointingEvent] {
+    /// Feed every analysed camera frame. `describe` turns a cell and the cached scene into speech;
+    /// `targetName` is how to say the selected target in a route confirmation.
+    public mutating func update(_ o: PointingObservation, targetName: String? = nil, describe: (PuckCell, CachedScene) -> String) -> [PointingEvent] {
         let now=o.timestamp
         guard now.isFinite else { return [] }
         lastObservation=o
@@ -314,6 +399,20 @@ public struct PointingController: Sendable {
             if let reason=turnedOrUnknown(since:scene,now:now) { phase = .refused; events.append(.refused(reason)); break }
             phase = .armed(scene); events.append(.armed)
         case .armed(let scene):
+            if o.fingers == 2 {
+                dwellCell=nil; dwellSince=nil
+                guard let column=o.routeColumn else { routeColumn=nil; routeSince=nil; break }
+                if column != routeColumn { routeColumn=column; routeSince=now; break }
+                guard let since=routeSince, now-since>=twoFingerSeconds-1e-9, column != lastRouted else { break }
+                if let reason=turnedOrUnknown(since:scene,now:now) { phase = .refused; events.append(.refused(reason)); break }
+                lastRouted=column
+                switch PointingRouter.plan(column:column,scene:scene,targetName:targetName) {
+                case .route(let route, let spoken): pendingRoute=route; events.append(.routeSet(route,spoken))
+                case .refused(let reason): events.append(.refused(reason))
+                }
+                break
+            }
+            routeColumn=nil; routeSince=nil
             guard let cell=o.cell else { dwellCell=nil; dwellSince=nil; break }
             if cell != dwellCell { dwellCell=cell; dwellSince=now; break }
             guard let since=dwellSince, now-since>=dwellSeconds-1e-9, cell != lastDescribed else { break }
@@ -327,9 +426,9 @@ public struct PointingController: Sendable {
     public mutating func tick(now: Double) -> [PointingEvent] {
         guard phase != .idle || gateSince != nil || firstSeen != nil else { return [] }
         if let last=lastGateOK, now-last>releaseSeconds {
-            let wasActive=phase != .idle
+            let wasActive=phase != .idle, route=pendingRoute
             phase = .idle; clearGesture()
-            return wasActive ? [.released] : []
+            return wasActive ? [.released(route)] : []
         }
         if lastGateOK == nil, let last=lastCodes, now-last>releaseSeconds { clearGesture() }
         if case .armed(let scene)=phase, now-scene.timestamp>maxReferenceAge { phase = .expired; return [.expired] }
@@ -374,5 +473,53 @@ public enum PointingDescriber {
         var text="\(directions[c]): "+parts.joined(separator:". ")+"."
         if shown>0, shown != cell.band { text+=shown<cell.band ? " The raised pin is closer than where you're pointing." : " The raised pin is farther than where you're pointing." }
         return text
+    }
+}
+
+/// A route goal picked by two fingers on a column, anchored in the world so it stays right
+/// after the user turns or walks.
+public struct PointingRoute: Equatable, Sendable {
+    public let column: Int
+    /// World position (AR frame) to route to.
+    public let goal: Vector3
+    public let distance: Double
+    public let label: String
+    /// True when the goal is the selected target; false when it stops short of an obstacle reading.
+    public let toTarget: Bool
+}
+public enum PointingRouter {
+    public enum Plan: Equatable, Sendable { case route(PointingRoute, String), refused(String) }
+    /// Stop this far short of an obstacle reading. A goal must lie beyond the guide's arrival
+    /// distance plus `minMargin`, or the route would "arrive" as soon as it starts.
+    public static var standOff = 0.5, minMargin = 0.3
+    static var minGoal: Double { DirectionCue.arriveMeters+minMargin }
+    public static func bearing(ofColumn c: Int) -> Double { -45+(Double(c)+0.5)*90/7 }
+    /// A point `distance` metres away along `bearing` (degrees, + right) on the horizontal plane.
+    public static func worldPoint(bearing: Double, distance: Double, pose: CameraPose) -> Vector3? {
+        let f=Vector3(-pose.back.x,0,-pose.back.z), r=Vector3(pose.right.x,0,pose.right.z)
+        let fl=f.dot(f).squareRoot(), rl=r.dot(r).squareRoot()
+        guard pose.isValid, fl>1e-6, rl>1e-6, bearing.isFinite, distance.isFinite, distance>0 else { return nil }
+        let b=bearing * .pi/180
+        return pose.position+f*(cos(b)/fl)*distance+r*(sin(b)/rl)*distance
+    }
+    /// Where two fingers on `column` of the cached scene should route to, or why nowhere.
+    public static func plan(column c: Int, scene: CachedScene, targetName: String?) -> Plan {
+        guard (0..<7).contains(c), scene.distances.count == 7 else { return .refused("Lay two fingers along one column.") }
+        let way=PointingDescriber.directions[c].lowercased()
+        if let t=scene.target, t.valid(at:scene.timestamp), let span=t.columns, span.contains(c),
+           let goal=worldPoint(bearing:t.bearingDegrees,distance:t.distance,pose:scene.pose) {
+            let name=targetName ?? t.label
+            guard t.distance>minGoal else { return .refused("\(name) is already within reach. No route needed.") }
+            let route=PointingRoute(column:c,goal:goal,distance:t.distance,label:name,toTarget:true)
+            return .route(route,"Route set to \(name.lowercased()), \(way), \(PointingDescriber.meters(t.distance)). Lower the puck to start.")
+        }
+        guard let d=scene.distances[c], TactileGeometry.band(distance:d)>0 else {
+            return .refused("Nothing measured that way, so there's no destination. Pick a column with a raised pin.")
+        }
+        let reach=d-standOff
+        guard reach>minGoal else { return .refused("That's already close. No route needed.") }
+        guard let goal=worldPoint(bearing:bearing(ofColumn:c),distance:reach,pose:scene.pose) else { return .refused("I can't place that direction.") }
+        let route=PointingRoute(column:c,goal:goal,distance:reach,label:"\(way) obstacle",toTarget:false)
+        return .route(route,"Route set \(way), about \(PointingDescriber.meters(reach)), stopping short of what's there. Lower the puck to start.")
     }
 }

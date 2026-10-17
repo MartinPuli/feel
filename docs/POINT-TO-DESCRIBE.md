@@ -22,6 +22,26 @@ The user asks about a pin without speaking:
 3. Point at a cell with the other hand's taped fingertip and hold still for 0.4 s. The phone describes that cell, for example "Slightly left: Possible door, 2.1 meters. Nearest reading 1.2 meters."
 4. Move to another cell to hear about it. Lower the puck to return to live sensing.
 
+### Two fingers: ask for a route
+
+Lay two taped fingers **along one column** (wrist to fingers) and hold for 0.6 s. The phone sets a route goal in that direction and says so, for example "Route set to possible door, left, 2.5 meters. Lower the puck to start." When you lower the puck, the direction arrows guide you there, with a success chime when they start.
+
+- **Where the route goes:**
+  - If the selected target was in that column, the route goes to the target.
+  - Otherwise it goes in that column's direction and stops 0.5 m short of the obstacle reading.
+- **When the phone refuses:**
+  - Nothing measured in that column: "Pick a column with a raised pin". It won't route into the unknown.
+  - The goal would be inside the guide's 1 m arrival distance (plus 0.3 m): "No route needed".
+  - Arrows are turned off in settings.
+- The goal is a fixed point in the room, saved with where the phone was facing. It stays right after you turn or walk.
+- **Guidance ends when:**
+  - you arrive within 1 m;
+  - routes stop for 3 s;
+  - no route is found within 2 s of lowering the puck (failure tone);
+  - a V-sign request starts.
+- **Fingers across the grid don't count.** Two fingers side by side span about 1.5 columns, so they give no column. The readout says "lay them along one column".
+- **Hand-tracking fallback is one finger only.** Two fingers need tape.
+
 **Rules:**
 - The frozen scene expires 3 s after it was captured.
 - It is refused if the phone turned more than 10° since then, or lost tracking for more than a second.
@@ -36,7 +56,9 @@ The user asks about a pin without speaking:
    - The bare strip left at the wrist end keeps the zip-tie slots clear.
    - Four loops of tape under the corners are enough.
    - The sheet fits only the production chassis in CAD.md.
-3. **Tape the pointing fingertip** with black, blue or green tape. Red, orange and yellow look too much like skin to be detected.
+3. **Tape the pointing fingertips** with a short band (about 1 cm) of black, blue or green tape. Red, orange and yellow look too much like skin to be detected.
+   - **Use black on the index finger and blue on the middle finger.** Different colours stay apart even when the fingers touch.
+   - Two same-colour bands pressed together are split by the blob's length. Don't wrap tape lengthwise along a finger, or one finger can look like two.
    - Without tape, the app falls back to Apple's hand tracking, which is less accurate.
 
 The earlier four-corner sticker sheet is gone: its finger-end stickers would have covered pin cells.
@@ -63,6 +85,11 @@ All of these live in [`Pointing.swift`](../ios/Shared/FeelCore/Sources/FeelCore/
 | Allowed rotation from thumb-up | `PointingGate.rotationToleranceDegrees` | 35° |
 | Minimum size in the image (about 50 cm away) | `PointingGate.minWidthFraction` | 0.12 |
 | Accepted fingertip blob size | `FingertipMarker.minArea` / `maxArea` | 20 / 900 mm² |
+| How long two fingers must hold a column | `PointingController.twoFingerSeconds` | 0.6 s |
+| Two separate tips count as a pair at | `FingerCounter.pairDistance` | 8–40 mm |
+| Merged same-colour blob counts as two at | `FingerCounter.mergedMinLength` / `mergedMinAspect` | 22 mm / 1.6 |
+| Sideways offset allowed for "along a column" | `PointingObservation.columnAlignment` | 7 mm |
+| Route stops short of an obstacle by | `PointingRouter.standOff` | 0.5 m |
 
 The layout numbers in `PuckBackLayout` and in [`make_back_sheet.py`](../cad/production/markers/make_back_sheet.py) must change together.
 
@@ -70,8 +97,8 @@ The layout numbers in `PuckBackLayout` and in [`make_back_sheet.py`](../cad/prod
 
 | Check | Result |
 |---|---|
-| FeelCore unit tests (`swift test`): homography, layout, gate, marker colours, cache, state machine, descriptions, spans | 89 / 89 pass |
-| The real detector on 11 synthetic camera frames (`ios/scripts/pointing_harness.sh`, Mac Vision) | 11 / 11 pass; fingertip within 0.5 mm of the cell centre. Covers both hands, black and blue tape, one code visible, and ARKit's YCbCr buffer format |
+| FeelCore unit tests (`swift test`), including finger counting, column choice, route goals and refusals | 148 / 148 pass (all FeelCore, including the direction-arrow tests) |
+| The real detector on 15 synthetic camera frames (`ios/scripts/pointing_harness.sh`, Mac Vision) | 15 / 15 pass; one fingertip within 0.5 mm of the cell centre. Covers both hands, black and blue tape, one code visible, ARKit's YCbCr buffer format, black + blue fingers, two black fingers apart and pressed together, and fingers straddling columns (correctly no column) |
 | The printed sheet (rendered SVG) read by Vision and fitted with the app's own layout | 12 / 12 codes decode; printed geometry within 0.6 mm of the layout |
 | App build and unit tests on the iPhone 17 Pro simulator | Pass. The detector test is skipped there because the simulator can't run Vision's barcode reader; the Mac harness covers it |
 | A real iPhone, real print, real hand, real lighting | **Not run** |
@@ -81,4 +108,6 @@ The layout numbers in `PuckBackLayout` and in [`make_back_sheet.py`](../cad/prod
 - whether a blind user can find the pose without help;
 - whether the 3 s window is long enough in practice;
 - how shadows and glare affect tape detection;
-- how the phone's speech mixes with the assistant's.
+- how the phone's speech mixes with the assistant's;
+- whether a blind user can lay two fingers along a column by feel;
+- whether the route planner's floor map, built from what the camera has seen so far, reaches far enough for a route started 3 s after the scene.

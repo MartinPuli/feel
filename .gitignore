@@ -32,3 +32,7 @@ cad/viewer/mesh_*.js
 # Local, per-unit physical measurement records and supporting evidence
 firmware/production-measurements.local.json
 firmware/production-evidence/
+
+# Replay harness: generated output and personal sensor recordings (never commit recordings)
+simulation/out/
+simulation/recordings/*.feelrec
