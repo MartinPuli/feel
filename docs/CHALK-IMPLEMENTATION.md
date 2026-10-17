@@ -104,4 +104,4 @@ No new provider credential or third model is currently required. Physical LiDAR/
 
 ## Reference
 
-Chalk's [Evaluation quick start](https://docs.chalk.ai/docs/evaluations/quick-start) requires checking result row counts and task/scorer error columns even when the overall run succeeds. Feature definitions and resolvers are not prerequisites for this evaluation workflow. The installed SDK API is checked locally; deployment remains a separate unexecuted gate.
+Chalk's [Evaluation quick start](https://docs.chalk.ai/docs/evaluations/quick-start) requires checking result row counts and task/scorer error columns even when the overall run succeeds. The current [evaluation overview](https://docs.chalk.ai/docs/compute/evaluations), rechecked October 17, requires support enablement for Evaluations and the async Function queue, and an active deployment for a new environment. Read-only MCP inspection found no active deployment in Feel; the existing smoke run remains unresolved. This supersedes the earlier conclusion that deployment was unnecessary. See the [applied assessment](CHALK-AGENT-ASSESSMENT.md).
