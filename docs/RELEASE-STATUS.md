@@ -5,6 +5,41 @@
 > this Mac and in the iOS Simulator. Physical camera, LiDAR, puck and live speech: NOT RUN here.**
 > Details at the end of this file.
 
+> **Merged Ethan's branch (2026-10-17 ~11:45): direction arrows, point-to-describe, target spans,
+> depth recording, synthetic scenes and the replay harness now live on `main` next to Where-is,
+> on main's OpenAI voice stack.** Ported: the keyword listener borrows the OpenAI session's
+> microphone; the "which one?" question is an in-conversation `response.create` (OpenAI has no
+> `force_message`). A placed Where-is target becomes the arrows' route goal, so "where is the exit"
+> gets the tactile arrow along the planned route and the pin, with no failure tone while the planner
+> has no route yet. After the merge: FeelCore + FeelSim 184 tests, Lantern 112 unit tests (1 skipped
+> in the simulator) and the UI suite pass locally. Ethan's own caveats below still hold: nothing of
+> his has run on a hand, a LiDAR map, a route or a physical column.
+
+> Replay harness (October 17): `python3 simulation/run.py` replays labelled depth
+> recordings (12 synthetic scenes now; iPhone recordings via the new Lantern
+> **Record depth** toggle) through the shared FeelCore depth step, the production
+> encoder and the production C++ controller, and scores the commanded pin grid over
+> time. 9 scenes pass and 3 KNOWN issues are reported: a 2.03 m door head reads as
+> an obstacle, the tap drops out with ≥ 0.15 s detector latency, and single LiDAR
+> outliers raise pins. 8 FeelSim and 148 FeelCore tests pass; Lantern builds and its
+> 40 unit tests pass (1 skipped). No phone recording has been captured or replayed yet.
+> [Harness](../simulation/README.md). The new FEEL site (`web/`, local only so far) adds
+> `/replay`: choose a simulated or phone session and watch the camera recording beside the
+> commanded pin grid and LiDAR depth. Phone camera video is recorded but untested on a device.
+
+> Direction arrows (October 17, supersedes the repeating guidance wave): a V hand sign
+> requests one tactile arrow along an A* route over a local LiDAR floor map to the
+> target in view. Later arrows play only on noticeable route changes or a repeated
+> sign. No firmware or protocol change. Local results: 118 FeelCore tests, 34
+> Lantern unit tests (1 pointing detector test skipped in the simulator), 8 UI tests
+> and the 11-scenario pointing harness passed. Both apps build. Not installed on the
+> phone. No real hand, LiDAR map, route or physical column tested.
+> Update: the V sign plus one spoken word ("exit") picks the target, using on-device
+> recognition. Guidance uses sounds only (success chime, failure tone, listening blip).
+> Several targets in view make the assistant ask which one (`choose_target`).
+> Now 135 FeelCore, 40 Lantern unit and 8 UI tests pass. Speech recognition, the
+> microphone hand-off and the assistant question are not tested on a device.
+
 > Seven-servo preparation: `esp32-production` and its English setup guide are
 > ready in source. Host/configuration tests, enabled-output compile fixtures and
 > 2,634 cross-layer assertions passed. Real deployment is still gated on the

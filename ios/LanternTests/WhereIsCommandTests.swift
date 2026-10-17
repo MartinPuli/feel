@@ -108,6 +108,19 @@ final class WhereIsCommandTests: XCTestCase {
         XCTAssertNil(model.heldTarget)
     }
 
+    func testPlacedTargetBecomesTheRouteGoalForTheArrows() {
+        let (model, _) = makeModel()
+        model.arrowsEnabled = true
+        model.handleWhereIs(.placed(held), thing: "desk")
+        XCTAssertTrue(model.routeGoalActive, "The arrows guide to a Where-is target the way they guide to a two-finger route")
+        model.clearHeldTarget(spokenLine: nil)
+        XCTAssertFalse(model.routeGoalActive)
+        model.arrowsEnabled = false
+        model.handleWhereIs(.placed(held), thing: "desk")
+        XCTAssertFalse(model.routeGoalActive, "Arrows off: the pin alone points, silently")
+        XCTAssertEqual(model.heldTarget, held)
+    }
+
     func testResultLineIsRetriedOnceTheAssistantIsFree() {
         let (voice, transport) = VoiceTestDoubles.activeSession()
         let model = LanternModel(voice: voice, chalkStore: MemoryChalkStore(), gatewayFactory: { _ in StubChatGateway() }, localFinder: StubLocalFinder())

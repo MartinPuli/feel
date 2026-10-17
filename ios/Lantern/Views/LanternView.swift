@@ -134,7 +134,7 @@ struct LanternView: View {
                 if dynamicTypeSize.isAccessibilitySize {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
-                            PuckView(packet: model.packet)
+                            PuckView(packet: model.packet, targetColumns: model.targetColumns)
                             guidance
                         }.padding(.horizontal, 20)
                     }
@@ -143,7 +143,7 @@ struct LanternView: View {
                     sessionAction.padding(16)
                 } else {
                     HStack(spacing: 20) {
-                        PuckView(packet: model.packet, compact: true).frame(width: 200)
+                        PuckView(packet: model.packet, targetColumns: model.targetColumns, compact: true).frame(width: 200)
                         guidance.frame(maxWidth: .infinity, alignment: .leading)
                         sessionAction.frame(width: 164)
                     }
@@ -314,6 +314,7 @@ struct LanternView: View {
                 Text("Start the camera to calibrate.")
                     .foregroundStyle(FeelTheme.secondary)
             }
+            DirectionArrowSettings(model: model)
             Button("Simulation") {
                 model.startSimulation()
                 controlsExpanded = true
@@ -369,7 +370,7 @@ private struct CameraGuidance: View {
         switch model.guidanceState {
         case .stopped: return model.isStarting ? "Opening camera" : "Camera stopped"
         case .live: return model.targetDescription
-        case .simulation: return "SIMULATION"
+        case .simulation: return model.guidanceCue.map { "SIMULATION · guiding: \($0.spoken)" } ?? "SIMULATION"
         case .trackingLost: return model.mode == .simulation ? "SIMULATION · Tracking lost" : "Tracking lost · Pins neutral"
         case .staleDepth: return "Waiting for depth · Pins neutral"
         case .invalidFrame: return "Depth unavailable · Pins neutral"
@@ -384,8 +385,22 @@ private struct CameraGuidance: View {
                 Text("No simulated movement sent to hardware.")
                     .font(FeelTypography.footnote)
                     .accessibilityIdentifier("simulationNotice")
+                if model.arrowsEnabled {
+                    Button("Simulate V sign") { model.simulateSign() }
+                        .buttonStyle(FeelSecondaryButtonStyle())
+                        .accessibilityIdentifier("simulateSign")
+                        .accessibilityHint("Plays the arrow a real V sign would request.")
+                }
             } else {
                 Text(model.status).font(FeelTypography.footnote).accessibilityIdentifier("sessionStatus")
+                if model.mode == .live {
+                    Text(model.pointingReadout).font(FeelTypography.footnote)
+                        .foregroundStyle(FeelTheme.secondary).accessibilityIdentifier("pointingReadout")
+                    if model.arrowsEnabled {
+                        Text(model.directionReadout).font(FeelTypography.footnote)
+                            .foregroundStyle(FeelTheme.secondary).accessibilityIdentifier("directionReadout")
+                    }
+                }
             }
             Text(puck.status).font(FeelTypography.footnote)
                 .foregroundStyle(FeelTheme.secondary).accessibilityIdentifier("puckConnectionStatus")
@@ -396,6 +411,8 @@ private struct CameraGuidance: View {
 
 struct PuckView: View {
     let packet: FeelPacket
+    /// Several target columns tap together; nil falls back to the packet's single highlight.
+    var targetColumns: ClosedRange<Int>? = nil
     var compact = false
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 7)
 
@@ -410,8 +427,8 @@ struct PuckView: View {
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(0..<7, id: \.self) { column in
                         let active = packet.bands[column] == UInt8(band)
-                        let target = active && packet.effectiveHighlight == UInt8(column)
-                        // Raised pins are solid ink; the target is the one orange pin; down pins are rings.
+                        let target = active && ((targetColumns.map { $0.count > 1 && $0.contains(column) } ?? false) || packet.effectiveHighlight == UInt8(column))
+                        // Raised pins are solid ink; target columns are orange; down pins are rings.
                         Circle()
                             .fill(target ? FeelTheme.pin : active ? FeelTheme.ink : FeelTheme.paper)
                             .overlay(Circle().strokeBorder(FeelTheme.ink, lineWidth: compact ? 1.5 : 2.5))
@@ -431,7 +448,27 @@ struct PuckView: View {
         .padding(compact ? 0 : 16)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Virtual puck")
-        .accessibilityValue(packet.bands.enumerated().map { "Column \($0.offset + 1), band \($0.element)" }.joined(separator: ". ") + (packet.effectiveHighlight < 7 ? ". Target column \(Int(packet.effectiveHighlight) + 1)" : ". No target highlight"))
+        .accessibilityValue(packet.bands.enumerated().map { "Column \($0.offset + 1), band \($0.element)" }.joined(separator: ". ") + targetSummary)
+    }
+
+    private var targetSummary: String {
+        if let span = targetColumns, span.count > 1 { return ". Target columns \(span.lowerBound + 1) to \(span.upperBound + 1)" }
+        return packet.effectiveHighlight < 7 ? ". Target column \(Int(packet.effectiveHighlight) + 1)" : ". No target highlight"
+    }
+}
+
+private struct DirectionArrowSettings: View {
+    @ObservedObject var model: LanternModel
+    var body: some View {
+        FeelSection(title: "Direction arrows", systemImage: "arrow.turn.up.right") {
+            Toggle("Arrows on V sign", isOn: $model.arrowsEnabled)
+                .font(FeelTypography.label)
+                .accessibilityIdentifier("directionArrowsToggle")
+                .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 
@@ -458,6 +495,19 @@ private struct LiveSetup: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("calibrationStatus")
 
+            }
+            FeelSection(title: "Record for replay", systemImage: "record.circle") {
+                Toggle("Record depth", isOn: $model.recordingDepth)
+                    .font(FeelTypography.label)
+                    .accessibilityIdentifier("recordDepthToggle")
+                Toggle("Include camera video", isOn: $model.recordingVideo)
+                    .font(FeelTypography.label)
+                    .disabled(model.recordingDepth)
+                    .accessibilityIdentifier("recordVideoToggle")
+                Text(model.recordingStatus ?? "Saves LiDAR depth, pose and detections, plus camera video if included, to Files › On My iPhone › FEEL › Recordings, for scoring the pins offline and watching them on the /replay page. Nothing leaves the phone until you share it. About 3 MB per second.")
+                    .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("recordingStatus")
             }
             FeelSection(title: "Find a target", systemImage: "scope") {
                 Picker("Find", selection: $model.finder) {
