@@ -44,10 +44,15 @@ struct VoiceSetup: View {
                 Text(voice.caption).font(FeelTypography.body)
                     .accessibilityIdentifier("voiceCaption")
             }
+            if voice.audioUnavailable {
+                Text("Sound output is unavailable on this device. Captions and actions still work.")
+                    .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                    .accessibilityIdentifier("voiceAudioUnavailable")
+            }
             if voice.isActive {
                 HStack(spacing: 10) {
                     TextField("Type a request", text: $typedRequest)
-                        .textFieldStyle(.roundedBorder).submitLabel(.send)
+                        .feelField().submitLabel(.send)
                         .onSubmit { sendTyped() }
                         .accessibilityLabel("Type a request")
                         .accessibilityHint("The same as saying it. Useful in a loud room or with a keyboard.")
@@ -96,11 +101,11 @@ struct VoiceSetup: View {
                     .accessibilityIdentifier("voiceProviderNote")
                 TextField(provider == .grok ? "https://your-service/session" : "Token service address (optional)", text: $endpoint)
                     .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    .textFieldStyle(.roundedBorder).accessibilityLabel("Voice service address")
+                    .feelField().accessibilityLabel("Voice service address")
                     .accessibilityIdentifier("voiceEndpoint")
                 SecureField(provider == .grok ? "Access code" : (endpoint.isEmpty ? "OpenAI API key" : "Access code"), text: $accessToken)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
-                    .textFieldStyle(.roundedBorder).accessibilityIdentifier("voiceAccessCode")
+                    .feelField().accessibilityIdentifier("voiceAccessCode")
                 if !setupError.isEmpty { Text(setupError).font(FeelTypography.footnote).accessibilityIdentifier("voiceSetupError") }
                 Button("Enable assistant") {
                     let token = accessToken.isEmpty && endpoint == voice.configuration?.endpoint ? voice.configuration?.accessToken ?? "" : accessToken

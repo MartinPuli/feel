@@ -66,6 +66,22 @@ extension View {
     }
 }
 
+/// Text fields are square, bordered boxes; no rounded system chrome.
+struct FeelFieldStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .font(FeelTypography.body)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 48)
+            .background(FeelTheme.paper)
+            .overlay(Rectangle().strokeBorder(FeelTheme.ink, lineWidth: 2))
+    }
+}
+
+extension View {
+    func feelField() -> some View { textFieldStyle(.plain).modifier(FeelFieldStyle()) }
+}
+
 /// Buttons press into their own shadow instead of fading.
 private struct FeelButtonBody: View {
     let label: AnyView

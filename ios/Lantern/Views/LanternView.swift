@@ -200,7 +200,8 @@ struct LanternView: View {
                 }.padding(.horizontal, 20).padding(.bottom, 20)
             }
             .accessibilityIdentifier("cameraSettingsScroll")
-            if model.mode != .stopped || model.isStarting || voice.isActive {
+            // The Assistant panel has its own pause control; the footer's copy would duplicate it.
+            if model.mode != .stopped || model.isStarting || (voice.isActive && panel != .voice) {
                 HStack {
                     if model.mode != .stopped || model.isStarting {
                         Button("Stop camera", role: .destructive) {
@@ -210,7 +211,7 @@ struct LanternView: View {
                         .accessibilityHint("Stops sensing and tactile output. The assistant keeps listening.")
                         .accessibilityIdentifier("panelStop")
                     }
-                    if voice.isActive {
+                    if voice.isActive && panel != .voice {
                         Button("Pause assistant") { voice.pauseAssistant(); closePanel() }
                             .buttonStyle(CameraPillButtonStyle(primary: false))
                             .accessibilityHint("Stops the microphone and spoken responses.")

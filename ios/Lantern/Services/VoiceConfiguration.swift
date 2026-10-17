@@ -93,9 +93,10 @@ struct VoiceConfigurationStore {
     static func provision(environment: [String: String], arguments: [String],
                           save: (VoiceConfiguration) throws -> Void) throws -> VoiceConfiguration? {
         guard !arguments.contains("--uitesting"), environment["FEEL_PROVISION_VOICE"] == "1" else { return nil }
-        guard let token = environment["FEEL_VOICE_ACCESS_TOKEN"] else { throw StoreError.invalid }
-        let provider = VoiceProvider(rawValue: environment["FEEL_VOICE_PROVIDER"] ?? "grok") ?? .grok
-        let configuration = VoiceConfiguration(provider: provider, endpoint: environment["FEEL_VOICE_ENDPOINT"] ?? "", accessToken: token)
+        let value = { (name: String) in environment[name]?.trimmingCharacters(in: .whitespacesAndNewlines) }
+        guard let token = value("FEEL_VOICE_ACCESS_TOKEN") else { throw StoreError.invalid }
+        let provider = VoiceProvider(rawValue: value("FEEL_VOICE_PROVIDER") ?? "grok") ?? .grok
+        let configuration = VoiceConfiguration(provider: provider, endpoint: value("FEEL_VOICE_ENDPOINT") ?? "", accessToken: token)
         guard configuration.isValid else { throw StoreError.invalid }
         try save(configuration)
         return configuration

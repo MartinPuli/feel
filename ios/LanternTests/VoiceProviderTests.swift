@@ -25,8 +25,10 @@ private final class ProviderFakeTransport: VoiceTransport {
 private final class ProviderFakeAudio: VoiceAudioIO {
     var pendingPlayback = false
     var playedMilliseconds = 0
+    var playError: Error?
+    private(set) var played = 0
     func start(onInput: @escaping (Data) -> Void, onPlaybackDrained: @escaping () -> Void) throws {}
-    func play(_ pcm: Data) throws {}
+    func play(_ pcm: Data) throws { if let playError { throw playError }; played += 1 }
     func interruptPlayback() {}
     func stop() {}
 }
@@ -131,6 +133,26 @@ final class VoiceProviderTests: XCTestCase {
         XCTAssertEqual(content.first?["text"] as? String, "where is the exit")
         XCTAssertFalse(voice.sendText("   "), "Blank text is not sent")
         XCTAssertFalse(voice.sendText(String(repeating: "x", count: 161)), "Overlong text is not sent")
+    }
+
+    /// No sound output (simulators, a dead speaker route) must not end the conversation:
+    /// captions and tools keep working, and the panel can say audio is unavailable.
+    func testAudioNotRunningKeepsSessionAliveWithoutSound() {
+        let token = ProviderFakeToken(), transport = ProviderFakeTransport(), audio = ProviderFakeAudio()
+        audio.playError = VoiceAudioError.notRunning
+        let voice = GrokVoiceSession(tokenClient: token, audio: audio, transportFactory: { transport },
+                                     configuration: openai, speaksLocally: false, requestPermission: { $0(true) })
+        voice.start()
+        transport.emit(["type": "session.created"]); transport.emit(["type": "session.updated"])
+        transport.emit(["type": "response.created", "response": ["id": "r1"]])
+        transport.emit(["type": "response.output_audio.delta", "response_id": "r1", "item_id": "i1", "delta": Data([1, 0, 2, 0]).base64EncodedString()])
+        XCTAssertTrue(voice.isActive, "A missing audio output must not disconnect the session")
+        XCTAssertTrue(voice.audioUnavailable)
+        XCTAssertEqual(voice.phase, .speaking)
+        transport.emit(["type": "response.output_audio_transcript.delta", "response_id": "r1", "delta": "I'm here."])
+        XCTAssertEqual(voice.caption, "I'm here.")
+        transport.emit(["type": "response.done", "response": ["id": "r1"]])
+        XCTAssertEqual(voice.phase, .listening)
     }
 
     func testSendTextIsRejectedWhileIdle() {

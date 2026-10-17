@@ -4,10 +4,19 @@ import Security
 enum KeychainStoreError: Error { case invalid, unavailable }
 
 /// One Codable value under one Keychain item, readable only while this device is unlocked.
+/// Simulator builds keep the value in this process instead: the simulator's Keychain
+/// refuses writes in some configurations, and nothing there needs to survive a relaunch.
 struct KeychainStore<Value: Codable> {
     let service: String
     let account: String
 
+    #if targetEnvironment(simulator)
+    private static var memory: [String: Data] { get { SimulatorKeychain.items } set { SimulatorKeychain.items = newValue } }
+    private var key: String { "\(service)/\(account)" }
+    func load() -> Value? { Self.memory[key].flatMap { try? JSONDecoder().decode(Value.self, from: $0) } }
+    func save(_ value: Value) throws { Self.memory[key] = try JSONEncoder().encode(value) }
+    func clear() { Self.memory[key] = nil }
+    #else
     private var query: [String: Any] {
         [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: account]
     }
@@ -30,4 +39,9 @@ struct KeychainStore<Value: Codable> {
         } else if update != errSecSuccess { throw KeychainStoreError.unavailable }
     }
     func clear() { SecItemDelete(query as CFDictionary) }
+    #endif
 }
+
+#if targetEnvironment(simulator)
+enum SimulatorKeychain { nonisolated(unsafe) static var items: [String: Data] = [:] }
+#endif

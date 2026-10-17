@@ -23,7 +23,7 @@ struct WhereIsSetup: View {
             field("Environment ID", text: $environment, identifier: "chalkEnvironment")
             SecureField(configured ? "Gateway key (saved)" : "Gateway key", text: $key)
                 .textInputAutocapitalization(.never).autocorrectionDisabled()
-                .textFieldStyle(.roundedBorder).accessibilityIdentifier("chalkKey")
+                .feelField().accessibilityIdentifier("chalkKey")
             field("Model", text: $modelName, identifier: "chalkModel")
             if !setupError.isEmpty {
                 Text(setupError).font(FeelTypography.footnote).accessibilityIdentifier("chalkSetupError")
@@ -57,7 +57,7 @@ struct WhereIsSetup: View {
     private func field(_ title: String, text: Binding<String>, identifier: String, keyboard: UIKeyboardType = .default) -> some View {
         TextField(title, text: text)
             .keyboardType(keyboard).textInputAutocapitalization(.never).autocorrectionDisabled()
-            .textFieldStyle(.roundedBorder).accessibilityLabel(title).accessibilityIdentifier(identifier)
+            .feelField().accessibilityLabel(title).accessibilityIdentifier(identifier)
     }
 
     private func save() {

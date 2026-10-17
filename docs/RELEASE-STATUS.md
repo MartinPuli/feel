@@ -156,10 +156,10 @@ CAD clearances, horn fit, thin-guide stiffness and foam return are unverified.
 | App unit tests (simulator) | PASS: gateway, Where-is service, `where_is` command, voice providers, existing suites | `xcodebuild … -only-testing:LanternTests` |
 | UI tests | PASS: existing suite with the restyle, Where-is setup, provider picker | `bash scripts/check_ios.sh` |
 | Chalk gateway from this Mac | PASS: text and image requests on `openai/gpt-6.1-sol`, 2.6–3.7 s | `chalk/check_connection.py --chat` |
-| Chalk gateway from the app | See the simulator self-test screenshots in the session notes | Assistant panel → Where-is setup → Test with a sample photo |
+| Chalk gateway from the app | PASS in the iOS Simulator: the sample photo went through the real request, parser and placement code; "Found '3D puck model' … in 4.2 s" | Assistant panel → Where-is setup → Test with a sample photo |
 | Chalk Evaluation run | BLOCKED: needs `chalk login` and venue photos | `chalk/README.md` → Run the evaluation |
 | Grok voice | NOT RUN here (an earlier entry above records a confirmed phone session) | — |
-| OpenAI Realtime voice | Protocol shapes unit-tested; live session NOT RUN here | — |
+| OpenAI Realtime voice | PASS in the iOS Simulator for connect, session setup, readiness line, a typed request, the app tool call and the spoken reply as a caption. Sound output is unavailable in the simulator (no running audio engine); the session now continues without it. Audible speech and the microphone: check on the phone | Assistant panel, typed request "where is the exit" |
 | Where-is on the LiDAR iPhone | NOT RUN: checklist below | — |
 
 ### Camera and LiDAR conventions, checked against Apple's documentation

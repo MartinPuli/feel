@@ -67,6 +67,9 @@ final class GrokVoiceSession: ObservableObject {
         didSet { UserDefaults.standard.set(proactiveEnabled, forKey: "voice.proactive") }
     }
     @Published private(set) var isPausedByUser = false
+    /// Sound output could not play (no running audio engine, as on simulators). The
+    /// conversation continues through captions and tool calls.
+    @Published private(set) var audioUnavailable = false
     private var automaticListening = false
     private var foreground = true
     private var waitingForHeadphones = false
@@ -283,7 +286,7 @@ final class GrokVoiceSession: ObservableObject {
         outgoing = []; sending = false; configured = false; receivedConfiguration = false
         handledCalls = []; interruptedResponses = []; responseID = nil; responseRunning = false
         continuationPending = false; assistantItemID = nil
-        userSpeaking = false
+        userSpeaking = false; audioUnavailable = false
         phase = .idle; caption = ""; onEnded?()
     }
 
@@ -463,7 +466,8 @@ final class GrokVoiceSession: ObservableObject {
                   let data = Data(base64Encoded: delta) else { return }
             assistantItemID = event["item_id"] as? String
             do { try audio.play(data); phase = .speaking }
-            catch { fail("Voice playback stopped. Tap to retry.") }
+            catch VoiceAudioError.notRunning { audioUnavailable = true; phase = .speaking }
+            catch { fail("Voice playback stopped: \(error.localizedDescription) Tap to retry.") }
         case "response.output_audio_transcript.delta", "response.audio_transcript.delta":
             guard accepts(event), let delta = event["delta"] as? String else { return }
             caption = String((caption + delta).prefix(400))

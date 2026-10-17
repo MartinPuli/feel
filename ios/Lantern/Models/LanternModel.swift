@@ -49,7 +49,7 @@ final class LanternModel:ObservableObject {
     private var simulatedAt:TimeInterval=0
     private var startGeneration=0
     private var finderEpoch=0
-    init(voice: GrokVoiceSession = GrokVoiceSession(), chalkStore: ChalkConfigurationStoring = defaultChalkConfigurationStore(),
+    init(voice: GrokVoiceSession = GrokVoiceSession(), chalkStore: ChalkConfigurationStoring = ChalkConfigurationStore(),
          gatewayFactory: @escaping (ChalkConfiguration) -> ChatGateway = { ChalkGateway(configuration: $0) }) {
         self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory
         chalkConfiguration = chalkStore.loadForLaunch()
