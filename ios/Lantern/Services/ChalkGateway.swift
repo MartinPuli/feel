@@ -20,9 +20,39 @@ struct ChalkConfiguration: Codable, Equatable {
     }
 }
 
-struct ChalkConfigurationStore {
+protocol ChalkConfigurationStoring {
+    func loadForLaunch() -> ChalkConfiguration?
+    func save(_ configuration: ChalkConfiguration) throws
+    func clear()
+}
+
+struct ChalkConfigurationStore: ChalkConfigurationStoring {
     private let store = KeychainStore<ChalkConfiguration>(service: "org.feel.hackharvard.chalk", account: "gateway")
     func load() -> ChalkConfiguration? { store.load() }
+    /// Keychain, or in DEBUG a paired developer launch (`FEEL_PROVISION_CHALK=1` with
+    /// `FEEL_CHALK_KEY`, `FEEL_CHALK_ENV` and optional `FEEL_CHALK_HOST` / `FEEL_CHALK_MODEL`),
+    /// the same pattern as the voice-service provisioning. Nothing is embedded in the app.
+    func loadForLaunch() -> ChalkConfiguration? {
+        let process = ProcessInfo.processInfo
+        guard !process.arguments.contains("--uitesting") else { return nil }
+        #if DEBUG
+        if process.environment["FEEL_PROVISION_CHALK"] == "1" {
+            return try? Self.provision(environment: process.environment, save: save)
+        }
+        #endif
+        return load()
+    }
+    #if DEBUG
+    static func provision(environment: [String: String], save: (ChalkConfiguration) throws -> Void) throws -> ChalkConfiguration? {
+        guard environment["FEEL_PROVISION_CHALK"] == "1" else { return nil }
+        guard let key = environment["FEEL_CHALK_KEY"], let environmentId = environment["FEEL_CHALK_ENV"] else { throw KeychainStoreError.invalid }
+        let configuration = ChalkConfiguration(apiHost: environment["FEEL_CHALK_HOST"] ?? ChalkConfiguration.defaultHost, routerApiKey: key,
+                                               environmentId: environmentId, model: environment["FEEL_CHALK_MODEL"] ?? ChalkConfiguration.defaultModel)
+        guard configuration.isValid else { throw KeychainStoreError.invalid }
+        try save(configuration)
+        return configuration
+    }
+    #endif
     func save(_ configuration: ChalkConfiguration) throws {
         guard configuration.isValid else { throw KeychainStoreError.invalid }
         try store.save(configuration)

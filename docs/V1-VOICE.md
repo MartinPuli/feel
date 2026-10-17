@@ -13,6 +13,16 @@ chair, person or teammate, reading sensing/connection status, floor calibration
 with a supplied measured height, discovering and selecting a puck, and opening
 settings. Teammate sharing still uses the existing consent flow.
 
+**Where is X?** For things outside the fixed target list, the assistant calls
+`where_is`. FEEL takes one camera photo, sends it with the question through
+Chalk's Model Gateway to a vision model (default `openai/gpt-6.1-sol`), places the
+answer with LiDAR depth, and keeps the pins pointing at that spot until you arrive,
+say stop, pick another target, or tracking resets. When the pins cannot show it,
+FEEL says a direction instead ("desk is to your left"). Enter the Chalk gateway
+settings once under Assistant settings → Where-is setup; they stay in Keychain. A
+photo leaves the phone only for this request. The result is a model's reading of
+one photo, not a confirmed object.
+
 “Stop” stops sensing and sends neutral tactile output while the assistant keeps
 listening. “Pause assistant” or “stop listening” ends microphone capture. The
 VoiceOver-accessible status control can resume it. Each modal exposes separate

@@ -17,10 +17,18 @@ final class LanternModel:ObservableObject {
     @Published private(set) var targetDescription="No target selected"
     @Published private(set) var calibrated=false
     @Published var cameraHeight=1.2
-    @Published var finder:FinderMode = .none { didSet { voice.invalidateSceneSpeech(); finderEpoch += 1; perception.setFinder(finder,epoch:finderEpoch); frame=nil; targetDescription="Searching: \(finder.rawValue)" } }
+    @Published var finder:FinderMode = .none { didSet { voice.invalidateSceneSpeech(); heldTarget = nil; finderEpoch += 1; perception.setFinder(finder,epoch:finderEpoch); frame=nil; targetDescription="Searching: \(finder.rawValue)" } }
     enum VoicePanel: String { case settings, connection }
     @Published var voicePanel: VoicePanel?
     let voice: GrokVoiceSession
+    @Published private(set) var chalkConfiguration: ChalkConfiguration?
+    @Published private(set) var heldTarget: HeldTarget?
+    @Published private(set) var whereIsNotice: String?
+    private let chalkStore: ChalkConfigurationStoring
+    private let gatewayFactory: (ChalkConfiguration) -> ChatGateway
+    private var whereIsService: WhereIsService?
+    private var lastDirectionSpokenAt: TimeInterval = -.infinity
+    var whereIsAvailable: Bool { chalkConfiguration?.isValid == true && mode == .live && guidanceState == .live }
     private var voiceSawTarget = false
     private var voiceTargetAvailable = false
     private var voiceTargetPhrase: String?
@@ -38,8 +46,10 @@ final class LanternModel:ObservableObject {
     private var simulatedAt:TimeInterval=0
     private var startGeneration=0
     private var finderEpoch=0
-    init(voice: GrokVoiceSession = GrokVoiceSession()) {
-        self.voice = voice
+    init(voice: GrokVoiceSession = GrokVoiceSession(), chalkStore: ChalkConfigurationStoring = ChalkConfigurationStore(),
+         gatewayFactory: @escaping (ChalkConfiguration) -> ChatGateway = { ChalkGateway(configuration: $0) }) {
+        self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory
+        chalkConfiguration = chalkStore.loadForLaunch()
         voice.onCommand = { [weak self] command in self?.performVoiceCommand(command) ?? ["error": "App unavailable"] }
         voice.onEnded = { [weak self] in
             guard let self else { return }
@@ -51,7 +61,7 @@ final class LanternModel:ObservableObject {
         }
         peer.arSession=perception.session
         perception.onFrame={ [weak self] frame in guard let self,self.mode == .live,frame.epoch==self.startGeneration,frame.finderEpoch==self.finderEpoch else { return }; self.frame=frame; self.calibrated=frame.floorY != nil }
-        perception.onInvalidated={ [weak self] epoch in guard let self,epoch==self.startGeneration else { return }; self.frame=nil; self.calibrated=false; self.tick() }
+        perception.onInvalidated={ [weak self] epoch in guard let self,epoch==self.startGeneration else { return }; self.frame=nil; self.calibrated=false; self.clearHeldTarget(spokenLine: "Lost tracking. Say it again."); self.tick() }
         perception.onStatus={ [weak self] text in guard let self,self.mode == .live else { return }; self.status=text }
         perception.onModelStatus={ [weak self] text,available in self?.detectorStatus=text; self?.detectorAvailable=available }
     }
@@ -85,6 +95,7 @@ final class LanternModel:ObservableObject {
         voice.invalidateSceneSpeech()
         if stopVoice { voice.disconnect() }
         isStarting=false; startGeneration += 1; timer?.invalidate(); timer=nil; frame=nil; calibrated=false
+        heldTarget = nil; whereIsService?.cancel(); whereIsNotice = nil
         perception.stop(); peer.stop(); mode = .stopped; guidanceState = .stopped
         sequence &+= 1; packet = .neutral(sequence:sequence); puck.send(packet)
         status="Stopped. Neutral command sent if connected"; targetDescription="No guidance"
@@ -108,7 +119,14 @@ final class LanternModel:ObservableObject {
             startLive()
             return voiceSnapshot()
         case .status: return voiceSnapshot()
+        case .whereIs(let thing):
+            if let refusal = Self.whereIsRefusal(mode: mode, configured: chalkConfiguration?.isValid == true, guidance: guidanceState) { return ["error": refusal] }
+            whereIsNotice = nil
+            startWhereIs(thing)
+            return ["status": "Looking for the \(thing) with one camera photo. The result arrives as an observation in a few seconds; call get_status to check.",
+                    "pending": true]
         case .find(let target):
+            heldTarget = nil
             guard mode == .live else { return ["error": "Camera is not live. Ask the user whether to start it."] }
             guard target != .chair || detectorAvailable else { return ["error": detectorStatus] }
             finder = target; voiceSawTarget = false
@@ -135,6 +153,63 @@ final class LanternModel:ObservableObject {
         }
     }
 
+    // MARK: Where-is
+
+    func saveChalkConfiguration(_ configuration: ChalkConfiguration) throws {
+        guard configuration.isValid else { throw KeychainStoreError.invalid }
+        try chalkStore.save(configuration)
+        chalkConfiguration = configuration; whereIsService = nil
+    }
+    func forgetChalkConfiguration() {
+        chalkStore.clear(); chalkConfiguration = nil; whereIsService?.cancel(); whereIsService = nil
+    }
+    static func whereIsRefusal(mode: RunMode, configured: Bool, guidance: GuidanceState) -> String? {
+        if mode != .live { return "Camera is not live. Ask the user whether to start it." }
+        if !configured { return "Where-is needs Chalk setup in Assistant settings." }
+        if guidance != .live { return "Sensing isn't ready. Calibrate or wait for tracking, then try again." }
+        return nil
+    }
+    private func startWhereIs(_ thing: String) {
+        guard let configuration = chalkConfiguration else { return }
+        let service = whereIsService ?? WhereIsService(gateway: gatewayFactory(configuration), model: configuration.model)
+        whereIsService = service
+        let generation = startGeneration
+        perception.snapshot { [weak self] snapshot in
+            guard let self, self.startGeneration == generation, self.mode == .live else { return }
+            guard let snapshot else { self.handleWhereIs(.failed, thing: thing); return }
+            service.find(thing, snapshot: snapshot) { [weak self] outcome in
+                guard let self, self.startGeneration == generation else { return }
+                self.handleWhereIs(outcome, thing: thing)
+            }
+        }
+    }
+    /// Main queue. The spoken line is kept in `whereIsNotice` so get_status can relay it.
+    func handleWhereIs(_ outcome: WhereIsOutcome, thing: String) {
+        switch outcome {
+        case .placed(let target):
+            heldTarget = target; voiceSawTarget = true; lastDirectionSpokenAt = -.infinity
+            let now = ProcessInfo.processInfo.systemUptime
+            if let pose = frame?.pose, let observation = target.observation(pose: pose, now: now, worldEpoch: target.worldEpoch),
+               let phrase = VoicePhrasing.observation(observation, named: target.label, now: now) {
+                say(phrase, sceneBound: true)
+            } else {
+                say("I found the \(thing). The pins will point to it.", sceneBound: true)
+            }
+        case .notVisible: say("I couldn't see a \(thing) in the photo.")
+        case .noDepth: say("I see the \(thing), but it's too far to point at.")
+        case .failed: say("I couldn't look just now. Try again.")
+        }
+    }
+    func clearHeldTarget(spokenLine: String?) {
+        guard heldTarget != nil else { return }
+        heldTarget = nil
+        if let spokenLine { say(spokenLine) }
+    }
+    private func say(_ line: String, sceneBound: Bool = false) {
+        whereIsNotice = line
+        voice.announce(line, automatic: false, sceneBound: sceneBound)
+    }
+
     func voiceSnapshot() -> [String: Any] {
         // Recompute age/tracking before sharing any scene-derived description.
         tick()
@@ -145,6 +220,7 @@ final class LanternModel:ObservableObject {
                 "scene_observation": valid && voiceTargetAvailable,
                 "spoken_observation": valid && voiceTargetAvailable ? voiceTargetPhrase ?? "No current target" : "No current target",
                 "selected_target": finder.rawValue, "puck_connected": puck.isConnected,
+                "where_is_available": whereIsAvailable, "held_target": heldTarget?.label ?? "none", "where_is": whereIsNotice ?? "none",
                 "connection": puck.status, "simulation": mode == .simulation,
                 "notice": "Neutral pins do not mean a clear path. No safe-route claim is available."]
     }
@@ -204,16 +280,25 @@ final class LanternModel:ObservableObject {
             packet = .neutral(sequence:sequence); guidanceState = mode == .live ? .staleDepth : .stopped
             if mode == .live { puck.send(packet) }; updateVoiceAwareness(targetAvailable: false); return
         }
-        let target=finder == .teammate ? peer.currentTarget(pose:frame.pose,now:now) : frame.target
+        // A held Where-is target takes precedence over finder and teammate targets.
+        let held=heldTarget?.observation(pose:frame.pose,now:now,worldEpoch:frame.worldEpoch)
+        let target=held ?? (finder == .teammate ? peer.currentTarget(pose:frame.pose,now:now) : frame.target)
         let output=TactileEncoder.encode(sequence:sequence,now:now,frameTimestamp:frame.timestamp,tracking:frame.tracking,distances:frame.distances,target:target,floorCalibrated:frame.floorY != nil)
         packet=output.packet; guidanceState=output.state; puck.send(packet)
         if let target,target.valid(at:now),output.state == .live {
             targetDescription=String(format:"%@, %.1f m, %.0f°",target.label,target.distance,target.bearingDegrees)
-            voiceTargetPhrase = VoicePhrasing.observation(target, finder: finder, now: now)
+            voiceTargetPhrase = held != nil ? VoicePhrasing.observation(target, named: target.label, now: now) : VoicePhrasing.observation(target, finder: finder, now: now)
         } else {
             voiceTargetPhrase = nil
-            targetDescription=finder == .none ? "Obstacle sensing" : "Target unavailable. No directional highlight"
+            targetDescription=heldTarget != nil ? "Where-is target outside the pins' field" : finder == .none ? "Obstacle sensing" : "Target unavailable. No directional highlight"
         }
         updateVoiceAwareness(targetAvailable: target?.valid(at: now) == true && output.state == .live)
+        if let heldTarget {
+            if heldTarget.worldEpoch != frame.worldEpoch { clearHeldTarget(spokenLine: "Lost tracking. Say it again.") }
+            else if heldTarget.reached(pose: frame.pose) { clearHeldTarget(spokenLine: "You're at the \(heldTarget.label).") }
+            else if held == nil, output.state == .live, now - lastDirectionSpokenAt >= 5, let direction = heldTarget.spokenDirection(pose: frame.pose) {
+                if voice.announce(direction, automatic: false) { lastDirectionSpokenAt = now; whereIsNotice = direction }
+            }
+        }
     }
 }

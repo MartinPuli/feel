@@ -14,12 +14,21 @@ enum VoicePhrasing {
         case .person: object = "A person"
         case .teammate: object = "Your teammate"
         }
-        let rounded = (target.distance * 10).rounded() / 10
-        let distance = rounded == rounded.rounded()
+        return "\(object) was \(distanceText(target.distance)) \(side(target.bearingDegrees))."
+    }
+    /// A Where-is target keeps the user's own name for the thing.
+    static func observation(_ target: TargetObservation, named label: String, now: TimeInterval) -> String? {
+        guard target.valid(at: now) else { return nil }
+        return "The \(label) was \(distanceText(target.distance)) \(side(target.bearingDegrees))."
+    }
+    private static func distanceText(_ distance: Double) -> String {
+        let rounded = (distance * 10).rounded() / 10
+        let text = rounded == rounded.rounded()
             ? String(format: "%.0f", locale: Locale(identifier: "en_US_POSIX"), rounded)
             : String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), rounded)
-        let unit = rounded == 1 ? "meter" : "meters"
-        let side = abs(target.bearingDegrees) <= 10 ? "ahead" : target.bearingDegrees < 0 ? "to your left" : "to your right"
-        return "\(object) was \(distance) \(unit) \(side)."
+        return "\(text) \(rounded == 1 ? "meter" : "meters")"
+    }
+    private static func side(_ bearing: Double) -> String {
+        abs(bearing) <= 10 ? "ahead" : bearing < 0 ? "to your left" : "to your right"
     }
 }

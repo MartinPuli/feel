@@ -6,6 +6,7 @@ import FeelCore
 enum VoiceCommand: Equatable {
     case startCamera, stop, pauseAssistant, status, scanPucks, listPucks, openSettings
     case find(FinderMode)
+    case whereIs(String)
     case calibrate(Double)
     case connectPuck(UUID)
 
@@ -38,6 +39,12 @@ enum VoiceCommand: Equatable {
             guard args.count == 1, let value = args["device_id"] as? String,
                   let id = UUID(uuidString: value) else { throw InvalidCommand() }
             return .connectPuck(id)
+        case "where_is":
+            guard args.count == 1, let raw = args["thing"] as? String else { throw InvalidCommand() }
+            let thing = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard (1...60).contains(thing.count),
+                  !thing.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) || CharacterSet.newlines.contains($0) }) else { throw InvalidCommand() }
+            return .whereIs(thing)
         default: throw InvalidCommand()
         }
     }
@@ -56,6 +63,7 @@ enum VoiceCommand: Equatable {
             tool("pause_assistant", "Stop microphone capture and spoken responses only when the user explicitly asks to pause the assistant or stop listening. The camera is unchanged."),
             tool("get_status", "Read fresh sensing, calibration, target and connection state. ALWAYS call before describing surroundings. Never reuse old readings."),
             tool("find_target", "Select the target the user asks for. This does not confirm a detection or start the camera.", properties: ["target": ["type": "string", "enum": ["obstacles", "door", "exit", "chair", "person", "teammate"]]]),
+            tool("where_is", "Find one thing the user names that is not in find_target's list, such as the registration desk, a water fountain or the stairs. Takes one camera photo and points the pins at it when found. Confirm once; the result arrives a few seconds later as an observation. Call get_status to check progress.", properties: ["thing": ["type": "string", "minLength": 1, "maxLength": 60]]),
             tool("calibrate_floor", "Calibrate only after the user supplies a measured lens height in meters and confirms the phone is mounted upright with rear camera forward and top edge to their left. Never guess height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
             tool("scan_pucks", "Begin Bluetooth discovery when the user asks to connect. Wait briefly, then list_pucks. Do not select a device yourself."),
             tool("list_pucks", "List currently discovered puck IDs and names. Ask the user which one to connect, even if there is only one."),
@@ -75,6 +83,7 @@ enum VoiceCommand: Equatable {
     ## Conversation Flow
     Use the provided tools for actions. Wait for their results before confirming anything.
     Call get_status before describing the scene. You do not receive camera images.
+    For a thing not in find_target's list, call where_is with a short description; it uses one camera photo, and the result comes later as an observation.
     Say stop: call stop immediately, then keep listening. Say pause assistant or stop listening: call pause_assistant.
     For missing information, ask one short question and wait. Do not repeat a completed action.
 
@@ -83,6 +92,7 @@ enum VoiceCommand: Equatable {
     Unknown, stale and neutral never mean a clear path.
     Do not give walking directions, promise safe passage, identify unobserved objects or invent distances.
     A rectangle candidate is only a possible door, never a confirmed door or safe opening.
+    A where_is result is a model's reading of one photo, never a confirmed object.
     Always call synthetic results simulation. Ask for a measured height before floor calibration.
     Start the camera, calibrate and connect hardware only when requested. Ask which discovered puck to connect.
     If a tool reports pending permission, a request or a failure, preserve that uncertainty.
