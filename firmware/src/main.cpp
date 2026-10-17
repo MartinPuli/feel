@@ -15,7 +15,9 @@
 #include "feel/output_guard.hpp"
 #include "feel/pwm.hpp"
 #include "feel/serial_line.hpp"
-#if FEEL_SINGLE_SERVO_DEMO
+#if FEEL_SINGLE_SERVO_LIVE
+#include "feel/single_live.hpp"
+#elif FEEL_SINGLE_SERVO_DEMO
 #include "feel/single_demo.hpp"
 #endif
 
@@ -64,9 +66,23 @@ bool configurePwmTimer(uint8_t index) {
         ledc_get_freq(kPwmMode, timer.timer_num) == kPwmFrequency;
 }
 
-#if FEEL_SINGLE_SERVO_DEMO
+#if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
 constexpr uint8_t kDemoPin = 32;
+#if FEEL_SINGLE_SERVO_LIVE
+constexpr const char* kAdvertisedName = "FEEL Center Live";
+constexpr const char* kSingleMode = "LIVE120";
+constexpr uint16_t kSingleMinimumUs = feel::kMinPulseUs;
+constexpr uint16_t kSingleMaximumUs = feel::kMaxPulseUs;
+constexpr std::size_t kSingleSector = feel::kSingleLiveSector;
+constexpr const char* kSingleHelp = "ONE SERVO LIVE120: center sector3 production band/gap/tap/calibration -> GPIO32, nominal900..2100us; NOT measured travel; STATUS or STOP; no serial motion/calibration";
+#else
 constexpr const char* kAdvertisedName = "FEEL Center Demo";
+constexpr const char* kSingleMode = "DEMO";
+constexpr uint16_t kSingleMinimumUs = 1450;
+constexpr uint16_t kSingleMaximumUs = 1550;
+constexpr std::size_t kSingleSector = feel::kDemoSector;
+constexpr const char* kSingleHelp = "ONE SERVO: live iPhone center sector3 -> GPIO32,1450..1550us; STATUS or STOP; no bench or calibration commands";
+#endif
 bool demoReady = false;
 bool demoAttached = false;
 uint16_t demoPulse = 0;
@@ -88,13 +104,22 @@ void setupDemo() {
     demoTimerHz = configured ? ledc_get_freq(kPwmMode, LEDC_TIMER_0) : 0;
     demoReady = configured && demoTimerHz == kPwmFrequency;
     ledcWrite(0, 0);
+#if FEEL_SINGLE_SERVO_LIVE
+    Serial.println(kSingleHelp);
+    Serial.println("Boot output OFF; production center-column pulse only; other six servo GPIOs remain unattached");
+#else
     Serial.println("ONE SERVO DEMO: center sector3 -> GPIO32, nominal1450..1550us; boot output OFF; cam mapping NOT enabled");
+#endif
 }
 void writeDemo() {
+#if FEEL_SINGLE_SERVO_LIVE
+    const uint16_t pulse = feel::singleLivePulse(controller.snapshot());
+#else
     const uint16_t pulse = feel::singleDemoPulse(controller.snapshot());
+#endif
     if (!demoReady || pulse == 0) { detachDemo(); return; }
     uint32_t duty = 0;
-    if (!feel::servoDuty(pulse, 1450, 1550, duty)) {
+    if (!feel::servoDuty(pulse, kSingleMinimumUs, kSingleMaximumUs, duty)) {
         demoReady = false;
         detachDemo();
         return;
@@ -113,7 +138,7 @@ void writeDemo() {
 constexpr const char* kAdvertisedName = "FEEL Puck";
 #endif
 uint8_t reportedOutputState() {
-#if FEEL_SINGLE_SERVO_DEMO
+#if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
     return demoReady ? 1 : 2;
 #else
     return static_cast<uint8_t>(outputGuard.state());
@@ -167,7 +192,7 @@ ServerCallbacks serverCallbacks;
 CommandCallbacks commandCallbacks;
 
 void disablePWM() {
-#if FEEL_SINGLE_SERVO_DEMO
+#if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
     demoReady = false;
     detachDemo();
     return;
@@ -189,7 +214,7 @@ void disablePWM() {
 }
 
 void writePWM() {
-#if FEEL_SINGLE_SERVO_DEMO
+#if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
     writeDemo();
     return;
 #endif
@@ -230,7 +255,7 @@ void writePWM() {
 }
 
 void setupPWM() {
-#if FEEL_SINGLE_SERVO_DEMO
+#if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
     setupDemo();
     return;
 #endif
@@ -287,9 +312,9 @@ void sendStatus(bool serial) {
         if (s.connected) statusCharacteristic->notify();
     }
     if (serial) {
-#if FEEL_SINGLE_SERVO_DEMO
-        Serial.printf("DEMO connected=%u active=%u ready=%u attached=%u gpio=32 sector=3 band=%u pulseUs=%u timerHz=%lu accepted=%lu rejected=%lu timeouts=%lu\n",
-            s.connected, s.active, demoReady, demoAttached, s.bands[feel::kDemoSector], demoPulse,
+#if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
+        Serial.printf("%s connected=%u active=%u ready=%u attached=%u gpio=32 sector=3 band=%u pulseUs=%u timerHz=%lu accepted=%lu rejected=%lu timeouts=%lu\n",
+            kSingleMode, s.connected, s.active, demoReady, demoAttached, s.bands[kSingleSector], demoPulse,
             static_cast<unsigned long>(demoTimerHz), static_cast<unsigned long>(s.accepted),
             static_cast<unsigned long>(s.rejected), static_cast<unsigned long>(s.timeouts));
         return;
@@ -304,15 +329,15 @@ void sendStatus(bool serial) {
 
 void serialCommand(const char* line, uint32_t now) {
     const auto command = feel::parseCommand(line);
-#if FEEL_SINGLE_SERVO_DEMO
+#if FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE
     if (command.kind != feel::CommandKind::Status && command.kind != feel::CommandKind::Stop && command.kind != feel::CommandKind::Help) {
         controller.stop(now);
         writePWM();
-        Serial.println("ERROR demo accepts only STATUS, STOP, HELP; motion comes from live BLE");
+        Serial.println("ERROR single-servo adapter accepts only STATUS, STOP, HELP; motion comes from live BLE");
         return;
     }
     if (command.kind == feel::CommandKind::Help) {
-        Serial.println("ONE SERVO: live iPhone center sector3 -> GPIO32,1450..1550us; STATUS or STOP; no bench or calibration commands");
+        Serial.println(kSingleHelp);
         return;
     }
 #endif

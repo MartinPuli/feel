@@ -1,7 +1,8 @@
 > **FS0307 120° revision:** current CAD and firmware use 0/40/80/120° band positions.
 > See [design and validation](docs/FS0307-120-DESIGN.md). Old 175° shafts/calibration
 > are superseded. Default seven-servo PWM is disabled pending measured limits.
-> The opt-in [single-servo iPhone demo](docs/SINGLE-SERVO-IPHONE.md) has user-reported live motion.
+> The [midpoint demo](docs/SINGLE-SERVO-IPHONE.md) has user-reported motion.
+> The opt-in [single-servo live profile](docs/SINGLE-SERVO-LIVE.md) uses nominal120° production mapping on GPIO32.
 
 # FEEL
 

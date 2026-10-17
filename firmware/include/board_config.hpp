@@ -8,11 +8,17 @@
 #ifndef FEEL_SINGLE_SERVO_DEMO
 #define FEEL_SINGLE_SERVO_DEMO 0
 #endif
-#if FEEL_SINGLE_SERVO_DEMO && FEEL_ENABLE_SERVO_OUTPUT
-#error "Single-servo demo cannot enable the production seven-servo output"
+#ifndef FEEL_SINGLE_SERVO_LIVE
+#define FEEL_SINGLE_SERVO_LIVE 0
 #endif
-#if FEEL_SINGLE_SERVO_DEMO && (!defined(FEEL_BOARD_CLASSIC) || defined(FEEL_BOARD_S3))
-#error "Single-servo demo requires the explicit classic ESP32 board"
+#if FEEL_SINGLE_SERVO_DEMO && FEEL_SINGLE_SERVO_LIVE
+#error "Select either midpoint demo or nominal120 single-live output, never both"
+#endif
+#if (FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE) && FEEL_ENABLE_SERVO_OUTPUT
+#error "Single-servo adapters cannot enable the production seven-servo output"
+#endif
+#if (FEEL_SINGLE_SERVO_DEMO || FEEL_SINGLE_SERVO_LIVE) && (!defined(FEEL_BOARD_CLASSIC) || defined(FEEL_BOARD_S3) || defined(CONFIG_IDF_TARGET_ESP32S3))
+#error "Single-servo adapters require the explicit classic ESP32 board"
 #endif
 #if FEEL_ENABLE_SERVO_OUTPUT
 #ifndef FEEL_VERIFIED_PULSE_MIN_US

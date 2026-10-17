@@ -9,19 +9,22 @@ physical readiness of the complete seven-column device.
 
 Keep the tested wiring intact, the servo unloaded, the ESP32 powered by USB and
 the servo on its separate compatible supply. Do not change wiring while powered.
-The previously installed board firmware is the limited single-servo demo; pushing
-main does not update the board or the installed iPhone app.
+Two single-servo profiles are available: **FEEL Center Demo** uses the small
+midpoint range; **FEEL Center Live** uses the nominal120° production mapping.
+Pushing main does not update the board or the installed iPhone app. See
+[SINGLE-SERVO-LIVE.md](SINGLE-SERVO-LIVE.md) for the live profile.
 
 1. Open FEEL on the iPhone. Under **Puck connection**, use **Scan for puck** and
-   connect **FEEL Center Demo** (the cached name may be FEEL Puck). Confirm connected.
+   connect the installed profile, **FEEL Center Live** or **FEEL Center Demo**
+   (a cached older name may persist). Confirm connected.
 2. Tap **Live sensing**. Hold the phone in landscape-left with the rear camera
    forward and its top edge to your left. Measure lens height from the floor,
    set **Camera height**, then tap **Calibrate floor**. Wait for valid tracking.
 3. Point the center of the camera at a large box or a person in the waist-to-head
    sensing region. Test distances around2 m,1.2 m and0.5 m. Keep the object in
    the middle and wait about a second at each distance.
-4. Expect a small change between servo positions. The center sector alone drives
-   GPIO32 in this demo. Remaining in one distance band holds one position;
+4. Expect distinct positions with Center Live, or small changes with Center Demo.
+   The center sector alone drives GPIO32 in both profiles. Remaining in one distance band holds one position;
    this is not continuous rotation. Simulation does not move hardware.
 5. Tap **Stop**, then change the object distance. The servo should no longer
    follow it. The shaft need not visibly return to center: Stop detaches PWM.

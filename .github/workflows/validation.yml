@@ -45,6 +45,8 @@ jobs:
       - run: pio run -j 2 --project-dir firmware
       - name: Single-servo BLE demo compile (no upload)
         run: pio run -j 2 --project-dir firmware -e esp32-single-demo
+      - name: Single-servo nominal120 live compile (no upload)
+        run: pio run -j 2 --project-dir firmware -e esp32-single-live
       - name: Standalone single-servo bench compile (no upload)
         run: pio run -j 2 --project-dir firmware/bench-single -e esp32-single-center
       - run: sh firmware/test/build_output_paths.sh

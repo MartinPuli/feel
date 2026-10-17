@@ -1,3 +1,9 @@
+> Single-servo app control: the opt-in `esp32-single-live` environment uses the
+> production center-sector mapping on GPIO32 within nominal900–2100 µs. This
+> user-selected120° profile is not measured calibration. See
+> [single-live instructions](../docs/SINGLE-SERVO-LIVE.md). The older midpoint
+> demo and default disabled seven-servo environments remain available.
+
 # FEEL V1 firmware — greenfield implementation
 
 This is newly written code derived from `HANDOFF-v7.md`. It is **not** the missing original firmware. Its portable production controller is exercised on the host; board compilation and physical testing are separate gates. Never infer servo motion, pin return, force, or BLE reliability from a passing host test.
@@ -128,3 +134,28 @@ Official implementation references consulted 2026-10-16:
 - [PlatformIO ESP32-S3 DevKitC-1 board](https://docs.platformio.org/en/latest/boards/espressif32/esp32-s3-devkitc-1.html) and [unit testing](https://docs.platformio.org/en/latest/advanced/unit-testing/index.html).
 
 Handoff omissions resolved explicitly: UUIDs/status layout, modular sequence policy, gap tie rule, tap period/dip duration, safe command parsing, offset bounds, disconnected bench mode, 30-second ARM lease, raw-pulse exclusivity and proposed S3 GPIO mapping. Physical endpoints, servo polarity, motion timing, current supply, horn alignment, pin return and tactile interpretation remain measurement tasks.
+
+## Opt-in single-servo live120 adapter
+
+`esp32-single-live` is a separate classic-ESP32 environment for the explicitly
+selected **nominal120-degree** design. It advertises **FEEL Center Live** and
+attaches only GPIO32. It reads production controller `pulses[3]` directly: the
+center sector's band positions, adjacent gaps, highlight taps and existing
+calibration offsets all apply within nominal900–2100 microseconds. This is not
+a measured-safe-range build or evidence of full physical120-degree travel.
+
+Boot, connection without a packet, all-zero STOP/tracking-loss packets,
+disconnection and the existing500ms command timeout leave GPIO32 detached/LOW.
+Serial accepts only STATUS, STOP and HELP; calibration and bench motion remain
+unavailable in this mode. Serial STOP is temporary if the phone continues
+sending live packets. The other six servo outputs remain unattached.
+
+```sh
+# Compile only; does not flash or actuate hardware:
+python3 -m platformio run -d firmware -e esp32-single-live -j 2
+```
+
+The existing `esp32-single-demo` keeps its nominal1450–1550us mapping. Default
+seven-servo environments keep PWM disabled and their measured-limit requirement
+is unchanged. The new adapter reuses the same nine-byte BLE protocol and
+quantized50Hz output path; no independent sweep is performed.

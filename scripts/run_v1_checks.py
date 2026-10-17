@@ -30,6 +30,7 @@ def main():
     check('production-integration',[sys.executable,'validation/production/run.py','--output',str(output/'simulation')],files=('ios/Shared/FeelCore/.build/debug/feel-replay','firmware/build/feel-sim'),scope='compiled production Swift and C++ with synthetic inputs')
     check('firmware-build',['pio','run','-j','2','--project-dir','firmware'],tools=('pio',),timeout=1200)
     check('firmware-single-demo-build',['pio','run','-j','2','--project-dir','firmware','-e','esp32-single-demo'],tools=('pio',),files=('firmware/platformio.ini',),timeout=1200,scope='single-servo BLE demo compile only; no upload')
+    check('firmware-single-live-build',['pio','run','-j','2','--project-dir','firmware','-e','esp32-single-live'],tools=('pio',),files=('firmware/platformio.ini',),timeout=1200,scope='single-servo nominal120 live compile only; no upload')
     check('firmware-bench-build',['pio','run','-j','2','--project-dir','firmware/bench-single','-e','esp32-single-center'],tools=('pio',),files=('firmware/bench-single/platformio.ini',),timeout=1200,scope='standalone single-servo bench compile only; no upload')
     check('firmware-enabled-compile',['sh','firmware/test/build_output_paths.sh'],tools=('pio',),timeout=1200)
     if not args.skip_cad_build:check('cad-build',['sh','cad/build.sh'],tools=('openscad',),timeout=1200)
