@@ -7,7 +7,7 @@
 # FEEL
 
 **V1 is now maintained on `main`.** It includes the current firmware and CAD,
-Lantern and Beacon with the shared app redesign, and V1 validation tools.
+Lantern and Beacon with the [Geist app redesign](docs/V1-VERCEL-DESIGN.md), and V1 validation tools.
 Use `main` for all current V1 work. V2 and V3 remain separate development branches.
 
 A prototype that translates indoor depth and target direction into a **7-column ×
