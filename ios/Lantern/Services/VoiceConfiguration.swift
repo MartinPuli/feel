@@ -18,7 +18,7 @@ struct VoiceConfiguration: Codable, Equatable {
 }
 
 struct VoiceConfigurationStore {
-    private let service = "org.feel.hackharvard.voice"
+    private let store = KeychainStore<VoiceConfiguration>(service: "org.feel.hackharvard.voice", account: "token-service")
     func loadForLaunch() -> VoiceConfiguration? {
         let process = ProcessInfo.processInfo
         guard !process.arguments.contains("--uitesting") else { return nil }
@@ -49,32 +49,12 @@ struct VoiceConfigurationStore {
     }
     #endif
 
-    func load() -> VoiceConfiguration? {
-        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service, kSecAttrAccount as String: "token-service",
-            kSecReturnData as String: true, kSecMatchLimit as String: kSecMatchLimitOne]
-        var result: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
-              let data = result as? Data else { return nil }
-        return try? JSONDecoder().decode(VoiceConfiguration.self, from: data)
-    }
+    func load() -> VoiceConfiguration? { store.load() }
     func save(_ configuration: VoiceConfiguration) throws {
         guard configuration.isValid else { throw StoreError.invalid }
-        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service, kSecAttrAccount as String: "token-service"]
-        let data = try JSONEncoder().encode(configuration)
-        let update = SecItemUpdate(query as CFDictionary, [kSecValueData as String: data] as CFDictionary)
-        if update == errSecItemNotFound {
-            var item = query
-            item[kSecValueData as String] = data
-            item[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-            guard SecItemAdd(item as CFDictionary, nil) == errSecSuccess else { throw StoreError.unavailable }
-        } else if update != errSecSuccess { throw StoreError.unavailable }
+        do { try store.save(configuration) } catch { throw StoreError.unavailable }
     }
-    func clear() {
-        SecItemDelete([kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service, kSecAttrAccount as String: "token-service"] as CFDictionary)
-    }
+    func clear() { store.clear() }
     enum StoreError: Error { case invalid, unavailable }
 }
 
