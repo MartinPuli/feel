@@ -10,10 +10,10 @@ struct VoiceControl: View {
                 if voice.phase == .connecting { ProgressView().tint(FeelTheme.accent) }
                 else { Image(systemName: voice.isActive ? "mic.fill" : "mic.slash") }
             }
-            .font(.system(size: 18, weight: .medium))
+            .font(.system(size: 18, weight: .bold))
             .frame(width: 48, height: 48)
-            .foregroundStyle(FeelTheme.accent)
-            .background(FeelTheme.inset, in: Circle())
+            .foregroundStyle(voice.isActive ? .black : FeelTheme.ink)
+            .feelBlock(Circle(), fill: voice.isActive ? FeelTheme.pin : FeelTheme.paper, shadow: 4)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Assistant settings")
@@ -30,6 +30,7 @@ struct VoiceSetup: View {
     @State private var accessToken = ""
     @State private var setupError = ""
     @State private var showSetup = false
+    @State private var typedRequest = ""
     @Environment(\.openURL) private var openURL
 
     var body: some View {
@@ -41,6 +42,25 @@ struct VoiceSetup: View {
             } else if !voice.caption.isEmpty {
                 Text(voice.caption).font(FeelTypography.body)
                     .accessibilityIdentifier("voiceCaption")
+            }
+            if voice.audioUnavailable {
+                Text("Sound output is unavailable on this device. Captions and actions still work.")
+                    .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                    .accessibilityIdentifier("voiceAudioUnavailable")
+            }
+            if voice.isActive {
+                HStack(spacing: 10) {
+                    TextField("Type a request", text: $typedRequest)
+                        .feelField().submitLabel(.send)
+                        .onSubmit { sendTyped() }
+                        .accessibilityLabel("Type a request")
+                        .accessibilityHint("The same as saying it. Useful in a loud room or with a keyboard.")
+                        .accessibilityIdentifier("voiceTypedRequest")
+                    Button("Send") { sendTyped() }
+                        .buttonStyle(FeelSecondaryButtonStyle()).frame(width: 96)
+                        .disabled(typedRequest.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .accessibilityIdentifier("voiceSend")
+                }
             }
             Text("FEEL listens while the app is open. Say what you need.")
                 .font(FeelTypography.body)
@@ -73,20 +93,23 @@ struct VoiceSetup: View {
                     .font(FeelTypography.headline).accessibilityAddTraits(.isHeader)
                 Text("Enter your FEEL voice service address and access code. Your OpenAI API key stays on the server.")
                     .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                    .accessibilityIdentifier("voiceProviderNote")
                 TextField("https://your-service/session", text: $endpoint)
                     .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
-                    .textFieldStyle(.roundedBorder).accessibilityLabel("Voice service address")
+                    .feelField().accessibilityLabel("Voice service address")
                     .accessibilityIdentifier("voiceEndpoint")
                 SecureField("Access code", text: $accessToken)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
-                    .textFieldStyle(.roundedBorder).accessibilityIdentifier("voiceAccessCode")
+                    .feelField().accessibilityIdentifier("voiceAccessCode")
                 if !setupError.isEmpty { Text(setupError).font(FeelTypography.footnote).accessibilityIdentifier("voiceSetupError") }
                 Button("Enable assistant") {
                     let token = accessToken.isEmpty && endpoint == voice.configuration?.endpoint ? voice.configuration?.accessToken ?? "" : accessToken
                     do {
                         try voice.saveConfiguration(endpoint: endpoint, accessToken: token)
                         accessToken = ""; voice.resumeAssistant(); close()
-                    } catch { setupError = "Use an HTTPS service address and an access code of at least 32 characters." }
+                    } catch {
+                        setupError = "Use an HTTPS service address and an access code of at least 32 characters, not a raw API key."
+                    }
                 }
                 .buttonStyle(FeelPrimaryButtonStyle())
                 .accessibilityIdentifier("saveVoiceSetup")
@@ -100,5 +123,9 @@ struct VoiceSetup: View {
                 .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
         }
         .onAppear { endpoint = voice.configuration?.endpoint ?? "" }
+    }
+
+    private func sendTyped() {
+        if voice.sendText(typedRequest) { typedRequest = "" }
     }
 }

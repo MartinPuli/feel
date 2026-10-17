@@ -14,6 +14,29 @@ chair, person or teammate, reading sensing/connection status, floor calibration
 with a supplied measured height, discovering and selecting a puck, and opening
 settings. Teammate sharing still uses the existing consent flow.
 
+**Where is X?** For things outside the fixed target list, the assistant calls
+`where_is`. FEEL takes one camera photo, sends it with the question through
+Chalk's Model Gateway to a vision model (default `openai/gpt-6.1-sol`), places the
+answer with LiDAR depth, and keeps the pins pointing at that spot until you arrive,
+say stop, pick another target, or tracking resets. When the pins cannot show it,
+FEEL says a direction instead ("desk is to your left"). Enter the Chalk gateway
+settings once under Assistant settings → Where-is setup; they stay in Keychain. A
+photo leaves the phone only for this request. The result is a model's reading of
+one photo, not a confirmed object. Without Chalk settings, or when Chalk cannot be
+reached within 12 s, FEEL answers on the phone itself: Vision reads EXIT signs and
+door-shaped rectangles and finds people, and the bundled Core ML detector finds chairs
+and common objects (run `python3 scripts/fetch_model.py` before building). For anything
+else offline it says "I can only look for the exit, a door, a person, a chair or common
+objects right now."
+
+**Typed requests.** While the assistant is active, the Assistant panel has a "Type a
+request" field. Text takes the same path as speech (a user item, then a response), so
+a loud room or a Bluetooth keyboard with VoiceOver still works.
+
+**No sound output.** If audio playback cannot run (the iOS Simulator, a dead output
+route), the session now stays alive: captions and tool calls continue and the panel says
+sound output is unavailable, instead of the assistant disconnecting.
+
 “Stop” stops sensing and sends neutral tactile output while the assistant keeps
 listening. “Pause assistant” or “stop listening” ends microphone capture. The
 VoiceOver-accessible status control can resume it. Each modal exposes separate

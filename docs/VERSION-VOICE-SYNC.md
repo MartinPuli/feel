@@ -1,6 +1,8 @@
 # October 17 V1 voice synchronization
 
-Source main: `6ad7004`. V1 remains on main; version-specific code stays isolated.
+Initial source main: `6ad7004`. V1 remains on main; version-specific code stays isolated.
+Concurrent published main advanced to `76e0453`; the follow-up below incorporates
+that snapshot without overwriting its Where-is work.
 
 ## V2 Spatial Memory
 
@@ -22,3 +24,20 @@ Evidence logs: `/tmp/feel-v2-core-sync.log`, `/tmp/feel-v2-sync-tests.log`,
 `/tmp/feel-v2-sync-device.log`. New regression confirms saved places never become
 live visual observations in voice snapshots.
 No V2 installation, hardware flashing or cloud deployment performed.
+
+## V2 follow-up from current main
+
+Integrated main `76e0453`, including Where-is, local object lookup, typed Assistant
+requests, updated controls and the existing photo gateway setup. Preserved V2's
+session-bound places. Explicit memory recall cancels pending Where-is work so a
+late photo or response cannot replace the selected place. World/session invalidation
+clears both types of guidance. A stored place remains separate from live detections.
+
+PASS: 85 portable core tests, 109 native tests, 15 Where-is Python tests and
+the unsigned iPhone build. All nine UI tests passed, including the unchanged retry
+of a camera-recovery test whose first app launch timed out. Retry evidence:
+`/tmp/feel-v2-current-main-ui-retry.log`. Independent review was interrupted;
+these results establish the tested checkpoint only. Commands: core and Xcode commands above; `python3 -m unittest discover
+-s chalk/tests -p 'test_*.py'`.
+Evidence: `/tmp/feel-v2-current-main-core.log`, `/tmp/feel-where-is-python.log`,
+`/tmp/feel-v2-current-main-tests.log`, `/tmp/feel-v2-current-main-device.log`.

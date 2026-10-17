@@ -1,8 +1,8 @@
-# FEEL V2 — current main integration
+# Current V2 synchronization
 
-Integration validation is recorded in [V2-MAIN-INTEGRATION.md](V2-MAIN-INTEGRATION.md).
-The sections below retain prior V1 hardware and V2 software evidence; they do not
-represent new physical testing of this integration.
+See [VERSION-VOICE-SYNC.md](VERSION-VOICE-SYNC.md) for this integration's results.
+The following records describe earlier revisions and inherited main evidence.
+
 
 > Seven-servo preparation: `esp32-production` and its English setup guide are
 > ready in source. Host/configuration tests, enabled-output compile fixtures and
@@ -148,3 +148,77 @@ The native gate now passes in [run38974519620](https://github.com/MartinPuli/hac
 source `6e59c5b5dbe3a96ba8f03d712af08a648dd3a9ff`. The initial failed run is
 preserved in `evidence/v2/github-actions-initial-failure.json`; final results are
 in `evidence/v2/github-actions.json`. V3 may now begin in an isolated branch.
+Primary hardware is the team's classic ESP32-WROOM. Servo PWM defaults OFF.
+Published FS0307 travel/voltage differs from the handoff's 175°/650–2500 µs
+assumption. Identify and measure the actual units before enabling output. Nominal
+CAD clearances, horn fit, thin-guide stiffness and foam return are unverified.
+
+## V4: Where-is through Chalk with an on-device fallback, typed requests, no-audio resilience (2026-10-17)
+
+| Check | Result | How |
+|---|---|---|
+| Swift core (portable) | PASS, 65 tests incl. held target, depth grid, placement, on-device vocabulary, held-target guidance | `sh ios/scripts/test_portable.sh` |
+| App unit tests (simulator) | PASS, 104 tests: gateway, Where-is service with the on-device fallback, `where_is` command, the review fix pass, existing suites | `xcodebuild … -only-testing:LanternTests` |
+| On-device fallback (simulator) | PASS: `ObjectDetectorTests` reads a rendered EXIT sign through the same Vision path the phone uses; the Core ML classes need `python3 scripts/fetch_model.py` before the device build | `xcodebuild … -only-testing:LanternTests/ObjectDetectorTests` |
+| UI tests | PASS, 8 tests: existing suite with the restyle and the Where-is setup (the voice-setup test now scrolls without momentum) | `bash scripts/check_ios.sh` |
+| Chalk gateway from this Mac | PASS: text and image requests on `openai/gpt-6.1-sol`, 2.6–3.7 s | `chalk/check_connection.py --chat` |
+| Chalk gateway from the app | PASS in the iOS Simulator: the sample photo went through the real request, parser and placement code; "Found '3D puck model' … in 4.2 s" | Assistant panel → Where-is setup → Test with a sample photo |
+| Chalk Evaluation run | BLOCKED: needs `chalk login` and venue photos | `chalk/README.md` → Run the evaluation |
+| OpenAI Realtime voice | PASS in the iOS Simulator for connect, session setup, readiness line, a typed request, the app tool call and the spoken reply as a caption. Sound output is unavailable in the simulator (no running audio engine); the session now continues without it. Audible speech and the microphone: check on the phone | Assistant panel, typed request "where is the exit" |
+| Where-is on the LiDAR iPhone | NOT RUN: checklist below | — |
+
+### Camera and LiDAR conventions, checked against Apple's documentation
+
+- `ARCamera.transform`: in camera space the x-axis points right when the device is in
+  `UIDeviceOrientation.landscapeLeft`, y points up, z points toward the screen side. The
+  app's landscape-left mount therefore gives +x right, +y up and −z forward, which is what
+  `CameraIntrinsics.unproject` and `TactileGeometry.bearing` assume.
+- `ARCamera.intrinsics`: fx, fy and the principal point are in pixels from the top-left of
+  the captured image; the app scales them to the 256×192 depth grid by the ratio of depth
+  size to `imageResolution` (`ARPerception.intrinsics`).
+- `ARDepthData.depthMap`: metres, `kCVPixelFormatType_DepthFloat32`; `confidenceMap` holds
+  `ARConfidenceLevel` low/medium/high (0/1/2) and only medium and high are used.
+- `ARFrame.capturedImage`: full-range YCbCr; `CIImage` converts it for the Where-is JPEG. It
+  shares the depth map's orientation, so the model's box maps to depth pixels unrotated.
+
+### On-device fallback
+
+"Where is X?" asks Chalk first. Without Chalk settings, or when the gateway fails or does not
+answer within 12 s, the same photo goes to the phone's own detector (`LocalWhereIs` →
+`ObjectDetector`): Vision text recognition for EXIT signs, Vision rectangles for door candidates,
+Core ML or Vision human rectangles for people, and the bundled Core ML detector
+(`FEELDetector.mlmodelc`, Apple's pinned YOLOv3, 80 COCO classes) for chairs and common objects.
+The user's words are matched against a fixed vocabulary (`LocalVocabulary`: articles dropped,
+plurals tried, last word as a fallback, so "registration desk" finds a table). Anything else
+offline gets "I can only look for the exit, a door, a person, a chair or common objects right
+now." The target is named by the user's own words, never by a model label. The sample-photo
+self-test stays Chalk-only so its result reflects the gateway setup.
+
+### Review fix pass (fresh-context review of the whole branch)
+
+Fixed, each with a test that failed first: a new ask clears the previous target, cancels the
+lookup in flight and resets the finder; a photo from an earlier ask is dropped; a placement from
+a world that has since reset is refused ("Lost tracking. Say it again."); a target placed outside
+the pins' field says its direction at once and "I no longer see your target" is never spoken for
+a held target; finder and teammate targets never shadow a held target; a result line the
+assistant could not speak (mid-reply, or inside the five-second announce throttle) is retried
+from the tick for ten seconds; a typed request is refused while a reply is running instead of
+racing it; the "audio engine not running" tolerance is confined to simulator builds; arrival
+("You're at the …") counts only while sensing is live.
+
+### Device checklist for the hardware session (not yet run)
+
+1. Run `python3 scripts/fetch_model.py` (pinned, SHA-256 checked) so the bundle includes the Core ML
+   detector, then install from `feel/v4-chalk-ben` (or `main` after the merge). In Assistant
+   settings enter the voice service; the Where-is gateway settings are optional (or launch with the
+   DEBUG provisioning variables). Without them Where-is runs on-device only.
+2. Start the camera, calibrate with the measured lens height, confirm `Where-is ready` (Chalk) or
+   `Where-is not set up` (on-device only).
+3. Say "where is the chair": confirmation within 1 s, spoken observation and pin within 6 s;
+   turn 90°, the pin follows; walk to it: "You're at the chair."
+4. Say "where is the refrigerator" with none present: "I couldn't see a refrigerator in the photo."; no pin change.
+5. Hold a target, cover the camera until tracking resets: "Lost tracking. Say it again."; pins neutral.
+6. Hold a target, turn your back to it: "chair is behind you." within 5 s; "stop": highlight off, obstacles still shown.
+7. Airplane mode with Chalk configured, near an EXIT sign: "where is the exit" → pin within about
+   13 s (12 s gateway timeout, then on-device); "where is the unicorn" → the vocabulary line.
+8. Record PASS/FAIL per step here with the commit.

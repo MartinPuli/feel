@@ -54,7 +54,8 @@ final class LanternUITests: XCTestCase {
         XCTAssertTrue(app.textFields["voiceEndpoint"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["controlsToggle"].exists)
         let save = app.buttons["saveVoiceSetup"]
-        for _ in 0..<4 where !save.isHittable { app.scrollViews["cameraSettingsScroll"].swipeUp() }
+        // Slow swipes scroll without momentum, so a longer panel cannot carry the button past the viewport.
+        for _ in 0..<6 where !save.isHittable { app.scrollViews["cameraSettingsScroll"].swipeUp(velocity: .slow) }
         save.tap()
         XCTAssertTrue(app.staticTexts["voiceSetupError"].exists)
         capture("voice-setup")

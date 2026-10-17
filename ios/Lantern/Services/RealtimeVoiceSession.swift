@@ -71,6 +71,9 @@ final class RealtimeVoiceSession: ObservableObject {
         didSet { UserDefaults.standard.set(proactiveEnabled, forKey: "voice.proactive") }
     }
     @Published private(set) var isPausedByUser = false
+    /// Sound output could not play (no running audio engine, as on simulators). The
+    /// conversation continues through captions and tool calls.
+    @Published private(set) var audioUnavailable = false
     private var automaticListening = false
     private var foreground = true
     private var waitingForHeadphones = false
@@ -253,21 +256,42 @@ final class RealtimeVoiceSession: ObservableObject {
                 guard let self, self.generation == id, self.isActive else { return }
                 switch result {
                 case .failure: self.fail("Voice couldn't connect. Check your connection and voice setup, then retry.")
-                case .success(let token):
-                    let connection = self.transportFactory()
-                    self.transport = connection
-                    connection.onEvent = { [weak self] event in
-                        guard let self, self.generation == id, self.isActive else { return }
-                        self.receive(event)
-                    }
-                    connection.onFailure = { [weak self] in
-                        guard let self, self.generation == id, self.isActive else { return }
-                        self.fail("Voice disconnected. Tap to reconnect.")
-                    }
-                    connection.open(token: token)
+                case .success(let token): self.openTransport(token: token, generation: id)
                 }
             }
         }
+    }
+    private func openTransport(token: String, generation id: UUID) {
+        let connection = transportFactory()
+        transport = connection
+        connection.onEvent = { [weak self] event in
+            guard let self, self.generation == id, self.isActive else { return }
+            self.receive(event)
+        }
+        connection.onFailure = { [weak self] in
+            guard let self, self.generation == id, self.isActive else { return }
+            self.fail("Voice disconnected. Tap to reconnect.")
+        }
+        connection.open(token: token)
+    }
+
+    /// A typed request takes the same path as speech: a user item, then a response.
+    /// Also the fallback for a loud room or a Bluetooth keyboard with VoiceOver.
+    private static let runsInSimulator: Bool = {
+        #if targetEnvironment(simulator)
+        return true
+        #else
+        return false
+        #endif
+    }()
+    @discardableResult func sendText(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard isActive, receivedConfiguration, !userSpeaking, !responseRunning, pendingRequestID == nil, (1...160).contains(trimmed.unicodeScalars.count) else { return false }
+        phase = .thinking; caption = String(trimmed.prefix(400))
+        enqueue(["type": "conversation.item.create", "item": ["type": "message", "role": "user",
+                 "content": [["type": "input_text", "text": trimmed]]]])
+        requestResponse([:])
+        return true
     }
 
     func disconnect() {
@@ -282,7 +306,7 @@ final class RealtimeVoiceSession: ObservableObject {
         outgoing = []; sending = false; configured = false; receivedConfiguration = false
         handledCalls = []; interruptedResponses = []; responseID = nil; responseRunning = false; responseIsAnnouncement = false
         continuationPending = false; assistantItemID = nil
-        userSpeaking = false
+        userSpeaking = false; audioUnavailable = false
         phase = .idle; caption = ""; onEnded?()
     }
 
@@ -544,6 +568,12 @@ final class RealtimeVoiceSession: ObservableObject {
             // Out-of-band announcements do not have a default-history item to truncate.
             assistantItemID = responseIsAnnouncement ? nil : event["item_id"] as? String
             do { try audio.play(data); phase = .speaking }
+            catch VoiceAudioError.notRunning where Self.runsInSimulator {
+                // The simulator has no audio engine: keep the conversation going through captions and tools.
+                // On a phone a stopped engine is a real failure and takes the recovery path below.
+                VoiceDiagnostics.record("playback_failure", detail: "engine_not_running")
+                audioUnavailable = true; phase = .speaking
+            }
             catch {
                 let code: String
                 switch error {
