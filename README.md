@@ -6,12 +6,12 @@
 
 # FEEL V2 — Spatial Memory
 
-This V2 branch integrates the latest V1 foundation from `main` (`7da10f7`) with
+This V2 branch integrates the latest V1 foundation from `main` (`a4c141e`) with
 session-only Remember, Recall, Return and multiple bookmarks. Start with
 [Spatial Memory](docs/SPATIAL-MEMORY.md). V3 features remain on their own branch.
 
 **V1 is maintained on `main`.** It includes the current firmware and CAD,
-Lantern and Beacon with the [Geist app redesign](docs/V1-VERCEL-DESIGN.md), and V1 validation tools.
+Lantern with its [camera-first interface](docs/V1-CAMERA-UI.md), Beacon, and V1 validation tools.
 Use `main` for all current V1 work. V2 and V3 remain separate development branches.
 
 A prototype that translates indoor depth and target direction into a **7-column ×
@@ -37,6 +37,8 @@ To set up the board on your Mac, start with [SETUP-MAC-ESP32.md](docs/SETUP-MAC-
 
 See [release status](docs/RELEASE-STATUS.md) for actual checks and blockers.
 **One-servo motion has been observed; full travel, seven-servo mechanics and sensing accuracy remain unverified.**
+
+See [version guide](docs/VERSIONS.md) for V1/V2/V3 features and branch selection.
 
 ## Run software checks
 

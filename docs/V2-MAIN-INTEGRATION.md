@@ -1,14 +1,15 @@
 # V2 updated from current V1 main
 
-This branch integrates V1 `main` commit `7da10f7` into V2 Spatial Memory. The
+This branch integrates V1 `main` commit `a4c141e` into V2 Spatial Memory. The
 previous V2 tip was `063c07c`. `main` remains V1; V2 is published on
 `feel/v2-spatial-memory`, with V3 advanced work separate.
 
 ## What changed
 
-- The iOS app retains current V1's Geist fonts, simple tactile display, explicit
-  connection management, larger-text layout and persistent Stop control.
-- My Places sits below the tactile view. Remember, select, rename, delete, Recall,
+- The iOS app retains current V1's camera-first screen, Geist fonts, compact tactile
+  display, connection/settings sheets, larger-text layout and Stop controls.
+  Normal launch requests camera access once; Stop or backgrounding does not restart it.
+- My Places opens from the camera header in its own sheet with a visible Stop. Remember, select, rename, delete, Recall,
   Set return point, Return and Stop guidance retain their existing behavior.
   Memory simulation retains its movement, tracking-loss and session-reset controls.
 - Places remain session-only. Stops, interruptions, resets and mode changes clear

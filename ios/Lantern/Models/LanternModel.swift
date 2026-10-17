@@ -8,11 +8,12 @@ import FeelCore
 final class LanternModel:ObservableObject {
     enum RunMode:String { case stopped="STOPPED",live="LIVE",simulation="SIMULATION" }
     enum SimulationScene:Equatable { case obstacles, memory }
+    @Published private(set) var isStarting=false
     @Published private(set) var mode:RunMode = .stopped
     @Published private(set) var simulationScene:SimulationScene = .obstacles
     @Published private(set) var packet=FeelPacket.neutral(sequence:0)
     @Published private(set) var guidanceState:GuidanceState = .stopped
-    @Published private(set) var status="Choose Live sensing or Simulation"
+    @Published private(set) var status="Open the camera to begin"
     @Published private(set) var detectorStatus="Loading detector"
     @Published private(set) var detectorAvailable=false
     @Published private(set) var targetDescription="No target selected"
@@ -69,9 +70,12 @@ final class LanternModel:ObservableObject {
         perception.onModelStatus={ [weak self] text,available in self?.detectorStatus=text; self?.detectorAvailable=available }
     }
     func startLive() {
-        stop(); startGeneration += 1; let generation=startGeneration
+        guard !isStarting, mode != .live else { return }
+        stop(); isStarting=true; status="Requesting camera access"
+        startGeneration += 1; let generation=startGeneration
         func begin() {
             guard self.startGeneration==generation else { return }
+            self.isStarting=false
             self.mode = .live
             guard self.perception.start(epoch:generation) else { self.mode = .stopped; self.status="Live sensing requires a LiDAR device. Simulation is available."; return }
             self.perception.setFinder(self.finder,epoch:self.finderEpoch); self.status="Starting live perception"; self.beginTimer()
@@ -81,9 +85,9 @@ final class LanternModel:ObservableObject {
         case .notDetermined:
             AVCaptureDevice.requestAccess(for:.video) { granted in DispatchQueue.main.async {
                 guard self.startGeneration==generation else { return }
-                if granted { begin() } else { self.status="Camera permission denied. Enable it in Settings to use Live." }
+                if granted { begin() } else { self.isStarting=false; self.status="Camera permission denied. Enable it in Settings to use Live." }
             } }
-        default: status="Camera permission denied. Enable it in Settings to use Live."
+        default: isStarting=false; status="Camera permission denied. Enable it in Settings to use Live."
         }
     }
     func startSimulation(memory:Bool=false) {
@@ -93,7 +97,7 @@ final class LanternModel:ObservableObject {
     }
     func calibrate() { guard mode == .live else { return }; perception.calibrate(cameraHeight:cameraHeight) }
     func stop() {
-        startGeneration += 1; timer?.invalidate(); timer=nil; frame=nil; calibrated=false
+        isStarting=false; startGeneration += 1; timer?.invalidate(); timer=nil; frame=nil; calibrated=false
         perception.stop(); peer.stop(); mode = .stopped; guidanceState = .stopped
         spatialMemory.end(); memoryGuidance=nil; memoryNotice="Session ended. Saved places and return point cleared."
         sequence &+= 1; packet = .neutral(sequence:sequence); puck.send(packet)
