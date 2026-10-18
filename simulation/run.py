@@ -32,6 +32,7 @@ REPLAY = PACKAGE / '.build/release/feel-replay'
 FIRMWARE = ROOT / 'firmware'
 FEEL_SIM = FIRMWARE / 'build/feel-sim'
 WATCHED = [PACKAGE / 'Sources', FIRMWARE / 'src', FIRMWARE / 'include', FIRMWARE / 'host', SIM / 'scenarios', SIM / 'recordings']
+ACTIVE_COLUMNS = tuple(range(1, 7))  # Six physical columns; wire slot b0 stays reserved.
 MS_OFFSET = 1000  # firmware clock = 1 s + scenario time, so CONNECT precedes every packet
 
 
@@ -129,19 +130,53 @@ def dropped(t, faults, rng):
 # ---------------------------------------------------------------- scoring
 
 def columns_of(spec):
-    # Wire slot 0 is reserved; the physical six-column layout is slots 1...6.
-    return list(range(1, 7)) if spec in (None, 'all') else list(spec)
+    columns = list(ACTIVE_COLUMNS) if spec in (None, 'all') else list(spec)
+    if not columns or len(set(columns)) != len(columns) or any(type(c) is not int or c not in ACTIVE_COLUMNS for c in columns):
+        raise ValueError('Label physical wire slots 1 through 6; b0 is checked by the reserved-slot invariant')
+    return columns
+
+
+def annotate_taps(ticks, max_held=3):
+    """Mark the taps. The phone drops a pin for exactly one tick between two ticks of the same raised band: steady
+    obstacle pins once a second (TapRhythm) and a target span once per six packets (the encoder's group tap). On the
+    firmware side the same tap may last longer only because the packets that would have raised the pin again were
+    lost (the firmware holds its last packet); up to `max_held` such held ticks count as the one tap.
+    tick['taps'][source] lists the columns tapping at that tick."""
+    n = len(ticks)
+    for tick in ticks:
+        tick['taps'] = {'phone': [], 'firmware': []}
+        tick['tapBands'] = {'phone': {}, 'firmware': {}}
+    for name in ('phone', 'firmware'):
+        for c in ACTIVE_COLUMNS:
+            band = lambda j: ticks[j][name]['bands'][c]
+            i = 1
+            while i < n - 1:
+                if band(i) != 0 or band(i - 1) == 0:
+                    i += 1
+                    continue
+                j = i
+                while name == 'firmware' and j + 1 < n and band(j + 1) == 0 and ticks[j + 1]['dropped'] and j + 1 - i < max_held:
+                    j += 1
+                if j + 1 < n and band(j + 1) == band(i - 1) and all(
+                    ticks[k]['phone']['state'] in ('live', 'simulation') for k in range(i - 1, j + 2)
+                ):
+                    for k in range(i, j + 1):
+                        ticks[k]['taps'][name].append(c)
+                        ticks[k]['tapBands'][name][c] = band(i - 1)
+                i = j + 1
 
 
 def check_tick(expect, tick):
-    """Return (checks, failures) for one expectation at one tick. A failure is (column|None, wanted, got)."""
+    """Return (checks, failures) for one expectation at one tick. A failure is (column|None, wanted, got).
+    A tap (see annotate_taps) satisfies a band check: the pin is still that band, it is being kept felt."""
     checks, failures = 0, []
-    source = tick['firmware'] if expect.get('source', 'firmware') == 'firmware' else tick['phone']
+    name = expect.get('source', 'firmware')
+    source = tick['firmware'] if name == 'firmware' else tick['phone']
     if 'band' in expect or 'bands' in expect:
         allowed = expect['bands'] if 'bands' in expect else [expect['band']]
         for c in columns_of(expect.get('columns')):
             checks += 1
-            if source['bands'][c] not in allowed:
+            if source['bands'][c] not in allowed and not (source['bands'][c] == 0 and tick.get('tapBands', {}).get(name, {}).get(c) in allowed):
                 failures.append((c, allowed, source['bands'][c]))
     if 'highlight' in expect:
         want = 255 if expect['highlight'] is None else expect['highlight']
@@ -161,8 +196,21 @@ def score(scenario, ticks, base=0.0):
     rules = {'minAccuracy': 0.95, **scenario.get('pass', {})}
     total = passed = phantom = missed = 0
     per_expect = []
+    annotate_taps(ticks)
     for index, expect in enumerate(expects):
         lo, hi = base + expect['from'] + expect.get('grace', 0), base + expect['to']
+        if 'taps' in expect:
+            # A window-level check: how often one column taps, per second, within [min, max].
+            spec, name = expect['taps'], expect.get('source', 'firmware')
+            window = [t for t in ticks if lo <= t['t'] <= hi]
+            count = sum(1 for t in window if spec['column'] in t['taps'][name])
+            rate = count / (hi - lo) if hi > lo else 0.0
+            ok = spec.get('min', 0.0) <= rate <= spec.get('max', float('inf'))
+            total += 1; passed += int(ok)
+            per_expect.append({'index': index, 'label': expect.get('label', ''), 'from': expect['from'], 'to': expect['to'],
+                               'checks': 1, 'passed': int(ok), 'accuracy': 1.0 if ok else 0.0, 'firstMatch': None,
+                               'tapsPerSecond': round(rate, 2), 'taps': count})
+            continue
         e_total = e_pass = 0
         first_ok = None
         for tick in ticks:
@@ -185,12 +233,24 @@ def score(scenario, ticks, base=0.0):
                            'firstMatch': None if first_ok is None else round(first_ok - expect['from'], 3)})
     # Flicker counts only changes between two live ticks, so going neutral on a fault is not flicker.
     live = [(a, b) for a, b in zip(ticks, ticks[1:]) if a['phone']['state'] == b['phone']['state'] == 'live' and not a['dropped'] and not b['dropped']]
-    changes = sum(1 for a, b in live for c in range(1, 7) if a['firmware']['bands'][c] != b['firmware']['bands'][c])
+    # A tap's two moves are deliberate, so they do not count as flicker; they are reported on their own.
+    changes = sum(1 for a, b in live for c in ACTIVE_COLUMNS
+                  if a['firmware']['bands'][c] != b['firmware']['bands'][c] and c not in a['taps']['firmware'] and c not in b['taps']['firmware'])
     live_seconds = sum(b['t'] - a['t'] for a, b in live) or 1e-9
+    taps = sum(len(t['taps']['firmware']) for t in ticks if t['phone']['state'] == 'live')
     ages = [t['t'] - t['phone']['frame'] for t in ticks if t['phone']['frame'] is not None and t['phone']['state'] == 'live']
     accuracy = passed / total if total else None
-    flicker = changes / 6 / live_seconds if live else 0.0
+    flicker = changes / len(ACTIVE_COLUMNS) / live_seconds if live else 0.0
     reasons = []
+    reserved_violations = 0
+    for tick in ticks:
+        for source in ('phone', 'firmware'):
+            if tick[source]['bands'][0] != 0 or tick[source]['highlight'] == 0:
+                reserved_violations += 1
+                tick.setdefault('mismatch', []).append({'expect': 'reserved-slot', 'column': 0,
+                    'want': 'b0=0 and no highlight', 'got': source})
+    if reserved_violations:
+        reasons.append(f'reserved wire slot b0 activated in {reserved_violations} phone/firmware states')
     if total == 0 and expects:
         reasons.append('no labelled checks fell inside the timeline')
     # Every labelled window must agree on its own; a short tap dropout must not hide behind many wall checks.
@@ -203,6 +263,8 @@ def score(scenario, ticks, base=0.0):
         'accuracy': None if accuracy is None else round(accuracy, 4), 'checks': total, 'failedChecks': total - passed,
         'phantomChecks': phantom, 'missedChecks': missed,
         'bandChangesPerColumnSecond': round(flicker, 3),
+        'reservedSlotViolations': reserved_violations,
+        'tapsPerColumnSecond': round(taps / len(ACTIVE_COLUMNS) / live_seconds, 3) if live else 0.0,
         # Modelled: simulated tick phase plus delivery latency, not a phone measurement.
         'frameAgeMs': {'mean': round(1000 * sum(ages) / len(ages), 1), 'max': round(1000 * max(ages), 1)} if ages else None,
         'expectations': per_expect, 'passed': not reasons, 'reasons': reasons,
@@ -421,6 +483,8 @@ def compare_baseline(entry, baselines: Path, update: bool):
 def status(entry):
     if 'skipped' in entry:
         return 'SKIP'
+    if entry['result'].get('reservedSlotViolations', 0):
+        return 'FAIL'  # A perception exception never waives the hardware-layout invariant.
     if not entry.get('expect'):
         return 'UNLABELLED'
     if entry['result']['passed']:

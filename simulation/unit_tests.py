@@ -57,6 +57,8 @@ def main() -> int:
     passed = sum(suite['passed'] for suite in suites)
     failed = sum(suite['failed'] for suite in suites)
     skipped = sum(suite['skipped'] for suite in suites)
+    if total == 0:
+        failures.append('No XCTest cases were parsed; inspect the Swift test output before claiming a pass.')
     diagnostics = subprocess.run(
         [sys.executable, str(PIN_DIAGNOSTICS)], cwd=ROOT, text=True,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -67,7 +69,7 @@ def main() -> int:
 
     report = {
         'generatedAt': datetime.now(timezone.utc).isoformat(timespec='seconds'),
-        'status': 'PASS' if result.returncode == 0 and failed == 0 and diagnostic_ok else 'FAIL',
+        'status': 'PASS' if result.returncode == 0 and total > 0 and failed == 0 and diagnostic_ok else 'FAIL',
         'exitCode': result.returncode if result.returncode else diagnostics.returncode,
         'total': total,
         'passed': passed,

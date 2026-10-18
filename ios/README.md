@@ -104,11 +104,36 @@ target ("You're there"). The arrows keep following the live route, and the pins 
 suggested direction, never a clear path. "Lead me to the exit" calls the `lead_me` tool for a place remembered in
 this room. `get_status.room_memory.journey` reports the walk being recorded and the point in use.
 
-To get the journeys off the phone, call `JourneyLog.export()` (from the debugger, or wire it to a button later): it
-writes every stored journey as one JSON array to `Documents/journeys.json`, which the **Files** app shows under
-**On My iPhone → FEEL** (the app lists its Documents folder there, like the depth recordings). Share it from Files
-and seed it into Chalk with `protocol/journey-v1.json` as the shape. There is no network upload yet:
-`JourneyLog.share` is the empty Supabase write. Nothing of this has run on a device.
+After explicit upload consent, each future kept journey can also be uploaded: `SupabaseWriter` posts it to the `journeys` table through Supabase's REST API with
+the publishable key and the signed-in user's token. The same writer sends a confirmed find on "found it" (the
+`confirmed_finds` table behind Chalk's `last_seen`, placed by venue and distance from the room's tag), an anchor for
+every confirmed target and a visit's room map when sensing stops, so Chalk's `room_anchors`, `room_structure`, `path`
+and `progress_points` can use shared records. Rows require a selected venue; there is no demo fallback. Uploads
+and sharing default off, with separate choices under Assistant → Cloud memory or explicit-consent voice tools.
+An expired token is refreshed only while its originating login and consent remain valid; `get_status.room_memory.uploads` counts what was sent, failed and skipped, with
+the last reason. `JourneyLog.export()` still writes every stored journey to `Documents/journeys.json` for the **Files**
+app (**On My iPhone → FEEL**), accessible through Cloud memory or the export_journeys voice tool. A real device
+upload round trip remains unverified. See [integrated version features](../docs/VERSION-INTEGRATION.md).
+
+## Tap rhythms (why raised pins pulse)
+
+A pin is felt when it moves and fades within seconds when it stays: steady skin pressure rides on slowly adapting
+nerve fibres whose firing, and the felt intensity with it, decay exponentially (Chung et al. 2015, *BMC Neuroscience*;
+Bensmaia et al. 2005, *J. Neurophysiol.*, where SA1 afferents adapt fastest). So the puck keeps pins felt by motion,
+sparse enough to remind rather than buzz:
+
+| What | Rhythm | Where |
+|---|---|---|
+| Obstacle pin unchanged for 1 s | one drop to the gap every 1.0 s, all steady pins together | `TapRhythm` (FeelCore), applied to the final packet of every tick after cues and highlights |
+| One target column | the firmware's 13° dip for 100 ms of every 600 ms | the highlight byte, gated by the tactile profile |
+| A target span | every span column dropped for one packet in six | `TactileEncoder.groupTapPeriod` |
+| Direction arrows | a new frame every 100 ms | `DirectionCue` |
+
+What points at something beats faster than what is merely there, and the arrows are the fastest motion. A drop
+commands the nearest gap, 29° of cam travel; the FS0307 turns 60° in about 0.10 s unloaded, so a drop is about 50 ms
+each way and up to twice that under the cam, a dropped packet is back up within about 200 ms, and no period may be
+shorter than three packets (`TapRhythm.minimumPeriod`). Not run on hardware yet: pin return speed under load decides
+how crisp a drop feels, and the settle time and period are constants in `TapRhythm` to tune on the device.
 
 ## BLE and physical-output status
 

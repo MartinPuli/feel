@@ -1,0 +1,140 @@
+{
+  "checked_at": "2026-10-18T02:43:17.165199+00:00",
+  "environment_id": "flnyc749e8d9",
+  "method": "feel_chalk.context.query using existing configured credential; no new model calls, seed changes or deployment",
+  "cases": [
+    {
+      "name": "keys",
+      "input": {
+        "object_history.id": "00000000-0000-0000-0000-000000000001:keys"
+      },
+      "output": [
+        "object_history.finds_count",
+        "object_history.last_place",
+        "object_history.last_seen_at",
+        "object_history.spoken"
+      ],
+      "result": {
+        "object_history.finds_count": 2,
+        "object_history.last_place": "kitchen table",
+        "object_history.last_seen_at": "2026-10-17T19:37:33.814802+00:00",
+        "object_history.spoken": "Keys: last confirmed at the kitchen table, 7 hours ago (2 finds on record)."
+      },
+      "checks": {
+        "two_seeded_finds": true,
+        "seeded_latest_place": true
+      },
+      "status": "PASS"
+    },
+    {
+      "name": "missing",
+      "input": {
+        "object_history.id": "00000000-0000-0000-0000-000000000001:laptop"
+      },
+      "output": [
+        "object_history.finds_count",
+        "object_history.last_place",
+        "object_history.last_seen_at",
+        "object_history.spoken"
+      ],
+      "result": {
+        "object_history.finds_count": 0,
+        "object_history.last_place": null,
+        "object_history.last_seen_at": null,
+        "object_history.spoken": "No confirmed find of laptop is on record."
+      },
+      "checks": {
+        "missing_is_not_invented": true
+      },
+      "status": "PASS"
+    },
+    {
+      "name": "venue",
+      "input": {
+        "venue.id": "harvard-yard"
+      },
+      "output": [
+        "venue.pack",
+        "venue.pack_sha256"
+      ],
+      "result": {
+        "entry_count": 4,
+        "generated_at": "2026-10-18T02:43:18Z",
+        "expires_at": "2026-10-25T02:43:18Z",
+        "sha256": "cf6feb25f9964fc7544f961f33b2cc8775fc7bc7fdd070d14a2460b4a9a5ef56",
+        "entry_ids": [
+          "accessible-campus-map",
+          "disability-resources",
+          "harvard-yard-gates",
+          "yard-weekend-restriction"
+        ],
+        "retrieved_at": [
+          "2026-10-17T20:00:00Z",
+          "2026-10-17T20:00:00Z",
+          "2026-10-17T20:00:00Z",
+          "2026-10-17T20:00:00Z"
+        ]
+      },
+      "checks": {
+        "four_seeded_entries": true,
+        "payload_hash_matches": true,
+        "no_future_retrieval": true
+      },
+      "status": "PASS"
+    },
+    {
+      "name": "room",
+      "input": {
+        "room_memory.id": "harvard-yard:feel-tag-01"
+      },
+      "output": [
+        "room_memory.spoken",
+        "room_memory.targets",
+        "room_memory.targets_count",
+        "room_memory.structure",
+        "room_memory.structure_visits",
+        "room_memory.world_map",
+        "room_memory.world_map_journeys"
+      ],
+      "result": {
+        "room_memory.spoken": "Remembered here: exit about 6 meters ahead-right, seen 4 times, last 6 hours ago; water fountain about 3 meters ahead-left, seen twice, last yesterday.",
+        "room_memory.targets": "[{\"label\": \"exit\", \"x\": -4.0, \"y\": 5.1, \"z\": 0.05, \"sightings\": 4, \"last_seen_at\": \"2026-10-17T20:22:12.054503+00:00\"}, {\"label\": \"water fountain\", \"x\": 2.1, \"y\": 2.4, \"z\": 0.3, \"sightings\": 2, \"last_seen_at\": \"2026-10-16T22:22:12.054503+00:00\"}]",
+        "room_memory.targets_count": 2,
+        "room_memory.structure": "{\"cell_size\": 0.1, \"cells\": \"28f2b10f2u6b\", \"height\": 6, \"origin_x\": -0.2, \"origin_y\": 0.0, \"schema\": 1, \"width\": 8}",
+        "room_memory.structure_visits": 3,
+        "room_memory.world_map": "{\"cell_size\": 0.1, \"cells\": \"38u8f38u8f38u8f38u4f2b2f38u8f40u6b260u1f361u1f97u1f263u1f44u1b150u1f165u1f16u1b219u1b56u1f67u1f361u1f9u1f9u1f9u1f15u\", \"height\": 52, \"origin_x\": -4.0, \"origin_y\": 0.0, \"schema\": 1, \"width\": 46}",
+        "room_memory.world_map_journeys": 3
+      },
+      "checks": {
+        "two_seeded_targets": true,
+        "three_structure_visits": true,
+        "structure_available": true,
+        "three_world_map_journeys": true
+      },
+      "status": "PASS"
+    },
+    {
+      "name": "path",
+      "input": {
+        "path.id": "harvard-yard:feel-tag-01:-0.3,0.3:exit"
+      },
+      "output": [
+        "path.polyline",
+        "path.progress_points",
+        "path.length_m",
+        "path.status"
+      ],
+      "result": {
+        "path.polyline": "[[-0.3, 0.3], [-1.75, 1.75], [-2.75, 1.75], [-3.25, 2.25], [-3.25, 4.75], [-4.0, 5.1]]",
+        "path.progress_points": "[[-3.25, 4.492], [-4.0, 5.1]]",
+        "path.length_m": 7.085,
+        "path.status": "ok"
+      },
+      "checks": {
+        "seeded_path_exists": true,
+        "two_progress_points": true
+      },
+      "status": "PASS"
+    }
+  ]
+}

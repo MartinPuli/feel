@@ -23,14 +23,17 @@ struct SupabaseConfiguration: Equatable {
     }
 
     /// Legacy keys are JWTs; the service-role one bypasses Row Level Security.
-    private static func isServiceRoleJWT(_ key: String) -> Bool {
-        let parts = key.split(separator: ".")
-        guard parts.count == 3 else { return false }
+    private static func isServiceRoleJWT(_ key: String) -> Bool { claims(of: key)?["role"] as? String == "service_role" }
+
+    /// The claims of a JWT, read without verifying it (the server verifies): `sub` is the user's id, `exp` the expiry
+    /// in seconds since 1970, `role` the Postgres role.
+    static func claims(of jwt: String) -> [String: Any]? {
+        let parts = jwt.split(separator: ".")
+        guard parts.count == 3 else { return nil }
         var payload = parts[1].replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
         payload += String(repeating: "=", count: (4 - payload.count % 4) % 4)
-        guard let data = Data(base64Encoded: payload),
-              let claims = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return false }
-        return claims["role"] as? String == "service_role"
+        guard let data = Data(base64Encoded: payload) else { return nil }
+        return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
     }
 }
 
@@ -183,8 +186,12 @@ final class AuthModel: ObservableObject {
         else { state = .signedOut }
     }
 
+    /// Where the sign-in keeps its tokens. The uploads to Supabase (SupabaseWriter) read the same entry and replace it
+    /// when they refresh an expired token.
+    static let sessionStore = KeychainStore<AuthSessionTokens>(service: "org.feel.hackharvard.auth", account: "supabase-session")
+
     static func forLaunch() -> AuthModel {
-        let store = KeychainStore<AuthSessionTokens>(service: "org.feel.hackharvard.auth", account: "supabase-session")
+        let store = sessionStore
         let uiTesting = ProcessInfo.processInfo.arguments.contains("--uitesting")
         let client = uiTesting ? nil : SupabaseConfiguration.fromBundle().map(SupabaseAuthClient.init)
         return AuthModel(client: client, store: store)

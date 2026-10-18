@@ -82,6 +82,32 @@ gap), startup 29°. Highlight dips **13° toward that gap** and returns. Firmwar
 implements a nominal 100 ms dip in a 600 ms cycle; these times are unmeasured
 prototype defaults. Calibration offsets apply per column within documented limits.
 
+## Tap rhythms (October 17, 2026)
+
+A pin that stays up stops being felt within seconds; a change is felt at once. So the puck keeps
+pins felt by motion:
+
+- Presence tap (new, phone-timed, `ios/Shared/FeelCore/Sources/FeelCore/TapRhythm.swift`): an
+  obstacle pin whose band has not changed for 1.0 s drops to its gap for one packet every 1.0 s,
+  all steady pins together.
+- Target taps (unchanged): one target column is tapped by the firmware highlight (13° toward the
+  gap for 100 ms of every 600 ms, gated by the tactile profile), a span by the encoder (every span
+  column dropped for one packet in six). Both beat faster than the presence tap, so what points
+  at something stands out.
+- Arrows (`DirectionCue`) keep their own 100 ms frames and are the fastest motion on the puck.
+
+Servo budget: an FS0307 turns 60° in about 0.10 s unloaded, so the 29° drop to the gap is about
+50 ms each way and up to twice that under the cam; with a fresh restoring packet delivered, a tap
+is expected to return within about 200 ms,
+and no period may be shorter than three packets. None of this is measured on hardware yet.
+
+Neutral commands remain neutral until a fresh accepted packet raises a band. The nine-byte ABI
+does not distinguish a presence-tap drop from tracking loss or Stop, so firmware must never infer
+a tap and restore an old band after packet loss. The 500 ms watchdog remains unchanged. A lost
+raise packet can extend a tap's neutral interval; this is preferable to resurrecting stale guidance.
+See `simulation/scenarios/packet-loss-failsafe.json` and
+`simulation/scenarios/tracking-loss-packet-blackout.json`. This revision is not flashed.
+
 A requested angle is not a measured angle. A continuous servo transition between
 distant bands necessarily crosses intermediate cam lobes; do not claim no
 transient pin activation. There are no position, force, temperature, or jam sensors.

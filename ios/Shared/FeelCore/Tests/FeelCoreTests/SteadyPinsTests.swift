@@ -82,8 +82,9 @@ final class PathWaveTests: XCTestCase {
     }
     func testBeyondTheFieldRunsToTheEdge() {
         var w=PathWave(); turn(&w)
-        XCTAssertEqual(frames(&w,from:1,count:5,bearing:-120),["...4...","..44...",".44....","44.....","4......"])
-        XCTAssertEqual(w.column,0)
+        // The edge is physical slot 1; reserved wire slot 0 never rises.
+        XCTAssertEqual(frames(&w,from:1,count:5,bearing:-120),["...4...","..44...",".44....",".4.....",".4....."])
+        XCTAssertEqual(w.column,1)
     }
     func testStraightRouteOrArrivalHasNoWave() {
         var w=PathWave(); turn(&w)

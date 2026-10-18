@@ -1,0 +1,6 @@
+Validation completed 2026-10-18T00:05:12-04:00
+
+Swift: 	 Executed 395 tests, with 0 failures (0 unexpected) in 35.568 (35.607) seconds
+	 Executed 395 tests, with 0 failures (0 unexpected) in 35.568 (35.607) seconds
+iOS unsigned builds: 2 successful builds (Lantern and Beacon).
+CAD contract check blocked: OpenSCAD is required and not installed.

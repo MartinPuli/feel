@@ -12,14 +12,14 @@ python3 simulation/run.py     # scores every scenario and writes the replay data
 python3 simulation/unit_tests.py # runs Swift tests and writes their summary for /replay
 python3 simulation/pin_diagnostics.py # checks each active pin's app packet and firmware command path
 cd web && npm run dev         # http://127.0.0.1:3000/replay
-npm test                      # server path containment and byte-range tests
+npm test                      # server, six-column replay, report rendering and public-build tests
 ```
 
 The dev server binds 127.0.0.1 only. It serves `public/` and maps `/replay/data/*` to `simulation/out/web/`, with byte ranges so video can seek. Space plays and pauses; the arrow keys step one 10 Hz tick.
 
 ## Phone sessions
 
-In Lantern, turn on **Record depth**. **Include camera video** is on by default. The phone writes three files to Files › On My iPhone › FEEL › Recordings:
+In Lantern, turn on **Record depth**. **Include camera video** is a separate explicit choice. The phone writes three files to Files › On My iPhone › FEEL › Recordings:
 - `feel-<time>.feelrec`
 - `feel-<time>.mp4` (960 × 720 H.264, 15 fps, no audio)
 - `feel-<time>.video.json`, which ties video time 0 to the ARKit clock
@@ -49,3 +49,15 @@ cd web && npm run build && vercel deploy        # preview; add --prod for produc
 ```
 
 `vercel.json` serves `dist/` with no install or build step, with clean URLs and short caching on replay data. Set the Vercel project's root directory to `web`. This deploy path has not been run yet. Check the first preview before promoting it. If the site gets a different home later, `dist/` is plain static files and can be hosted anywhere.
+
+## Branch integration
+
+The six-column display, labelled pin checks and software-report panels come from
+`replay-pin-diagnostics` (`6d41c62`). Public builds include only selected report
+fields, omit raw build errors and retain the physical-validation limitation.
+Reports describe the timestamped run shown; they do not certify the current checkout.
+
+The snapshot comparison from `ethan/cad` (`48774f0`) is not included. It still
+uses seven physical columns and can install a stale comparison after a session
+change. A future port needs six-column alignment, request cancellation, matching
+input identities and tests before it can support reliable comparisons.

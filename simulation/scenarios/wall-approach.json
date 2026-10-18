@@ -1,27 +1,194 @@
 {
   "title": "Walk toward a wall",
-  "description": "Walk straight at 0.5 m/s from 5 m to 0.75 m of a wide wall. Each of the six physical columns steps 0 → 4 → 3 → 2 → 1; outer columns change later because their nearest point is at a wider angle (range = D / cos(edge bearing)). Windows exclude ±0.35 s around each predicted change.",
+  "description": "Walk at 0.5 m/s from 5 m to 0.75 m of a wide wall. Six sectors form symmetric pairs: slots 3/4 have innermost bearing 0\u00b0, 2/5 have 15\u00b0, 1/6 have 30\u00b0. For each band boundary R, transition t=(5\u2212R*cos(bearing))/0.5. Labelled windows retain a 0.35 s guard around each analytic transition; b0 is separately checked reserved.",
   "scene": {
     "duration": 10,
-    "path": [{"t": 0, "x": 0, "z": 0}, {"t": 8.5, "x": 0, "z": -4.25}],
-    "objects": [{"kind": "box", "min": [-10, 0, -5.2], "max": [10, 3, -5.0], "label": "wall"}],
-    "sensor": {"noise": 0.005, "seed": 7}
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0
+      },
+      {
+        "t": 8.5,
+        "x": 0,
+        "z": -4.25
+      }
+    ],
+    "objects": [
+      {
+        "kind": "box",
+        "min": [
+          -10,
+          0,
+          -5.2
+        ],
+        "max": [
+          10,
+          3,
+          -5.0
+        ],
+        "label": "wall"
+      }
+    ],
+    "sensor": {
+      "noise": 0.005,
+      "seed": 7
+    }
   },
   "expect": [
-    {"from": 0.0, "to": 1.6, "columns": [3, 4], "band": 0, "label": "wall beyond 4 m"},
-    {"from": 2.4, "to": 4.6, "columns": [3, 4], "band": 4, "label": "2.5–4 m"},
-    {"from": 5.4, "to": 6.4, "columns": [3, 4], "band": 3, "label": "1.6–2.5 m"},
-    {"from": 7.2, "to": 7.8, "columns": [3, 4], "band": 2, "label": "0.9–1.6 m"},
-    {"from": 8.6, "to": 10.0, "columns": [3, 4], "band": 1, "label": "under 0.9 m"},
-    {"from": 0.0, "to": 2.0, "columns": [2, 5], "band": 0},
-    {"from": 2.85, "to": 4.85, "columns": [2, 5], "band": 4},
-    {"from": 5.7, "to": 6.55, "columns": [2, 5], "band": 3},
-    {"from": 7.4, "to": 7.85, "columns": [2, 5], "band": 2},
-    {"from": 8.7, "to": 10.0, "columns": [2, 5], "band": 1},
-    {"from": 0.0, "to": 2.85, "columns": [1, 6], "band": 0},
-    {"from": 3.65, "to": 5.35, "columns": [1, 6], "band": 4},
-    {"from": 6.2, "to": 6.9, "columns": [1, 6], "band": 3},
-    {"from": 7.7, "to": 8.1, "columns": [1, 6], "band": 2}
+    {
+      "from": 0,
+      "to": 1.65,
+      "columns": [
+        3,
+        4
+      ],
+      "band": 0,
+      "label": "0 degree inner edge, band 0"
+    },
+    {
+      "from": 2.35,
+      "to": 4.65,
+      "columns": [
+        3,
+        4
+      ],
+      "band": 4,
+      "label": "0 degree inner edge, band 4"
+    },
+    {
+      "from": 5.35,
+      "to": 6.45,
+      "columns": [
+        3,
+        4
+      ],
+      "band": 3,
+      "label": "0 degree inner edge, band 3"
+    },
+    {
+      "from": 7.15,
+      "to": 7.85,
+      "columns": [
+        3,
+        4
+      ],
+      "band": 2,
+      "label": "0 degree inner edge, band 2"
+    },
+    {
+      "from": 8.55,
+      "to": 10,
+      "columns": [
+        3,
+        4
+      ],
+      "band": 1,
+      "label": "0 degree inner edge, band 1"
+    },
+    {
+      "from": 0,
+      "to": 1.923,
+      "columns": [
+        2,
+        5
+      ],
+      "band": 0,
+      "label": "15 degree inner edge, band 0"
+    },
+    {
+      "from": 2.623,
+      "to": 4.82,
+      "columns": [
+        2,
+        5
+      ],
+      "band": 4,
+      "label": "15 degree inner edge, band 4"
+    },
+    {
+      "from": 5.52,
+      "to": 6.559,
+      "columns": [
+        2,
+        5
+      ],
+      "band": 3,
+      "label": "15 degree inner edge, band 3"
+    },
+    {
+      "from": 7.259,
+      "to": 7.911,
+      "columns": [
+        2,
+        5
+      ],
+      "band": 2,
+      "label": "15 degree inner edge, band 2"
+    },
+    {
+      "from": 8.611,
+      "to": 10,
+      "columns": [
+        2,
+        5
+      ],
+      "band": 1,
+      "label": "15 degree inner edge, band 1"
+    },
+    {
+      "from": 0,
+      "to": 2.722,
+      "columns": [
+        1,
+        6
+      ],
+      "band": 0,
+      "label": "30 degree inner edge, band 0"
+    },
+    {
+      "from": 3.422,
+      "to": 5.32,
+      "columns": [
+        1,
+        6
+      ],
+      "band": 4,
+      "label": "30 degree inner edge, band 4"
+    },
+    {
+      "from": 6.02,
+      "to": 6.879,
+      "columns": [
+        1,
+        6
+      ],
+      "band": 3,
+      "label": "30 degree inner edge, band 3"
+    },
+    {
+      "from": 7.579,
+      "to": 8.091,
+      "columns": [
+        1,
+        6
+      ],
+      "band": 2,
+      "label": "30 degree inner edge, band 2"
+    },
+    {
+      "from": 8.791,
+      "to": 10,
+      "columns": [
+        1,
+        6
+      ],
+      "band": 1,
+      "label": "30 degree inner edge, band 1"
+    }
   ],
-  "pass": {"minAccuracy": 0.97}
+  "pass": {
+    "minAccuracy": 0.97
+  }
 }

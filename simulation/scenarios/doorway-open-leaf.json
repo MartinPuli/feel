@@ -138,13 +138,23 @@
       "from": 0.3,
       "to": 1.35,
       "columns": [
-        4
+        4,
+        5
       ],
       "band": 4,
       "label": "shoe rack (band 4)"
     },
     {
       "from": 0.3,
+      "to": 1.45,
+      "columns": [
+        3
+      ],
+      "band": 4,
+      "label": "umbrella stand (band 4)"
+    },
+    {
+      "from": 0.75,
       "to": 1.45,
       "columns": [
         2
@@ -153,35 +163,8 @@
       "label": "umbrella stand (band 4)"
     },
     {
-      "from": 0.3,
-      "to": 1.45,
-      "columns": [
-        5
-      ],
-      "band": 4,
-      "label": "shoe rack (band 4)"
-    },
-    {
-      "from": 0.45,
-      "to": 1.65,
-      "columns": [
-        3
-      ],
-      "band": 4,
-      "label": "door head 2.03 m (band 4)"
-    },
-    {
-      "from": 0.85,
-      "to": 1.55,
-      "columns": [
-        1
-      ],
-      "band": 4,
-      "label": "wall left of door (band 4)"
-    },
-    {
-      "from": 1.45,
-      "to": 1.85,
+      "from": 1.35,
+      "to": 1.75,
       "columns": [
         6
       ],
@@ -189,25 +172,16 @@
       "label": "wall right of door (band 4)"
     },
     {
-      "from": 1.45,
-      "to": 2.35,
+      "from": 1.35,
+      "to": 2.25,
       "columns": [
-        0
+        1
       ],
       "band": 4,
       "label": "wall left of door (band 4)"
     },
     {
       "from": 2.45,
-      "to": 3.25,
-      "columns": [
-        4
-      ],
-      "band": 3,
-      "label": "shoe rack (band 3)"
-    },
-    {
-      "from": 2.55,
       "to": 2.85,
       "columns": [
         5
@@ -216,17 +190,17 @@
       "label": "shoe rack (band 3)"
     },
     {
-      "from": 2.55,
-      "to": 3.05,
+      "from": 2.45,
+      "to": 3.45,
       "columns": [
-        1
+        4
       ],
       "band": 3,
-      "label": "umbrella stand (band 3)"
+      "label": "door head 2.03 m (band 3)"
     },
     {
       "from": 2.55,
-      "to": 3.25,
+      "to": 3.05,
       "columns": [
         2
       ],
@@ -235,12 +209,12 @@
     },
     {
       "from": 2.75,
-      "to": 3.45,
+      "to": 4.75,
       "columns": [
         3
       ],
       "band": 3,
-      "label": "door head 2.03 m (band 3)"
+      "label": "wall left of door (band 3)"
     },
     {
       "from": 3.85,
@@ -253,7 +227,17 @@
     },
     {
       "from": 4.05,
-      "to": 4.45,
+      "to": 4.55,
+      "columns": [
+        1,
+        2
+      ],
+      "band": 2,
+      "label": "umbrella stand (band 2)"
+    },
+    {
+      "from": 4.05,
+      "to": 4.55,
       "columns": [
         6
       ],
@@ -261,49 +245,22 @@
       "label": "shoe rack (band 2)"
     },
     {
-      "from": 4.05,
-      "to": 4.55,
-      "columns": [
-        1
-      ],
-      "band": 2,
-      "label": "umbrella stand (band 2)"
-    },
-    {
-      "from": 4.15,
-      "to": 4.45,
-      "columns": [
-        0
-      ],
-      "band": 2,
-      "label": "umbrella stand (band 2)"
-    },
-    {
-      "from": 4.25,
-      "to": 5.45,
-      "columns": [
-        2
-      ],
-      "band": 2,
-      "label": "open door leaf (band 2)"
-    },
-    {
       "from": 4.65,
-      "to": 5.85,
-      "columns": [
-        3
-      ],
-      "band": 4,
-      "label": "hallway wall (band 4)"
-    },
-    {
-      "from": 4.95,
       "to": 5.85,
       "columns": [
         4
       ],
       "band": 4,
-      "label": "side table in the hallway (band 4)"
+      "label": "hallway wall (band 4)"
+    },
+    {
+      "from": 5.45,
+      "to": 6.55,
+      "columns": [
+        1
+      ],
+      "band": 1,
+      "label": "open door leaf (band 1)"
     },
     {
       "from": 6.65,
@@ -315,10 +272,18 @@
       "label": "side table in the hallway (band 3)"
     },
     {
+      "from": 6.85,
+      "to": 8,
+      "columns": [
+        6
+      ],
+      "band": 3,
+      "label": "side table in the hallway (band 3)"
+    },
+    {
       "from": 6.95,
       "to": 7.35,
       "columns": [
-        2,
         3,
         4
       ],
@@ -326,13 +291,22 @@
       "label": "hallway wall (band 3)"
     },
     {
-      "from": 6.95,
-      "to": 8,
+      "from": 7.15,
+      "to": 7.45,
       "columns": [
-        6
+        2
       ],
       "band": 3,
-      "label": "side table in the hallway (band 3)"
+      "label": "hallway wall (band 3)"
+    },
+    {
+      "from": 7.45,
+      "to": 8,
+      "columns": [
+        1
+      ],
+      "band": 3,
+      "label": "hallway wall (band 3)"
     }
   ]
 }

@@ -18,7 +18,7 @@ final class JourneyTests: XCTestCase {
     /// A route from 10 m behind the camera's origin to the remembered exit at (−1, 0, −2): 13 m, so three progress points.
     private let route = [Vector3(0, 0, 10), Vector3(0, 0, -2), Vector3(-1, 0, -2)]
     /// The model stamps a journey's start with the system uptime; ticks are timed after it.
-    private let t0 = ProcessInfo.processInfo.systemUptime + 1
+    private lazy var t0 = ProcessInfo.processInfo.systemUptime + 1
 
     override func setUpWithError() throws {
         directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -156,10 +156,18 @@ final class JourneyTests: XCTestCase {
         XCTAssertEqual(JourneyLog.directory.lastPathComponent, "Journeys")
         XCTAssertEqual(JourneyLog.directory.deletingLastPathComponent(), RoomMemory.directory.deletingLastPathComponent(), "beside RoomMemory")
     }
-    func testTheUploadIsNotWiredYet() {
+    func testEveryKeptJourneyLeavesThroughTheUploader() throws {
+        let uploader = RecordingUploader()
         let log = JourneyLog(directory: journeys, exportFile: exportFile)
-        log.share(Journey(tagId: "feel-tag-01", sessionId: "s", startedAt: seenAt, targetLabel: "exit"))
-        XCTAssertEqual(log.journeys.count, 0, "the export file is the way off the phone until Supabase is wired")
+        log.uploader = uploader
+        log.begin(targetLabel: "exit", target: Vector3(-1, 0, -2), sighting: sighting(), startUptime: 1)
+        log.record(pose: CameraPose(position: Vector3(0, 0, 0)), now: 1)
+        log.record(pose: CameraPose(position: Vector3(0, 0, -1)), now: 2)
+        let kept = try XCTUnwrap(log.end(arrived: false, pose: nil, now: 3))
+        XCTAssertEqual(uploader.journeys, [kept], "the journey kept on the phone is the one uploaded")
+        log.begin(targetLabel: "exit", target: Vector3(-1, 0, -2), sighting: sighting(), startUptime: 4)
+        XCTAssertNil(log.end(arrived: false, pose: nil, now: 4.1))
+        XCTAssertEqual(uploader.journeys.count, 1, "a walk too short to keep is not uploaded either")
     }
 
     // MARK: Following

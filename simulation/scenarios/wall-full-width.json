@@ -1,0 +1,53 @@
+{
+  "title": "Wall ahead fills every sector",
+  "scene": {
+    "duration": 4,
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0
+      }
+    ],
+    "objects": [
+      {
+        "kind": "box",
+        "min": [
+          -10,
+          0.6,
+          -1.6
+        ],
+        "max": [
+          10,
+          2.1,
+          -1.2
+        ],
+        "label": "wall"
+      }
+    ],
+    "sensor": {
+      "noise": 0,
+      "seed": 42
+    }
+  },
+  "expect": [
+    {
+      "from": 0.3,
+      "to": 4,
+      "columns": "all",
+      "band": 2,
+      "label": "wall (band 2)"
+    }
+  ],
+  "labelProvenance": {
+    "sourceBranch": "movement-simulation-tests",
+    "sourceRevision": "3c041c0",
+    "generator": "simulation/geometry_labels.py",
+    "physicalColumns": 6,
+    "samplingStepMeters": 0.03,
+    "rangeTolerance": 0.04,
+    "edgeExclusionDegrees": 0.7,
+    "transitionTrimSeconds": 0.35,
+    "outputIndependent": true
+  }
+}

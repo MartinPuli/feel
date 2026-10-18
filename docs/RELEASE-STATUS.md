@@ -1,3 +1,101 @@
+## October 18 UTC — current production readiness
+
+**Not ready for unrestricted production.** Latest source, cloud checks and remaining device/configuration gates are recorded in [PRODUCTION-READINESS.md](PRODUCTION-READINESS.md). That report supersedes the historical counts and branch/deployment statements below.
+
+The unsafe 150 ms restoration of old pin bands after a neutral packet has been removed. Only a fresh valid command can raise them again. Angles and wiring are unchanged; this firmware has not been flashed. Shared context reads now have a verified-user server boundary, but remain disabled until FEEL's database identity is configured.
+
+## October 18 — Ethan dot tracking synchronized into main
+
+Validation timestamp: 2026-10-18T00:05:12-04:00 (America/New_York). Local main advanced from
+`c71fc01` to `8b0789c`; Ethan's `765027e` was already merged by `9fe722a`.
+See [integration scope](VERSION-INTEGRATION.md#october-18--ethan-dot-tracking-integration).
+This entry supersedes the held-drop behavior described in the historical entry below.
+
+Independent review found and reproduced unsafe stale-band restoration after neutral plus
+packet loss. The focused correction keeps neutral latched until a fresh accepted command.
+The new regression failed before the fix (43/44), then passed (44/44). Dot animation,
+phone-timed taps, six-column mapping, reserved b0 and angle/pulse settings are preserved.
+
+| Gate and command | Result | Evidence / next action |
+|---|---|---|
+| `sh ios/scripts/test_portable.sh` | PASS: 395 tests | `evidence/ethan-dot-integration-20261018/summary.txt` |
+| `sh ios/scripts/build.sh` | PASS: Lantern and Beacon unsigned simulator builds | Xcode 26.6; same summary |
+| `sh firmware/test/run_host_tests.sh` | PASS: 44/44 controller tests and all sibling suites | `firmware.log` in the evidence folder |
+| `python3 simulation/pin_diagnostics.py` | PASS: 24/24 app-to-controller pin commands | `pin-diagnostics.log`; physical motion unverified |
+| `python3 -m unittest discover -s simulation/tests -v` | PASS: 4 tests | `scorer.log` |
+| `cd web && npm test` | PASS: 9 tests | `web.log`; rerun outside sandbox to permit local server |
+| `python3 simulation/run.py --repeat 2 --no-web` | PASS with existing limitations: 13 PASS, 5 KNOWN, no FAIL; deterministic repeats | `replay.log`; reserved slot invariant passes |
+| `python3 simulation/run.py simulation/scenarios/packet-loss-failsafe.json simulation/scenarios/tracking-loss-packet-blackout.json --no-build --no-web --repeat 2 --update-baselines --out /tmp/feel-ethan-neutral-replay` | PASS: both safety scenarios, accuracy 1.0 | `neutral-replay.log`; only these baselines accepted after review |
+| `python3 scripts/check_sources.py` | PASS: required source files present | Presence only, not a readiness claim |
+| `python3 validation/check_cam_contract.py` | BLOCKED: OpenSCAD unavailable | Install/use existing CAD validation environment, rerun |
+| Full iOS UI/device tests; ESP32 build/flash | NOT RUN in this integration | Existing historical results are not new validation |
+| Physical hardware | NOT VERIFIED | No flashing, signing, wiring or powered movement performed |
+
+[Evidence folder](evidence/ethan-dot-integration-20261018/summary.txt). The five known replay
+limits remain: narrow doorway sector resolution, lintel height, slow detector freshness,
+cluttered-hallway filter delay and crossing-person filter delay. The new path wave is covered
+by core tests; replay does not model tactile perception, radio transport or servo mechanics.
+No new claim of complete product readiness is made.
+
+Next three human actions:
+1. Review the integrated moving-dot behavior and the safety-neutral correction before publishing.
+2. Validate the dot's left/right direction and target retention on the LiDAR phone.
+3. After hardware approval, load the corrected firmware and check all six columns, Stop,
+   tracking loss, disconnect and timeout in the supervised bench setup.
+
+## October 17 — firmware held-drop rule (not flashed)
+
+The portable controller now restores a one-packet drop that no packet follows: when an accepted
+packet lowers a column from a raised band to 0, the band is remembered and commanded again if no
+further packet is accepted within `kHeldDropMs = 150` (beside `kWatchdogMs` in
+`firmware/include/feel/controller.hpp`). A later packet always wins, a packet that keeps 0 is a real
+disappearance, the restore does not refresh the 500 ms watchdog, and bench `B`/`HL`/`US` are
+unchanged. The `packet-loss-failsafe` known issue (a blackout starting on a presence-tap frame held
+the pins down until the watchdog) is removed.
+
+| Gate | Observed result |
+|---|---|
+| Firmware host tests (`sh firmware/test/run_host_tests.sh`) | PASS: 44/44 controller tests (two new) plus every sibling suite; one single-live test now sends a second zero packet to mean a real disappearance. |
+| Simulation (`python3 simulation/run.py --no-web`) | PASS: 13 scenarios, 9 PASS, 4 KNOWN, 0 FAIL; `packet-loss-failsafe` PASS at accuracy 1.0, its baseline regenerated (digest changed from t=2.15 s); all other baselines same. |
+| Board build (`sh firmware/build.sh`) | NOT RUN: PlatformIO is not installed in this environment. |
+| Physical hardware | NOT VERIFIED: nothing flashed; the 150 ms window and the felt crispness of a restore are untested on a servo. |
+
+## October 17 — V2–V4 integration and current-main validation
+
+This entry supersedes older integration and upload-default statements below.
+Useful session memory, saved-room restore, local commands, barcode finding,
+adaptive highlights and guarded Chalk intents are integrated with main `88c3900`.
+See [feature matrix and remaining gaps](VERSION-INTEGRATION.md).
+
+| Gate | Observed result |
+|---|---|
+| V1/V2 integrated native software | PASS: 268 native unit/integration tests and 12 UI tests; simulator build succeeds. |
+| Portable core | PASS: 360 tests. |
+| Deterministic six-column simulation | PASS with documented limitations: 13 scenarios ×3; 9 PASS, 4 KNOWN, 0 FAIL. Zero reserved-slot violations. |
+| Replay web diagnostics | PASS: nine tests and a local build with 13 synthetic sessions. Browser inspection unavailable. |
+| Firmware host contracts | PASS; no firmware, electrical or calibration changes in this integration. |
+| V3 software | PASS in software: local grammar, persistence/relocalization gates, barcode and tactile tests. |
+| V2/V3 physical hardware | NOT VERIFIED by this work. iPhone reports unavailable; no new install or physical test claimed. |
+| Chalk context | PASS: five direct-engine synthetic cases, twelve assertions. MCP parity FAIL; cause unproven. |
+| Chalk Python and intent backend | PASS: 135 and 36 tests respectively. |
+| Live intent quality/latency | PARTIAL MEASUREMENT; 16/19 measured cloud strict matches, 4/4 local Stop. Cloud p50 1.70 s, p95 2.55 s; 1 s latency target FAIL. |
+| Production cloud activation | NOT COMPLETE: optional intent HTTPS deployment, authenticated phone context reads and hosted FEEL eval verification remain. |
+
+Upload consent and public sharing now default off. The app requires a selected
+venue and sign-in, never invents a demo venue, and discards stale refresh/retries
+after logout, account switch or consent withdrawal. Source tests do not prove a
+phone-to-database-to-Chalk-to-phone round trip.
+
+[Chalk validation](evidence/chalk-context/INTEGRATION-VALIDATION.md),
+[live text eval](evidence/chalk-context/INTENT-EVALUATION.md), and
+[simulation evidence](../simulation/SIX-COLUMN-VALIDATION.md) retain limitations.
+The public intent service and the local timestamp fix were not deployed. A team
+notebook records FEEL context and feedback; no new support message was sent.
+
+Next human checks: reconnect/unlock the iPhone for installation; verify spoken
+commands/mute/headphones; then test real relocalization and tactile responses in
+a clear supervised area. These are device gates, not claims of certification.
+
 ## October 17 — six-column update
 
 Software checks PASS across current main and isolated V2/V3/V4; ESP32 six-live
@@ -5,6 +103,37 @@ upload and six-pin status readback PASS. Current iPhone install BLOCKED because
 macOS reports the device unavailable. Physical six-servo integration NOT VERIFIED.
 See [evidence](evidence/six-columns-20261017/REPORT.md) and [wiring](SIX-COLUMN-LAYOUT.md).
 Earlier seven-column statements below describe historical revisions.
+
+> **Presence taps on `main` (2026-10-17, night):** a raised pin is felt when it moves and fades within seconds when it
+> stays (steady pressure rides on slowly adapting afferents whose firing and felt intensity decay exponentially: Chung
+> et al. 2015, Bensmaia et al. 2005), so the puck now keeps obstacle pins felt by motion. FeelCore `TapRhythm`, applied
+> to the final packet of every 100 ms tick before the adaptive highlight gate: an obstacle pin whose band has not
+> changed for 1 s drops to its gap for one packet every 1.0 s, all steady pins together. Target columns keep their own,
+> faster taps (the firmware's 13° highlight dip every 600 ms for one column, gated by the tactile profile; the
+> encoder's one-in-six drop for a span) and arrows keep their 100 ms frames, so what points at something beats faster
+> than what is merely there. Servo budget: a drop is 29° of cam, about 50 ms each way on an FS0307 unloaded (0.10 s per
+> 60°) and up to twice that under load; no period may be shorter than three packets. The replayer applies the same
+> rhythm; the simulation harness counts a one-tick drop between two identical raised bands as a tap (held longer only
+> by lost packets), reports taps per column-second and checks a tap rate per window; `find-door` now also checks the
+> wall's presence beat, and `packet-loss-failsafe` records the one cost as a known issue: a BLE blackout that begins
+> right after a drop packet leaves the firmware holding that pin down until packets resume or the watchdog fires.
+> Software checks on this Mac: FeelCore 370 tests (both targets), Lantern 268 unit tests on the simulator,
+> simulation harness: 13 scenarios, 8 pass and 5 known (doorway-open, doorway-with-lintel, find-door-slow-detector, lidar-outliers, packet-loss-failsafe), 0 fail, zero reserved-slot violations, the find-door wall column at 1.0 taps per second, baselines regenerated with the taps; three journey tests that stamp their start at instance creation fail only when the Mac is loaded and passed 12 of 12 when run alone. NOT RUN on hardware: how crisp a 29° drop feels under the cam load and whether 1 s settle and 1 s period suit
+> the wearer; both are constants in `TapRhythm` to tune on the device.
+
+> **Phone → Supabase writes on `main` (2026-10-17, night):** the phone now writes the rows Chalk reads. "Found it"
+> sends a confirmed find (`confirmed_finds`, the table behind `last_seen`, placed by venue and distance from the room's
+> tag); every confirmed target sends an anchor, a visit's map goes when sensing stops, and each kept journey goes when
+> the walk ends (`anchors`, `room_maps`, `journeys`, marked shared unless the user default `feel.shareRoomMemory` is
+> false). One PostgREST insert each, with the publishable key and the signed-in user's token (`SupabaseWriter`, behind
+> `RoomMemory.uploader` and `JourneyLog.uploader`; `user_id` is the token's subject, as Row Level Security requires).
+> A token about to expire, or refused with 401, is exchanged once for a new one with the saved refresh token, which
+> replaces the sign-in's; rows outside a table's limits are dropped on the phone; `get_status.room_memory.uploads`
+> reports sent, failed and skipped with the last reason, the user id and the venue. Rows are filed under the loaded
+> venue pack's venue, else `rubenstein-treehouse`. Software checks on this Mac: Lantern 205 unit tests on the
+> simulator, the wire shape against a stub server. NOT RUN on a device: no phone was reachable, so no row written by
+> a phone has been seen in Supabase or through Chalk yet. Still pending: the download of shared memory
+> (`RoomMemory.fetchSharedStructure`) and a `last_seen` tool on the phone.
 
 > **Journey loop, Chalk side, on `claude/journey-chalk` (2026-10-17, night):** every walk from a printed tag toward a
 > remembered target is a journey (`journeys` table with its opt-in `shared` flag, `Journey` feature,

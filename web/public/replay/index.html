@@ -242,9 +242,16 @@ const ACTIVE_SLOTS = [1, 2, 3, 4, 5, 6];
 const COLUMN_LABELS = ['L3', 'L2', 'L1', 'R1', 'R2', 'R3'];
 const COLUMN_EDGES = Array.from({ length: 7 }, (_, k) => -45 + k * 90 / 6);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function validReport(report) {
+  return report && ['PASS', 'FAIL'].includes(report.status) &&
+    ['total', 'passed', 'failed'].every(k => Number.isInteger(report[k]) && report[k] >= 0) &&
+    report.passed + report.failed <= report.total &&
+    (report.status !== 'PASS' || (report.total > 0 && report.failed === 0));
+}
 const STATE_TEXT = { live: null, trackingLost: 'TRACKING LOST · pins neutral', staleDepth: 'NO FRESH DEPTH · pins neutral', uncalibrated: 'FLOOR NOT CALIBRATED · pins neutral', invalidFrame: 'INVALID FRAME · pins neutral' };
 
 let index = [], session = null, depthFrames = new Map(), t = 0, playing = false, speed = 1, lastFrameTime = 0, tickIndex = 0;
+let sessionRequest = 0, compareRequest = 0;
 let snapshots = [], compare = null;   // compare: { label, snap, aligned[], diffs[], diffSet }
 const video = $('video');
 
@@ -282,6 +289,7 @@ async function loadPinDiagnostics() {
     const response = await fetch('data/pin-diagnostics.json', { cache: 'no-cache' });
     if (!response.ok) return;
     const report = await response.json();
+    if (!validReport(report)) throw new Error("Invalid report");
     const summary = $('pinDiagnosticSummary');
     summary.textContent = `${report.status} · ${report.passed}/${report.total} command paths`;
     summary.className = report.status === 'PASS' ? 'PASS' : 'FAIL';
@@ -294,16 +302,15 @@ async function loadPinDiagnostics() {
     const rows = [...groups.entries()].map(([title, checks]) => {
       const failed = checks.find(check => check.status !== 'PASS');
       const detail = checks.map(check => `<tr>
-        <td>Band ${check.expectedBand}</td><td>${check.actualBands?.[check.slot] ? `Band ${check.actualBands[check.slot]}` : 'Down'}</td>
-        <td>${check.actualAngleDeg}°</td><td>${check.actualPulseUs} µs</td>
-        <td class="${check.status}">${check.status === 'PASS' ? 'PASS' : esc(check.firstFailure)}</td>
+        <td>Band ${esc(check.expectedBand)}</td><td>${check.actualBands?.[check.slot] ? `Band ${esc(check.actualBands[check.slot])}` : 'Down'}</td>
+        <td>${esc(check.actualAngleDeg)}°</td><td>${esc(check.actualPulseUs)} µs</td>
+        <td class="${check.status === 'PASS' ? 'PASS' : 'FAIL'}">${check.status === 'PASS' ? 'PASS' : esc(check.firstFailure)}</td>
         <td class="packet">${esc(check.packetHex)}</td></tr>`).join('');
       return `<details${failed ? ' open' : ''}><summary>${esc(title)} · ${failed ? `FAIL: ${esc(failed.firstFailure)}` : 'PASS'}</summary>
         <table><thead><tr><th>Expected</th><th>Firmware band</th><th>Angle</th><th>Pulse</th><th>Result</th><th>App packet</th></tr></thead><tbody>${detail}</tbody></table></details>`;
     }).join('');
-    const note = report.hardware === 'UNVERIFIED'
-      ? `<p class="hardware-note">Physical movement: unverified. ${esc(report.hardwareNote)}</p>` : '';
-    $('pinDiagnosticContent').innerHTML = `<div class="summary"><strong>${report.status === 'PASS' ? 'All command paths passed' : 'A command path failed'}</strong><time>Run ${esc(new Date(report.generatedAt).toLocaleString())}</time></div>${note}${rows}`;
+    const note = '<p class="hardware-note">Software command checks only. Physical movement remains unverified.</p>';
+    $('pinDiagnosticContent').innerHTML = `<div class="summary"><strong>${report.status === 'PASS' ? 'Software command paths passed' : 'A software command path failed'}</strong><time>Run ${esc(new Date(report.generatedAt).toLocaleString())}</time></div>${note}${rows}`;
   } catch {
     // Keep the local run instructions visible until the report exists.
   }
@@ -314,26 +321,32 @@ async function loadUnitTests() {
     const response = await fetch('data/unit-tests.json', { cache: 'no-cache' });
     if (!response.ok) return;
     const report = await response.json();
+    if (!validReport(report)) throw new Error("Invalid report");
     const summary = $('unitTestSummary');
     summary.textContent = `${report.status} · ${report.passed}/${report.total} passed · ${report.failed} failed`;
     summary.className = report.status === 'PASS' ? 'PASS' : 'FAIL';
     const generated = new Date(report.generatedAt);
     const suites = (report.suites || []).map(suite => {
       const tests = suite.tests.map(test => `<li class="${esc(test.status)}">${esc(test.status)} · ${esc(test.name)}</li>`).join('');
-      return `<details><summary>${esc(suite.name)} · ${suite.passed}/${suite.total} passed${suite.failed ? ` · ${suite.failed} failed` : ''}</summary><ul class="test-list">${tests}</ul></details>`;
+      return `<details><summary>${esc(suite.name)} · ${esc(suite.passed)}/${esc(suite.total)} passed${suite.failed ? ` · ${esc(suite.failed)} failed` : ''}</summary><ul class="test-list">${tests}</ul></details>`;
     }).join('');
     const errors = (report.errors || []).length
       ? `<p class="bad">${report.errors.map(esc).join('<br>')}</p>` : '';
-    $('unitTestContent').innerHTML = `<div class="summary"><strong>${report.status === 'PASS' ? 'All checks passed' : 'Some checks failed'}</strong><time>Run ${esc(generated.toLocaleString())}</time></div>${errors}${suites}`;
+    $('unitTestContent').innerHTML = `<div class="summary"><strong>${report.status === 'PASS' ? 'Reported software checks passed' : 'Some software checks failed'}</strong><time>Run ${esc(generated.toLocaleString())}</time></div>${errors}${suites}`;
   } catch {
     // Keep the local run instructions visible until the report exists.
   }
 }
 
 async function open(name) {
+  const request = ++sessionRequest;
+  ++compareRequest; // Invalidate snapshot loads for the previous session immediately.
+  compare = null;
   stopExport(false); pause();
   const url = new URL(location.href); url.searchParams.set('session', name); history.replaceState(null, '', url);
-  session = await (await fetch(`data/sessions/${encodeURIComponent(name)}/session.json`, { cache: 'no-cache' })).json();
+  const loaded = await (await fetch(`data/sessions/${encodeURIComponent(name)}/session.json`, { cache: 'no-cache' })).json();
+  if (request !== sessionRequest) return;
+  session = loaded;
   depthFrames = new Map(Object.entries(session.depth?.frames ?? {}));
   const decoded = new Map();
   session._depth = key => {
@@ -356,6 +369,7 @@ async function open(name) {
     `<option value="${esc(s.label)}">${esc(s.label)}${s.commit ? ' · ' + esc(s.commit) : ''}${s.generated ? ' · ' + esc(s.generated.slice(5, 16)) : ''}</option>`).join('');
   const wantedCompare = new URLSearchParams(location.search).get('compare') || $('compare').dataset.last || '';
   await setCompare(available.some(s => s.label === wantedCompare) ? wantedCompare : '');
+  if (request !== sessionRequest) return;
   seek(session.ticks[0]?.t ?? 0);
   resize();
 }
@@ -363,10 +377,13 @@ async function open(name) {
 // Compare mode: a snapshot of an earlier run of the same recording (simulation/run.py --snapshot LABEL, or
 // "previous" for the run before this one), aligned to the current ticks by time.
 async function setCompare(label) {
+  const request = ++compareRequest, owner = session, ownerRequest = sessionRequest;
+  const current = () => request === compareRequest && ownerRequest === sessionRequest && owner === session;
   compare = null;
   if (label) {
     try {
-      const snap = await (await fetch(`data/snapshots/${encodeURIComponent(label)}/${encodeURIComponent(session.name)}.json`, { cache: 'no-cache' })).json();
+      const snap = await (await fetch(`data/snapshots/${encodeURIComponent(label)}/${encodeURIComponent(owner.name)}.json`, { cache: 'no-cache' })).json();
+      if (!current()) return;
       const byTime = new Map(snap.ticks.map(k => [k.t.toFixed(3), k]));
       const nearest = time => {   // snapshot tick within 60 ms, when tick phases differ
         let lo = 0, hi = snap.ticks.length - 1;
@@ -378,8 +395,9 @@ async function setCompare(label) {
       const differs = (a, b) => !b || a.fw.some((v, c) => v !== b.fw[c]) || a.hl !== b.hl || !!a.tap !== !!b.tap;
       const diffs = []; aligned.forEach((b, i) => { if (differs(session.ticks[i], b)) diffs.push(i); });
       compare = { label, snap, aligned, diffs, diffSet: new Set(diffs) };
-    } catch { compare = null; }
+    } catch { if (!current()) return; compare = null; }
   }
+  if (!current()) return;
   $('compare').value = compare ? compare.label : ''; $('compare').dataset.last = compare ? compare.label : '';
   const url = new URL(location.href); if (compare) url.searchParams.set('compare', compare.label); else url.searchParams.delete('compare'); history.replaceState(null, '', url);
   $('diffNav').hidden = $('diffLegend').hidden = $('pinsThen').hidden = !compare; $('pins').classList.toggle('two', !!compare);

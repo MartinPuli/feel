@@ -1,3 +1,34 @@
+## October 18 UTC — current production readiness
+
+**Not ready for unrestricted production.** Latest source, cloud checks and remaining device/configuration gates are recorded in [PRODUCTION-READINESS.md](PRODUCTION-READINESS.md). That report supersedes the historical counts and branch/deployment statements below.
+
+The unsafe 150 ms restoration of old pin bands after a neutral packet has been removed. Only a fresh valid command can raise them again. Angles and wiring are unchanged; this firmware has not been flashed. Shared context reads now have a verified-user server boundary, but remain disabled until FEEL's database identity is configured.
+
+## October 17 — integrated versions, latest main and Chalk
+
+Observed on this Mac with Xcode's installed iOS 26.5 simulator:
+
+- `xcodebuild … -only-testing:LanternTests -only-testing:LanternUITests … test`: 268 native + 12 UI tests, zero failures. Result: `/private/tmp/feel-version-integration-build/Logs/Test/Test-Lantern-2026.10.17_22-50-13--0400.xcresult`.
+- Final concise mute wording was additionally checked with `-only-testing:LanternTests/VersionFeatureIntegrationTests` (same scheme/destination); result log `/private/tmp/feel-integration-final-wording-tests.log`.
+- `swift test`: 360 portable tests passed, including session memory, persistent-map gates, local grammar, adaptive feedback and existing perception/protocol checks.
+- `sh firmware/test/run_host_tests.sh`: PASS, log `/private/tmp/feel-integration-firmware.log`.
+- `python3 simulation/run.py --repeat 3 --no-web --no-build`: 13 scenarios, 9 PASS / 4 KNOWN / 0 FAIL, identical output across three runs; 24 pin-command diagnostics and four scorer tests pass. Existing compiled binaries came from the integrated production source.
+- `npm --prefix web test`: 9 PASS; local static build succeeds with 13 regenerated synthetic sessions. Browser inspection was unavailable; the new rendering functions are covered by focused minimal-DOM tests.
+- Pinned SDK `python -m unittest discover -s chalk/tests -v`: 135 PASS; `python -m unittest discover -s services/chalk -v`: 36 PASS.
+- Five direct-engine synthetic context queries passed twelve assertions. The same inputs through native Chalk MCP disagree; the discrepancy is retained as a failure, not hidden by reseeding.
+- One bounded live text holdout: 20 gateway attempts and four local Stop bypasses, no retry. One recorder error left an attempt unmeasured. Strict matches: 16/19 measured gateway responses plus 4/4 local Stop. No measured gateway response met the 1 s target (p50 1.70 s, p95 2.55 s).
+
+UI workflows exercised saving/recalling a simulated place, tracking loss/neutral
+output, stopping, local typed mute and cloud-consent defaults. Retained screenshots
+were visually inspected; the app remains a dark camera-first interface with
+additional functions inside collapsed assistant sections.
+
+All new cloud tests used synthetic fixtures or mocked transports. No personal
+camera/audio data was uploaded. No new hardware actuation or device installation
+was performed. See [integration scope](VERSION-INTEGRATION.md) and its linked
+reports for exact commands, provenance and known limitations. Earlier counts
+below describe older revisions and are not added to these totals.
+
 ## October 17 proactive voice and full app controls
 
 Build 14 is signed, installed and launched on the iPhone. All 60 native tests

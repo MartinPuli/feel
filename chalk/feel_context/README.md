@@ -33,8 +33,8 @@ aggregates anchors, merges maps and scores journeys exactly as Chalk does (`prot
 ## The database, and what the Supabase values are for
 
 `chalk/.env` now has `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. Those are the project's **API**
-address and anon key: what the phone will use (with a signed-in user) to write confirmed finds
-through Supabase's REST API under row-level security.
+address and anon key: what the phone uses (with a signed-in user) to write confirmed finds, anchors,
+room maps and journeys through Supabase's REST API under row-level security (`SupabaseWriter` in the app).
 
 Chalk does not use either. Its PostgreSQL data source connects to the **database** behind that
 project, so it needs host, port, database name, user and password. On Supabase they are under the
@@ -77,13 +77,13 @@ or `journeys` tables existed gets them from `sql/upgrade-room-maps.sql` and `sql
 First live deployment and the verified queries are recorded in
 [docs/evidence/chalk-context](../../docs/evidence/chalk-context/QUERIES.md).
 
-Not done yet, in order: the phone writing a find after "found it", an anchor after a confirmed Where-is
-target and a visit's map when sensing stops (Supabase REST, user JWT; `RoomMemory.shareAnchor` and
-`RoomMemory.shareStructure` in the app are the empty functions for the last two), the `last_seen`,
-`room_anchors` and `room_structure` assistant tools calling Chalk with a scoped token (the second would
-fill the phone's local anchor store from the shared memory, the third its visits: `RoomMemory.fetchSharedStructure`
-is that empty function), and a scheduled query that rebuilds each venue's pack daily (`ScheduledQuery` over
-`Venue.pack`; `queries.py` is where it goes).
+The phone's writes are in: a find after "found it", an anchor after every confirmed Where-is target, a visit's map
+when sensing stops and each kept journey go through Supabase REST with the user's JWT (`SupabaseWriter`, behind
+`RoomMemory.uploader` and `JourneyLog.uploader`). Uploads require explicit consent, sign-in and a selected venue.
+Public room sharing requires a separate opt-in; both choices default off. No demo venue is invented. Not done yet, in order: the `last_seen`, `room_anchors` and
+`room_structure` assistant tools calling Chalk with a scoped token (the second would fill the phone's local anchor
+store from the shared memory, the third its visits: `RoomMemory.fetchSharedStructure` is that empty function), and a
+scheduled query that rebuilds each venue's pack daily (`ScheduledQuery` over `Venue.pack`; `queries.py` is where it goes).
 
 ## Room memory
 
@@ -133,9 +133,9 @@ observed the cell saw it blocked (a tie goes to blocked, since a missed wall cos
 camera overrides), free otherwise, unknown where no visit looked. Walls persist; a chair that moved is gone after two
 more visits that see the floor there. `feel_chalk/room_map.py` is the same rule as FeelCore's `RoomMap.merge`,
 `protocol/room-map-v1.json` is the vector both must reproduce, and `sql/seed.sql` carries its three visits, so
-`room-structure --venue harvard-yard --tag feel-tag-01` prints the merged 8 × 6 map once deployed. The phone's upload
-of a visit (`RoomMemory.shareStructure`) and its download of the merged map (`RoomMemory.fetchSharedStructure`) are
-the two empty functions still to wire; the device test of the tag this all depends on is pending.
+`room-structure --venue harvard-yard --tag feel-tag-01` prints the merged 8 × 6 map. The phone uploads a visit through
+`RoomMemory.uploader` (`SupabaseWriter`); its download of the merged map (`RoomMemory.fetchSharedStructure`) is the
+empty function still to wire, and the device test of the tag this all depends on is pending.
 
 **Privacy.** A visit map says which cells of a named room someone walked through, so it is personal data like an
 anchor: it stays on the phone unless the user opted in, and Chalk reads only shared rows (`sql/access.sql`). It holds
@@ -159,7 +159,7 @@ journeys score each path version. Box by box:
 A path is a suggested direction over remembered cells, never a claim that the way is clear or safe; the live
 camera decides each step, and the pins never read the map. Journeys are personal data like anchors (where
 someone walked and when): they stay on the phone unless the user opted in, and Chalk reads only shared rows.
-The phone's write of a journey and the device test of the whole loop are pending; nothing here is deployed yet.
+The phone writes each kept journey (`JourneyLog.uploader`, `SupabaseWriter`); the device test of the whole loop is pending.
 
 ## Privacy
 

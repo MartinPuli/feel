@@ -1,0 +1,54 @@
+{
+  "checked_at": "2026-10-18T04:05:05.727996+00:00",
+  "source_baseline": "8b0789c",
+  "integration_commits": [
+    "a1f4313",
+    "0b15e79"
+  ],
+  "native_tests": {
+    "passed": 288,
+    "failed": 0
+  },
+  "ui_tests": {
+    "passed": 12,
+    "failed": 0,
+    "initial_combined_run_failed_in_unit_tests": true,
+    "corrected_unit_suite_reran": true
+  },
+  "portable_core_tests": {
+    "passed": 396,
+    "failed": 0
+  },
+  "server_tests": {
+    "passed": 30,
+    "failed": 0
+  },
+  "chalk_python_tests": {
+    "passed": 135,
+    "failed": 0
+  },
+  "intent_backend_tests": {
+    "passed": 36,
+    "failed": 0
+  },
+  "firmware_builds": {
+    "esp32": "PASS",
+    "esp32s3": "PASS",
+    "esp32-compilecheck": "PASS",
+    "esp32s3-compilecheck": "PASS",
+    "esp32-six-live": "PASS"
+  },
+  "iphone_target_build": "PASS_UNSIGNED",
+  "phone_install": "BLOCKED_UNAVAILABLE",
+  "physical_validation": "NOT_VERIFIED",
+  "context_activation": "BLOCKED_CONFIGURATION",
+  "production_decision": "NOT_READY",
+  "deployment_id": "dpl_5DoBTRJtxwYQ8jm9KJrAT7xcJVbn",
+  "server_source_sha256": {
+    "server.mjs": "f22e7c5adfda77c4eca554e352192941639ad0068f54150e4fd7fcff50fe4176",
+    "context-handler.mjs": "920efd1b1c1a76951c5deaa60ac35f72bb09dc3f5ae363e4a3ebe5d62942a110",
+    "api/context.mjs": "a74bca202723effe352dace85bcdc21a9a40a111514336a1274eb977205dd298",
+    "vercel.json": "482ff559f948d7726d5e0e6ae9ee373fc1dbfc138bf5d494fd55e1f76c217b18",
+    ".vercelignore": "bfbb9a378e586c2ca9923195ceb5b85454aab78af741450afe5b1deb757c988f"
+  }
+}

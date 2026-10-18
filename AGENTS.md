@@ -1,3 +1,9 @@
+> Current integration directive: the user explicitly requested the useful V2/V3/V4
+> functions in main. Preserve the historical branches and current main behavior;
+> adapt and validate feature integrations instead of replacing main with an older
+> branch. Track the full scope in docs/VERSION-INTEGRATION.md. Physical validation
+> and the six-column hardware contract remain separate gates.
+
 > October 17 latest directive: six physical columns; GPIO32 is unused. Preserve
 > the current angle settings. Active wire slots1–6 map to GPIO33,25,26,27,14,13.
 > All application versions must use the six-column layout; retain the nine-byte
@@ -17,7 +23,7 @@
 must not be included in V1 without a new explicit request.
 
 The latest user request supersedes the historical version labels and source assumptions below.
-The repository was empty of production source. HANDOFF-v7.md is a specification/reference,
+The repository was empty of production source. docs/HANDOFF-v7.md is a specification/reference,
 not evidence of implemented code. Recreate missing functionality; never wait for original code.
 
 - P0 V1: complete greenfield foundation and all available software builds/tests/simulation.
@@ -49,15 +55,15 @@ Act as the lead engineer. Inspect the real repository, implement missing functio
 
 **Priority order:**
 
-- **P0 — FEEL V2:** Complete the existing project described by `HANDOFF-v7.md`. Reach **software-ready / physical-validation-pending** status.
+- **P0 — FEEL V2:** Complete the existing project described by `docs/HANDOFF-v7.md`. Reach **software-ready / physical-validation-pending** status.
 - **P1 — FEEL V3:** Add Spatial Memory (`Remember → Move → Recall → Feel`) on a separate branch/worktree **only after V2 passes its software-only gates**. Do not merge into V2 without approval.
 - **P2 — FEEL V4:** Optional advanced features, only if time remains.
 
 ## 2. Read before editing
 
-Read `HANDOFF-v7.md`, `HANDOFF-v6.md`, `docs/BUILD-HANDOFF.md`, `docs/PROTOCOL.md`, `cad/README.md`, `firmware/README.md`, `ios/README.md`, and inspect `cad/`, `firmware/`, `ios/Lantern/`, `ios/Beacon/`, `ios/Shared/`, and `research/`.
+Read `docs/HANDOFF-v7.md`, `docs/BUILD-HANDOFF.md`, `docs/PROTOCOL.md`, `cad/README.md`, `firmware/README.md`, `ios/README.md`, and inspect `cad/`, `firmware/`, `ios/Lantern/`, `ios/Beacon/`, `ios/Shared/`, and `research/`.
 
-**Precedence:** actual code establishes what exists; `HANDOFF-v7.md` wins over earlier *specifications* when they conflict. Record discrepancies rather than silently changing behavior. Preserve existing working features. Before changing anything, inspect `git status`, make a safe branch, and never discard uncommitted work.
+**Precedence:** actual code establishes what exists; `docs/HANDOFF-v7.md` wins over earlier *specifications* when they conflict. Record discrepancies rather than silently changing behavior. Preserve existing working features. Before changing anything, inspect `git status`, make a safe branch, and never discard uncommitted work.
 
 ## 3. FEEL V2: what already exists (verify in repo)
 

@@ -5,9 +5,21 @@
   "installCommand": "",
   "outputDirectory": "public",
   "functions": {
-    "api/session.mjs": { "maxDuration": 15 }
+    "api/session.mjs": {
+      "maxDuration": 15
+    },
+    "api/context.mjs": {
+      "maxDuration": 15
+    }
   },
   "rewrites": [
-    { "source": "/session", "destination": "/api/session" }
+    {
+      "source": "/session",
+      "destination": "/api/session"
+    },
+    {
+      "source": "/context",
+      "destination": "/api/context"
+    }
   ]
 }

@@ -151,16 +151,7 @@
   "expect": [
     {
       "from": 0.3,
-      "to": 2.05,
-      "columns": [
-        3
-      ],
-      "band": 0,
-      "label": "clear"
-    },
-    {
-      "from": 0.3,
-      "to": 2.45,
+      "to": 2.15,
       "columns": [
         4
       ],
@@ -171,8 +162,8 @@
       "from": 0.3,
       "to": 10,
       "columns": [
-        0,
-        1
+        1,
+        2
       ],
       "band": 2,
       "label": "left wall (band 2)"
@@ -181,13 +172,22 @@
       "from": 0.3,
       "to": 10,
       "columns": [
-        2
+        3
       ],
       "band": 3,
       "label": "left wall (band 3)"
     },
     {
-      "from": 2.15,
+      "from": 1.25,
+      "to": 1.45,
+      "columns": [
+        6
+      ],
+      "band": 3,
+      "label": "water fountain (band 3)"
+    },
+    {
+      "from": 1.95,
       "to": 3.35,
       "columns": [
         5
@@ -197,7 +197,7 @@
     },
     {
       "from": 2.25,
-      "to": 3.75,
+      "to": 3.65,
       "columns": [
         6
       ],
@@ -205,25 +205,16 @@
       "label": "right wall (band 4)"
     },
     {
-      "from": 2.85,
-      "to": 3.55,
+      "from": 3.05,
+      "to": 3.65,
       "columns": [
-        3
+        4
       ],
       "band": 4,
       "label": "person C crossing (band 4)"
     },
     {
-      "from": 4.35,
-      "to": 10,
-      "columns": [
-        3
-      ],
-      "band": 0,
-      "label": "clear"
-    },
-    {
-      "from": 6.85,
+      "from": 6.55,
       "to": 10,
       "columns": [
         4

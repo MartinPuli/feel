@@ -248,7 +248,16 @@
   "expect": [
     {
       "from": 0.3,
-      "to": 1.55,
+      "to": 0.65,
+      "columns": [
+        3
+      ],
+      "band": 4,
+      "label": "desk (band 4)"
+    },
+    {
+      "from": 0.3,
+      "to": 2.75,
       "columns": [
         4
       ],
@@ -267,27 +276,18 @@
     },
     {
       "from": 0.95,
-      "to": 1.65,
+      "to": 1.75,
       "columns": [
-        1
+        2
       ],
       "band": 3,
       "label": "office chair (band 3)"
     },
     {
-      "from": 1.05,
-      "to": 2.75,
-      "columns": [
-        3
-      ],
-      "band": 0,
-      "label": "clear"
-    },
-    {
-      "from": 1.35,
+      "from": 1.15,
       "to": 1.65,
       "columns": [
-        0
+        1
       ],
       "band": 3,
       "label": "office chair (band 3)"
@@ -296,14 +296,14 @@
       "from": 1.85,
       "to": 2.35,
       "columns": [
-        2
+        3
       ],
       "band": 3,
       "label": "desk (band 3)"
     },
     {
       "from": 3.35,
-      "to": 3.75,
+      "to": 4.05,
       "columns": [
         2
       ],
@@ -311,16 +311,7 @@
       "label": "desk (band 2)"
     },
     {
-      "from": 3.45,
-      "to": 3.95,
-      "columns": [
-        4
-      ],
-      "band": 0,
-      "label": "clear"
-    },
-    {
-      "from": 3.45,
+      "from": 3.65,
       "to": 4.15,
       "columns": [
         1
@@ -329,53 +320,62 @@
       "label": "desk (band 2)"
     },
     {
-      "from": 3.75,
-      "to": 4.15,
-      "columns": [
-        0
-      ],
-      "band": 2,
-      "label": "desk (band 2)"
-    },
-    {
-      "from": 4.55,
-      "to": 6.25,
-      "columns": [
-        2
-      ],
-      "band": 4,
-      "label": "filing cabinet (band 4)"
-    },
-    {
-      "from": 4.95,
+      "from": 4.45,
       "to": 5.45,
       "columns": [
-        1
-      ],
-      "band": 4,
-      "label": "filing cabinet (band 4)"
-    },
-    {
-      "from": 5.25,
-      "to": 5.55,
-      "columns": [
-        0
+        3
       ],
       "band": 4,
       "label": "far wall left of door (band 4)"
     },
     {
-      "from": 5.25,
+      "from": 4.85,
+      "to": 5.45,
+      "columns": [
+        2
+      ],
+      "band": 4,
+      "label": "filing cabinet (band 4)"
+    },
+    {
+      "from": 5.05,
       "to": 6.45,
+      "columns": [
+        4
+      ],
+      "band": 4,
+      "label": "right wall (band 4)"
+    },
+    {
+      "from": 5.15,
+      "to": 5.55,
+      "columns": [
+        1
+      ],
+      "band": 4,
+      "label": "far wall left of door (band 4)"
+    },
+    {
+      "from": 6.45,
+      "to": 6.95,
       "columns": [
         3
       ],
-      "band": 4,
-      "label": "far wall right of door (band 4)"
+      "band": 0,
+      "label": "clear"
     },
     {
       "from": 6.55,
       "to": 7.95,
+      "columns": [
+        2
+      ],
+      "band": 3,
+      "label": "filing cabinet (band 3)"
+    },
+    {
+      "from": 6.65,
+      "to": 8.05,
       "columns": [
         1
       ],
@@ -383,28 +383,19 @@
       "label": "filing cabinet (band 3)"
     },
     {
-      "from": 6.75,
-      "to": 8.15,
+      "from": 7.15,
+      "to": 8.35,
       "columns": [
-        0
+        5
       ],
       "band": 3,
-      "label": "filing cabinet (band 3)"
-    },
-    {
-      "from": 7.35,
-      "to": 8.15,
-      "columns": [
-        4
-      ],
-      "band": 3,
-      "label": "far wall right of door (band 3)"
+      "label": "right wall (band 3)"
     },
     {
       "from": 7.55,
-      "to": 8.35,
+      "to": 8.15,
       "columns": [
-        3
+        4
       ],
       "band": 3,
       "label": "far wall right of door (band 3)"
@@ -413,13 +404,22 @@
       "from": 8.35,
       "to": 10.45,
       "columns": [
-        2
+        3
       ],
       "band": 4,
       "label": "corridor wall (band 4)"
     },
     {
       "from": 9.05,
+      "to": 10.15,
+      "columns": [
+        2
+      ],
+      "band": 2,
+      "label": "far wall left of door (band 2)"
+    },
+    {
+      "from": 9.15,
       "to": 9.85,
       "columns": [
         1
@@ -428,31 +428,31 @@
       "label": "far wall left of door (band 2)"
     },
     {
-      "from": 9.25,
-      "to": 9.75,
-      "columns": [
-        4
-      ],
-      "band": 2,
-      "label": "far wall right of door (band 2)"
-    },
-    {
-      "from": 9.25,
-      "to": 10.45,
-      "columns": [
-        3
-      ],
-      "band": 4,
-      "label": "corridor wall (band 4)"
-    },
-    {
-      "from": 9.55,
+      "from": 9.45,
       "to": 9.95,
       "columns": [
         5
       ],
       "band": 2,
       "label": "far wall right of door (band 2)"
+    },
+    {
+      "from": 9.85,
+      "to": 10.05,
+      "columns": [
+        6
+      ],
+      "band": 2,
+      "label": "far wall right of door (band 2)"
+    },
+    {
+      "from": 10.25,
+      "to": 10.45,
+      "columns": [
+        4
+      ],
+      "band": 4,
+      "label": "corridor wall (band 4)"
     }
   ]
 }

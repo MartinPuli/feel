@@ -149,6 +149,8 @@ Result Controller::receive(const uint8_t* data, std::size_t length, uint32_t now
         if (delta == 0) return reject(Result::Duplicate);
         if (delta >= 128) return reject(Result::StaleSequence);
     }
+    // A neutral packet may mean tracking loss. Never infer a tap and restore an old
+    // band when subsequent packets are missing; only an accepted packet can raise it.
     apply(packet.bands, packet.highlight, now);
     state_.lastSequence = packet.sequence;
     state_.sequenceValid = true;

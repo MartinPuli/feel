@@ -4,7 +4,8 @@
 For every 10 Hz tick this samples the surfaces of the scene's objects (box faces, cylinder sides and
 caps) inside the obstacle height window, keeps the points the iPhone wide camera can see (±33.6° by
 ±26.5°), and takes the nearest horizontal range per column, exactly the sector rule the encoder uses
-(nearest point, 0.6–2.1 m above the floor, within 4 m, seven 12.86° columns). Runs of a constant band
+(nearest point, 0.6–2.1 m above the floor, within 4 m, six 15° columns in wire slots 1...6;
+slot 0 is reserved and never labelled). Runs of a constant band
 per column become `expect` windows with ±0.35 s trimmed around every transition, so a label never sits
 on a tick where the answer changes. Occlusion is ignored: a nearer surface always wins the column, so
 hiding a farther one changes nothing.
@@ -25,7 +26,8 @@ from pathlib import Path
 HALF_H = math.atan(960 / 1445)  # horizontal half view of the wide camera, radians (33.6°)
 HALF_V = math.atan(720 / 1445)  # vertical half view (26.5°)
 MIN_HEIGHT, MAX_HEIGHT, MAX_RANGE = 0.6, 2.1, 4.0
-COLUMN_WIDTH = 90 / 7
+COLUMN_WIDTH = 90 / 6
+SLOTS = range(1, 7)  # physical columns; index 0 of every per-column list stays unused
 TRIM, MIN_RUN, MIN_WINDOW = 0.35, 0.9, 0.2
 STEP = 0.03  # surface sampling pitch in metres
 # A tick is labelled only when its answer is robust: the band must not change under a ±4 % range
@@ -44,7 +46,7 @@ def band(distance):
 def column(bearing_deg):
     if bearing_deg < -45 or bearing_deg > 45:
         return None
-    return 6 if bearing_deg == 45 else min(6, int((bearing_deg + 45) // COLUMN_WIDTH))
+    return 6 if bearing_deg == 45 else 1 + min(5, int((bearing_deg + 45) // COLUMN_WIDTH))
 
 
 def pose(scene, t):
@@ -138,7 +140,7 @@ def ranges_at(scene, t):
                 continue
             if best[c] is None or distance < best[c]:
                 best[c], who[c] = distance, obj.get('label') or obj['kind']
-            lo, hi = -45 + c * COLUMN_WIDTH, -45 + (c + 1) * COLUMN_WIDTH
+            lo, hi = -45 + (c - 1) * COLUMN_WIDTH, -45 + c * COLUMN_WIDTH
             if bearing - lo >= EDGE and hi - bearing >= EDGE and (inner[c] is None or distance < inner[c]):
                 inner[c] = distance
     return best, who, inner, nearest_any
@@ -162,9 +164,9 @@ def windows(scene, ticks=10):
     bands, names = [], []
     for t in times:
         r, w, inner, any_ = ranges_at(scene, t)
-        bands.append([robust_band(r[c], inner[c], any_[c]) for c in range(7)]); names.append(w)
+        bands.append([0] + [robust_band(r[c], inner[c], any_[c]) for c in SLOTS]); names.append(w)
     entries = []
-    for c in range(7):
+    for c in SLOTS:
         i = 0
         while i < len(times):
             j = i
@@ -182,7 +184,7 @@ def windows(scene, ticks=10):
     # changing) the pin must be up in one of the bands it passes through. Only where no constant-band
     # window already covers the time.
     covered = {(e['column'], i) for e in entries for i, t in enumerate(times) if e['from'] <= t <= e['to']}
-    for c in range(7):
+    for c in SLOTS:
         i = 0
         while i < len(times):
             j = i
@@ -202,7 +204,7 @@ def windows(scene, ticks=10):
         merged.setdefault(key, []).append(e['column'])
     out = []
     for (a, b, bd, bds, who), cols in sorted(merged.items(), key=lambda kv: (kv[0][0], kv[0][1], kv[1][0])):
-        entry = {'from': a, 'to': b, 'columns': 'all' if len(cols) == 7 else sorted(cols)}
+        entry = {'from': a, 'to': b, 'columns': 'all' if len(cols) == len(SLOTS) else sorted(cols)}
         if bds:
             entry['bands'] = list(bds); entry['label'] = f'{who} (bands {"/".join(map(str, bds))})'
         else:
@@ -223,7 +225,7 @@ def main():
     expect, times, bands = windows(scenario['scene'])
     if args.timeline:
         for t, b in zip(times, bands):
-            print(f'{t:6.2f}  ' + ' '.join('?' if x == UNCERTAIN else str(x) if x else '.' for x in b))
+            print(f'{t:6.2f}  ' + ' '.join('?' if x == UNCERTAIN else str(x) if x else '.' for x in b[1:]))
     for e in expect:
         cols = e['columns'] if e['columns'] == 'all' else ','.join(map(str, e['columns']))
         what = f"band {e['band']}" if 'band' in e else 'bands ' + '/'.join(map(str, e['bands']))

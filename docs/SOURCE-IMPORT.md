@@ -37,6 +37,6 @@ The preparation repository now has its own bootstrap commit and `feel/v2-prepara
 
 ## Documents preserved without changes
 
-`AGENTS.md` is the supplied engineering instruction file. `HANDOFF-v7.md` is the supplied `HANDOFF-v7 (1).md`. `HACKHARVARD-2026.md` is the supplied **updated** event document, normalized to the requested canonical filename. Original content hashes are in `docs/evidence/baseline.json`.
+`AGENTS.md` is the supplied engineering instruction file. `docs/HANDOFF-v7.md` is the supplied `HANDOFF-v7 (1).md`. `docs/HACKHARVARD-2026.md` is the supplied **updated** event document, normalized to the requested canonical filename. Original content hashes are in `docs/evidence/baseline.json`.
 
 None of the quoted historical test counts have been reproduced here. No private viewer link or other unprovided repository was treated as executable source.

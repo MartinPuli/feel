@@ -1,0 +1,90 @@
+{
+  "title": "Two chairs in separate sectors",
+  "scene": {
+    "duration": 4,
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0
+      }
+    ],
+    "objects": [
+      {
+        "kind": "box",
+        "min": [
+          -1.15,
+          0.6,
+          -1.6
+        ],
+        "max": [
+          -0.65,
+          1.4,
+          -1.2
+        ],
+        "label": "left chair"
+      },
+      {
+        "kind": "box",
+        "min": [
+          0.65,
+          0.6,
+          -1.6
+        ],
+        "max": [
+          1.15,
+          1.4,
+          -1.2
+        ],
+        "label": "right chair"
+      }
+    ],
+    "sensor": {
+      "noise": 0,
+      "seed": 44
+    }
+  },
+  "expect": [
+    {
+      "from": 0.3,
+      "to": 4,
+      "columns": [
+        1,
+        2
+      ],
+      "band": 2,
+      "label": "left chair (band 2)"
+    },
+    {
+      "from": 0.3,
+      "to": 4,
+      "columns": [
+        3,
+        4
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 0.3,
+      "to": 4,
+      "columns": [
+        5,
+        6
+      ],
+      "band": 2,
+      "label": "right chair (band 2)"
+    }
+  ],
+  "labelProvenance": {
+    "sourceBranch": "movement-simulation-tests",
+    "sourceRevision": "3c041c0",
+    "generator": "simulation/geometry_labels.py",
+    "physicalColumns": 6,
+    "samplingStepMeters": 0.03,
+    "rangeTolerance": 0.04,
+    "edgeExclusionDegrees": 0.7,
+    "transitionTrimSeconds": 0.35,
+    "outputIndependent": true
+  }
+}

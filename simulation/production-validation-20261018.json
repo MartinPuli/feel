@@ -1,0 +1,3310 @@
+{
+  "sourceRevision": "8b0789c",
+  "defaultReplay": [
+    {
+      "name": "chair-in-front-of-wall",
+      "title": "Near chair takes priority over far wall",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "80458bf53882aad7",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 222,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.238,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.714,
+        "frameAgeMs": {
+          "mean": 57.0,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "far wall (band 4)",
+            "from": 0.3,
+            "to": 4,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "near chair (band 2)",
+            "from": 0.3,
+            "to": 4,
+            "checks": 148,
+            "passed": 148,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "chair-narrow-centre",
+      "title": "Narrow chair ahead leaves side sectors clear",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "ca6565adbd59d505",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 222,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.159,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.476,
+        "frameAgeMs": {
+          "mean": 57.0,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "clear",
+            "from": 0.3,
+            "to": 4,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "chair (band 2)",
+            "from": 0.3,
+            "to": 4,
+            "checks": 148,
+            "passed": 148,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "chair-outer-edge",
+      "title": "Chair near outer camera edge",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "0fce5b9a99e03e4a",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 222,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.04,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.119,
+        "frameAgeMs": {
+          "mean": 57.0,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "clear",
+            "from": 0.3,
+            "to": 4,
+            "checks": 185,
+            "passed": 185,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "chair (band 3)",
+            "from": 0.3,
+            "to": 4,
+            "checks": 37,
+            "passed": 37,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "chair-sector-edge",
+      "title": "Chair at a sector edge",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "dbe51f45860a9490",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 222,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.079,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.238,
+        "frameAgeMs": {
+          "mean": 57.0,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "clear",
+            "from": 0.3,
+            "to": 4,
+            "checks": 148,
+            "passed": 148,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "chair (band 2)",
+            "from": 0.3,
+            "to": 4,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "corridor-oncoming-people",
+      "title": "Corridor, two people walking toward you and one crossing",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "891e728dd3233862",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 441,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.479,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.578,
+        "frameAgeMs": {
+          "mean": 51.0,
+          "max": 150.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "clear",
+            "from": 0.3,
+            "to": 2.15,
+            "checks": 19,
+            "passed": 19,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "left wall (band 2)",
+            "from": 0.3,
+            "to": 10,
+            "checks": 194,
+            "passed": 194,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "left wall (band 3)",
+            "from": 0.3,
+            "to": 10,
+            "checks": 97,
+            "passed": 97,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 3,
+            "label": "water fountain (band 3)",
+            "from": 1.25,
+            "to": 1.45,
+            "checks": 3,
+            "passed": 3,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 4,
+            "label": "right wall (band 4)",
+            "from": 1.95,
+            "to": 3.35,
+            "checks": 15,
+            "passed": 15,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 5,
+            "label": "right wall (band 4)",
+            "from": 2.25,
+            "to": 3.65,
+            "checks": 15,
+            "passed": 15,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 6,
+            "label": "person C crossing (band 4)",
+            "from": 3.05,
+            "to": 3.65,
+            "checks": 7,
+            "passed": 7,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 7,
+            "label": "clear",
+            "from": 6.55,
+            "to": 10,
+            "checks": 35,
+            "passed": 35,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 8,
+            "label": "right wall (band 4)",
+            "from": 7.25,
+            "to": 10,
+            "checks": 56,
+            "passed": 56,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "doorway-open-leaf",
+      "title": "Standard door (0.9 \u00d7 2.03 m) with the leaf open, walking through",
+      "source": "synthetic",
+      "knownIssue": "Obstacle height window tops out at 2.1 m (DepthProjector.sectors maxHeight), above a standard 2.03 m door head, so doorways read as blocked until about 1.7 m away.",
+      "digest": "b51ac62cbd1f5720",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 192,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.761,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.288,
+        "frameAgeMs": {
+          "mean": 51.2,
+          "max": 150.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "shoe rack (band 4)",
+            "from": 0.3,
+            "to": 1.35,
+            "checks": 22,
+            "passed": 22,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "umbrella stand (band 4)",
+            "from": 0.3,
+            "to": 1.45,
+            "checks": 12,
+            "passed": 12,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "umbrella stand (band 4)",
+            "from": 0.75,
+            "to": 1.45,
+            "checks": 8,
+            "passed": 8,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 3,
+            "label": "wall right of door (band 4)",
+            "from": 1.35,
+            "to": 1.75,
+            "checks": 5,
+            "passed": 5,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 4,
+            "label": "wall left of door (band 4)",
+            "from": 1.35,
+            "to": 2.25,
+            "checks": 10,
+            "passed": 10,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 5,
+            "label": "shoe rack (band 3)",
+            "from": 2.45,
+            "to": 2.85,
+            "checks": 5,
+            "passed": 5,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 6,
+            "label": "door head 2.03 m (band 3)",
+            "from": 2.45,
+            "to": 3.45,
+            "checks": 11,
+            "passed": 11,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 7,
+            "label": "umbrella stand (band 3)",
+            "from": 2.55,
+            "to": 3.05,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 8,
+            "label": "wall left of door (band 3)",
+            "from": 2.75,
+            "to": 4.75,
+            "checks": 21,
+            "passed": 21,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 9,
+            "label": "shoe rack (band 2)",
+            "from": 3.85,
+            "to": 4.55,
+            "checks": 8,
+            "passed": 8,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 10,
+            "label": "umbrella stand (band 2)",
+            "from": 4.05,
+            "to": 4.55,
+            "checks": 12,
+            "passed": 12,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 11,
+            "label": "shoe rack (band 2)",
+            "from": 4.05,
+            "to": 4.55,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 12,
+            "label": "hallway wall (band 4)",
+            "from": 4.65,
+            "to": 5.85,
+            "checks": 13,
+            "passed": 13,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 13,
+            "label": "open door leaf (band 1)",
+            "from": 5.45,
+            "to": 6.55,
+            "checks": 12,
+            "passed": 12,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 14,
+            "label": "side table in the hallway (band 3)",
+            "from": 6.65,
+            "to": 7.45,
+            "checks": 9,
+            "passed": 9,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 15,
+            "label": "side table in the hallway (band 3)",
+            "from": 6.85,
+            "to": 8,
+            "checks": 12,
+            "passed": 12,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 16,
+            "label": "hallway wall (band 3)",
+            "from": 6.95,
+            "to": 7.35,
+            "checks": 10,
+            "passed": 10,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 17,
+            "label": "hallway wall (band 3)",
+            "from": 7.15,
+            "to": 7.45,
+            "checks": 4,
+            "passed": 4,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 18,
+            "label": "hallway wall (band 3)",
+            "from": 7.45,
+            "to": 8,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "doorway-open",
+      "title": "Open doorway, 2 m ahead",
+      "source": "synthetic",
+      "knownIssue": "A 1 m opening at 2 m is narrower than the two central 15\u00b0 sectors. Each contains a jamb sample, so nearest-sample sector encoding cannot represent the opening as clear.",
+      "digest": "b36dc10371eff3e1",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "KNOWN",
+      "result": {
+        "accuracy": 0.695,
+        "checks": 282,
+        "failedChecks": 86,
+        "phantomChecks": 86,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.192,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.769,
+        "frameAgeMs": {
+          "mean": 55.7,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "opening is clear",
+            "from": 0.3,
+            "to": 5.0,
+            "checks": 94,
+            "passed": 8,
+            "accuracy": 0.0851,
+            "firstMatch": 1.65
+          },
+          {
+            "index": 1,
+            "label": "wall either side",
+            "from": 0.3,
+            "to": 5.0,
+            "checks": 188,
+            "passed": 188,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": false,
+        "reasons": [
+          "window 0.3\u20135.0 s (opening is clear): 0.085 < 0.95"
+        ]
+      }
+    },
+    {
+      "name": "doorway-wide-open",
+      "title": "Wide open doorway, 2 m ahead",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "7f2af1c29abb8d8d",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 282,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.128,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.513,
+        "frameAgeMs": {
+          "mean": 55.7,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "opening is clear",
+            "from": 0.3,
+            "to": 5.0,
+            "checks": 94,
+            "passed": 94,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "wall either side",
+            "from": 0.3,
+            "to": 5.0,
+            "checks": 188,
+            "passed": 188,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "doorway-with-lintel",
+      "title": "Real doorway: 2.03 m lintel",
+      "source": "synthetic",
+      "knownIssue": "Obstacle height window tops out at 2.1 m (DepthProjector.sectors maxHeight), above a standard 2.03 m door head, so doorways read as blocked.",
+      "digest": "b36dc10371eff3e1",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "KNOWN",
+      "result": {
+        "accuracy": 0.695,
+        "checks": 282,
+        "failedChecks": 86,
+        "phantomChecks": 86,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.192,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.769,
+        "frameAgeMs": {
+          "mean": 55.7,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "opening is clear",
+            "from": 0.3,
+            "to": 5.0,
+            "checks": 94,
+            "passed": 8,
+            "accuracy": 0.0851,
+            "firstMatch": 1.65
+          },
+          {
+            "index": 1,
+            "label": "wall either side",
+            "from": 0.3,
+            "to": 5.0,
+            "checks": 188,
+            "passed": 188,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": false,
+        "reasons": [
+          "window 0.3\u20135.0 s (opening is clear): 0.085 < 0.95"
+        ]
+      }
+    },
+    {
+      "name": "find-door-slow-detector",
+      "title": "Find a door: 0.2 s detector",
+      "source": "synthetic",
+      "knownIssue": "Target freshness (0.5 s) is close to detector cadence (~0.4 s) plus inference; with \u2265 0.15 s inference the tap drops out for a tick every cycle.",
+      "digest": "68ddd43c0a25757a",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "KNOWN",
+      "result": {
+        "accuracy": 0.9787,
+        "checks": 375,
+        "failedChecks": 8,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.161,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.753,
+        "frameAgeMs": {
+          "mean": 54.8,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "wall",
+            "from": 0.3,
+            "to": 6.0,
+            "checks": 342,
+            "passed": 342,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "door taps column 5 steadily",
+            "from": 1.1,
+            "to": 4.4,
+            "checks": 33,
+            "passed": 25,
+            "accuracy": 0.7576,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": false,
+        "reasons": [
+          "window 1.1\u20134.4 s (door taps column 5 steadily): 0.758 < 0.95"
+        ]
+      }
+    },
+    {
+      "name": "find-door",
+      "title": "Find a door: tap column",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "881b732e0d406c15",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 391,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.161,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.726,
+        "frameAgeMs": {
+          "mean": 54.8,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "wall",
+            "from": 0.3,
+            "to": 6.0,
+            "checks": 342,
+            "passed": 342,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "door taps column 5",
+            "from": 1.0,
+            "to": 4.4,
+            "checks": 34,
+            "passed": 34,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "tapping stops",
+            "from": 4.6,
+            "to": 6.0,
+            "checks": 14,
+            "passed": 14,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 3,
+            "label": "steady wall pins keep the presence beat",
+            "from": 2.0,
+            "to": 6.0,
+            "checks": 1,
+            "passed": 1,
+            "accuracy": 1.0,
+            "firstMatch": null,
+            "tapsPerSecond": 1.0,
+            "taps": 4
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "hallway-cluttered",
+      "title": "Cluttered hallway, 1.8 m wide, walking to a door",
+      "source": "synthetic",
+      "knownIssue": "SectorFilter (Oct 17) needs four agreeing frames to move a pin farther; the console-table sliver at the left column edge keeps resetting the count, so the near pin lingers about 0.8 s after the table has passed (3.25\u20135.15 s window).",
+      "digest": "ab8d6d0d3d2b6823",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "KNOWN",
+      "result": {
+        "accuracy": 0.9821,
+        "checks": 279,
+        "failedChecks": 5,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.578,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.462,
+        "frameAgeMs": {
+          "mean": 51.0,
+          "max": 150.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "coat rack (band 4)",
+            "from": 0.3,
+            "to": 1.25,
+            "checks": 10,
+            "passed": 10,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "console table (band 2)",
+            "from": 0.3,
+            "to": 2.15,
+            "checks": 19,
+            "passed": 19,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "console table (band 2)",
+            "from": 0.55,
+            "to": 2.45,
+            "checks": 20,
+            "passed": 20,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 3,
+            "label": "stacked boxes (band 4)",
+            "from": 1.05,
+            "to": 3.15,
+            "checks": 22,
+            "passed": 22,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 4,
+            "label": "right wall (band 3)",
+            "from": 1.75,
+            "to": 2.95,
+            "checks": 13,
+            "passed": 13,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 5,
+            "label": "coat rack (band 3)",
+            "from": 2.35,
+            "to": 3.15,
+            "checks": 9,
+            "passed": 9,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 6,
+            "label": "left wall (band 3)",
+            "from": 3.05,
+            "to": 4.85,
+            "checks": 19,
+            "passed": 19,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 7,
+            "label": "left wall (band 3)",
+            "from": 3.25,
+            "to": 5.15,
+            "checks": 20,
+            "passed": 15,
+            "accuracy": 0.75,
+            "firstMatch": 0.5
+          },
+          {
+            "index": 8,
+            "label": "coat rack (band 2)",
+            "from": 4.05,
+            "to": 4.45,
+            "checks": 5,
+            "passed": 5,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 9,
+            "label": "stacked boxes (band 3)",
+            "from": 4.25,
+            "to": 6.05,
+            "checks": 19,
+            "passed": 19,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 10,
+            "label": "bin (band 3)",
+            "from": 4.95,
+            "to": 5.55,
+            "checks": 7,
+            "passed": 7,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 11,
+            "label": "stacked boxes (band 2)",
+            "from": 5.95,
+            "to": 6.25,
+            "checks": 4,
+            "passed": 4,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 12,
+            "label": "stacked boxes (band 2)",
+            "from": 6.15,
+            "to": 6.35,
+            "checks": 3,
+            "passed": 3,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 13,
+            "label": "end wall right of door (band 4)",
+            "from": 6.45,
+            "to": 8.05,
+            "checks": 17,
+            "passed": 17,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 14,
+            "label": "bin (band 2)",
+            "from": 6.55,
+            "to": 7.25,
+            "checks": 8,
+            "passed": 8,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 15,
+            "label": "bin (band 2)",
+            "from": 6.85,
+            "to": 7.35,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 16,
+            "label": "end wall left of door (band 4)",
+            "from": 6.95,
+            "to": 8.05,
+            "checks": 12,
+            "passed": 12,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 17,
+            "label": "stacked boxes (band 1)",
+            "from": 7.25,
+            "to": 8.05,
+            "checks": 9,
+            "passed": 9,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 18,
+            "label": "right wall (band 3)",
+            "from": 8.15,
+            "to": 10,
+            "checks": 19,
+            "passed": 19,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 19,
+            "label": "left wall (band 3)",
+            "from": 8.65,
+            "to": 10,
+            "checks": 14,
+            "passed": 14,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 20,
+            "label": "left wall (band 3)",
+            "from": 8.85,
+            "to": 10,
+            "checks": 12,
+            "passed": 12,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 21,
+            "label": "end wall right of door (band 3)",
+            "from": 9.15,
+            "to": 10,
+            "checks": 9,
+            "passed": 9,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 22,
+            "label": "end wall left of door (band 3)",
+            "from": 9.25,
+            "to": 9.45,
+            "checks": 3,
+            "passed": 3,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          }
+        ],
+        "passed": false,
+        "reasons": [
+          "window 3.25\u20135.15 s (left wall (band 3)): 0.750 < 0.95"
+        ]
+      }
+    },
+    {
+      "name": "height-window",
+      "title": "Low box ignored, overhang shown",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "7f11968cc4013229",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 222,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.079,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.238,
+        "frameAgeMs": {
+          "mean": 57.0,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "overhang shown",
+            "from": 0.3,
+            "to": 4.0,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "low box not shown",
+            "from": 0.3,
+            "to": 4.0,
+            "checks": 148,
+            "passed": 148,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "lidar-outliers",
+      "title": "Stress: LiDAR outliers in an empty room",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "5cf4cd2d22082d0a",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 342,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.0,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.0,
+        "frameAgeMs": {
+          "mean": 54.8,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "nothing there",
+            "from": 0.3,
+            "to": 6.0,
+            "checks": 342,
+            "passed": 342,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "office-furnished",
+      "title": "Furnished office, person walking toward you, out through the door",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "1120905f8a8ac184",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 270,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.73,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.303,
+        "frameAgeMs": {
+          "mean": 50.8,
+          "max": 150.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "desk (band 4)",
+            "from": 0.3,
+            "to": 0.65,
+            "checks": 4,
+            "passed": 4,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "clear",
+            "from": 0.3,
+            "to": 2.75,
+            "checks": 25,
+            "passed": 25,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "bookshelf (band 4)",
+            "from": 0.3,
+            "to": 3.15,
+            "checks": 58,
+            "passed": 58,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 3,
+            "label": "office chair (band 3)",
+            "from": 0.95,
+            "to": 1.75,
+            "checks": 9,
+            "passed": 9,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 4,
+            "label": "office chair (band 3)",
+            "from": 1.15,
+            "to": 1.65,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 5,
+            "label": "desk (band 3)",
+            "from": 1.85,
+            "to": 2.35,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 6,
+            "label": "desk (band 2)",
+            "from": 3.35,
+            "to": 4.05,
+            "checks": 8,
+            "passed": 8,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 7,
+            "label": "desk (band 2)",
+            "from": 3.65,
+            "to": 4.15,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 8,
+            "label": "far wall left of door (band 4)",
+            "from": 4.45,
+            "to": 5.45,
+            "checks": 11,
+            "passed": 11,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 9,
+            "label": "filing cabinet (band 4)",
+            "from": 4.85,
+            "to": 5.45,
+            "checks": 7,
+            "passed": 7,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 10,
+            "label": "right wall (band 4)",
+            "from": 5.05,
+            "to": 6.45,
+            "checks": 15,
+            "passed": 15,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 11,
+            "label": "far wall left of door (band 4)",
+            "from": 5.15,
+            "to": 5.55,
+            "checks": 5,
+            "passed": 5,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 12,
+            "label": "clear",
+            "from": 6.45,
+            "to": 6.95,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 13,
+            "label": "filing cabinet (band 3)",
+            "from": 6.55,
+            "to": 7.95,
+            "checks": 15,
+            "passed": 15,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 14,
+            "label": "filing cabinet (band 3)",
+            "from": 6.65,
+            "to": 8.05,
+            "checks": 15,
+            "passed": 15,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 15,
+            "label": "right wall (band 3)",
+            "from": 7.15,
+            "to": 8.35,
+            "checks": 13,
+            "passed": 13,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 16,
+            "label": "far wall right of door (band 3)",
+            "from": 7.55,
+            "to": 8.15,
+            "checks": 7,
+            "passed": 7,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 17,
+            "label": "corridor wall (band 4)",
+            "from": 8.35,
+            "to": 10.45,
+            "checks": 22,
+            "passed": 22,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 18,
+            "label": "far wall left of door (band 2)",
+            "from": 9.05,
+            "to": 10.15,
+            "checks": 12,
+            "passed": 12,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 19,
+            "label": "far wall left of door (band 2)",
+            "from": 9.15,
+            "to": 9.85,
+            "checks": 8,
+            "passed": 8,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 20,
+            "label": "far wall right of door (band 2)",
+            "from": 9.45,
+            "to": 9.95,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 21,
+            "label": "far wall right of door (band 2)",
+            "from": 9.85,
+            "to": 10.05,
+            "checks": 3,
+            "passed": 3,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 22,
+            "label": "corridor wall (band 4)",
+            "from": 10.25,
+            "to": 10.45,
+            "checks": 3,
+            "passed": 3,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "packet-loss-failsafe",
+      "title": "BLE packet loss and the 500 ms failsafe",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "9c24b09b81407278",
+      "deterministic": true,
+      "baseline": "changed from t=2.15",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 336,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.488,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.244,
+        "frameAgeMs": {
+          "mean": 54.8,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "wall before last accepted neutral",
+            "from": 0.3,
+            "to": 1.85,
+            "checks": 96,
+            "passed": 96,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "last neutral held, then watchdog expires",
+            "from": 1.95,
+            "to": 3.15,
+            "checks": 78,
+            "passed": 78,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 2,
+            "label": "recovered; survives 30 % loss",
+            "from": 3.3,
+            "to": 6.0,
+            "checks": 162,
+            "passed": 162,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "person-and-chair",
+      "title": "Person and chair occupy different sectors",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "631c3b245c79d76a",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 222,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.159,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.476,
+        "frameAgeMs": {
+          "mean": 57.0,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "person (band 2)",
+            "from": 0.3,
+            "to": 4,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "clear",
+            "from": 0.3,
+            "to": 4,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "chair (band 2)",
+            "from": 0.3,
+            "to": 4,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "person-crossing-close",
+      "title": "Person crossing close ahead",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "93478db96d7e9539",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 371,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.247,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.144,
+        "frameAgeMs": {
+          "mean": 51.2,
+          "max": 150.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "clear",
+            "from": 0.3,
+            "to": 0.85,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "clear",
+            "from": 0.3,
+            "to": 1.05,
+            "checks": 8,
+            "passed": 8,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "clear",
+            "from": 0.3,
+            "to": 1.95,
+            "checks": 17,
+            "passed": 17,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 3,
+            "label": "clear",
+            "from": 0.3,
+            "to": 2.65,
+            "checks": 24,
+            "passed": 24,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 4,
+            "label": "clear",
+            "from": 0.3,
+            "to": 3.25,
+            "checks": 30,
+            "passed": 30,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 5,
+            "label": "clear",
+            "from": 0.3,
+            "to": 3.95,
+            "checks": 37,
+            "passed": 37,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 6,
+            "label": "person (band 1)",
+            "from": 1.85,
+            "to": 2.55,
+            "checks": 8,
+            "passed": 8,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 7,
+            "label": "person (band 1)",
+            "from": 1.95,
+            "to": 3.25,
+            "checks": 14,
+            "passed": 14,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 8,
+            "label": "person (band 1)",
+            "from": 2.75,
+            "to": 3.95,
+            "checks": 13,
+            "passed": 13,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 9,
+            "label": "clear",
+            "from": 3.35,
+            "to": 8,
+            "checks": 47,
+            "passed": 47,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 10,
+            "label": "person (band 1)",
+            "from": 3.45,
+            "to": 4.55,
+            "checks": 12,
+            "passed": 12,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 11,
+            "label": "person (band 1)",
+            "from": 4.05,
+            "to": 5.35,
+            "checks": 14,
+            "passed": 14,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 12,
+            "label": "clear",
+            "from": 4.05,
+            "to": 8,
+            "checks": 40,
+            "passed": 40,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 13,
+            "label": "person (band 1)",
+            "from": 4.75,
+            "to": 5.55,
+            "checks": 9,
+            "passed": 9,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 14,
+            "label": "clear",
+            "from": 4.75,
+            "to": 8,
+            "checks": 33,
+            "passed": 33,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 15,
+            "label": "clear",
+            "from": 5.45,
+            "to": 8,
+            "checks": 26,
+            "passed": 26,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 16,
+            "label": "clear",
+            "from": 6.25,
+            "to": 8,
+            "checks": 18,
+            "passed": 18,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 17,
+            "label": "clear",
+            "from": 6.55,
+            "to": 8,
+            "checks": 15,
+            "passed": 15,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "person-crossing-far",
+      "title": "Person crossing far ahead",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "a694e23ae56fa421",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 346,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.267,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.144,
+        "frameAgeMs": {
+          "mean": 51.2,
+          "max": 150.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "clear",
+            "from": 0.3,
+            "to": 0.55,
+            "checks": 3,
+            "passed": 3,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "clear",
+            "from": 0.3,
+            "to": 2.35,
+            "checks": 21,
+            "passed": 21,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "clear",
+            "from": 0.3,
+            "to": 4.15,
+            "checks": 39,
+            "passed": 39,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 3,
+            "label": "clear",
+            "from": 0.3,
+            "to": 6.25,
+            "checks": 60,
+            "passed": 60,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 4,
+            "label": "clear",
+            "from": 0.65,
+            "to": 8,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 5,
+            "label": "person (band 3)",
+            "from": 2.45,
+            "to": 3.45,
+            "checks": 11,
+            "passed": 11,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 6,
+            "label": "clear",
+            "from": 2.65,
+            "to": 8,
+            "checks": 54,
+            "passed": 54,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 7,
+            "label": "person (band 3)",
+            "from": 3.45,
+            "to": 4.45,
+            "checks": 11,
+            "passed": 11,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 8,
+            "label": "clear",
+            "from": 4.45,
+            "to": 8,
+            "checks": 36,
+            "passed": 36,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 9,
+            "label": "clear",
+            "from": 6.35,
+            "to": 8,
+            "checks": 17,
+            "passed": 17,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 10,
+            "label": "person (band 4)",
+            "from": 6.95,
+            "to": 8,
+            "checks": 11,
+            "passed": 11,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 11,
+            "label": "person (band 4)",
+            "from": 7.15,
+            "to": 8,
+            "checks": 9,
+            "passed": 9,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "person-crossing-right-left",
+      "title": "Person crossing right to left",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "8ffb80c7bec879d6",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 352,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.309,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.185,
+        "frameAgeMs": {
+          "mean": 51.2,
+          "max": 150.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "clear",
+            "from": 0.3,
+            "to": 1.15,
+            "checks": 9,
+            "passed": 9,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "clear",
+            "from": 0.3,
+            "to": 2.35,
+            "checks": 21,
+            "passed": 21,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "clear",
+            "from": 0.3,
+            "to": 3.45,
+            "checks": 32,
+            "passed": 32,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 3,
+            "label": "clear",
+            "from": 0.3,
+            "to": 4.65,
+            "checks": 44,
+            "passed": 44,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 4,
+            "label": "person (band 2)",
+            "from": 1.05,
+            "to": 1.35,
+            "checks": 4,
+            "passed": 4,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 5,
+            "label": "person (band 2)",
+            "from": 1.15,
+            "to": 2.55,
+            "checks": 15,
+            "passed": 15,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 6,
+            "label": "person (band 2)",
+            "from": 2.05,
+            "to": 3.65,
+            "checks": 17,
+            "passed": 17,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 7,
+            "label": "clear",
+            "from": 2.15,
+            "to": 8,
+            "checks": 59,
+            "passed": 59,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 8,
+            "label": "person (band 2)",
+            "from": 3.15,
+            "to": 4.85,
+            "checks": 18,
+            "passed": 18,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 9,
+            "label": "clear",
+            "from": 3.45,
+            "to": 8,
+            "checks": 46,
+            "passed": 46,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 10,
+            "label": "person (band 2)",
+            "from": 4.25,
+            "to": 5.75,
+            "checks": 16,
+            "passed": 16,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 11,
+            "label": "clear",
+            "from": 4.55,
+            "to": 8,
+            "checks": 35,
+            "passed": 35,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 12,
+            "label": "person (band 2)",
+            "from": 5.55,
+            "to": 5.85,
+            "checks": 4,
+            "passed": 4,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 13,
+            "label": "clear",
+            "from": 5.75,
+            "to": 8,
+            "checks": 23,
+            "passed": 23,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 14,
+            "label": "clear",
+            "from": 7.15,
+            "to": 8,
+            "checks": 9,
+            "passed": 9,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "person-crossing-right",
+      "title": "Person crossing from left to right",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "110a47684150fb3f",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 352,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.309,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.185,
+        "frameAgeMs": {
+          "mean": 51.2,
+          "max": 150.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "clear",
+            "from": 0.3,
+            "to": 1.15,
+            "checks": 9,
+            "passed": 9,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "clear",
+            "from": 0.3,
+            "to": 2.35,
+            "checks": 21,
+            "passed": 21,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "clear",
+            "from": 0.3,
+            "to": 3.45,
+            "checks": 32,
+            "passed": 32,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 3,
+            "label": "clear",
+            "from": 0.3,
+            "to": 4.65,
+            "checks": 44,
+            "passed": 44,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 4,
+            "label": "person (band 2)",
+            "from": 1.05,
+            "to": 1.35,
+            "checks": 4,
+            "passed": 4,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 5,
+            "label": "person (band 2)",
+            "from": 1.15,
+            "to": 2.55,
+            "checks": 15,
+            "passed": 15,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 6,
+            "label": "person (band 2)",
+            "from": 2.05,
+            "to": 3.65,
+            "checks": 17,
+            "passed": 17,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 7,
+            "label": "clear",
+            "from": 2.15,
+            "to": 8,
+            "checks": 59,
+            "passed": 59,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 8,
+            "label": "person (band 2)",
+            "from": 3.15,
+            "to": 4.85,
+            "checks": 18,
+            "passed": 18,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 9,
+            "label": "clear",
+            "from": 3.45,
+            "to": 8,
+            "checks": 46,
+            "passed": 46,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 10,
+            "label": "person (band 2)",
+            "from": 4.25,
+            "to": 5.75,
+            "checks": 16,
+            "passed": 16,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 11,
+            "label": "clear",
+            "from": 4.55,
+            "to": 8,
+            "checks": 35,
+            "passed": 35,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 12,
+            "label": "person (band 2)",
+            "from": 5.55,
+            "to": 5.85,
+            "checks": 4,
+            "passed": 4,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 13,
+            "label": "clear",
+            "from": 5.75,
+            "to": 8,
+            "checks": 23,
+            "passed": 23,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 14,
+            "label": "clear",
+            "from": 7.15,
+            "to": 8,
+            "checks": 9,
+            "passed": 9,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "person-crossing",
+      "title": "Person crossing left to right",
+      "source": "synthetic",
+      "knownIssue": "SectorFilter (Oct 17) lets a pin drop or move farther only after four agreeing frames, so the column the person just left stays raised about 0.3 s; the two short windows at 3.95 and 4.6 s fall inside that lag.",
+      "digest": "aa13908d8f3465d3",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "KNOWN",
+      "result": {
+        "accuracy": 0.9855,
+        "checks": 138,
+        "failedChecks": 2,
+        "phantomChecks": 2,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.288,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.062,
+        "frameAgeMs": {
+          "mean": 51.2,
+          "max": 150.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "person outside the camera's view",
+            "from": 0.3,
+            "to": 1.0,
+            "checks": 42,
+            "passed": 42,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "person left of centre",
+            "from": 3.2,
+            "to": 3.5,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "",
+            "from": 3.2,
+            "to": 3.5,
+            "checks": 9,
+            "passed": 9,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 3,
+            "label": "person straight ahead",
+            "from": 3.95,
+            "to": 4.15,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 4,
+            "label": "",
+            "from": 3.95,
+            "to": 4.15,
+            "checks": 12,
+            "passed": 12,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 5,
+            "label": "person right of centre",
+            "from": 4.6,
+            "to": 4.9,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 6,
+            "label": "",
+            "from": 4.6,
+            "to": 4.9,
+            "checks": 9,
+            "passed": 7,
+            "accuracy": 0.7778,
+            "firstMatch": 0.25
+          },
+          {
+            "index": 7,
+            "label": "person gone",
+            "from": 7.2,
+            "to": 8.0,
+            "checks": 48,
+            "passed": 48,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": false,
+        "reasons": [
+          "window 4.6\u20134.9 s: 0.778 < 0.95"
+        ]
+      }
+    },
+    {
+      "name": "person-stationary-centre",
+      "title": "Stationary person ahead",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "7f11968cc4013229",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 222,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.079,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.238,
+        "frameAgeMs": {
+          "mean": 57.0,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "clear",
+            "from": 0.3,
+            "to": 4,
+            "checks": 148,
+            "passed": 148,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "person (band 2)",
+            "from": 0.3,
+            "to": 4,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "person-stationary-left",
+      "title": "Stationary person on the left",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "d6c25ff0b0b27908",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 222,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.079,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.238,
+        "frameAgeMs": {
+          "mean": 57.0,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "person (band 2)",
+            "from": 0.3,
+            "to": 4,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "clear",
+            "from": 0.3,
+            "to": 4,
+            "checks": 148,
+            "passed": 148,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "person-stationary-right",
+      "title": "Stationary person on the right",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "dbe51f45860a9490",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 222,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.079,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.238,
+        "frameAgeMs": {
+          "mean": 57.0,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "clear",
+            "from": 0.3,
+            "to": 4,
+            "checks": 148,
+            "passed": 148,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "person (band 2)",
+            "from": 0.3,
+            "to": 4,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "person-toward-centre",
+      "title": "Person moving toward in the centre",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "6f091fbc182feedb",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 262,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.323,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.108,
+        "frameAgeMs": {
+          "mean": 54.8,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "clear",
+            "from": 0.3,
+            "to": 4.75,
+            "checks": 90,
+            "passed": 90,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "clear",
+            "from": 0.3,
+            "to": 6,
+            "checks": 114,
+            "passed": 114,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "person (band 3)",
+            "from": 1.25,
+            "to": 2.25,
+            "checks": 22,
+            "passed": 22,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 3,
+            "label": "person (band 2)",
+            "from": 3.35,
+            "to": 3.95,
+            "checks": 14,
+            "passed": 14,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 4,
+            "label": "person (band 1)",
+            "from": 4.95,
+            "to": 6,
+            "checks": 22,
+            "passed": 22,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "person-toward-left",
+      "title": "Person moving toward on the left",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "d14b6226ebc311c7",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 264,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.296,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.081,
+        "frameAgeMs": {
+          "mean": 54.8,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "clear",
+            "from": 0.3,
+            "to": 3.05,
+            "checks": 28,
+            "passed": 28,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "clear",
+            "from": 0.3,
+            "to": 6,
+            "checks": 171,
+            "passed": 171,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "person (band 3)",
+            "from": 1.45,
+            "to": 2.55,
+            "checks": 12,
+            "passed": 12,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 3,
+            "label": "person (band 3)",
+            "from": 1.45,
+            "to": 2.75,
+            "checks": 14,
+            "passed": 14,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 4,
+            "label": "person (band 2)",
+            "from": 3.65,
+            "to": 4.55,
+            "checks": 10,
+            "passed": 10,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 5,
+            "label": "clear",
+            "from": 3.75,
+            "to": 6,
+            "checks": 23,
+            "passed": 23,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 6,
+            "label": "person (band 2)",
+            "from": 3.95,
+            "to": 4.45,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "person-toward-right",
+      "title": "Person moving toward on the right",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "a7a2f1645460ddf4",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 264,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.296,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.081,
+        "frameAgeMs": {
+          "mean": 54.8,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "clear",
+            "from": 0.3,
+            "to": 3.05,
+            "checks": 28,
+            "passed": 28,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "clear",
+            "from": 0.3,
+            "to": 6,
+            "checks": 171,
+            "passed": 171,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "person (band 3)",
+            "from": 1.45,
+            "to": 2.55,
+            "checks": 12,
+            "passed": 12,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 3,
+            "label": "person (band 3)",
+            "from": 1.45,
+            "to": 2.75,
+            "checks": 14,
+            "passed": 14,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 4,
+            "label": "person (band 2)",
+            "from": 3.65,
+            "to": 4.55,
+            "checks": 10,
+            "passed": 10,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 5,
+            "label": "clear",
+            "from": 3.75,
+            "to": 6,
+            "checks": 23,
+            "passed": 23,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 6,
+            "label": "person (band 2)",
+            "from": 3.95,
+            "to": 4.45,
+            "checks": 6,
+            "passed": 6,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "tracking-and-stale-depth",
+      "title": "Tracking loss and frame stall",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "95ddefdc14fcbc6b",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 476,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.492,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.164,
+        "frameAgeMs": {
+          "mean": 56.2,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "wall shown",
+            "from": 0.3,
+            "to": 2.9,
+            "checks": 156,
+            "passed": 156,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "tracking lost \u2192 neutral",
+            "from": 3.15,
+            "to": 4.95,
+            "checks": 133,
+            "passed": 133,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 2,
+            "label": "recovered",
+            "from": 5.3,
+            "to": 6.4,
+            "checks": 66,
+            "passed": 66,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 3,
+            "label": "no frames \u2192 neutral",
+            "from": 6.8,
+            "to": 7.5,
+            "checks": 49,
+            "passed": 49,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 4,
+            "label": "recovered",
+            "from": 7.8,
+            "to": 9.0,
+            "checks": 72,
+            "passed": 72,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "tracking-loss-packet-blackout",
+      "title": "Tracking loss followed by packet blackout",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "43b47b35d356cfcc",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 173,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.8,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.0,
+        "frameAgeMs": {
+          "mean": 61.1,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "fresh obstacle guidance",
+            "from": 0.3,
+            "to": 1.3,
+            "checks": 60,
+            "passed": 60,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "tracking neutral must never resurrect during blackout",
+            "from": 1.45,
+            "to": 2.45,
+            "checks": 77,
+            "passed": 77,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 2,
+            "label": "only fresh live packets restore guidance",
+            "from": 2.8,
+            "to": 3.4,
+            "checks": 36,
+            "passed": 36,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "turn-toward-pole",
+      "title": "Turn right toward a pole",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "15d7e627bda3224c",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 120,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.108,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.188,
+        "frameAgeMs": {
+          "mean": 54.8,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "pole on the right",
+            "from": 0.2,
+            "to": 0.5,
+            "checks": 3,
+            "passed": 3,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "",
+            "from": 0.2,
+            "to": 0.5,
+            "checks": 15,
+            "passed": 15,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "pole straight ahead",
+            "from": 4.3,
+            "to": 6.0,
+            "checks": 34,
+            "passed": 34,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 3,
+            "label": "",
+            "from": 4.3,
+            "to": 6.0,
+            "checks": 68,
+            "passed": 68,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "two-chairs-separated",
+      "title": "Two chairs in separate sectors",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "631c3b245c79d76a",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 222,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.159,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.476,
+        "frameAgeMs": {
+          "mean": 57.0,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "left chair (band 2)",
+            "from": 0.3,
+            "to": 4,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "clear",
+            "from": 0.3,
+            "to": 4,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 2,
+            "label": "right chair (band 2)",
+            "from": 0.3,
+            "to": 4,
+            "checks": 74,
+            "passed": 74,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "uncalibrated",
+      "title": "Floor not calibrated",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "a76aa249b2f17a32",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 210,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.0,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.0,
+        "frameAgeMs": null,
+        "expectations": [
+          {
+            "index": 0,
+            "label": "",
+            "from": 0.0,
+            "to": 3.0,
+            "checks": 210,
+            "passed": 210,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "wall-approach",
+      "title": "Walk toward a wall",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "eb70015b7b168aa1",
+      "deterministic": true,
+      "baseline": "same",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 440,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.429,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.33,
+        "frameAgeMs": {
+          "mean": 51.0,
+          "max": 150.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "0 degree inner edge, band 0",
+            "from": 0,
+            "to": 1.65,
+            "checks": 34,
+            "passed": 34,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 1,
+            "label": "0 degree inner edge, band 4",
+            "from": 2.35,
+            "to": 4.65,
+            "checks": 48,
+            "passed": 48,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 2,
+            "label": "0 degree inner edge, band 3",
+            "from": 5.35,
+            "to": 6.45,
+            "checks": 24,
+            "passed": 24,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 3,
+            "label": "0 degree inner edge, band 2",
+            "from": 7.15,
+            "to": 7.85,
+            "checks": 16,
+            "passed": 16,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 4,
+            "label": "0 degree inner edge, band 1",
+            "from": 8.55,
+            "to": 10,
+            "checks": 30,
+            "passed": 30,
+            "accuracy": 1.0,
+            "firstMatch": 0.0
+          },
+          {
+            "index": 5,
+            "label": "15 degree inner edge, band 0",
+            "from": 0,
+            "to": 1.923,
+            "checks": 38,
+            "passed": 38,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 6,
+            "label": "15 degree inner edge, band 4",
+            "from": 2.623,
+            "to": 4.82,
+            "checks": 44,
+            "passed": 44,
+            "accuracy": 1.0,
+            "firstMatch": 0.027
+          },
+          {
+            "index": 7,
+            "label": "15 degree inner edge, band 3",
+            "from": 5.52,
+            "to": 6.559,
+            "checks": 22,
+            "passed": 22,
+            "accuracy": 1.0,
+            "firstMatch": 0.03
+          },
+          {
+            "index": 8,
+            "label": "15 degree inner edge, band 2",
+            "from": 7.259,
+            "to": 7.911,
+            "checks": 12,
+            "passed": 12,
+            "accuracy": 1.0,
+            "firstMatch": 0.091
+          },
+          {
+            "index": 9,
+            "label": "15 degree inner edge, band 1",
+            "from": 8.611,
+            "to": 10,
+            "checks": 28,
+            "passed": 28,
+            "accuracy": 1.0,
+            "firstMatch": 0.039
+          },
+          {
+            "index": 10,
+            "label": "30 degree inner edge, band 0",
+            "from": 0,
+            "to": 2.722,
+            "checks": 54,
+            "passed": 54,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          },
+          {
+            "index": 11,
+            "label": "30 degree inner edge, band 4",
+            "from": 3.422,
+            "to": 5.32,
+            "checks": 38,
+            "passed": 38,
+            "accuracy": 1.0,
+            "firstMatch": 0.028
+          },
+          {
+            "index": 12,
+            "label": "30 degree inner edge, band 3",
+            "from": 6.02,
+            "to": 6.879,
+            "checks": 18,
+            "passed": 18,
+            "accuracy": 1.0,
+            "firstMatch": 0.03
+          },
+          {
+            "index": 13,
+            "label": "30 degree inner edge, band 2",
+            "from": 7.579,
+            "to": 8.091,
+            "checks": 10,
+            "passed": 10,
+            "accuracy": 1.0,
+            "firstMatch": 0.071
+          },
+          {
+            "index": 14,
+            "label": "30 degree inner edge, band 1",
+            "from": 8.791,
+            "to": 10,
+            "checks": 24,
+            "passed": 24,
+            "accuracy": 1.0,
+            "firstMatch": 0.059
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    },
+    {
+      "name": "wall-full-width",
+      "title": "Wall ahead fills every sector",
+      "source": "synthetic",
+      "knownIssue": null,
+      "digest": "b48eda5759622c3d",
+      "deterministic": true,
+      "baseline": "none",
+      "skipped": null,
+      "status": "PASS",
+      "result": {
+        "accuracy": 1.0,
+        "checks": 222,
+        "failedChecks": 0,
+        "phantomChecks": 0,
+        "missedChecks": 0,
+        "bandChangesPerColumnSecond": 0.238,
+        "reservedSlotViolations": 0,
+        "tapsPerColumnSecond": 0.714,
+        "frameAgeMs": {
+          "mean": 57.0,
+          "max": 250.0
+        },
+        "expectations": [
+          {
+            "index": 0,
+            "label": "wall (band 2)",
+            "from": 0.3,
+            "to": 4,
+            "checks": 222,
+            "passed": 222,
+            "accuracy": 1.0,
+            "firstMatch": 0.05
+          }
+        ],
+        "passed": true,
+        "reasons": []
+      }
+    }
+  ],
+  "movementCandidateResults": "movement-validation.json"
+}

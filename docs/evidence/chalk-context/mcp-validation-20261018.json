@@ -1,0 +1,151 @@
+{
+  "checked_at": "2026-10-18T02:44:31.883Z",
+  "environment_id": "flnyc749e8d9",
+  "access": "native Chalk MCP; read-only inventory and existing synthetic online queries",
+  "feature_count": 110,
+  "functions": [
+    {
+      "name": "infrastructure_echo",
+      "version": 1
+    },
+    {
+      "name": "infrastructure_exact_match",
+      "version": 1
+    }
+  ],
+  "datasets": [
+    {
+      "id": "c19e60f4-6da7-4767-988b-353624c0e229",
+      "name": "infrastructure-echo-smoke",
+      "revision_status": "DATASET_REVISION_STATUS_COMPLETED"
+    }
+  ],
+  "existing_eval_lookup": {
+    "offline_queries": []
+  },
+  "queries": [
+    {
+      "name": "keys",
+      "input": {
+        "object_history.id": "00000000-0000-0000-0000-000000000001:keys"
+      },
+      "output": [
+        "object_history.spoken",
+        "object_history.last_place",
+        "object_history.last_seen_at",
+        "object_history.finds_count"
+      ],
+      "checked_at": "2026-10-18T02:40:19.403Z",
+      "results": {
+        "object_history.finds_count": 0,
+        "object_history.last_place": null,
+        "object_history.last_seen_at": null,
+        "object_history.spoken": "No confirmed find of keys is on record."
+      }
+    },
+    {
+      "name": "missing",
+      "input": {
+        "object_history.id": "00000000-0000-0000-0000-000000000001:laptop"
+      },
+      "output": [
+        "object_history.spoken",
+        "object_history.last_place",
+        "object_history.last_seen_at",
+        "object_history.finds_count"
+      ],
+      "checked_at": "2026-10-18T02:40:24.617Z",
+      "results": {
+        "object_history.finds_count": 0,
+        "object_history.last_place": null,
+        "object_history.last_seen_at": null,
+        "object_history.spoken": "No confirmed find of laptop is on record."
+      }
+    },
+    {
+      "name": "venue",
+      "input": {
+        "venue.id": "harvard-yard"
+      },
+      "output": [
+        "venue.pack",
+        "venue.pack_sha256"
+      ],
+      "checked_at": "2026-10-18T02:40:30.673Z",
+      "errors": [
+        {
+          "code": "ERROR_CODE_RESOLVER_FAILED",
+          "message": "VenuePackError: entry accessible-campus-map: retrieved_at is after the pack was built"
+        },
+        {
+          "code": "ERROR_CODE_VALIDATION_FAILED",
+          "message": "Failed to find any value for feature: 'venue.pack', and 'venue.pack' was not found in the online store."
+        },
+        {
+          "code": "ERROR_CODE_VALIDATION_FAILED",
+          "message": "Failed to find any value for feature: 'venue.pack_sha256', and 'venue.pack_sha256' was not found in the online store."
+        }
+      ],
+      "field_errors": [
+        {
+          "code": "ERROR_CODE_VALIDATION_FAILED",
+          "feature": "venue.pack",
+          "message": "Failed to find any value for feature: 'venue.pack', and 'venue.pack' was not found in the online store."
+        },
+        {
+          "code": "ERROR_CODE_VALIDATION_FAILED",
+          "feature": "venue.pack_sha256",
+          "message": "Failed to find any value for feature: 'venue.pack_sha256', and 'venue.pack_sha256' was not found in the online store."
+        }
+      ],
+      "results": {
+        "venue.pack": null,
+        "venue.pack_sha256": null
+      }
+    },
+    {
+      "name": "room",
+      "input": {
+        "room_memory.id": "harvard-yard:feel-tag-01"
+      },
+      "output": [
+        "room_memory.spoken",
+        "room_memory.targets",
+        "room_memory.targets_count",
+        "room_memory.structure",
+        "room_memory.structure_visits",
+        "room_memory.world_map",
+        "room_memory.world_map_journeys"
+      ],
+      "checked_at": "2026-10-18T02:40:22.172Z",
+      "results": {
+        "room_memory.spoken": "Nothing is remembered at this tag yet.",
+        "room_memory.structure": null,
+        "room_memory.structure_visits": 0,
+        "room_memory.targets": "[]",
+        "room_memory.targets_count": 0,
+        "room_memory.world_map": null,
+        "room_memory.world_map_journeys": 0
+      }
+    },
+    {
+      "name": "path",
+      "input": {
+        "path.id": "harvard-yard:feel-tag-01:-0.3,0.3:exit"
+      },
+      "output": [
+        "path.polyline",
+        "path.progress_points",
+        "path.length_m",
+        "path.status"
+      ],
+      "checked_at": "2026-10-18T02:40:28.537Z",
+      "results": {
+        "path.length_m": 0,
+        "path.polyline": "[]",
+        "path.progress_points": "[]",
+        "path.status": "no target"
+      }
+    }
+  ]
+}

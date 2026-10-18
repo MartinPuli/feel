@@ -57,6 +57,22 @@ class VenuePackTests(unittest.TestCase):
             with self.subTest(name), self.assertRaises(venue_pack.VenuePackError):
                 venue_pack.build(data, GENERATED, days=7)
 
+    def test_same_second_retrieval_is_compared_before_wire_precision_truncation(self):
+        data = source()
+        data['entries'][0]['retrieved_at'] = '2026-10-17T12:00:00.400000+00:00'
+        generated = GENERATED.replace(microsecond=600000)
+        pack = venue_pack.build(data, generated, days=7)
+        payload = json.loads(pack['payload'])
+        self.assertEqual(payload['generated_at'], '2026-10-17T12:00:00Z')
+        self.assertEqual(payload['entries'][0]['retrieved_at'], '2026-10-17T12:00:00Z')
+        data['entries'][0]['retrieved_at'] = '2026-10-17T12:00:00.800000+00:00'
+        with self.assertRaises(venue_pack.VenuePackError):
+            venue_pack.build(data, generated, days=7)
+
+    def test_build_clock_requires_explicit_timezone(self):
+        with self.assertRaises(venue_pack.VenuePackError):
+            venue_pack.build(source(), GENERATED.replace(tzinfo=None), days=7)
+
     def test_validity_must_be_positive(self):
         with self.assertRaises(venue_pack.VenuePackError):
             venue_pack.build(source(), GENERATED, days=0)

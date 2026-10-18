@@ -1,3 +1,17 @@
+## October 18 UTC — current production readiness
+
+**Not ready for unrestricted production.** Latest source, cloud checks and remaining device/configuration gates are recorded in [PRODUCTION-READINESS.md](PRODUCTION-READINESS.md). That report supersedes the historical counts and branch/deployment statements below.
+
+The unsafe 150 ms restoration of old pin bands after a neutral packet has been removed. Only a fresh valid command can raise them again. Angles and wiring are unchanged; this firmware has not been flashed. Shared context reads now have a verified-user server boundary, but remain disabled until FEEL's database identity is configured.
+
+## October 17 integration limits
+
+- Chalk MCP context results disagree with the direct engine for the same synthetic IDs. Direct queries pass; MCP parity is unresolved. See the [reproduction](evidence/chalk-context/INTEGRATION-VALIDATION.md).
+- Live intent evaluation is partial and misses the 1 s target. Three measured replies clarify instead of rejecting; no invalid destination was observed. The optional service is not promoted as production-ready.
+- Shared-room downloads and private last-seen queries still need an authenticated phone-facing endpoint. The new upload path is opt-in and software-tested; a real phone round trip remains unverified.
+- Six-column replay retains four known synthetic limitations: narrow openings, lintels, slow detector highlights and outlier flicker. Historical seven-sector baselines were preserved.
+- Real phone/headphone voice, LiDAR, restored-room tracking, UWB, BLE and tactile behavior remain separate physical gates. The iPhone was unavailable in this run.
+
 # Known issues and verification limits — V1
 
 | Priority | Issue | Current handling / next action |

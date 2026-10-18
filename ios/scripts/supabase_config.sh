@@ -30,4 +30,11 @@ if [ -n "$chalk_key" ] && [ -n "$chalk_env" ]; then
   [ -n "$chalk_host" ] && printf 'FEEL_CHALK_HOST = https:/$()/%s\n' "${chalk_host#https://}" >> Config/Supabase.local.xcconfig
   echo 'Chalk gateway included.'
 fi
+# Optional authenticated context proxy. No Chalk service credentials belong on the phone.
+context_url=$(read_value FEEL_CONTEXT_URL)
+if [ -n "$context_url" ]; then
+  case "$context_url" in https://?*/api/context|https://?*/context) ;; *) echo 'Set FEEL_CONTEXT_URL to the HTTPS context endpoint.' >&2; exit 2;; esac
+  printf 'FEEL_CONTEXT_URL = https:/$()/%s\n' "${context_url#https://}" >> Config/Supabase.local.xcconfig
+  echo 'Authenticated context endpoint included; reads still require opt-in and sign-in.'
+fi
 echo 'Wrote ios/Config/Supabase.local.xcconfig. Rebuild the Lantern app.'

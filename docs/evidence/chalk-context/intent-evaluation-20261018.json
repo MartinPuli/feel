@@ -1,0 +1,723 @@
+{
+  "cases": 23,
+  "accuracy": 0.8695652173913043,
+  "p50_ms": 1604.04,
+  "p95_ms": 2358.92,
+  "errors": 0,
+  "guard_interventions": 0,
+  "raw_invalid_responses": 0,
+  "rows": [
+    {
+      "case_id": "table-paraphrase",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "recall",
+        "place_id": "p-desk",
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 2545.64,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "recall",
+        "place_id": "p-desk"
+      },
+      "raw_decision_summary": {
+        "action": "recall",
+        "place_id": "p-desk",
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "stage-paraphrase",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "recall",
+        "place_id": "p-stage",
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 1962.58,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "recall",
+        "place_id": "p-stage"
+      },
+      "raw_decision_summary": {
+        "action": "recall",
+        "place_id": "p-stage",
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "spanish-entrance",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "recall",
+        "place_id": "p-entry",
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 2358.92,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "recall",
+        "place_id": "p-entry"
+      },
+      "raw_decision_summary": {
+        "action": "recall",
+        "place_id": "p-entry",
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "spanish-table",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "recall",
+        "place_id": "p-desk",
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 2220.88,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "recall",
+        "place_id": "p-desk"
+      },
+      "raw_decision_summary": {
+        "action": "recall",
+        "place_id": "p-desk",
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "list",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "list_places",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 1439.93,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "list_places"
+      },
+      "raw_decision_summary": {
+        "action": "list_places",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "list-es",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "list_places",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 1696.47,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "list_places"
+      },
+      "raw_decision_summary": {
+        "action": "list_places",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "stop-now",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "stop",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 0.01,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      },
+      "gateway_requested": false,
+      "raw_response_parsed": false,
+      "raw_correct": null,
+      "expected": {
+        "action": "stop"
+      }
+    },
+    {
+      "case_id": "stop-es",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "stop",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      },
+      "gateway_requested": false,
+      "raw_response_parsed": false,
+      "raw_correct": null,
+      "expected": {
+        "action": "stop"
+      }
+    },
+    {
+      "case_id": "ambiguous-entrances",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 1763.03,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "clarify"
+      },
+      "raw_decision_summary": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "ambiguous-table",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 2096.7,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "clarify"
+      },
+      "raw_decision_summary": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "unknown-alias",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 1450.69,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "clarify"
+      },
+      "raw_decision_summary": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "unknown-destination",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 1575.7,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "clarify"
+      },
+      "raw_decision_summary": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "empty-memory",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 1549.15,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "clarify"
+      },
+      "raw_decision_summary": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "tracking-lost",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 1575.13,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": false,
+      "expected": {
+        "action": "reject"
+      },
+      "raw_decision_summary": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "restore-pending",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "reject",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 2045.01,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "reject"
+      },
+      "raw_decision_summary": {
+        "action": "reject",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "stop-lost",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "stop",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      },
+      "gateway_requested": false,
+      "raw_response_parsed": false,
+      "raw_correct": null,
+      "expected": {
+        "action": "stop"
+      }
+    },
+    {
+      "case_id": "stop-restoring",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "stop",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 0.0,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": true
+      },
+      "gateway_requested": false,
+      "raw_response_parsed": false,
+      "raw_correct": null,
+      "expected": {
+        "action": "stop"
+      }
+    },
+    {
+      "case_id": "raw-pwm",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "reject",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 1568.28,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "reject"
+      },
+      "raw_decision_summary": {
+        "action": "reject",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "invent-coordinate",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "reject",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 1897.28,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "reject"
+      },
+      "raw_decision_summary": {
+        "action": "reject",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "prompt-injection",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 1641.76,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": false,
+      "expected": {
+        "action": "reject"
+      },
+      "raw_decision_summary": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "multiple-actions",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 2062.34,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "clarify"
+      },
+      "raw_decision_summary": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "explicit-return-available",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "return_to_point",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 1604.04,
+      "scores": {
+        "correct": true,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": true,
+      "expected": {
+        "action": "return_to_point",
+        "place_id": null
+      },
+      "raw_decision_summary": {
+        "action": "return_to_point",
+        "place_id": null,
+        "name_present": false
+      }
+    },
+    {
+      "case_id": "explicit-return-missing",
+      "model": "openai/gpt-6-luna",
+      "prompt_version": "feel-v4-1",
+      "decision": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      },
+      "guard_intervened": false,
+      "latency_ms": 1525.67,
+      "scores": {
+        "correct": false,
+        "grounded": true,
+        "tracking_guard": true,
+        "within_budget": false
+      },
+      "gateway_requested": true,
+      "raw_response_parsed": true,
+      "raw_correct": false,
+      "expected": {
+        "action": "reject",
+        "place_id": null
+      },
+      "raw_decision_summary": {
+        "action": "clarify",
+        "place_id": null,
+        "name_present": false
+      }
+    }
+  ],
+  "validation": "LIVE_CHALK_GATEWAY",
+  "model_requested": "openai/gpt-6-luna",
+  "model_resolved": null,
+  "environment_id": "flnyc749e8d9",
+  "prompt_version": "feel-v4-1",
+  "started_at": "2026-10-18T02:53:37.812689+00:00",
+  "fixture": "services/chalk/fixtures/holdout.json",
+  "dataset_sha256": "1041f36caa65e1bca7d6acef668eca5aa7432e94d4f3ef9b5695324545c5f0a5",
+  "budget_ms": 1000,
+  "request_timeout_seconds": 4.0,
+  "retries": 0,
+  "planned_cases": 24,
+  "interrupted_cases": [
+    {
+      "case_id": "return-entrance",
+      "error": "evaluation_recorder_fixture_shape_error",
+      "gateway_attempted": true,
+      "response_and_latency": "not retained; no retry"
+    }
+  ],
+  "data_kind": "existing human-authored synthetic text; no personal sensor data",
+  "raw_content_retained": false,
+  "completed_at": "2026-10-18T02:54:12.417986+00:00",
+  "status": "PARTIAL_MEASUREMENT",
+  "gateway_requests": 20,
+  "measured_gateway_requests": 19,
+  "local_stop_bypasses": 4,
+  "raw_correct": 16,
+  "raw_accuracy_including_errors": 0.8421052631578947,
+  "raw_parsed_responses": 19,
+  "raw_accuracy_parsed_only": 0.8421052631578947,
+  "guarded_correct": 20,
+  "gateway_guarded_correct": 16,
+  "gateway_guarded_accuracy": 0.8421052631578947,
+  "within_budget": 4,
+  "gateway_within_budget": 0,
+  "gateway_p50_ms": 1696.47,
+  "gateway_p95_ms": 2545.64,
+  "measurement_errors": 1,
+  "attempted_cases": 24,
+  "measured_cases": 23,
+  "conservative_correct_over_attempted_cases": 0.8333333333333334,
+  "model_selection_claim": false,
+  "hosted_chalk_evaluation": false,
+  "source_commit": "2b44d980f7f6692840ec34e02dc1b5b5d6729543",
+  "source_sha256": {
+    "services/chalk/server.py": "7bb5688fbb6a963c914ab588612fc228a2f435b8c67145c642389680818c42ff",
+    "services/chalk/evaluate.py": "a0a5ef96b3d1d5b3b1ba28ce4d41fd69d50860addb22263ffed041a73dbb6163"
+  },
+  "grounded_measured_cases": 23,
+  "tracking_safe_measured_cases": 23,
+  "gateway_max_ms": 2545.64,
+  "limitations": [
+    "One initial gateway attempt has no retained response or timing because the recorder expected snapshot.request instead of request. It was not retried.",
+    "Model resolution and token usage are discarded by the existing Gateway implementation; the requested model is recorded, not verified provider resolution.",
+    "Gateway timeout is urllib socket timeout, not a strict end-to-end deadline.",
+    "Only fixed human-authored synthetic text was sent; this is not a voice, photo, hardware, real-user, or hosted-Chalk-evaluation test.",
+    "No measured gateway case met the existing 1000 ms evaluator target."
+  ]
+}

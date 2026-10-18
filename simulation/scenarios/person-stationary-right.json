@@ -1,0 +1,64 @@
+{
+  "title": "Stationary person on the right",
+  "scene": {
+    "duration": 4,
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0
+      }
+    ],
+    "objects": [
+      {
+        "kind": "cylinder",
+        "center": [
+          0.65,
+          -1.5
+        ],
+        "radius": 0.22,
+        "height": 1.75,
+        "label": "person"
+      }
+    ],
+    "sensor": {
+      "noise": 0,
+      "seed": 27
+    }
+  },
+  "expect": [
+    {
+      "from": 0.3,
+      "to": 4,
+      "columns": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 0.3,
+      "to": 4,
+      "columns": [
+        5,
+        6
+      ],
+      "band": 2,
+      "label": "person (band 2)"
+    }
+  ],
+  "labelProvenance": {
+    "sourceBranch": "movement-simulation-tests",
+    "sourceRevision": "3c041c0",
+    "generator": "simulation/geometry_labels.py",
+    "physicalColumns": 6,
+    "samplingStepMeters": 0.03,
+    "rangeTolerance": 0.04,
+    "edgeExclusionDegrees": 0.7,
+    "transitionTrimSeconds": 0.35,
+    "outputIndependent": true
+  }
+}

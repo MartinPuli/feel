@@ -250,7 +250,8 @@ public struct PathWave: Sendable {
               hint.targetDistance>DirectionCue.arriveMeters, abs(hint.bearingDegrees)>straightDegrees,
               !output.packet.bands.contains(1) else { sweepStart=nil; column=nil; return output }
         let b=hint.bearingDegrees, center=DirectionCue.center
-        let target = abs(b)>45 ? (b>0 ? 6 : 0) : (TactileGeometry.column(bearingDegrees:b) ?? center)
+        let edge = b>0 ? PuckLayout.activeColumns.upperBound : PuckLayout.activeColumns.lowerBound   // never reserved slot 0
+        let target = abs(b)>45 ? edge : (TactileGeometry.column(bearingDegrees:b) ?? center)
         guard target != center else { sweepStart=nil; column=nil; return output }
         if sweepStart==nil || now<sweepStart! { sweepStart=now }
         column=target

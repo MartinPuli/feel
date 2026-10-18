@@ -1,0 +1,64 @@
+{
+  "checked_at": "2026-10-18T02:47:19.872655+00:00",
+  "environment_id": "flnyc749e8d9",
+  "method": "direct online engine query",
+  "input": {
+    "object_history.id": "00000000-0000-0000-0000-000000000001:keys"
+  },
+  "output": [
+    "object_history.finds_count",
+    "object_history.last_place",
+    "object_history.spoken"
+  ],
+  "response_top_level_keys": [
+    "data",
+    "errors",
+    "meta"
+  ],
+  "metadata_keys": [
+    "execution_duration_s",
+    "deployment_id",
+    "environment_id",
+    "environment_name",
+    "query_id",
+    "query_timestamp",
+    "query_hash",
+    "explain_output",
+    "json_plan",
+    "serialized_plan",
+    "serialized_static_plan",
+    "serialized_static_physical_plan",
+    "planner_options",
+    "plan_stages_stored",
+    "performance_summary",
+    "bus_message_ids",
+    "missed_plan_cache",
+    "value_tables"
+  ],
+  "metadata": {
+    "deployment_id": "cmvd45tlw09ul013elnsmpc1o",
+    "environment_id": "flnyc749e8d9",
+    "query_id": "cmvd860af01lh0g3ufsorg04j",
+    "query_timestamp": "2026-10-18T02:47:20.052877+00:00",
+    "query_hash": "937fd56ce06f9fb1306bf66bfb928766c5e0b1b35a6851aea12c5c7347aa13a6"
+  },
+  "feature_timestamps": [
+    {
+      "field": "object_history.finds_count",
+      "ts": "2026-10-18T02:47:20.052877+00:00"
+    },
+    {
+      "field": "object_history.last_place",
+      "ts": "2026-10-18T02:47:20.052877+00:00"
+    },
+    {
+      "field": "object_history.spoken",
+      "ts": "2026-10-18T02:47:20.052877+00:00"
+    }
+  ],
+  "result": {
+    "object_history.finds_count": 2,
+    "object_history.last_place": "kitchen table",
+    "object_history.spoken": "Keys: last confirmed at the kitchen table, 7 hours ago (2 finds on record)."
+  }
+}
