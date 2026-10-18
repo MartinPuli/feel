@@ -24,6 +24,14 @@ enum VoicePhrasing {
     /// The cue for a place recalled from room memory: a past sighting with a rough distance, the pins doing the
     /// pointing, and the way to check with the camera. Never a present-tense claim.
     static func remembered(_ label: String, bearingDegrees: Double, distance: Double) -> String {
+        "Last time the \(label) was \(roughPlace(bearingDegrees: bearingDegrees, distance: distance)). Pins point there. Say photo to check again."
+    }
+    /// The cue when the phone leads the way to a remembered place one progress point at a time (lead_me). Still a past
+    /// sighting; the pins point to the next point of the way, which is a suggested direction, never a clear path.
+    static func leading(_ label: String, bearingDegrees: Double, distance: Double) -> String {
+        "Leading you to the \(label). Last time it was \(roughPlace(bearingDegrees: bearingDegrees, distance: distance)). Pins point the way, one point at a time."
+    }
+    private static func roughPlace(bearingDegrees: Double, distance: Double) -> String {
         let metres = max(1, Int(distance.rounded()))
         let side: String
         switch abs(bearingDegrees) {
@@ -32,7 +40,7 @@ enum VoicePhrasing {
         case ...120: side = bearingDegrees < 0 ? "to your left" : "to your right"
         default: side = "behind you"
         }
-        return "Last time the \(label) was about \(metres) \(metres == 1 ? "meter" : "meters") \(side). Pins point there. Say photo to check again."
+        return "about \(metres) \(metres == 1 ? "meter" : "meters") \(side)"
     }
     private static func distanceText(_ distance: Double) -> String {
         let rounded = (distance * 10).rounded() / 10

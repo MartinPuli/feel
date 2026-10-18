@@ -24,6 +24,13 @@ struct PerceptionFrame {
     let floorY: Double?
     /// Route to the currently visible target over the local floor grid; nil without one.
     var routeHint: RouteHint? = nil
+    /// The planned route to an explicit goal (a held Where-is target or a two-finger goal) as world points, start to
+    /// goal; nil without a goal or while the planner finds no way. The journey loop splits it into progress points.
+    var routePath: [Vector3]? = nil
+    /// Centres of the floor cells the camera has classified as blocked, on the frames where the planner ran (a few
+    /// times a second while a goal is set); nil on the others. The journey log keeps them as the trip's obstacles.
+    var blockedCells: [Vector3]? = nil
+    var cellSize = 0.1
     /// Distinct targets of the selected kind in view, left to right.
     var candidates: [VisibleCandidate] = []
 }
@@ -70,7 +77,9 @@ final class ARPerception: NSObject, ARSessionDelegate {
     /// Floor map of the current surroundings; reset with the session or calibration.
     private var grid=FloorGrid()
     private var lastPlan: TimeInterval = -.infinity
-    private var lastHint: RouteHint?
+    private var lastHint: RouteHint? { didSet { if lastHint == nil { lastPath=nil } } }
+    /// The route behind `lastHint` when it was planned to an explicit goal; goes with the hint.
+    private var lastPath: [Vector3]?
     /// Explicit world goal from two-finger pointing. While set, routes go there instead of the visible target.
     private var routeGoal: (point: Vector3, label: String)?
     /// Distinct detections from the latest Vision pass (≥ 1 m apart).
@@ -266,10 +275,13 @@ final class ARPerception: NSObject, ARSessionDelegate {
         if let floorY { grid.integrate(points:processed.mapPoints,floorY:floorY,camera:pose.position) }
         // A pointing goal is a fixed world point, so it needs no target in view. Otherwise route only
         // to a target that is in view right now. Either way, a few times a second.
+        var blockedNow: [Vector3]?
         if let goal=routeGoal {
             if floorY != nil, frame.timestamp-lastPlan>=0.4 {
                 lastPlan=frame.timestamp
-                lastHint=RouteHint.make(path:grid.route(from:pose.position,to:goal.point),pose:pose,target:goal.point,timestamp:frame.timestamp,label:goal.label)
+                let path=grid.route(from:pose.position,to:goal.point)
+                lastHint=RouteHint.make(path:path,pose:pose,target:goal.point,timestamp:frame.timestamp,label:goal.label); lastPath=path
+                blockedNow=grid.observedCells.compactMap { $0.value == .blocked ? grid.center($0.key) : nil }
             }
         }
         else if target == nil { lastHint=nil }
@@ -278,7 +290,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
             lastHint=RouteHint.make(path:grid.route(from:pose.position,to:goal.position),pose:pose,target:goal.position,timestamp:frame.timestamp,label:goal.label)
         }
         var published=PerceptionFrame(epoch:sessionEpoch,finderEpoch:finderEpoch,worldEpoch:worldEpoch,timestamp:frame.timestamp,tracking:true,distances:distances,target:target,pose:pose,floorY:floorY)
-        published.routeHint=lastHint
+        published.routeHint=lastHint; published.routePath=lastPath; published.blockedCells=blockedNow; published.cellSize=grid.cellSize
         published.candidates=candidates.compactMap { c in c.observation(pose:pose,now:frame.timestamp).map { VisibleCandidate(position:c.position,observation:$0) } }
             .sorted { $0.observation.bearingDegrees<$1.observation.bearingDegrees }
         publish(published)
