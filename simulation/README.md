@@ -14,6 +14,7 @@ python3 simulation/run.py                    # build, run every scenario, write 
 python3 simulation/run.py --repeat 3         # also require identical output on every run
 python3 simulation/run.py --watch            # rebuild and rerun whenever code, scenarios or recordings change
 python3 simulation/run.py --update-baselines # accept the current timelines as the regression baseline
+python3 simulation/run.py --snapshot before  # also keep this run's pins, to compare on /replay after a code change
 python3 simulation/run.py simulation/scenarios/find-door.json   # one scenario
 ```
 
@@ -27,10 +28,10 @@ The Swift tests are in `ios/Shared/FeelCore/Tests/FeelSimTests`. They need full 
 
 | Real | Modelled or absent |
 |---|---|
-| Depth step, encoder, packet bytes, sequence numbers, staleness and tracking gates | Tick timing: 10 Hz, first tick 50 ms after the first frame, frames usable 20 ms after capture |
+| Depth step (third-nearest point per sector), per-frame sector steadying (`SectorFilter`), encoder, packet bytes, sequence numbers, staleness and tracking gates | Tick timing: 10 Hz, first tick 50 ms after the first frame, frames usable 20 ms after capture |
 | Firmware decoder, 500 ms watchdog, effective highlight and tap | Servo motion, torque, friction, power sag, and how it **feels** |
 | Recorded detections (from the phone) are replayed exactly | The detector is never re-run. Synthetic detections use ARPerception's cadence (≥ 0.35 s, one in flight) with a configurable latency |
-| | Point-to-describe freezing, direction arrows, teammate (UWB) targets, BLE radio |
+| | Point-to-describe freezing, direction arrows, the path wave, teammate (UWB) targets, BLE radio |
 
 Synthetic scenes are ideal geometry: a floor at y = 0, boxes and vertical cylinders, iPhone wide-camera intrinsics (±33.5° horizontal view), and optional Gaussian noise and random outliers. They are not a model of real LiDAR behaviour on glass, black surfaces or edges. That is what phone recordings are for.
 
@@ -38,12 +39,11 @@ Synthetic scenes are ideal geometry: a floor at y = 0, boxes and vertical cylind
 
 1. In Lantern, open the live controls and turn on **Record for replay → Record depth**. Recording stops when sensing stops. It saves depth, confidence, pose, floor height and the cached detection. **Include camera video** (on by default) also writes an H.264 `.mp4` and a `.video.json` timing file for the `/replay` page. Together that's about 3 MB/s, and the depth recording is capped at 1.5 GB (about ten minutes). Nothing leaves the phone until you share it.
 2. Walk the course. Note roughly when things happen (for example "door on the right at about 6 s"), or film the walk on a second phone for labelling.
-3. Copy the files off the phone (all three per session: `.feelrec`, `.mp4`, `.video.json`), either from **Files → On My iPhone → FEEL → Recordings** (AirDrop to the Mac) or with:
+3. Copy the files off the phone (all three per session: `.feelrec`, `.mp4`, `.video.json`, plus `.events.json` for grid-walk trials), either from **Files → On My iPhone → FEEL → Recordings** (AirDrop to the Mac) or, with the phone connected and paired, in one step that also reruns the harness:
    ```sh
-   xcrun devicectl device copy from --device <name|udid> --domain-type appDataContainer \
-     --domain-identifier org.feel.hackharvard.lantern --source Documents/Recordings --destination simulation/recordings
+   scripts/pull_recordings.sh            # device "iPhone"; pass a name or UDID to choose another
    ```
-   Everything in `simulation/recordings/` except this README is git-ignored. Do not commit personal sensor recordings or camera video.
+   It wraps `xcrun devicectl device copy from … --domain-type appDataContainer --domain-identifier org.feel.hackharvard.lantern --source Documents/Recordings`, which needs a development build of Lantern on the phone. Everything in `simulation/recordings/` except this README is git-ignored. Do not commit personal sensor recordings or camera video.
 4. Run once with no labels and watch it on `/replay`, then write labels in seconds from the start of the recording (the page's clock):
    ```json
    {
@@ -58,6 +58,19 @@ Synthetic scenes are ideal geometry: a floor at y = 0, boxes and vertical cylind
    }
    ```
    Save it in `simulation/scenarios/`. A scenario whose recording is missing is skipped, not failed.
+5. To see what a code change does to that walk, run `--snapshot before` first, change the code, run again, and pick `before` in the compare menu on `/replay` (the last run is always there as `previous`). See [web/README.md](../web/README.md).
+
+## Realistic scenes and labels from geometry
+
+Four scenarios model places people actually walk, at real sizes, with a valid route through each: `hallway-cluttered` (1.8 m hallway, console table, boxes, coat rack, bin, fire extinguisher, a 0.9 m door at the end), `office-furnished` (desk, monitor, chair, bookshelf, sofa, plant, filing cabinet, a person walking toward the wearer, a turn, and the exit door), `corridor-oncoming-people` (two people coming the other way, one crossing, a water fountain, and a radiator and wet-floor sign below the 0.6 m window) and `doorway-open-leaf` (a standard 0.9 × 2.03 m door walked through, leaf open, shoe rack and umbrella stand beside it). Their labels are not written by hand:
+
+```sh
+python3 simulation/geometry_labels.py simulation/scenarios/hallway-cluttered.json            # print the windows
+python3 simulation/geometry_labels.py simulation/scenarios/hallway-cluttered.json --write    # replace "expect"
+python3 simulation/geometry_labels.py simulation/scenarios/hallway-cluttered.json --timeline # band per column per tick
+```
+
+The tool samples every object surface inside the 0.6–2.1 m window, keeps what the wide camera can see, takes the nearest horizontal range per column (the encoder's rule), and turns runs of a constant band into windows with ±0.35 s trimmed around each transition. A moving object that passes through several bands gets a `bands` window instead. Ticks whose band would flip under a ±4 % range error, or that rest on a sliver under 0.7° wide at a column edge, are left unlabelled, so a label never sits on a knife edge. Edit the scene, rerun with `--write`, and the labels follow the geometry.
 
 ## Scenario format
 
@@ -73,6 +86,7 @@ Synthetic scenes are ideal geometry: a floor at y = 0, boxes and vertical cylind
 - `replay`: `tickOffset`, `latency`, `tail` (seconds).
 - `pass`: `minAccuracy` (default 0.95, applied to **every** window on its own) and optional `maxFlicker`.
 - `knownIssue`: text. A failure is then reported as `KNOWN` and does not fail the run.
+- `bands` lists several allowed bands for a window, for an object that moves through them.
 
 The synthetic labels were derived from geometry before running, not fitted to the output. For a wall at distance D, a column's range is D divided by the cosine of its innermost bearing. Each window leaves out ±0.35 s around every predicted transition.
 
@@ -92,3 +106,13 @@ These are software findings on idealised scenes. None of them has been confirmed
 2. **The tap can drop out when detection is slow.** A detection counts for 0.5 s. A new one starts at most every ~0.4 s at 10 Hz. With 0.2 s inference, the tap misses about a quarter of ticks (`find-door-slow-detector`); with 0.1 s it is steady (`find-door`).
 3. **One stray pixel raises a pin.** Each column takes the single nearest medium- or high-confidence sample. At an outlier rate of 2 in 10,000 pixels, an empty room flickers at about 1.4 changes per column per second (`lidar-outliers`).
 4. **The outer columns are nearly blind.** The camera sees ±33.5° but columns 0 and 6 span 32.1–45°, so they see a 1.4° sliver. A person beyond about 1.4 m to the side at 1.5 m distance is invisible (`person-crossing`).
+
+## Before/after: sector filter (working tree, October 17) against commit 93f27d6
+
+Measured with `--snapshot before` on the committed code and a plain run of the working tree, compared on `/replay` and from the snapshot files. The working tree adds a third-nearest-point rule and a frame-to-frame `SectorFilter` in `Perception.swift`.
+
+- **Outliers fixed.** `lidar-outliers` goes from 92.2 % and 1.38 band changes per column per second to 100 % and 0.
+- **Pins lag the geometry.** Over the four realistic scenes, a pin that should move nearer now appears a median 0.10 s later than before (mean 0.13 s, worst 1.2 s); a pin that should move farther or drop appears a median 0.30 s later (worst 0.8 s).
+- **Stale near pins on a flickering edge.** In `hallway-cluttered` the console table has left column 0 at 2.95 s, but the pin stays at band 2 (0.99 m) until 3.75 s while the wall behind is at 1.70 m. The receding change needs four agreeing frames and the sliver at the column edge keeps resetting the count. That window fails: 100 % before, 76 % after; the scene drops from 100 % to 98.1 %.
+- **Start-up blank.** The first tick is now all pins down (two frames of agreement are needed), which shows up as 0.1–0.3 changes per column per second in scenes that were previously perfectly steady. It is one transition per column, not flicker.
+- Everything else is unchanged in label agreement: the other realistic scenes stay at 100 % both before and after.

@@ -1,0 +1,338 @@
+{
+  "title": "Standard door (0.9 × 2.03 m) with the leaf open, walking through",
+  "description": "Walking straight at a standard 80-inch door and through it at 0.625 m/s: shoe rack to the right of the door, umbrella stand to the left, the door leaf swung 90° open on the far side, a side table and the facing wall of the hallway beyond. The opening is the valid way through. Labels derive from the geometry, which includes the 2.03 m head: inside the 0.6–2.1 m window it reads as an obstacle in the centre columns from 4 m down to 1.7 m, where it leaves the camera's view, so a pass here means the pins matched the geometry, not that the doorway felt open.",
+  "knownIssue": "Obstacle height window tops out at 2.1 m (DepthProjector.sectors maxHeight), above a standard 2.03 m door head, so doorways read as blocked until about 1.7 m away.",
+  "scene": {
+    "duration": 8,
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0,
+        "yaw": 0
+      },
+      {
+        "t": 8,
+        "x": 0,
+        "z": -5.0,
+        "yaw": 0
+      }
+    ],
+    "objects": [
+      {
+        "kind": "box",
+        "min": [
+          -5,
+          0,
+          -4.1
+        ],
+        "max": [
+          -0.45,
+          2.7,
+          -3.9
+        ],
+        "label": "wall left of door"
+      },
+      {
+        "kind": "box",
+        "min": [
+          0.45,
+          0,
+          -4.1
+        ],
+        "max": [
+          5,
+          2.7,
+          -3.9
+        ],
+        "label": "wall right of door"
+      },
+      {
+        "kind": "box",
+        "min": [
+          -0.45,
+          2.03,
+          -4.1
+        ],
+        "max": [
+          0.45,
+          2.7,
+          -3.9
+        ],
+        "label": "door head 2.03 m"
+      },
+      {
+        "kind": "box",
+        "min": [
+          -0.5,
+          0,
+          -5.0
+        ],
+        "max": [
+          -0.45,
+          2.03,
+          -4.1
+        ],
+        "label": "open door leaf"
+      },
+      {
+        "kind": "box",
+        "min": [
+          0.6,
+          0,
+          -3.9
+        ],
+        "max": [
+          1.4,
+          0.9,
+          -3.6
+        ],
+        "label": "shoe rack"
+      },
+      {
+        "kind": "cylinder",
+        "center": [
+          -0.75,
+          -3.75
+        ],
+        "radius": 0.12,
+        "height": 0.7,
+        "label": "umbrella stand"
+      },
+      {
+        "kind": "box",
+        "min": [
+          1.0,
+          0,
+          -6.5
+        ],
+        "max": [
+          1.6,
+          0.8,
+          -6.1
+        ],
+        "label": "side table in the hallway"
+      },
+      {
+        "kind": "box",
+        "min": [
+          -5,
+          0,
+          -6.7
+        ],
+        "max": [
+          5,
+          2.7,
+          -6.5
+        ],
+        "label": "hallway wall"
+      }
+    ],
+    "sensor": {
+      "noise": 0.005,
+      "seed": 24
+    }
+  },
+  "expect": [
+    {
+      "from": 0.3,
+      "to": 1.35,
+      "columns": [
+        4
+      ],
+      "band": 4,
+      "label": "shoe rack (band 4)"
+    },
+    {
+      "from": 0.3,
+      "to": 1.45,
+      "columns": [
+        2
+      ],
+      "band": 4,
+      "label": "umbrella stand (band 4)"
+    },
+    {
+      "from": 0.3,
+      "to": 1.45,
+      "columns": [
+        5
+      ],
+      "band": 4,
+      "label": "shoe rack (band 4)"
+    },
+    {
+      "from": 0.45,
+      "to": 1.65,
+      "columns": [
+        3
+      ],
+      "band": 4,
+      "label": "door head 2.03 m (band 4)"
+    },
+    {
+      "from": 0.85,
+      "to": 1.55,
+      "columns": [
+        1
+      ],
+      "band": 4,
+      "label": "wall left of door (band 4)"
+    },
+    {
+      "from": 1.45,
+      "to": 1.85,
+      "columns": [
+        6
+      ],
+      "band": 4,
+      "label": "wall right of door (band 4)"
+    },
+    {
+      "from": 1.45,
+      "to": 2.35,
+      "columns": [
+        0
+      ],
+      "band": 4,
+      "label": "wall left of door (band 4)"
+    },
+    {
+      "from": 2.45,
+      "to": 3.25,
+      "columns": [
+        4
+      ],
+      "band": 3,
+      "label": "shoe rack (band 3)"
+    },
+    {
+      "from": 2.55,
+      "to": 2.85,
+      "columns": [
+        5
+      ],
+      "band": 3,
+      "label": "shoe rack (band 3)"
+    },
+    {
+      "from": 2.55,
+      "to": 3.05,
+      "columns": [
+        1
+      ],
+      "band": 3,
+      "label": "umbrella stand (band 3)"
+    },
+    {
+      "from": 2.55,
+      "to": 3.25,
+      "columns": [
+        2
+      ],
+      "band": 3,
+      "label": "umbrella stand (band 3)"
+    },
+    {
+      "from": 2.75,
+      "to": 3.45,
+      "columns": [
+        3
+      ],
+      "band": 3,
+      "label": "door head 2.03 m (band 3)"
+    },
+    {
+      "from": 3.85,
+      "to": 4.55,
+      "columns": [
+        5
+      ],
+      "band": 2,
+      "label": "shoe rack (band 2)"
+    },
+    {
+      "from": 4.05,
+      "to": 4.45,
+      "columns": [
+        6
+      ],
+      "band": 2,
+      "label": "shoe rack (band 2)"
+    },
+    {
+      "from": 4.05,
+      "to": 4.55,
+      "columns": [
+        1
+      ],
+      "band": 2,
+      "label": "umbrella stand (band 2)"
+    },
+    {
+      "from": 4.15,
+      "to": 4.45,
+      "columns": [
+        0
+      ],
+      "band": 2,
+      "label": "umbrella stand (band 2)"
+    },
+    {
+      "from": 4.25,
+      "to": 5.45,
+      "columns": [
+        2
+      ],
+      "band": 2,
+      "label": "open door leaf (band 2)"
+    },
+    {
+      "from": 4.65,
+      "to": 5.85,
+      "columns": [
+        3
+      ],
+      "band": 4,
+      "label": "hallway wall (band 4)"
+    },
+    {
+      "from": 4.95,
+      "to": 5.85,
+      "columns": [
+        4
+      ],
+      "band": 4,
+      "label": "side table in the hallway (band 4)"
+    },
+    {
+      "from": 6.65,
+      "to": 7.45,
+      "columns": [
+        5
+      ],
+      "band": 3,
+      "label": "side table in the hallway (band 3)"
+    },
+    {
+      "from": 6.95,
+      "to": 7.35,
+      "columns": [
+        2,
+        3,
+        4
+      ],
+      "band": 3,
+      "label": "hallway wall (band 3)"
+    },
+    {
+      "from": 6.95,
+      "to": 8,
+      "columns": [
+        6
+      ],
+      "band": 3,
+      "label": "side table in the hallway (band 3)"
+    }
+  ]
+}

@@ -22,7 +22,19 @@ In Lantern, turn on **Record depth**. **Include camera video** is on by default.
 - `feel-<time>.mp4` (960 × 720 H.264, 15 fps, no audio)
 - `feel-<time>.video.json`, which ties video time 0 to the ARKit clock
 
-Trials started in **Grid walk** also write `feel-<time>.events.json`. Copy them all into `simulation/recordings/` and run `simulation/run.py`. New walks appear automatically as `UNLABELLED` sessions; add a scenario in `simulation/scenarios/` to label one.
+Trials started in **Grid walk** also write `feel-<time>.events.json`. Copy them all into `simulation/recordings/` and run `simulation/run.py`, or do both with `scripts/pull_recordings.sh` while the phone is connected. New walks appear automatically as `UNLABELLED` sessions; add a scenario in `simulation/scenarios/` to label one.
+
+## Before and after a code change
+
+The page can show two runs of the same recording side by side:
+
+```sh
+python3 simulation/run.py --snapshot before    # save this run's pins as "before"
+# edit the encoder, column geometry, firmware controller…
+python3 simulation/run.py                      # rerun; the run before this one is also kept as "previous"
+```
+
+Pick `before` (or `previous`) in the **compare** menu under the scrubber. The pin grid splits into **now** and the snapshot, with changed pins ringed; each timeline row shows now on top and the snapshot below with a mark where they differ; the metrics add how many ticks changed and label agreement snapshot → now. The **◀ diff / diff ▶** buttons (or `[` and `]`) step between differences. `?compare=<label>` links to a comparison. Snapshots live in `simulation/out/web/snapshots/` and are not deployed.
 
 ## Deploying
 

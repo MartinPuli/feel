@@ -199,3 +199,69 @@ public struct DirectionGuide: Sendable {
         return (nil,[])
     }
 }
+
+/// The passive path wave: while the wearer turns, a dot runs along the finger row from the centre
+/// column to the column the route lies in, again and again, on top of the obstacle pins. No sign
+/// is needed. When the route is beyond the ±45° field the dot runs to the edge column: keep
+/// turning. A one-column gap in a wall is hard to find by turning; the wave ends on that column,
+/// a line through the door. It never overrides a raised pin (an obstacle keeps its band) and never
+/// plays with anything within 0.9 m. It stops `tailSeconds` after the turn ends or once the route
+/// is straight ahead. Arrows (`CuePlayer`) take precedence; the caller skips the wave while one plays.
+public struct PathWave: Sendable {
+    /// Turning slower than this is drift, not a turn.
+    public var minTurnRateDegreesPerSecond = 20.0
+    public var tailSeconds = 1.5
+    public var frameSeconds = 0.1
+    /// After the dot reaches the route column it stays for `holdFrames`, then rests `pauseFrames`.
+    public var holdFrames = 2
+    public var pauseFrames = 4
+    public var hintMaxAge = 1.0
+    public var straightDegrees = 15.0
+    private var yawSamples: [YawSample] = []
+    private var turningUntil = -Double.infinity
+    private var sweepStart: Double?
+    /// Column the wave runs to right now; nil when idle.
+    public private(set) var column: Int?
+    private struct YawSample: Sendable { let t: Double, yaw: Double }
+    public init() {}
+
+    public var isActive: Bool { column != nil }
+    public mutating func reset() { yawSamples=[]; turningUntil = -.infinity; sweepStart=nil; column=nil }
+
+    /// Records the facing direction at a frame time (degrees, any convention, wraps at 360).
+    /// Repeated or older frame times add nothing.
+    public mutating func observe(yawDegrees: Double, at t: Double) {
+        guard yawDegrees.isFinite, t.isFinite else { return }
+        if let last=yawSamples.last, t<=last.t { return }
+        yawSamples.append(YawSample(t:t,yaw:yawDegrees))
+        yawSamples.removeAll { t-$0.t>0.5 }
+        guard let first=yawSamples.first, t-first.t>=0.15 else { return }
+        var delta=(yawDegrees-first.yaw).truncatingRemainder(dividingBy:360)
+        if delta>180 { delta -= 360 } else if delta < -180 { delta += 360 }
+        if abs(delta)/(t-first.t)>=minTurnRateDegreesPerSecond { turningUntil=t+tailSeconds }
+    }
+
+    /// Overlays the wave on the pins when a turn is under way and the route lies off centre.
+    public mutating func apply(to output: EncoderOutput, hint: RouteHint?, now: Double) -> EncoderOutput {
+        guard now.isFinite, output.state == .live || output.state == .simulation, now<turningUntil,
+              let hint, hint.status == .route, hint.bearingDegrees.isFinite, hint.targetDistance.isFinite,
+              now>=hint.timestamp, now-hint.timestamp<=hintMaxAge,
+              hint.targetDistance>DirectionCue.arriveMeters, abs(hint.bearingDegrees)>straightDegrees,
+              !output.packet.bands.contains(1) else { sweepStart=nil; column=nil; return output }
+        let b=hint.bearingDegrees, center=DirectionCue.center
+        let target = abs(b)>45 ? (b>0 ? 6 : 0) : (TactileGeometry.column(bearingDegrees:b) ?? center)
+        guard target != center else { sweepStart=nil; column=nil; return output }
+        if sweepStart==nil || now<sweepStart! { sweepStart=now }
+        column=target
+        let path=Array(stride(from:center,through:target,by:target>center ? 1 : -1))
+        let period=path.count+1+holdFrames+pauseFrames
+        let index=Int(((now-sweepStart!)/frameSeconds).rounded()) % period
+        var bands=output.packet.bands
+        func raise(_ c: Int) { if bands[c] == 0 { bands[c]=4 } }
+        if index<path.count { raise(path[index]); if index>=1 { raise(path[index-1]) } }
+        else if index<path.count+holdFrames+1 { raise(path[path.count-1]) }
+        else { return output }
+        guard bands != output.packet.bands, let packet=try? FeelPacket(sequence:output.packet.sequence,bands:bands,highlight:output.packet.highlight) else { return output }
+        return EncoderOutput(packet:packet,state:output.state,targetColumns:output.targetColumns)
+    }
+}

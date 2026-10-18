@@ -46,11 +46,16 @@ public struct DepthSample: Equatable, Codable, Sendable {
     public init(cameraPoint: Vector3, confidence: UInt8) { self.cameraPoint=cameraPoint; self.confidence=confidence }
 }
 public enum DepthProjector {
-    /// Nearest positive horizontal range per sector. Unknown remains nil, never "clear".
+    /// A sector reports the `support`-th nearest confident point, not the nearest: one or two stray
+    /// LiDAR pixels cannot raise a pin, while any real surface in the window, even a thin pole,
+    /// leaves dozens of samples.
+    public static let support = 3
+    /// Nearest supported horizontal range per sector. Unknown remains nil, never "clear".
     /// Floor is explicitly calibrated, never assumed to be AR world's y=0.
-    public static func sectors(samples: [DepthSample], pose: CameraPose, floorY: Double?, minHeight: Double = 0.6, maxHeight: Double = 2.1) -> [Double?] {
+    public static func sectors(samples: [DepthSample], pose: CameraPose, floorY: Double?, minHeight: Double = 0.6, maxHeight: Double = 2.1, support: Int = support) -> [Double?] {
         var result = [Double?](repeating: nil, count: 7)
         guard pose.isValid, let floorY, floorY.isFinite, minHeight.isFinite,maxHeight.isFinite,minHeight>=0,maxHeight>minHeight else { return result }
+        var ranges = [[Double]](repeating: [], count: 7)
         for sample in samples {
             let p=sample.cameraPoint
             guard p.isFinite, sample.confidence >= 1, sample.confidence <= 2,
@@ -59,9 +64,60 @@ public enum DepthProjector {
             guard height >= minHeight, height <= maxHeight else { continue }
             let distance=hypot(p.x,p.z)
             guard distance>0,distance<=4 else { continue }
-            result[column]=min(result[column] ?? .infinity,distance)
+            ranges[column].append(distance)
+        }
+        let k=max(1,support)
+        for column in 0..<7 where ranges[column].count>=k {
+            ranges[column].sort(); result[column]=ranges[column][k-1]
         }
         return result
+    }
+}
+
+/// Steadies the seven sector ranges from frame to frame so the pins do not flutter with walking
+/// bob and LiDAR noise, while staying current: a band change toward the wearer shows after
+/// `nearFrames` frames of agreement (band 1, under 0.9 m, after one); a change away from the
+/// wearer, or to unknown, needs `farFrames` frames and the range `marginMeters` past the band
+/// boundary. Within a band the latest range passes through, so the encoder and replay see real
+/// distances. Feed it one depth frame at a time; a repeated frame timestamp returns the last result.
+public struct SectorFilter: Sendable {
+    public var nearFrames = 2
+    public var farFrames = 4
+    public var marginMeters = 0.1
+    private var shown = [Double?](repeating: nil, count: 7)
+    private var candidate = [UInt8](repeating: 0, count: 7)
+    private var agreement = [Int](repeating: 0, count: 7)
+    private var lastFrame = -Double.infinity
+    public init() {}
+
+    public var current: [Double?] { shown }
+    public mutating func reset() {
+        shown=Array(repeating:nil,count:7); candidate=Array(repeating:0,count:7); agreement=Array(repeating:0,count:7); lastFrame = -.infinity
+    }
+
+    public mutating func update(_ distances: [Double?], frameTimestamp: Double) -> [Double?] {
+        guard distances.count == 7, frameTimestamp.isFinite else { return shown }
+        guard frameTimestamp>lastFrame else { return shown }
+        lastFrame=frameTimestamp
+        for c in 0..<7 {
+            let raw=distances[c].flatMap { $0.isFinite && $0>0 ? $0 : nil }
+            let shownBand=shown[c].map { TactileGeometry.band(distance:$0) } ?? 0
+            var rawBand=raw.map { TactileGeometry.band(distance:$0) } ?? 0
+            // A step away from the wearer must clear the boundary by the margin, or it is noise on the edge.
+            if shownBand != 0, let raw, rawBand == 0 || rawBand>shownBand, TactileGeometry.band(distance:raw-marginMeters)<=shownBand, raw-marginMeters<=4 {
+                rawBand=shownBand
+            }
+            if rawBand == shownBand {
+                agreement[c]=0
+                if let raw, TactileGeometry.band(distance:raw) == shownBand { shown[c]=raw } else if raw == nil, shownBand == 0 { shown[c]=nil }
+                continue
+            }
+            if candidate[c] == rawBand { agreement[c] += 1 } else { candidate[c]=rawBand; agreement[c]=1 }
+            let nearer = rawBand != 0 && (shownBand == 0 || rawBand<shownBand)
+            let needed = nearer ? (rawBand == 1 ? 1 : nearFrames) : farFrames
+            if agreement[c]>=needed { shown[c]=raw; agreement[c]=0 }
+        }
+        return shown
     }
 }
 

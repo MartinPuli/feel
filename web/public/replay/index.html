@@ -12,18 +12,18 @@
 :root {
   --bg: #fafafa; --panel: #ffffff; --ink: #0a0a0a; --muted: #666666; --faint: #8f8f8f; --line: #eaeaea; --well: #f2f2f2;
   --b1: #d93a00; --b2: #f2690d; --b3: #f5a35c; --b4: #f8d3ad; --pin-off: #e9e9e9;
-  --pass: #0f7b3f; --fail: #d1242f; --known: #a35200; --mark: #c4107a; --accent: #0068d6;
+  --pass: #0f7b3f; --fail: #d1242f; --known: #a35200; --mark: #c4107a; --accent: #0068d6; --diff: #6d28d9;
   --sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #0a0a0a; --panel: #111111; --ink: #ededed; --muted: #a1a1a1; --faint: #707070; --line: #262626; --well: #1a1a1a;
   --b1: #ff6a2b; --b2: #f2690d; --b3: #b9561c; --b4: #6b3416; --pin-off: #222222;
-  --pass: #3fcf7f; --fail: #ff5c63; --known: #f5a524; --mark: #ff4fae; --accent: #52a8ff;
+  --pass: #3fcf7f; --fail: #ff5c63; --known: #f5a524; --mark: #ff4fae; --accent: #52a8ff; --diff: #b794ff;
 } }
 :root[data-theme="dark"] {
   --bg: #0a0a0a; --panel: #111111; --ink: #ededed; --muted: #a1a1a1; --faint: #707070; --line: #262626; --well: #1a1a1a;
   --b1: #ff6a2b; --b2: #f2690d; --b3: #b9561c; --b4: #6b3416; --pin-off: #222222;
-  --pass: #3fcf7f; --fail: #ff5c63; --known: #f5a524; --mark: #ff4fae; --accent: #52a8ff;
+  --pass: #3fcf7f; --fail: #ff5c63; --known: #f5a524; --mark: #ff4fae; --accent: #52a8ff; --diff: #b794ff;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -56,7 +56,13 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .right, .left { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .topview { position: relative; aspect-ratio: 16 / 9; background: var(--well); }
 .topview canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.pins { display: grid; grid-template-columns: 34px repeat(7, 1fr); gap: 8px 10px; padding: 14px; align-items: center; }
+.pair { display: flex; flex-wrap: wrap; }
+.pins { display: grid; grid-template-columns: 34px repeat(7, 1fr); gap: 8px 10px; padding: 14px; align-items: center; flex: 1 1 200px; min-width: 0; }
+.pair.two .pins { grid-template-columns: 26px repeat(7, 1fr); gap: 6px 7px; padding: 10px 12px; }
+.pair.two .pins + .pins { border-left: 1px solid var(--line); }
+.pins .cap { grid-column: 1 / -1; font: 500 11px var(--mono); color: var(--muted); letter-spacing: 0.03em; text-transform: uppercase; }
+.pins .cap b { color: var(--diff); font-weight: 500; }
+.pin.diff { outline: 2px solid var(--diff); outline-offset: 3px; }
 .pins .lab { font: 11px var(--mono); color: var(--faint); text-align: center; }
 .pins .row { font: 11px var(--mono); color: var(--faint); text-align: right; }
 .pin { aspect-ratio: 1; border-radius: 50%; background: var(--pin-off); position: relative; transition: background-color .08s; }
@@ -72,6 +78,10 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .transport { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; flex-wrap: wrap; }
 .transport button { font: 500 13px var(--sans); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 14px; cursor: pointer; }
 .transport button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); min-width: 76px; }
+#compare { flex: 0 1 auto; min-width: 170px; max-width: 300px; font-size: 13px; padding: 6px 28px 6px 8px; }
+.transport .diffnav { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.transport .diffnav button { border: 0; border-radius: 0; padding: 7px 10px; }
+.transport .diffnav button + button { border-left: 1px solid var(--line); }
 .transport input[type=range] { flex: 1; min-width: 140px; accent-color: var(--ink); }
 .clock { font: 13px var(--mono); min-width: 120px; text-align: right; }
 .speed { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
@@ -137,7 +147,7 @@ td.num { font-family: var(--mono); }
       <div class="right">
         <section class="panel" aria-labelledby="pinHead">
           <div class="head"><h2 id="pinHead">Pin grid</h2><span id="pinNote">as commanded by the firmware</span></div>
-          <div class="pins" id="pins" role="img"></div>
+          <div class="pair" id="pins" role="img"><div class="pins" id="pinsNow"></div><div class="pins" id="pinsThen" hidden></div></div>
           <div class="ranges" id="ranges" aria-hidden="true"></div>
         </section>
         <section class="panel" aria-labelledby="depthHead">
@@ -155,6 +165,10 @@ td.num { font-family: var(--mono); }
       <input id="scrub" type="range" min="0" max="1000" value="0" step="1" aria-label="Time">
       <span class="clock" id="clock">0.00 s</span>
       <label class="toggle"><input type="checkbox" id="showCols" checked> column guides</label>
+      <label class="toggle" id="compareWrap" hidden>compare <select id="compare" aria-label="Snapshot to compare with"></select></label>
+      <span class="diffnav" id="diffNav" role="group" aria-label="Step between differences" hidden>
+        <button id="prevDiff" type="button" title="Previous difference ([)">◀ diff</button><button id="nextDiff" type="button" title="Next difference (])">diff ▶</button>
+      </span>
       <button id="export" type="button" title="Record a 1920 × 1080 video of this replay">Export video</button>
       <a id="download" hidden></a>
     </div>
@@ -168,6 +182,7 @@ td.num { font-family: var(--mono); }
         <span><span class="sw" style="background:var(--b4)"></span>4 · up to 4 m</span>
         <span><span class="sw" style="background:var(--accent)"></span>tapping</span>
         <span><span class="sw" style="background:var(--mark)"></span>disagrees with label</span>
+        <span id="diffLegend" hidden><span class="sw" style="background:var(--diff)"></span>differs from snapshot · each row: now on top, snapshot below</span>
         <span>bars below: labelled windows</span>
       </div>
       <div class="metrics" id="metrics"></div>
@@ -181,6 +196,7 @@ td.num { font-family: var(--mono); }
     <p class="note">Pins and packets come from the production Swift encoder and C++ firmware controller replaying the recorded depth. Servo motion and how the pins feel are not simulated. Simulated sessions show a rendered view of an idealised scene.</p>
   </div>
   <p id="empty" hidden>No replay sessions yet. Run <code>python3 simulation/run.py</code>, then reload.</p>
+  <p class="note" id="compareHelp" hidden>To compare two versions of the grid code on this recording: run <code>python3 simulation/run.py --snapshot before</code>, change the code, run again, then pick <code>before</code> in the compare menu. The previous run is always available as <code>previous</code>.</p>
 </div>
 
 <script>
@@ -191,12 +207,14 @@ const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const STATE_TEXT = { live: null, trackingLost: 'TRACKING LOST · pins neutral', staleDepth: 'NO FRESH DEPTH · pins neutral', uncalibrated: 'FLOOR NOT CALIBRATED · pins neutral', invalidFrame: 'INVALID FRAME · pins neutral' };
 
 let index = [], session = null, depthFrames = new Map(), t = 0, playing = false, speed = 1, lastFrameTime = 0, tickIndex = 0;
+let snapshots = [], compare = null;   // compare: { label, snap, aligned[], diffs[], diffSet }
 const video = $('video');
 
 async function load() {
   let data;
   try { data = await (await fetch('data/index.json', { cache: 'no-cache' })).json(); } catch { data = { sessions: [] }; }
   index = data.sessions || [];
+  try { snapshots = (await (await fetch('data/snapshots/index.json', { cache: 'no-cache' })).json()).snapshots || []; } catch { snapshots = []; }
   if (!index.length) { $('empty').hidden = false; return; }
   const select = $('session');
   const groups = [['iphone', 'Phone recordings'], ['synthetic', 'Simulated scenes']];
@@ -238,9 +256,47 @@ async function open(name) {
     video.removeAttribute('src'); video.load(); video.hidden = true; $('noVideo').hidden = false; $('camNote').textContent = '';
   }
   $('depthNote').textContent = session.depth ? `${session.depth.w} × ${session.depth.h} · near = warm` : 'no depth';
-  renderInfo(); renderMetrics(); renderEvents();
+  renderInfo(); renderEvents();
+  const available = snapshots.filter(s => s.sessions.includes(name));
+  $('compareWrap').hidden = !available.length; $('compareHelp').hidden = available.length > 0 || session.source !== 'iphone';
+  $('compare').innerHTML = '<option value="">off</option>' + available.map(s =>
+    `<option value="${esc(s.label)}">${esc(s.label)}${s.commit ? ' · ' + esc(s.commit) : ''}${s.generated ? ' · ' + esc(s.generated.slice(5, 16)) : ''}</option>`).join('');
+  const wantedCompare = new URLSearchParams(location.search).get('compare') || $('compare').dataset.last || '';
+  await setCompare(available.some(s => s.label === wantedCompare) ? wantedCompare : '');
   seek(session.ticks[0]?.t ?? 0);
   resize();
+}
+
+// Compare mode: a snapshot of an earlier run of the same recording (simulation/run.py --snapshot LABEL, or
+// "previous" for the run before this one), aligned to the current ticks by time.
+async function setCompare(label) {
+  compare = null;
+  if (label) {
+    try {
+      const snap = await (await fetch(`data/snapshots/${encodeURIComponent(label)}/${encodeURIComponent(session.name)}.json`, { cache: 'no-cache' })).json();
+      const byTime = new Map(snap.ticks.map(k => [k.t.toFixed(3), k]));
+      const nearest = time => {   // snapshot tick within 60 ms, when tick phases differ
+        let lo = 0, hi = snap.ticks.length - 1;
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (snap.ticks[mid].t < time) lo = mid + 1; else hi = mid; }
+        const best = [snap.ticks[lo], snap.ticks[lo - 1]].filter(Boolean).sort((a, b) => Math.abs(a.t - time) - Math.abs(b.t - time))[0];
+        return best && Math.abs(best.t - time) <= 0.06 ? best : null;
+      };
+      const aligned = session.ticks.map(k => byTime.get(k.t.toFixed(3)) ?? nearest(k.t));
+      const differs = (a, b) => !b || a.fw.some((v, c) => v !== b.fw[c]) || a.hl !== b.hl || !!a.tap !== !!b.tap;
+      const diffs = []; aligned.forEach((b, i) => { if (differs(session.ticks[i], b)) diffs.push(i); });
+      compare = { label, snap, aligned, diffs, diffSet: new Set(diffs) };
+    } catch { compare = null; }
+  }
+  $('compare').value = compare ? compare.label : ''; $('compare').dataset.last = compare ? compare.label : '';
+  const url = new URL(location.href); if (compare) url.searchParams.set('compare', compare.label); else url.searchParams.delete('compare'); history.replaceState(null, '', url);
+  $('diffNav').hidden = $('diffLegend').hidden = $('pinsThen').hidden = !compare; $('pins').classList.toggle('two', !!compare);
+  $('pinHead').textContent = compare ? 'Pin grid: now vs snapshot' : 'Pin grid';
+  renderMetrics(); draw();
+}
+function jumpDiff(dir) {
+  if (!compare || !compare.diffs.length) return;
+  const d = compare.diffs, i = dir > 0 ? (d.find(i => i > tickIndex) ?? d[0]) : (d.slice().reverse().find(i => i < tickIndex) ?? d[d.length - 1]);
+  pause(); seek(session.ticks[i].t);
 }
 
 const start = () => session.ticks[0].t, end = () => session.ticks[session.ticks.length - 1].t;
@@ -304,19 +360,29 @@ function expectedAt(time) {
   return { want, highlight };
 }
 
-function drawPins(tick) {
+function pinsHtml(tick, other, caption) {
   const { want } = expectedAt(tick.t);
-  let html = '<div></div>' + ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].map(c => `<div class="lab">${c}</div>`).join('');
+  let html = (caption ? `<div class="cap">${caption}</div>` : '') + '<div></div>' + ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].map(c => `<div class="lab">${c}</div>`).join('');
   for (let band = 4; band >= 1; band--) {
     html += `<div class="row">${band === 4 ? 'far' : band === 1 ? 'near' : ''}</div>`;
     for (let c = 0; c < 7; c++) {
       const up = tick.fw[c] === band, labelled = want[c]?.includes(band), wrong = want[c] && !want[c].includes(tick.fw[c]);
+      const diff = other !== undefined && (!other || (other.fw[c] === band) !== up || (up && (other.hl === c) !== (tick.hl === c)));
       const color = up ? `background:var(--b${band})` : '';
-      html += `<div class="pin ${up ? 'up' : ''} ${labelled ? 'want' : ''} ${(up || labelled) && wrong ? 'wrong' : ''} ${up && tick.hl === c && tick.tap ? 'tap' : ''}" style="${color}"></div>`;
+      html += `<div class="pin ${up ? 'up' : ''} ${labelled ? 'want' : ''} ${(up || labelled) && wrong ? 'wrong' : ''} ${up && tick.hl === c && tick.tap ? 'tap' : ''} ${diff ? 'diff' : ''}" style="${color}"></div>`;
     }
   }
-  $('pins').innerHTML = html;
-  $('pins').setAttribute('aria-label', tick.fw.map((b, c) => `column ${c + 1}: ${b ? 'band ' + b : 'down'}${tick.hl === c ? ', tapping' : ''}`).join('; '));
+  return html;
+}
+function drawPins(tick) {
+  const other = compare ? compare.aligned[tickIndex] : undefined;
+  $('pinsNow').innerHTML = pinsHtml(tick, other, compare ? 'now' : '');
+  if (compare) {
+    const same = other && !compare.diffSet.has(tickIndex);
+    $('pinsThen').innerHTML = other ? pinsHtml(other, tick, `${esc(compare.label)}${same ? '' : ' · <b>differs</b>'}`) : `<div class="cap">${esc(compare.label)} · no tick at this time</div>`;
+  }
+  $('pins').setAttribute('aria-label', tick.fw.map((b, c) => `column ${c + 1}: ${b ? 'band ' + b : 'down'}${tick.hl === c ? ', tapping' : ''}`).join('; ')
+    + (compare ? `; snapshot ${compare.label}: ${other ? other.fw.map((b, c) => `${b ? 'band ' + b : 'down'}`).join(', ') : 'no tick'}` : ''));
   $('ranges').innerHTML = '<div></div>' + tick.dist.map(d => `<div>${d == null ? '–' : d.toFixed(2)}</div>`).join('');
   $('pinNote').textContent = tick.dropped ? 'packet dropped this tick' : tick.state === 'live' ? 'as commanded by the firmware' : 'neutral: ' + tick.state;
 }
@@ -479,16 +545,21 @@ function drawTimeline() {
   g.font = `11px ${css('--mono')}`; g.fillStyle = css('--faint'); g.textBaseline = 'middle';
   ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].forEach((l, c) => g.fillText(l, 6, top + c * rowH + rowH / 2));
   g.fillStyle = css('--well'); g.fillRect(left, top, W - left - right, 7 * rowH - 2);
-  const colors = [null, css('--b1'), css('--b2'), css('--b3'), css('--b4')], mark = css('--mark'), accent = css('--accent');
-  for (const tick of ticks) {
-    const xx = x(tick.t);
+  const colors = [null, css('--b1'), css('--b2'), css('--b3'), css('--b4')], mark = css('--mark'), accent = css('--accent'), diffColor = css('--diff');
+  const half = compare ? (rowH - 2) / 2 : rowH - 2;   // compare mode: now on top of each row, snapshot below
+  ticks.forEach((tick, i) => {
+    const xx = x(tick.t), then = compare ? compare.aligned[i] : null;
     for (let c = 0; c < 7; c++) {
-      if (tick.fw[c]) { g.fillStyle = colors[tick.fw[c]]; g.fillRect(xx, top + c * rowH, step, rowH - 2); }
+      if (tick.fw[c]) { g.fillStyle = colors[tick.fw[c]]; g.fillRect(xx, top + c * rowH, step, half); }
+      if (then && then.fw[c]) { g.fillStyle = colors[then.fw[c]]; g.globalAlpha = 0.75; g.fillRect(xx, top + c * rowH + half, step, half); g.globalAlpha = 1; }
       if (tick.mismatch.some(m => m.column === c)) { g.fillStyle = mark; g.fillRect(xx, top + c * rowH + rowH - 5, step, 3); }
+      if (compare && (!then || then.fw[c] !== tick.fw[c])) { g.fillStyle = diffColor; g.fillRect(xx, top + c * rowH + half - 1, step, 2); }
     }
     if (tick.hl < 7) { g.fillStyle = accent; g.fillRect(xx, top + tick.hl * rowH, step, 3); }
+    if (then && then.hl < 7) { g.fillStyle = accent; g.fillRect(xx, top + then.hl * rowH + half, step, 3); }
     if (tick.mismatch.some(m => m.column === null)) { g.fillStyle = mark; g.fillRect(xx, labelsTop - 6, step, 3); }
-  }
+    if (compare && compare.diffSet.has(i)) { g.fillStyle = diffColor; g.fillRect(xx, top - 6, step, 3); }
+  });
   g.fillStyle = css('--line');
   session.expect.forEach((e, i) => g.fillRect(x(session.start + e.from), labelsTop + (i % 4) * 7, Math.max(2, x(session.start + e.to) - x(session.start + e.from)), 4));
   g.fillStyle = css('--faint'); g.textBaseline = 'alphabetic';
@@ -527,8 +598,12 @@ function renderMetrics() {
   const m = (v, l) => `<div class="metric"><b>${esc(v)}</b><span>${esc(l)}</span></div>`;
   $('metrics').innerHTML = m(r.accuracy == null ? '–' : (100 * r.accuracy).toFixed(1) + '%', `label agreement (${r.checks - r.failedChecks}/${r.checks})`)
     + m(r.phantomChecks, 'phantom pin checks') + m(r.missedChecks, 'missed obstacle checks')
-    + m(r.bandChangesPerColumnSecond, 'live band changes / column / s') + m(age ? age.mean + ' ms' : '–', 'modelled depth age at send');
+    + m(r.bandChangesPerColumnSecond, 'live band changes / column / s') + m(age ? age.mean + ' ms' : '–', 'modelled depth age at send')
+    + (compare ? m(`${compare.diffs.length} / ${session.ticks.length}`, `ticks that differ from ${compare.label}`)
+      + m(`${pct(compare.snap.accuracy)} → ${pct(r.accuracy)}`, 'label agreement, snapshot → now')
+      + m(`${compare.snap.bandChangesPerColumnSecond ?? '–'} → ${r.bandChangesPerColumnSecond}`, 'band changes / col / s, snapshot → now') : '');
 }
+const pct = v => v == null ? '–' : (100 * v).toFixed(1) + '%';
 
 
 // ---- Video export: a 1920 × 1080 composite (recording left; pin grid over LiDAR right; timeline below),
@@ -617,6 +692,9 @@ $('play').onclick = () => playing ? pause() : play();
 $('export').onclick = startExport;
 $('scrub').oninput = e => { pause(); seek(start() + e.target.value / 1000 * (end() - start())); };
 $('showCols').onchange = draw;
+$('compare').onchange = () => { pause(); setCompare($('compare').value); };
+$('prevDiff').onclick = () => jumpDiff(-1);
+$('nextDiff').onclick = () => jumpDiff(1);
 document.querySelectorAll('.speed button').forEach(b => b.onclick = () => {
   speed = Number(b.dataset.speed); video.playbackRate = speed;
   document.querySelectorAll('.speed button').forEach(o => o.setAttribute('aria-pressed', o === b));
@@ -630,6 +708,8 @@ addEventListener('keydown', e => {
   if (e.key === ' ') { e.preventDefault(); playing ? pause() : play(); }
   if (e.key === 'ArrowRight' && e.target.type !== 'range') { pause(); seek(session.ticks[Math.min(session.ticks.length - 1, tickIndex + 1)].t); }
   if (e.key === 'ArrowLeft' && e.target.type !== 'range') { pause(); seek(session.ticks[Math.max(0, tickIndex - 1)].t); }
+  if (e.key === ']') jumpDiff(1);
+  if (e.key === '[') jumpDiff(-1);
 });
 video.addEventListener('loadedmetadata', draw);
 video.addEventListener('seeked', () => { if (!playing) draw(); });

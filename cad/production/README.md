@@ -20,8 +20,11 @@ openscad -D 'part="assembly"' -D angle=58 cad/production/puck.scad   # view, puc
 STLs go to `stl/production/`, which is gitignored. Print orientation is the orientation the files are exported in. Slicer settings are in CAD.md §4.
 
 The four-lobe band's centers were updated to the user-requested 0/58/116/174°
-layout on October 17. Previous exports and verification below are historical and
-must be regenerated; no new geometry PASS is claimed. `shaft3` remains unchanged.
+layout on October 17. `shaft3` remains unchanged.
+
+## Verification rerun (2026-10-17, after the 0/58/116/174° change and the reinforced coupling)
+
+`verify.py` was rerun on this tree with OpenSCAD 2026.09.23 (Manifold); the log and JSON in `evidence/` are from that run. Results match the 2026-10-16 run below except where noted: 34 derived values match (gaps now 29/87/145), all 10 STLs pass (now including `chassis_loose` and `shaft4`), the collision sweep is empty across 149 intersections (sweep angles −5/0/29/58/87/116/145/174/180 for `shaft` and `shaft3`, plus the 11-angle 120° sweep for `shaft4`), horn insertion is empty for all three shafts, `shaft` holds ±7.02° with 0 gap rise, `shaft4` holds ±6.24°, and `shaft3` still fails its ±7° hold window at ±6.89°. Geometry only; nothing has been printed or measured.
 
 ## Historical verification (2026-10-16, OpenSCAD 2026.09.23, Manifold)
 

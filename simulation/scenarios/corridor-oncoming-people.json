@@ -1,0 +1,245 @@
+{
+  "title": "Corridor, two people walking toward you and one crossing",
+  "description": "A 2.0 m corridor. The wearer keeps left (0.55 m from the left wall) at 0.8 m/s. Two people come the other way on the right side at 1.0 and 1.1 m/s and pass at about 5.3 s and 7.4 s with 0.45 m between shoulders; a third steps out of a doorway on the left at 2.5 s and crosses to the right 6 m ahead, well before the wearer gets there. A water fountain sticks out of the right wall; a radiator on the left and a 0.55 m wet-floor sign in the right lane are below the 0.6 m window and by design do not raise a pin. The left lane is a valid route the whole way. Labels derive from the geometry.",
+  "scene": {
+    "duration": 10,
+    "path": [
+      {
+        "t": 0,
+        "x": -0.45,
+        "z": 0,
+        "yaw": 0
+      },
+      {
+        "t": 10,
+        "x": -0.45,
+        "z": -8,
+        "yaw": 0
+      }
+    ],
+    "objects": [
+      {
+        "kind": "box",
+        "min": [
+          -1.2,
+          0,
+          -16
+        ],
+        "max": [
+          -1.0,
+          2.7,
+          1.0
+        ],
+        "label": "left wall"
+      },
+      {
+        "kind": "box",
+        "min": [
+          1.0,
+          0,
+          -16
+        ],
+        "max": [
+          1.2,
+          2.7,
+          1.0
+        ],
+        "label": "right wall"
+      },
+      {
+        "kind": "box",
+        "min": [
+          -1.2,
+          0,
+          -16.2
+        ],
+        "max": [
+          1.2,
+          2.7,
+          -16
+        ],
+        "label": "end wall"
+      },
+      {
+        "kind": "box",
+        "min": [
+          0.7,
+          0.6,
+          -3.2
+        ],
+        "max": [
+          1.0,
+          1.0,
+          -2.8
+        ],
+        "label": "water fountain"
+      },
+      {
+        "kind": "box",
+        "min": [
+          -1.0,
+          0.1,
+          -5.0
+        ],
+        "max": [
+          -0.85,
+          0.55,
+          -4.0
+        ],
+        "label": "radiator (below the window)"
+      },
+      {
+        "kind": "cylinder",
+        "center": [
+          0.3,
+          -7.0
+        ],
+        "radius": 0.15,
+        "height": 0.55,
+        "label": "wet-floor sign (below the window)"
+      },
+      {
+        "kind": "cylinder",
+        "center": [
+          0.5,
+          -9.5
+        ],
+        "radius": 0.25,
+        "height": 1.75,
+        "velocity": [
+          0,
+          1.0
+        ],
+        "label": "person A"
+      },
+      {
+        "kind": "cylinder",
+        "center": [
+          0.45,
+          -14.0
+        ],
+        "radius": 0.25,
+        "height": 1.75,
+        "velocity": [
+          0,
+          1.1
+        ],
+        "label": "person B"
+      },
+      {
+        "kind": "cylinder",
+        "center": [
+          -0.75,
+          -6.0
+        ],
+        "radius": 0.25,
+        "height": 1.75,
+        "velocity": [
+          0.6,
+          0
+        ],
+        "from": 2.5,
+        "to": 5.3,
+        "label": "person C crossing"
+      }
+    ],
+    "sensor": {
+      "noise": 0.005,
+      "seed": 23
+    }
+  },
+  "expect": [
+    {
+      "from": 0.3,
+      "to": 2.05,
+      "columns": [
+        3
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 0.3,
+      "to": 2.45,
+      "columns": [
+        4
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 0.3,
+      "to": 10,
+      "columns": [
+        0,
+        1
+      ],
+      "band": 2,
+      "label": "left wall (band 2)"
+    },
+    {
+      "from": 0.3,
+      "to": 10,
+      "columns": [
+        2
+      ],
+      "band": 3,
+      "label": "left wall (band 3)"
+    },
+    {
+      "from": 2.15,
+      "to": 3.35,
+      "columns": [
+        5
+      ],
+      "band": 4,
+      "label": "right wall (band 4)"
+    },
+    {
+      "from": 2.25,
+      "to": 3.75,
+      "columns": [
+        6
+      ],
+      "band": 4,
+      "label": "right wall (band 4)"
+    },
+    {
+      "from": 2.85,
+      "to": 3.55,
+      "columns": [
+        3
+      ],
+      "band": 4,
+      "label": "person C crossing (band 4)"
+    },
+    {
+      "from": 4.35,
+      "to": 10,
+      "columns": [
+        3
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 6.85,
+      "to": 10,
+      "columns": [
+        4
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 7.25,
+      "to": 10,
+      "columns": [
+        5,
+        6
+      ],
+      "band": 4,
+      "label": "right wall (band 4)"
+    }
+  ]
+}

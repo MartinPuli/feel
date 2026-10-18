@@ -12,6 +12,10 @@ Written for someone who has not used either slicer before. Every click is spelle
 1. Copy the folder `stl/print-oct17/` (8 files, 44 MB) to a USB stick. Also keep this page open on your phone.
 2. Bring the finished print back in a box; the pins plate is fragile until the pins are snipped off.
 
+## Which chassis
+
+Print **`chassis_loose.stl`**. The original `chassis.stl` has a closed window in the bulkhead that the servo must slide through sideways with 0.2 mm of room; a hand fit on Oct 17 showed it can't be assembled. `chassis_loose` opens that window at the top so each servo drops straight in, gives 0.5 mm per side (prints fine with a 0.6 nozzle), and runs the wire slot across all seven pockets. Servos are glued at their ears once aligned with their shafts.
+
 ## What you are printing, and in what order
 
 Two jobs. Start Job 1 first because it's the long one; Job 2 can run on a second printer if there is one, or after.
@@ -19,11 +23,18 @@ Two jobs. Start Job 1 first because it's the long one; Job 2 can run on a second
 | Job | Files | Rough time | Material |
 |---|---|---|---|
 | 1. Shafts | `shaft4.stl` × **7** | 3–4 h | PLA, any colour |
-| 2. Body | `chassis.stl`, `guide.stl`, `face.stl`, `pack_tray.stl`, `foam_template.stl` | 5–7 h total; may not all fit in one go, see below | PLA, any colour |
+| 2. Body | **`chassis_loose.stl`** (not `chassis.stl`), `guide.stl`, `face.stl`, `pack_tray.stl`, `foam_template.stl` | 5–7 h total; may not all fit in one go, see below | PLA, any colour |
 | 3. Pins | `pins.stl` × 1 | 2–3 h | PLA, a **different colour** from the face if you can; dark is best |
 | Only if the servo test showed ~175° | `shaft.stl` × 7 | 3–4 h | PLA |
 
 If you can only do one thing before closing: **Job 1 (shaft4)** and **the pins**. Those are the parts that make it work. The chassis and face can print in the uncertain after-hours slot.
+
+## Shaft strength
+
+The first shafts snapped where the stem meets the coupling disc, within two rotations. `shaft4.stl` (and `shaft.stl`) in `stl/print-oct17/` now have a reinforced coupling: a thicker root and a fillet behind the disc. Same length, same fit. Two print choices matter as much as the geometry:
+
+- **Hotter and slower.** On the Prusa, Filament Settings → Temperature → nozzle **+10 °C** over the PLA default (e.g. 215 → 225). Layer bonding is what fails; heat helps it.
+- **PETG if there's a spool.** PETG across layers is far tougher than PLA. Same settings otherwise; the Prusa's "Generic PETG" filament profile sets the temperatures. The Bambu has PolyLite PETG in slot 5 but a 0.6 nozzle, so shafts stay on the Prusa.
 
 ## The settings, all in one table
 

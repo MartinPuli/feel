@@ -38,6 +38,23 @@
 > in the simulator) and the UI suite pass locally. Ethan's own caveats below still hold: nothing of
 > his has run on a hand, a LiDAR map, a route or a physical column.
 
+> Steady pins, path wave and a floor that follows the wearer (October 17, field report
+> after a stair descent): (1) a sector now reports its third-nearest confident LiDAR
+> point and `SectorFilter` steadies bands between frames (nearer after two agreeing
+> frames, under 0.9 m at once; farther or unknown after four frames and 10 cm past the
+> boundary), so walking bob and stray pixels no longer flutter the pins; (2) `PathWave`
+> runs a dot from the centre column toward the route while the wearer turns, with no
+> sign, never covering a raised pin, so a one-column doorway is found by turning, and a
+> detected target that turns out of view keeps its route for 8 s; (3) calibration now
+> latches the camera's height above the floor and recomputes the floor level from the
+> worn camera every frame, so a wall at the bottom of a staircase is back inside the
+> 0.6–2.1 m window; the floor map restarts when the level moves over 0.4 m. Local
+> results: 247 FeelCore tests (19 new) and 8 FeelSim tests pass; Lantern builds for the
+> iPhone 17 Pro simulator; all 12 replay scenes pass or stay KNOWN (the LiDAR-outlier
+> scene is now a plain PASS with zero flicker; the lintel and slow-detector issues
+> remain). Replay baselines were re-accepted for the steadying delay. Not yet tried on
+> the phone: how the wave feels, the stair walk, and the turn-rate threshold.
+
 > Replay harness (October 17): `python3 simulation/run.py` replays labelled depth
 > recordings (12 synthetic scenes now; iPhone recordings via the new Lantern
 > **Record depth** toggle) through the shared FeelCore depth step, the production
