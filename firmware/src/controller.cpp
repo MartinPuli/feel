@@ -79,6 +79,7 @@ void Controller::neutralize() {
     state_.sequenceValid = false;
     state_.rawPulse = false;
     state_.tapActive = false;
+    heldDrop_.fill(0);
 }
 
 void Controller::connect(uint32_t now) {
@@ -110,6 +111,14 @@ void Controller::tick(uint32_t now) {
     if (state_.active && static_cast<uint32_t>(now - lastCommandMs_) >= kWatchdogMs) {
         neutralize();
         ++state_.timeouts;
+    }
+    // Held drop: no packet followed the one-packet drop, so raise the pin again.
+    // Does not refresh lastCommandMs_; the watchdog still counts from the packet.
+    if (state_.active && static_cast<uint32_t>(now - heldDropEpochMs_) >= kHeldDropMs) {
+        for (std::size_t i = 0; i < kColumns; ++i) {
+            if (heldDrop_[i] != 0 && state_.bands[i] == 0) state_.bands[i] = heldDrop_[i];
+        }
+        heldDrop_.fill(0);
     }
     updateOutput(now);
 }
@@ -149,6 +158,11 @@ Result Controller::receive(const uint8_t* data, std::size_t length, uint32_t now
         if (delta == 0) return reject(Result::Duplicate);
         if (delta >= 128) return reject(Result::StaleSequence);
     }
+    for (std::size_t i = 0; i < kColumns; ++i) {
+        heldDrop_[i] = state_.active && state_.bands[i] != 0 && packet.bands[i] == 0 ?
+            state_.bands[i] : 0;
+    }
+    heldDropEpochMs_ = now;
     apply(packet.bands, packet.highlight, now);
     state_.lastSequence = packet.sequence;
     state_.sequenceValid = true;

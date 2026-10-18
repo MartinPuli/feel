@@ -98,9 +98,15 @@ pins felt by motion:
 
 Servo budget: an FS0307 turns 60° in about 0.10 s unloaded, so the 29° drop to the gap is about
 50 ms each way and up to twice that under the cam; a dropped packet is back up within about 200 ms,
-and no period may be shorter than three packets. None of this is measured on hardware yet. A BLE
-blackout that begins right after a drop packet leaves the firmware holding that pin down until
-packets resume or its 500 ms watchdog fires (`simulation/scenarios/packet-loss-failsafe.json`).
+and no period may be shorter than three packets. None of this is measured on hardware yet.
+
+Held drop (firmware, `kHeldDropMs = 150`): when an accepted packet lowers a column from a raised band
+to 0, the puck remembers that band and, if no further packet is accepted within 150 ms, commands it
+again: a tap that was never ended is a tap, not a disappearance. A later packet always wins, so a
+packet that keeps the column at 0 is a real disappearance and the pin stays down; the 500 ms watchdog
+still counts from the last packet. So a BLE blackout that begins right after a drop packet, or a lost
+raise packet, costs one restore of about 150 ms rather than the held scene
+(`simulation/scenarios/packet-loss-failsafe.json`). Host-tested; this firmware is not flashed yet.
 
 A requested angle is not a measured angle. A continuous servo transition between
 distant bands necessarily crosses intermediate cam lobes; do not claim no

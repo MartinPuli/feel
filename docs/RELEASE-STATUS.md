@@ -1,3 +1,20 @@
+## October 17 — firmware held-drop rule (not flashed)
+
+The portable controller now restores a one-packet drop that no packet follows: when an accepted
+packet lowers a column from a raised band to 0, the band is remembered and commanded again if no
+further packet is accepted within `kHeldDropMs = 150` (beside `kWatchdogMs` in
+`firmware/include/feel/controller.hpp`). A later packet always wins, a packet that keeps 0 is a real
+disappearance, the restore does not refresh the 500 ms watchdog, and bench `B`/`HL`/`US` are
+unchanged. The `packet-loss-failsafe` known issue (a blackout starting on a presence-tap frame held
+the pins down until the watchdog) is removed.
+
+| Gate | Observed result |
+|---|---|
+| Firmware host tests (`sh firmware/test/run_host_tests.sh`) | PASS: 44/44 controller tests (two new) plus every sibling suite; one single-live test now sends a second zero packet to mean a real disappearance. |
+| Simulation (`python3 simulation/run.py --no-web`) | PASS: 13 scenarios, 9 PASS, 4 KNOWN, 0 FAIL; `packet-loss-failsafe` PASS at accuracy 1.0, its baseline regenerated (digest changed from t=2.15 s); all other baselines same. |
+| Board build (`sh firmware/build.sh`) | NOT RUN: PlatformIO is not installed in this environment. |
+| Physical hardware | NOT VERIFIED: nothing flashed; the 150 ms window and the felt crispness of a restore are untested on a servo. |
+
 ## October 17 — V2–V4 integration and current-main validation
 
 This entry supersedes older integration and upload-default statements below.
