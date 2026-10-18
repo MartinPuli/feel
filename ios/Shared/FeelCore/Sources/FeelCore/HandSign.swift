@@ -94,8 +94,9 @@ public struct HandSignObservation: Equatable, Sendable {
 public struct HandSignTrigger: Sendable {
     public var holdSeconds = 0.4
     public var minDetections = 2
-    /// A gap longer than this between detections restarts the hold.
-    public var maxGapSeconds = 0.4
+    /// A gap longer than this between detections restarts the hold. The detector shares a queue with the
+    /// pointing detector and runs every 0.15 to 0.5 s on a phone, and the pose can flicker for a frame.
+    public var maxGapSeconds = 0.7
     /// The sign must be absent this long before it can fire again.
     public var releaseSeconds = 0.8
     public private(set) var holding = false

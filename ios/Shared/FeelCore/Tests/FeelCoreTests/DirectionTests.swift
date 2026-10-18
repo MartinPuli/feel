@@ -94,11 +94,14 @@ final class HandSignTests: XCTestCase {
     }
     func testBriefFlashDoesNotFire() {
         var trigger=HandSignTrigger()
-        XCTAssertEqual(run(&trigger,[(0,true),(0.15,true),(0.3,true),(0.45,false),(0.6,false),(1.0,true),(1.15,false)]),[])
+        XCTAssertEqual(run(&trigger,[(0,true),(0.15,true),(0.3,true),(0.45,false),(0.6,false),(1.1,true),(1.25,false)]),[])
     }
     func testGapRestartsHold() {
         var trigger=HandSignTrigger()
-        XCTAssertEqual(run(&trigger,[(0,true),(0.15,true),(0.3,true),(0.9,true),(1.05,true),(1.2,true),(1.35,true),(1.5,true)]),[1.35])
+        // 0.8 s without the sign restarts the hold; a missed frame or two (under 0.7 s) does not.
+        XCTAssertEqual(run(&trigger,[(0,true),(0.15,true),(0.3,true),(1.1,true),(1.25,true),(1.4,true),(1.55,true),(1.7,true)]),[1.55])
+        var flicker=HandSignTrigger()
+        XCTAssertEqual(run(&flicker,[(0,true),(0.15,false),(0.3,true),(0.45,false),(0.6,true)]),[0.6])
     }
     func testReleaseThenFireAgain() {
         var trigger=HandSignTrigger()
