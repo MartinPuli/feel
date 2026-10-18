@@ -7,16 +7,20 @@ struct TargetInput: Decodable {
     var confidence: Double?, label: String?
     var observation: TargetObservation { .init(bearingDegrees:bearingDegrees,distance:distance,timestamp:timestamp,confidence:confidence ?? 1,label:label ?? "target") }
 }
+/// A LiDAR return for the `lidar` op: an obstacle at a bearing (degrees, right positive) and range
+/// (metres), `height` metres above the floor (default 1.0, chest height for a camera held at 1 m).
+struct ObstacleInput: Decodable { var bearingDegrees: Double, distance: Double, height: Double? }
 struct Command: Decodable {
     var op: String
     var seq: Int?, bands: [Int]?, highlight: Int?, hex: String?
     var now: Double?, frameTimestamp: Double?, tracking: Bool?, distances: [Double?]?, target: TargetInput?, floorCalibrated: Bool?
+    var obstacles: [ObstacleInput]?
     var expectedHex: String?
 }
 struct Reply: Encodable {
     var valid: Bool
-    var hex: String?, seq: Int?, bands: [UInt8]?, highlight: UInt8?, state: String?, error: String?
-    init(packet: FeelPacket, state: String?=nil) { valid=true; hex=packet.hex; seq=Int(packet.sequence); bands=packet.bands; highlight=packet.highlight; self.state=state }
+    var hex: String?, seq: Int?, bands: [UInt8]?, highlight: UInt8?, state: String?, distances: [Double?]?, error: String?
+    init(packet: FeelPacket, state: String?=nil, distances: [Double?]?=nil) { valid=true; hex=packet.hex; seq=Int(packet.sequence); bands=packet.bands; highlight=packet.highlight; self.state=state; self.distances=distances }
     init(error: String) { valid=false; self.error=error }
 }
 enum CommandError: Error { case missing(String), range(String), mismatch(String) }
@@ -37,6 +41,20 @@ func execute(_ command: Command) throws -> Reply {
         guard let now=command.now,let time=command.frameTimestamp,let tracking=command.tracking,let distances=command.distances else { throw CommandError.missing("perceive fields") }
         let output=TactileEncoder.encode(sequence:try byte(command.seq,"seq"),now:now,frameTimestamp:time,tracking:tracking,distances:distances,target:command.target?.observation,floorCalibrated:command.floorCalibrated ?? true)
         reply=Reply(packet:output.packet,state:output.state.rawValue)
+    case "lidar":
+        // Synthetic LiDAR: each obstacle leaves a real surface (`DepthProjector.support` returns) and
+        // goes through the production projector and encoder, exactly as a depth frame would.
+        guard let obstacles=command.obstacles else { throw CommandError.missing("obstacles") }
+        let pose=CameraPose(position:Vector3(0,1,0))
+        let samples=obstacles.flatMap { o -> [DepthSample] in
+            let bearing=o.bearingDegrees * .pi/180
+            let point=Vector3(sin(bearing)*o.distance,(o.height ?? 1.0)-1.0,-cos(bearing)*o.distance)
+            return Array(repeating:DepthSample(cameraPoint:point,confidence:2),count:DepthProjector.support)
+        }
+        let ranges=DepthProjector.sectors(samples:samples,pose:pose,floorY:0)
+        let now=command.now ?? 10
+        let output=TactileEncoder.encode(sequence:try byte(command.seq ?? 0,"seq"),now:now,frameTimestamp:command.frameTimestamp ?? now,tracking:command.tracking ?? true,distances:ranges,target:command.target?.observation,floorCalibrated:command.floorCalibrated ?? true)
+        reply=Reply(packet:output.packet,state:output.state.rawValue,distances:ranges)
     default: throw CommandError.missing("Unknown op: \(command.op)")
     }
     if let expected=command.expectedHex, expected.lowercased() != reply.hex { throw CommandError.mismatch("expected \(expected), got \(reply.hex ?? "nil")") }

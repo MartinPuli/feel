@@ -54,3 +54,5 @@ python3 "$firmware_dir/test/test_production_config.py"
   -I "$firmware_dir/include" "$firmware_dir/src/controller.cpp" \
   "$firmware_dir/test/pin_rise_tests.cpp" -o "$firmware_dir/build/pin-rise-tests"
 "$firmware_dir/build/pin-rise-tests"
+
+python3 "$firmware_dir/test/test_pin_test.py"

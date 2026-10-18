@@ -91,7 +91,7 @@ The prototype permits one BLE connection and does not implement pairing/authenti
 
 ## Bench commands (115200 baud, newline)
 
-Disconnect the phone first. No servo motion command is accepted until `ARM`. Arming lasts 30 seconds, regardless of keepalives. Motion expires at 500 ms; this is deliberate for both BLE **and serial**. A manual `B` demonstrates a brief move. Use the bounded `tools/bench.py` helper to hold a supervised position while inspecting it.
+Disconnect the phone first. No servo motion command is accepted until `ARM`. Arming lasts 30 seconds, regardless of keepalives. Motion expires at 500 ms; this is deliberate for both BLE **and serial**. A manual `B` demonstrates a brief move. Use the bounded `tools/bench.py` helper to hold a supervised position while inspecting it. To raise a chosen set of pins on the live firmware over BLE, or from a LiDAR-style scene through the production projector, use `tools/pin_test.py`; see [PIN-TEST.md](../docs/PIN-TEST.md).
 
 | Command | Meaning |
 |---|---|
