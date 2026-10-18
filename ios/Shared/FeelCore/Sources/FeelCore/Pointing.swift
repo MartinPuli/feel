@@ -115,14 +115,14 @@ public enum PuckBackLayout {
         guard p.isFinite else { return nil }
         let x = -p.x
         let c=Int(floor((x+3.5*columnPitch)/columnPitch)), r=Int(floor((p.y-(firstRowV-rowPitch/2))/rowPitch))
-        guard (0..<7).contains(c), (0..<4).contains(r) else { return nil }
+        guard PuckLayout.activeColumns.contains(c), (0..<4).contains(r) else { return nil }
         return PuckCell(column:c,band:UInt8(r+1))
     }
     /// Column under a sheet u coordinate, ignoring the row.
     public static func column(atU u: Double) -> Int? {
         guard u.isFinite else { return nil }
         let c=Int(floor((-u+3.5*columnPitch)/columnPitch))
-        return (0..<7).contains(c) ? c : nil
+        return PuckLayout.activeColumns.contains(c) ? c : nil
     }
     /// Distance in mm from the point to the nearest edge of its cell (0 = on a boundary).
     public static func edgeMargin(at p: PlanePoint) -> Double? {
@@ -448,7 +448,7 @@ public struct PointingController: Sendable {
 
 /// Speech for one cell of the cached scene. Never claims a clear path.
 public enum PointingDescriber {
-    public static let directions = ["Far left","Left","Slightly left","Ahead","Slightly right","Right","Far right"]
+    public static let directions = ["Unused","Far left","Left","Slightly left","Slightly right","Right","Far right"]
     static func meters(_ d: Double) -> String {
         let r=(d*10).rounded()/10
         let text=r == r.rounded() ? String(format:"%.0f",locale:Locale(identifier:"en_US_POSIX"),r) : String(format:"%.1f",locale:Locale(identifier:"en_US_POSIX"),r)
@@ -457,7 +457,7 @@ public enum PointingDescriber {
     /// One finger on a cell: just the name. "Possible door." / "Chair." / "Obstacle." / "Nothing measured."
     /// `targetName` is how to say the selected target; nil uses its label.
     public static func describe(_ cell: PuckCell, in scene: CachedScene, targetName: String? = nil) -> String {
-        guard (0..<7).contains(cell.column), scene.distances.count == 7 else { return "Point at one of the pins." }
+        guard PuckLayout.activeColumns.contains(cell.column), scene.distances.count == 7 else { return "Point at one of the pins." }
         let c=cell.column
         if let t=scene.target, t.valid(at:scene.timestamp), let span=t.columns, span.contains(c) {
             let name=(targetName ?? t.label).trimmingCharacters(in:.whitespaces)
@@ -508,7 +508,7 @@ public enum PointingRouter {
     /// distance plus `minMargin`, or the route would "arrive" as soon as it starts.
     public static var standOff = 0.5, minMargin = 0.3
     static var minGoal: Double { DirectionCue.arriveMeters+minMargin }
-    public static func bearing(ofColumn c: Int) -> Double { -45+(Double(c)+0.5)*90/7 }
+    public static func bearing(ofColumn c: Int) -> Double { PuckLayout.bearing(ofColumn: c) }
     /// A point `distance` metres away along `bearing` (degrees, + right) on the horizontal plane.
     public static func worldPoint(bearing: Double, distance: Double, pose: CameraPose) -> Vector3? {
         let f=Vector3(-pose.back.x,0,-pose.back.z), r=Vector3(pose.right.x,0,pose.right.z)
@@ -519,7 +519,7 @@ public enum PointingRouter {
     }
     /// Where two fingers on `column` of the cached scene should route to, or why nowhere.
     public static func plan(column c: Int, scene: CachedScene, targetName: String?) -> Plan {
-        guard (0..<7).contains(c), scene.distances.count == 7 else { return .refused("Lay two fingers along one column.") }
+        guard PuckLayout.activeColumns.contains(c), scene.distances.count == 7 else { return .refused("Lay two fingers along one column.") }
         let way=PointingDescriber.directions[c].lowercased()
         if let t=scene.target, t.valid(at:scene.timestamp), let span=t.columns, span.contains(c),
            let goal=worldPoint(bearing:t.bearingDegrees,distance:t.distance,pose:scene.pose) {

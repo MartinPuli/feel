@@ -1,3 +1,7 @@
+> Current six-column revision: GPIO32 is unused. Use [SIX-COLUMN-LAYOUT.md](SIX-COLUMN-LAYOUT.md)
+> for current wiring and the `esp32-six-live` target. Historical single-servo
+> examples below using GPIO32 are superseded; current single profiles use GPIO33.
+
 # Single-servo live V1: nominal120° mapping
 
 The user requested the production mapping instead of the small midpoint demo.

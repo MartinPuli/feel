@@ -43,6 +43,12 @@ public struct FeelPacket: Equatable, Codable, Sendable {
         }
         try self.init(bytes: bytes)
     }
+    /// Final adapter for every app version; legacy packet parsing remains compatible.
+    public var forActiveLayout: Self {
+        var activeBands = bands
+        activeBands[0] = 0
+        return try! Self(sequence: sequence, bands: activeBands, highlight: highlight == 0 ? 255 : highlight)
+    }
     public var bytes: [UInt8] { [sequence] + bands + [highlight] }
     public var data: Data { Data(bytes) }
     public var hex: String { bytes.map { String(format: "%02x", $0) }.joined() }
@@ -56,21 +62,30 @@ public enum FeelBLE {
     public static let status = "7D2A0003-5C6B-4F9A-8E21-0BCE7F0A1000"
 }
 
+/// Six physical columns retain their original wire slots and GPIO mapping.
+public enum PuckLayout {
+    public static let activeColumns = 1...6
+    public static let physicalColumnCount = 6
+    public static func bearing(ofColumn column: Int) -> Double {
+        -45 + (Double(column - 1) + 0.5) * 90 / 6
+    }
+}
+
 public enum TactileGeometry {
     public static func band(distance: Double) -> UInt8 {
         guard distance.isFinite, distance > 0, distance <= 4 else { return 0 }
         if distance < 0.9 { return 1 }; if distance < 1.6 { return 2 }
         if distance < 2.5 { return 3 }; return 4
     }
-    /// Seven equal sectors. x right, camera forward -z. Internal edges choose right.
+    /// Six equal sectors in wire slots 1...6; slot 0 is unused. x right, camera forward -z. Internal edges choose right.
     public static func column(bearingDegrees: Double) -> Int? {
         guard bearingDegrees.isFinite, bearingDegrees >= -45, bearingDegrees <= 45 else { return nil }
         if bearingDegrees == 45 { return 6 }
-        let scaled = (bearingDegrees + 45) * 7 / 90
+        let scaled = (bearingDegrees + 45) * 6 / 90
         // Avoid a round-off drift to the left for an exactly constructed boundary.
         let nearest = scaled.rounded()
         let normalized = abs(scaled - nearest) <= 1e-12 ? nearest : scaled
-        return min(6, max(0, Int(floor(normalized))))
+        return 1 + min(5, max(0, Int(floor(normalized))))
     }
     public static func bearing(x: Double, z: Double) -> Double? {
         guard x.isFinite, z.isFinite, z < 0 else { return nil }

@@ -15,7 +15,7 @@ inline SevenLiveResult sevenLivePlan(const Snapshot& state, SevenLivePlan& outpu
     if (!state.connected || !state.active || state.benchArmed || state.rawPulse)
         return SevenLiveResult::Off;
     SevenLivePlan candidate;
-    for (std::size_t column = 0; column < kColumns; ++column) {
+    for (std::size_t column = kFirstActiveColumn; column < kColumns; ++column) {
         const uint16_t pulse = livePulseForColumn(state, column);
         if (!pulse || !servoDuty(pulse, kMinPulseUs, kSingleLiveMaximumUs, candidate.duties[column]))
             return SevenLiveResult::Invalid;

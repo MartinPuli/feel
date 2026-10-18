@@ -76,9 +76,9 @@ final class PathWaveTests: XCTestCase {
     }
     func testTurnSweepsFromCentreToRouteColumnAndRepeats() {
         var w=PathWave(); turn(&w)
-        // 30° → column 5: centre, 4, 5; the end pin holds, a rest, then again.
-        XCTAssertEqual(frames(&w,from:1,count:12),["...4...","...44..","....44.",".....4.",".....4.",".....4.",".......",".......",".......",".......","...4...","...44.."])
-        XCTAssertEqual(w.column,5); XCTAssertTrue(w.isActive)
+        // 30° → slot 6 (six sectors in slots 1...6): centre, 4, 5, 6; the end pin holds, a rest, then again.
+        XCTAssertEqual(frames(&w,from:1,count:12),["...4...","...44..","....44.",".....44","......4","......4","......4",".......",".......",".......",".......","...4..."])
+        XCTAssertEqual(w.column,6); XCTAssertTrue(w.isActive)
     }
     func testBeyondTheFieldRunsToTheEdge() {
         var w=PathWave(); turn(&w)

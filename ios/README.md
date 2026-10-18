@@ -4,7 +4,7 @@ This source recreates the intended system from the handoff. No original Swift pr
 
 ## What is implemented
 
-- SwiftUI run screen, accessible labels, visible live/simulation/uncertain states, stop action and a seven-column virtual puck.
+- SwiftUI run screen, accessible labels, visible live/simulation/uncertain states, stop action and a six-column virtual puck (wire slots 1–6; GPIO32/slot 0 unused).
 - ARKit world tracking and native LiDAR `sceneDepth`, pixel confidence filtering, scaled intrinsics, floor-relative height rejection and nearest horizontal range per sector.
 - Vision/CoreML adapter, built-in EXIT OCR, person detection and honestly labeled door candidates. Chair uses the separately downloaded genuine pretrained model.
 - BLE discovery and explicit puck selection, nine-byte commands at 10 Hz, write backpressure, newest-only queue, stale-queue expiry, callback identity checks, serialized same-device reconnect, and the firmware's 15-byte status decoder.
@@ -93,6 +93,23 @@ Say photo to check again." Saying photo runs the normal Where-is photo path. The
 throughout; memory only replaces the photo round trip. `ios/scripts/make_room_tag.py` redraws the tag. The tag
 recognition, the placement accuracy after relocalization and the cue have not been tested on a device yet.
 
+### Journeys and leading the way
+
+With the tag seen, every walk toward a Where-is or remembered target is recorded as a journey in the tag's frame
+(FeelCore `Journey`: a pose step every 0.5 m or 2 s, the blocked floor cells seen on the trip, cue latencies, arrival
+time and distance) and kept as one JSON file per walk under `Application Support/Journeys` (`Services/JourneyLog.swift`).
+Once the route planner has a route to the target, it is split into progress points every 6 m and the pins point to
+the next point instead of the target; within 1 m the next one takes over ("Next point."), and the last point is the
+target ("You're there"). The arrows keep following the live route, and the pins keep showing live depth: a route is a
+suggested direction, never a clear path. "Lead me to the exit" calls the `lead_me` tool for a place remembered in
+this room. `get_status.room_memory.journey` reports the walk being recorded and the point in use.
+
+To get the journeys off the phone, call `JourneyLog.export()` (from the debugger, or wire it to a button later): it
+writes every stored journey as one JSON array to `Documents/journeys.json`, which the **Files** app shows under
+**On My iPhone → FEEL** (the app lists its Documents folder there, like the depth recordings). Share it from Files
+and seed it into Chalk with `protocol/journey-v1.json` as the shape. There is no network upload yet:
+`JourneyLog.share` is the empty Supabase write. Nothing of this has run on a device.
+
 ## BLE and physical-output status
 
 Choose the intended device under **Puck connection**; the app does not automatically connect to an arbitrary puck. Packets use the UUIDs in `FeelBLE`, matching the firmware. Connection/status notifications do not prove actuation.
@@ -178,3 +195,15 @@ On this Linux host, portable sources and app syntax can be checked. Full Apple-f
 - [Nearby-object world transform](https://developer.apple.com/documentation/nearbyinteraction/nisession/worldtransform(for:))
 - [NI orientation guidance](https://developer.apple.com/design/human-interface-guidelines/nearby-interactions)
 - [Swift compiler driver fallback](https://github.com/swiftlang/swift/blob/main/docs/DebuggingTheCompiler.md)
+
+## Six-column hardware layout
+
+The current app maps the entire −45°…+45° view into six 15° sectors. Left to
+right, visible columns 1–6 retain wire slots 1–6 and GPIOs 33, 25, 26, 27, 14, 13.
+Slot 0 is reserved and always suppressed before BLE transmission. Packets remain
+nine bytes; legacy packet decoding remains compatible. Do not pair this app with
+old seven-sector firmware for a six-column assembly.
+
+Straight tactile cues use the middle pair, columns 3 and 4. The pointing back-sheet
+keeps its existing printed coordinates; the removed leftmost physical slot is
+rejected. No new mechanical spacing or servo angle is inferred by this change.

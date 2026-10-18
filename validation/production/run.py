@@ -134,18 +134,18 @@ def run(replay):
         r.reset()
         r.packet(0, encoded['hex'], f'Contract sample {index}', accepted=True, bands=bands)
     r.reset()
-    bands = [1,2,3,4,4,0,0]
+    bands = [0,2,3,4,4,0,0]
     reply = r.perceive(100,254,[.2,.9,1.6,2.5,4,4.001,None])
     r.expect(reply['bands'], bands, 'distance interval edges')
     r.packet(100, reply['hex'], 'Swift perception → firmware', accepted=True, bands=bands)
     reply = r.perceive(200,255,[1]*7)
-    r.packet(200, reply['hex'], 'Sequence 255', accepted=True, bands=[2]*7)
+    r.packet(200, reply['hex'], 'Sequence 255', accepted=True, bands=[0]+[2]*6)
     reply = r.perceive(300,0,[2]*7)
-    r.packet(300, reply['hex'], 'Sequence wrap 255 → 0', accepted=True, bands=[3]*7)
-    r.packet(350, reply['hex'], 'Duplicate does not refresh', accepted=False, bands=[3]*7, result='duplicate')
+    r.packet(300, reply['hex'], 'Sequence wrap 255 → 0', accepted=True, bands=[0]+[3]*6)
+    r.packet(350, reply['hex'], 'Duplicate does not refresh', accepted=False, bands=[0]+[3]*6, result='duplicate')
     old = r.swift_call(op='encode',seq=255,bands=[4]*7,highlight=255)
-    r.packet(400,old['hex'],'Reordered packet', accepted=False, bands=[3]*7, result='stale_sequence')
-    r.command('TICK 799','Before watchdog', bands=[3]*7, active=True)
+    r.packet(400,old['hex'],'Reordered packet', accepted=False, bands=[0]+[3]*6, result='stale_sequence')
+    r.command('TICK 799','Before watchdog', bands=[0]+[3]*6, active=True)
     r.command('TICK 800','Exact 500ms watchdog', bands=[0]*7, highlight=255, active=False)
     r.packet(801,old['hex'],'Fresh baseline after watchdog',accepted=True,bands=[4]*7)
     r.command('DISCONNECT 802','Immediate disconnect',bands=[0]*7,highlight=255)
@@ -161,7 +161,7 @@ def run(replay):
         r.expect(p['bands'],[0]*7,name)
         r.packet(ms,p['hex'],name,accepted=True,bands=[0]*7,highlight=255)
     r.reset(2000)
-    for index,(bearing,column) in enumerate([(-45,0),(0,3),(45,6)]):
+    for index,(bearing,column) in enumerate([(-45,1),(0,4),(45,6)]):
         ms=2000+index*100
         p=r.perceive(ms,index,[2]*7,target={'bearingDegrees':bearing,'distance':2,'timestamp':ms/1000})
         r.expect(p['highlight'],column,'target bearing')

@@ -2,37 +2,37 @@ import XCTest
 @testable import FeelCore
 
 final class TargetSpanTests: XCTestCase {
-    let sector = 90.0/7
+    let sector = 90.0/6
     func encode(_ t: TargetObservation, sequence: UInt8 = 1, distances: [Double?] = Array(repeating:nil,count:7)) -> EncoderOutput {
         TactileEncoder.encode(sequence:sequence,now:10,frameTimestamp:10,tracking:true,distances:distances,target:t)
     }
     func testPointTargetKeepsSingleColumnFirmwareTap() {
         let out=encode(.init(bearingDegrees:0,distance:2,timestamp:10))
-        XCTAssertEqual(out.targetColumns,3...3); XCTAssertEqual(out.packet.highlight,3); XCTAssertEqual(out.packet.bands,[0,0,0,3,0,0,0])
+        XCTAssertEqual(out.targetColumns,4...4); XCTAssertEqual(out.packet.highlight,4); XCTAssertEqual(out.packet.bands,[0,0,0,0,3,0,0])
     }
     func testWideTargetCoversColumnsAndUsesPhoneTap() {
         let t=TargetObservation(bearingDegrees:0,distance:2,timestamp:10,halfWidthDegrees:sector*1.2)
-        XCTAssertEqual(t.columns,2...4)
+        XCTAssertEqual(t.columns,3...5)
         let out=encode(t)
-        XCTAssertEqual(out.packet.highlight,255); XCTAssertEqual(out.packet.bands,[0,0,3,3,3,0,0])
+        XCTAssertEqual(out.packet.highlight,255); XCTAssertEqual(out.packet.bands,[0,0,0,3,3,3,0])
     }
     func testGroupTapDropsSpanOncePerPeriod() {
         let t=TargetObservation(bearingDegrees:0,distance:2,timestamp:10,halfWidthDegrees:sector*1.2)
         let dropped=(0..<12).filter { encode(t,sequence:UInt8($0)).packet.bands[3] == 0 }
         XCTAssertEqual(dropped,[0,6])
-        XCTAssertEqual(encode(t,sequence:6).targetColumns,2...4)
+        XCTAssertEqual(encode(t,sequence:6).targetColumns,3...5)
     }
     func testSmallOverlapDoesNotJoinNeighbour() {
         // Centre of column 3, edges 2° into columns 2 and 4: below the 3° minimum overlap.
-        XCTAssertEqual(TargetObservation(bearingDegrees:0,distance:2,timestamp:10,halfWidthDegrees:sector/2+2).columns,3...3)
-        XCTAssertEqual(TargetObservation(bearingDegrees:0,distance:2,timestamp:10,halfWidthDegrees:sector/2+4).columns,2...4)
+        XCTAssertEqual(TargetObservation(bearingDegrees:7.5,distance:2,timestamp:10,halfWidthDegrees:sector/2+2).columns,4...4)
+        XCTAssertEqual(TargetObservation(bearingDegrees:7.5,distance:2,timestamp:10,halfWidthDegrees:sector/2+4).columns,3...5)
     }
     func testSpanClipsAtFieldEdge() {
         XCTAssertEqual(TargetObservation(bearingDegrees:40,distance:2,timestamp:10,halfWidthDegrees:30).columns,4...6)
     }
     func testSpanPreservesCloserObstacles() {
         let t=TargetObservation(bearingDegrees:0,distance:3,timestamp:10,halfWidthDegrees:sector*1.2)
-        XCTAssertEqual(encode(t,distances:[nil,nil,0.5,nil,4,nil,nil]).packet.bands,[0,0,1,4,4,0,0])
+        XCTAssertEqual(encode(t,distances:[nil,nil,0.5,nil,4,nil,nil]).packet.bands,[0,0,1,4,4,4,0])
     }
     func testInvalidTargetHasNoColumns() {
         let out=encode(.init(bearingDegrees:0,distance:2,timestamp:5,halfWidthDegrees:20))
@@ -40,7 +40,7 @@ final class TargetSpanTests: XCTestCase {
     }
     func testDecodingWithoutWidthIsPointTarget() throws {
         let t=try JSONDecoder().decode(TargetObservation.self,from:Data(#"{"bearingDegrees":0,"distance":2,"timestamp":1,"confidence":1,"label":"x"}"#.utf8))
-        XCTAssertEqual(t.halfWidthDegrees,0); XCTAssertEqual(t.columns,3...3)
+        XCTAssertEqual(t.halfWidthDegrees,0); XCTAssertEqual(t.columns,4...4)
     }
     func testCapturedTargetWidthScalesWithDistance() {
         let near=CapturedTarget(position:Vector3(0,0,-1),timestamp:1,halfWidthMeters:0.5).observation(pose:.identity,now:1)
@@ -81,14 +81,14 @@ final class HomographyTests: XCTestCase {
 
 final class PuckBackLayoutTests: XCTestCase {
     func testEveryCellCentreMapsBack() {
-        for c in 0..<7 { for b in UInt8(1)...4 {
+        for c in 1...6 { for b in UInt8(1)...4 {
             let cell=PuckCell(column:c,band:b)
             XCTAssertEqual(PuckBackLayout.cell(at:PuckBackLayout.center(of:cell)),cell)
             XCTAssertEqual(PuckBackLayout.edgeMargin(at:PuckBackLayout.center(of:cell)),6)
         } }
     }
     func testBackIsMirroredColumnZeroOnTheRight() {
-        XCTAssertEqual(PuckBackLayout.cell(at:PlanePoint(36,14.5))?.column,0)
+        XCTAssertNil(PuckBackLayout.cell(at:PlanePoint(36,14.5)))
         XCTAssertEqual(PuckBackLayout.cell(at:PlanePoint(-36,14.5))?.column,6)
         XCTAssertEqual(PuckBackLayout.cell(at:PlanePoint(0,53.5))?.band,4)
     }
@@ -238,17 +238,22 @@ final class PointingDescriberTests: XCTestCase {
     func testShortFormIsJustTheName() {
         let empty=CachedScene(timestamp:1,pose:.identity,tracking:true,distances:Array(repeating:nil,count:7),target:nil)
         XCTAssertEqual(PointingDescriber.describe(PuckCell(column:6,band:2),in:empty),"Nothing measured.")
-        // The door spans columns 1-3; column 4 has only a depth reading.
+        // In the six-active-column layout, the door spans columns 2-3.
         let s=CachedScene(timestamp:1,pose:.identity,tracking:true,distances:[nil,1.2,nil,nil,0.7,nil,nil],target:door)
-        XCTAssertEqual(PointingDescriber.describe(PuckCell(column:1,band:3),in:s,targetName:"Possible door"),"Possible door.")
+        XCTAssertEqual(PointingDescriber.describe(PuckCell(column:1,band:3),in:s,targetName:"Possible door"),"Obstacle.")
         XCTAssertEqual(PointingDescriber.describe(PuckCell(column:3,band:3),in:s),"Door candidate.")
         XCTAssertEqual(PointingDescriber.describe(PuckCell(column:4,band:1),in:s),"Obstacle.")
         XCTAssertEqual(PointingDescriber.describe(PuckCell(column:5,band:1),in:s),"Nothing measured.")
         XCTAssertEqual(PointingDescriber.describe(PuckCell(column:2,band:4),in:s,targetName:"Chair."),"Chair.")
     }
+    func testTargetInSpanNamedFirst() {
+        let t=TargetObservation(bearingDegrees:-15,distance:2.1,timestamp:1,label:"Door candidate",halfWidthDegrees:12)
+        let s=CachedScene(timestamp:1,pose:.identity,tracking:true,distances:[nil,nil,1.2,nil,nil,nil,nil],target:t)
+        XCTAssertEqual(PointingDescriber.describe(PuckCell(column:2,band:3),in:s,targetName:"Possible door"), "Possible door.")
+    }
     func testDetailedFormKeepsDirectionAndReadings() {
-        let s=CachedScene(timestamp:1,pose:.identity,tracking:true,distances:[nil,1.2,nil,nil,nil,nil,nil],target:door)
-        XCTAssertEqual(PointingDescriber.describeDetailed(PuckCell(column:1,band:3),in:s,targetName:"Possible door"),
+        let s=CachedScene(timestamp:1,pose:.identity,tracking:true,distances:[nil,nil,1.2,nil,nil,nil,nil],target:door)
+        XCTAssertEqual(PointingDescriber.describeDetailed(PuckCell(column:2,band:3),in:s,targetName:"Possible door"),
                        "Left: Possible door, 2.1 meters. Nearest reading 1.2 meters. The raised pin is closer than where you're pointing.")
     }
 }
@@ -307,7 +312,7 @@ final class PointingRouterTests: XCTestCase {
     }
     func testTargetInColumnIsTheGoal() {
         let t=TargetObservation(bearingDegrees:-19,distance:2.5,timestamp:10,label:"Door candidate",halfWidthDegrees:8)
-        guard case .route(let r,let spoken)=PointingRouter.plan(column:1,scene:scene([nil,1.5,nil,nil,nil,nil,nil],target:t),targetName:"Possible door") else { return XCTFail() }
+        guard case .route(let r,let spoken)=PointingRouter.plan(column:2,scene:scene([nil,nil,1.5,nil,nil,nil,nil],target:t),targetName:"Possible door") else { return XCTFail() }
         XCTAssertTrue(r.toTarget); XCTAssertEqual(r.distance,2.5)
         let expected=PointingRouter.worldPoint(bearing:-19,distance:2.5,pose:ahead)!
         XCTAssertEqual(r.goal.x,expected.x,accuracy:1e-9); XCTAssertEqual(r.goal.z,expected.z,accuracy:1e-9)
@@ -328,7 +333,7 @@ final class PointingRouterTests: XCTestCase {
         guard case .route(let r,let spoken)=PointingRouter.plan(column:3,scene:scene([nil,nil,nil,1.7,nil,nil,nil]),targetName:nil) else { return XCTFail() }
         XCTAssertTrue(r.highlightOnly); XCTAssertEqual(r.column,3); XCTAssertEqual(r.band,3); XCTAssertEqual(spoken,"")
         let near=TargetObservation(bearingDegrees:0,distance:1.1,timestamp:10,label:"Chair")
-        guard case .route(let t,let quiet)=PointingRouter.plan(column:3,scene:scene(Array(repeating:nil,count:7),target:near),targetName:nil) else { return XCTFail() }
+        guard case .route(let t,let quiet)=PointingRouter.plan(column:4,scene:scene(Array(repeating:nil,count:7),target:near),targetName:nil) else { return XCTFail() }
         XCTAssertTrue(t.highlightOnly); XCTAssertTrue(t.toTarget); XCTAssertEqual(t.band,2); XCTAssertEqual(quiet,"")
     }
 }

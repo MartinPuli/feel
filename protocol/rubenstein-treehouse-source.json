@@ -1,0 +1,15 @@
+{
+  "comment": "Reviewed from Harvard Gazette, 2025-11-03 (news.harvard.edu) and the building's contact page on 2026-10-17. Only what those pages state; no hours or accessible-entrance claims, which neither page gives.",
+  "venue_id": "rubenstein-treehouse",
+  "venue_name": "David Rubenstein Treehouse",
+  "entries": [
+    {"id": "treehouse-location", "kind": "place", "name": "David Rubenstein Treehouse",
+     "aliases": ["treehouse", "rubenstein treehouse", "the building", "conference center"],
+     "text": "Harvard's conference center at 20 Western Avenue in Allston, the front door to the Enterprise Research Campus. Phone 617-495-8422. Three floors; the main conference room, Canopy Hall, is on the top floor.",
+     "source_url": "https://news.harvard.edu/gazette/story/2025/11/designed-to-be-different-harvard-unveils-rubenstein-treehouse", "retrieved_at": "2026-10-18T01:00:00Z"},
+    {"id": "treehouse-first-floor", "kind": "place", "name": "First floor and cafe",
+     "aliases": ["cafe", "atrium", "first floor", "ground floor", "lobby"],
+     "text": "The first floor has a cafe in the atrium and is the public level. Opening hours and the accessible entrance are not stated on the sources reviewed; ask building staff.",
+     "source_url": "https://news.harvard.edu/gazette/story/2025/11/designed-to-be-different-harvard-unveils-rubenstein-treehouse", "retrieved_at": "2026-10-18T01:00:00Z"}
+  ]
+}

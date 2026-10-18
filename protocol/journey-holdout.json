@@ -1,0 +1,5 @@
+{
+  "schema": 1,
+  "about": "The frozen holdout for the journey evaluation (chalk/feel_chalk/journey_eval.py): journeys whose session_id is listed are scored, every other journey is development data and is only counted. Split by session so one walk cannot be in both sets. Add sessions here before tuning a path version against them, never after.",
+  "sessions": ["seed-session-02", "seed-session-03"]
+}

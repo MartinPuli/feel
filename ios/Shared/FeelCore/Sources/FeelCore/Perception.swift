@@ -174,6 +174,7 @@ public enum TactileEncoder {
         guard distances.count == 7, now.isFinite,frameTimestamp.isFinite,now>=frameTimestamp else { return neutral(.invalidFrame) }
         guard now-frameTimestamp<=0.250 else { return neutral(.staleDepth) }
         var bands=distances.map { $0.map { TactileGeometry.band(distance:$0) } ?? 0 }
+        bands[0] = 0 // GPIO32 is absent; never emit a command for the reserved slot.
         var highlight: UInt8=255
         var span: ClosedRange<Int>?
         if let target, target.valid(at:now), let columns=target.columns {

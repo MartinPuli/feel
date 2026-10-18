@@ -45,12 +45,12 @@ final class GeometryTests: XCTestCase {
         for (distance,band) in data { XCTAssertEqual(TactileGeometry.band(distance:distance),band,"\(distance)") }
     }
     func testSectorCenters() {
-        for column in 0..<7 { XCTAssertEqual(TactileGeometry.column(bearingDegrees:-45+(Double(column)+0.5)*90/7),column) }
+        for column in 1...6 { XCTAssertEqual(TactileGeometry.column(bearingDegrees:-45+(Double(column)-0.5)*15),column) }
     }
     func testSectorEdgesChooseRight() {
-        XCTAssertEqual(TactileGeometry.column(bearingDegrees:-45),0); XCTAssertEqual(TactileGeometry.column(bearingDegrees:45),6)
-        for edge in 1...6 {
-            let angle = -45+Double(edge)*90/7
+        XCTAssertEqual(TactileGeometry.column(bearingDegrees:-45),1); XCTAssertEqual(TactileGeometry.column(bearingDegrees:45),6)
+        for edge in 2...6 {
+            let angle = -45+Double(edge-1)*15
             XCTAssertEqual(TactileGeometry.column(bearingDegrees:angle),edge)
             XCTAssertEqual(TactileGeometry.column(bearingDegrees:angle-1e-8),edge-1)
             XCTAssertEqual(TactileGeometry.column(bearingDegrees:angle+1e-8),edge)
@@ -78,15 +78,16 @@ final class PerceptionTests: XCTestCase {
     func sample(_ x: Double=0,_ y: Double=0,_ z: Double = -1,_ confidence: UInt8=2) -> DepthSample { .init(cameraPoint:Vector3(x,y,z),confidence:confidence) }
     /// A real surface leaves several samples; the projector needs `DepthProjector.support` of them.
     func surface(_ x: Double=0,_ y: Double=0,_ z: Double = -1,_ confidence: UInt8=2) -> [DepthSample] { Array(repeating:sample(x,y,z,confidence),count:DepthProjector.support) }
+    /// Six sectors in wire slots 1...6: straight ahead is slot 4.
     func testNearestSurfacePerSector() {
         let result=DepthProjector.sectors(samples:surface(0,0,-2)+surface(0,0,-0.8)+surface(-1,0,-2)+surface(1,0,-2),pose:pose,floorY:0)
-        XCTAssertEqual(result[3],0.8); XCTAssertEqual(result[1],sqrt(5)); XCTAssertEqual(result[5],sqrt(5)); XCTAssertNil(result[0])
+        XCTAssertEqual(result[4],0.8); XCTAssertEqual(result[2],sqrt(5)); XCTAssertEqual(result[5],sqrt(5)); XCTAssertNil(result[0])
     }
     func testStrayPixelsNeverRaiseAPin() {
         XCTAssertEqual(DepthProjector.support,3)
-        XCTAssertNil(DepthProjector.sectors(samples:[sample(0,0,-1),sample(0,0,-1)],pose:pose,floorY:0)[3],"two stray points are not an obstacle")
-        XCTAssertEqual(DepthProjector.sectors(samples:surface(0,0,-2)+[sample(0,0,-0.5),sample(0.02,0,-0.7)],pose:pose,floorY:0)[3],2,"flyers ahead of a wall do not pull it closer")
-        XCTAssertEqual(DepthProjector.sectors(samples:[sample(0,0,-1)],pose:pose,floorY:0,support:1)[3],1)
+        XCTAssertNil(DepthProjector.sectors(samples:[sample(0,0,-1),sample(0,0,-1)],pose:pose,floorY:0)[4],"two stray points are not an obstacle")
+        XCTAssertEqual(DepthProjector.sectors(samples:surface(0,0,-2)+[sample(0,0,-0.5),sample(0.02,0,-0.7)],pose:pose,floorY:0)[4],2,"flyers ahead of a wall do not pull it closer")
+        XCTAssertEqual(DepthProjector.sectors(samples:[sample(0,0,-1)],pose:pose,floorY:0,support:1)[4],1)
     }
     func testRejectFloorCeilingBehindAndConfidence() {
         let result=DepthProjector.sectors(samples:surface(0,-0.5,-1)+surface(0,1.2,-1)+surface(0,0,1)+surface(0,0,-1,0)+surface(0,0,-1,3),pose:pose,floorY:0)
@@ -94,12 +95,12 @@ final class PerceptionTests: XCTestCase {
     }
     func testFloorCalibrationIsRequired() { XCTAssertTrue(DepthProjector.sectors(samples:surface(),pose:pose,floorY:nil).allSatisfy { $0 == nil }) }
     func testCalibratedFloorNotWorldOrigin() {
-        XCTAssertEqual(DepthProjector.sectors(samples:surface(),pose:CameraPose(position:Vector3(0,7,0)),floorY:6)[3],1)
+        XCTAssertEqual(DepthProjector.sectors(samples:surface(),pose:CameraPose(position:Vector3(0,7,0)),floorY:6)[4],1)
     }
     func output(now:Double=10,time:Double=10,tracking:Bool=true,distances:[Double?]=[0.5,1,2,3,nil,nil,nil],target:TargetObservation?=nil,floor:Bool=true)->EncoderOutput {
         TactileEncoder.encode(sequence:12,now:now,frameTimestamp:time,tracking:tracking,distances:distances,target:target,floorCalibrated:floor)
     }
-    func testProductionEncoding() { XCTAssertEqual(output().packet.hex,"0c01020304000000ff"); XCTAssertEqual(output().state,.live) }
+    func testProductionEncoding() { XCTAssertEqual(output().packet.hex,"0c00020304000000ff"); XCTAssertEqual(output().state,.live) }
     func testTrackingLossImmediatelyNeutral() { XCTAssertEqual(output(tracking:false).packet.bands,Array(repeating:0,count:7)); XCTAssertEqual(output(tracking:false).state,.trackingLost) }
     func testStaleDepthCutoff() { XCTAssertEqual(output(now:10.25).state,.live); XCTAssertEqual(output(now:10.25001).state,.staleDepth) }
     func testFutureInvalidTimestampAndMissingFrame() { XCTAssertEqual(output(time:11).state,.invalidFrame); XCTAssertEqual(output(now:.nan).state,.invalidFrame); XCTAssertEqual(output(distances:[]).state,.invalidFrame) }
@@ -107,15 +108,15 @@ final class PerceptionTests: XCTestCase {
     func testInvalidDistancesDoNotCreatePins() { XCTAssertEqual(output(distances:[nil,.nan,.infinity,-1,0,4.1,nil]).packet.bands,Array(repeating:0,count:7)) }
     func testTargetPreservesCloserObstacle() {
         let target=TargetObservation(bearingDegrees:0,distance:3,timestamp:10)
-        let p=output(distances:[nil,nil,nil,0.5,nil,nil,nil],target:target).packet
-        XCTAssertEqual(p.bands[3],1); XCTAssertEqual(p.highlight,3)
+        let p=output(distances:[nil,nil,nil,nil,0.5,nil,nil],target:target).packet
+        XCTAssertEqual(p.bands[4],1); XCTAssertEqual(p.highlight,4)
     }
     func testTargetCanRaisePreviouslyEmptyColumn() {
         let p=output(target:.init(bearingDegrees:40,distance:1.5,timestamp:10)).packet
         XCTAssertEqual(p.bands[6],2); XCTAssertEqual(p.highlight,6)
     }
     func testTargetExpiryAndConfidence() {
-        XCTAssertEqual(output(target:.init(bearingDegrees:0,distance:1,timestamp:9.5)).packet.highlight,3)
+        XCTAssertEqual(output(target:.init(bearingDegrees:0,distance:1,timestamp:9.5)).packet.highlight,4)
         for t in [TargetObservation(bearingDegrees:0,distance:1,timestamp:9.49999),.init(bearingDegrees:0,distance:1,timestamp:11),.init(bearingDegrees:0,distance:1,timestamp:10,confidence:0.49),.init(bearingDegrees:0,distance:1,timestamp:10,confidence:1.1),.init(bearingDegrees:90,distance:1,timestamp:10)] { XCTAssertEqual(output(target:t).packet.highlight,255) }
     }
     func testLostTrackingSuppressesFreshTarget() { XCTAssertEqual(output(tracking:false,target:.init(bearingDegrees:0,distance:1,timestamp:10)).packet.highlight,255) }
@@ -133,7 +134,7 @@ final class CapturedTargetTests:XCTestCase {
         let angle=30.0*Double.pi/180
         let turned=CameraPose(position:root.position,right:Vector3(cos(angle),0,sin(angle)),up:Vector3(0,1,0),back:Vector3(-sin(angle),0,cos(angle)))
         XCTAssertEqual(target.observation(pose:turned,now:10.1)!.bearingDegrees,-30,accuracy:1e-10)
-        XCTAssertEqual(TactileGeometry.column(bearingDegrees:target.observation(pose:turned,now:10.1)!.bearingDegrees),1)
+        XCTAssertEqual(TactileGeometry.column(bearingDegrees:target.observation(pose:turned,now:10.1)!.bearingDegrees),2)
     }
     func testTranslationRecomputesRange() {
         let target=CapturedTarget(position:Vector3(0,1,-2),timestamp:10)

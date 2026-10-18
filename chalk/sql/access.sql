@@ -7,6 +7,12 @@ create policy "own finds" on public.confirmed_finds for all
 alter table public.anchors enable row level security;
 create policy "own anchors" on public.anchors for all
     using (auth.uid() = user_id) with check (auth.uid() = user_id);
+alter table public.room_maps enable row level security;
+create policy "own room maps" on public.room_maps for all
+    using (auth.uid() = user_id) with check (auth.uid() = user_id);
+alter table public.journeys enable row level security;
+create policy "own journeys" on public.journeys for all
+    using (auth.uid() = user_id) with check (auth.uid() = user_id);
 alter table public.venues enable row level security;
 create policy "venues are public" on public.venues for select using (true);
 alter table public.venue_entries enable row level security;
@@ -17,9 +23,11 @@ create policy "venue entries are public" on public.venue_entries for select usin
 --    Give the Chalk data source this role as user "feel_chalk.<project ref>" on the session pooler.
 create role feel_chalk login password 'REPLACE-WITH-A-GENERATED-PASSWORD';
 grant usage on schema public to feel_chalk;
-grant select on public.confirmed_finds, public.anchors, public.venues, public.venue_entries to feel_chalk;
+grant select on public.confirmed_finds, public.anchors, public.room_maps, public.journeys, public.venues, public.venue_entries to feel_chalk;
 create policy "chalk reads finds" on public.confirmed_finds for select to feel_chalk using (true);
--- Room memory is opt-in: Chalk sees an anchor only when its owner set shared = true.
+-- Room memory is opt-in: Chalk sees an anchor, a visit's map or a journey only when its owner set shared = true.
 create policy "chalk reads shared anchors" on public.anchors for select to feel_chalk using (shared);
+create policy "chalk reads shared room maps" on public.room_maps for select to feel_chalk using (shared);
+create policy "chalk reads shared journeys" on public.journeys for select to feel_chalk using (shared);
 create policy "chalk reads venues" on public.venues for select to feel_chalk using (true);
 create policy "chalk reads venue entries" on public.venue_entries for select to feel_chalk using (true);

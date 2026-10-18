@@ -9,6 +9,9 @@ import FeelCore
 /// All calls and callbacks are on the main thread.
 final class KeywordListener {
     var onWord: ((TargetWord) -> Void)?
+    /// The latest transcript of the current listen, and whether a target word was matched in it.
+    private var transcript = ""
+    private var matched = false
     private let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
     private weak var voice: RealtimeVoiceSession?
     private var request: SFSpeechAudioBufferRecognitionRequest?
@@ -46,11 +49,15 @@ final class KeywordListener {
         request.taskHint = .search
         self.request = request
         var delivered = false
+        transcript = ""; matched = false
         task = recognizer.recognitionTask(with: request) { [weak self] result, _ in
-            guard let text = result?.bestTranscription.formattedString, let word = TargetWord.match(text) else { return }
+            guard let text = result?.bestTranscription.formattedString else { return }
+            let word = TargetWord.match(text)
             DispatchQueue.main.async {
-                guard let self, self.generation == id, !delivered else { return }
-                delivered = true
+                guard let self, self.generation == id else { return }
+                self.transcript = text
+                guard let word, !delivered else { return }
+                delivered = true; self.matched = true
                 self.onWord?(word)
             }
         }
@@ -77,8 +84,17 @@ final class KeywordListener {
         }
     }
 
+    /// What was said during the current listen when it was not one of the target words; nil otherwise.
+    /// Cleared on return, so a stop that follows does not report it again.
+    func takeUnmatchedTranscript() -> String? {
+        defer { transcript = "" }
+        let text = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        return matched || text.isEmpty ? nil : text
+    }
+
     func stop() {
         generation += 1
+        transcript = ""; matched = false
         request?.endAudio(); task?.cancel()
         request = nil; task = nil
         if borrowed { voice?.borrowMicrophone(nil); borrowed = false }

@@ -29,7 +29,25 @@ struct VoiceConfigurationStore {
             return try? Self.provision(environment: process.environment, arguments: process.arguments, save: save)
         }
         #endif
-        return load()
+        if let saved = load() { return saved }
+        return provisionFromBundle()
+    }
+
+    /// First launch of a build whose config carried the voice service (ios/scripts/supabase_config.sh):
+    /// the values are saved to the Keychain once, so the assistant needs no typing. Forgetting the
+    /// connection in the app clears the Keychain, and the next launch seeds it again from the same build.
+    func provisionFromBundle(_ bundle: Bundle = .main) -> VoiceConfiguration? {
+        guard let configuration = Self.configuration(fromInfo: bundle.infoDictionary ?? [:]),
+              (try? save(configuration)) != nil else { return nil }
+        return configuration
+    }
+
+    /// The build-config values, or nil when absent, blank, left as unexpanded `$(...)`, or not a valid pair.
+    static func configuration(fromInfo info: [String: Any]) -> VoiceConfiguration? {
+        guard let endpoint = info["FEEL_VOICE_ENDPOINT"] as? String, let token = info["FEEL_VOICE_ACCESS_TOKEN"] as? String,
+              !endpoint.isEmpty, !token.isEmpty, !endpoint.hasPrefix("$("), !token.hasPrefix("$(") else { return nil }
+        let configuration = VoiceConfiguration(endpoint: endpoint, accessToken: token)
+        return configuration.isValid ? configuration : nil
     }
 
     #if DEBUG

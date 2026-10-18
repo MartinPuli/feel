@@ -5,7 +5,9 @@ import Foundation
 /// blocked by anything 10 cm–2 m above the calibrated floor, so bags and chair legs below
 /// the 0.6 m sector window still count. Cells the camera has not seen stay unknown.
 /// Cells farther than `keepRadius` from the wearer are dropped: this is a map of the
-/// current room, not a memory of places.
+/// current room, not a memory of places. A `RoomMap` from an earlier visit can be set as a
+/// prior (`setPrior`): it fills in cells the camera has not classified yet, so a route can be
+/// planned before the room is seen, and a live classification always overrides it.
 public struct FloorGrid: Sendable {
     public struct Cell: Hashable, Sendable { public let x: Int, z: Int; public init(_ x: Int, _ z: Int) { self.x=x; self.z=z } }
     public enum State: Equatable, Sendable { case unknown, free, blocked }
@@ -17,21 +19,60 @@ public struct FloorGrid: Sendable {
     public var keepRadius = 8.0
     private var floorHits: [Cell: Float] = [:]
     private var obstacleHits: [Cell: Float] = [:]
+    /// Remembered structure in this world's cells, from a RoomMap; the camera never writes it.
+    private var prior: [Cell: State] = [:]
     private var integrations = 0
 
     public init(cellSize: Double = 0.1) { self.cellSize=cellSize }
 
+    /// Cells with live evidence, classified or not.
     public var cellCount: Int { Set(floorHits.keys).union(obstacleHits.keys).count }
-    public mutating func reset() { floorHits=[:]; obstacleHits=[:] }
+    /// Cells the camera has classified this session, without the prior.
+    public var observedCells: [Cell: State] {
+        var result: [Cell: State]=[:]
+        for cell in Set(floorHits.keys).union(obstacleHits.keys) { let state=liveState(cell); if state != .unknown { result[cell]=state } }
+        return result
+    }
+    public var priorCells: [Cell: State] { prior }
+    public var priorCellCount: Int { prior.count }
+    /// A new world: everything goes, the prior included (it was placed in the old world's coordinates).
+    public mutating func reset() { floorHits=[:]; obstacleHits=[:]; prior=[:] }
+    /// The floor level changed: live heights are stale, the remembered structure is not.
+    public mutating func clearObservations() { floorHits=[:]; obstacleHits=[:] }
 
     public func cell(_ p: Vector3) -> Cell { Cell(Int(floor(p.x/cellSize)), Int(floor(p.z/cellSize))) }
     public func center(_ c: Cell) -> Vector3 { Vector3((Double(c.x)+0.5)*cellSize, 0, (Double(c.z)+0.5)*cellSize) }
 
-    public func state(_ c: Cell) -> State {
+    /// What the camera has classified in this cell this session.
+    public func liveState(_ c: Cell) -> State {
         let o=obstacleHits[c] ?? 0, f=floorHits[c] ?? 0
         if o>=3 && o>=f { return .blocked }
         if f>=2 { return .free }
         return .unknown
+    }
+    /// The live classification, or the prior where the camera has not classified the cell yet.
+    public func state(_ c: Cell) -> State {
+        let live=liveState(c)
+        return live == .unknown ? (prior[c] ?? .unknown) : live
+    }
+
+    /// Replaces the prior with a remembered map, placed through the tag's levelled frame into this world's cells.
+    /// False, and no prior, when the map's cells are not this grid's cells or the tag is not upright on a wall. Cells
+    /// map by their centres (see RoomMap); where two land in one cell, blocked wins.
+    @discardableResult
+    public mutating func setPrior(_ map: RoomMap, frame: RoomFrame) -> Bool {
+        guard abs(map.cellSize-cellSize)<=1e-9, let level=frame.levelled else { return false }
+        var next: [Cell: State]=[:]
+        for iy in 0..<map.height { for ix in 0..<map.width {
+            let state=map.cells[iy*map.width+ix]
+            guard state != .unknown else { continue }
+            let tag=Vector3((Double(map.minIX+ix)+0.5)*cellSize,(Double(map.minIY+iy)+0.5)*cellSize,0)
+            let world=level.worldPoint(tag:tag)
+            let key=cell(Vector3(world.x,0,world.z))
+            next[key]=(state == .blocked || next[key] == .blocked) ? .blocked : .free
+        } }
+        prior=next
+        return true
     }
 
     /// Adds one frame of world points. A floor hit weakens old obstacle evidence in that cell,

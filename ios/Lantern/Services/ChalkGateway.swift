@@ -41,7 +41,29 @@ struct ChalkConfigurationStore: ChalkConfigurationStoring {
             return try? Self.provision(environment: process.environment, save: save)
         }
         #endif
-        return load()
+        if let saved = load() { return saved }
+        return provisionFromBundle()
+    }
+
+    /// First launch of a build whose config carried the gateway settings (ios/scripts/supabase_config.sh):
+    /// saved to the Keychain once. Forgetting the setup in the app clears it; the next launch seeds it again.
+    func provisionFromBundle(_ bundle: Bundle = .main) -> ChalkConfiguration? {
+        guard let configuration = Self.configuration(fromInfo: bundle.infoDictionary ?? [:]),
+              (try? save(configuration)) != nil else { return nil }
+        return configuration
+    }
+
+    /// The build-config values, or nil when absent, blank, unexpanded `$(...)` or invalid.
+    static func configuration(fromInfo info: [String: Any]) -> ChalkConfiguration? {
+        func value(_ name: String) -> String? {
+            guard let raw = info[name] as? String else { return nil }
+            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty || trimmed.hasPrefix("$(") ? nil : trimmed
+        }
+        guard let key = value("FEEL_CHALK_KEY"), let environmentId = value("FEEL_CHALK_ENV") else { return nil }
+        let configuration = ChalkConfiguration(apiHost: value("FEEL_CHALK_HOST") ?? ChalkConfiguration.defaultHost, routerApiKey: key,
+                                               environmentId: environmentId, model: value("FEEL_CHALK_MODEL") ?? ChalkConfiguration.defaultModel)
+        return configuration.isValid ? configuration : nil
     }
     #if DEBUG
     static func provision(environment: [String: String], save: (ChalkConfiguration) throws -> Void) throws -> ChalkConfiguration? {

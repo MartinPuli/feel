@@ -524,10 +524,10 @@ final class RealtimeVoiceSession: ObservableObject {
             guard !configured else { return }; configured = true
             enqueue(["type": "session.update", "session": [
                 "type": "realtime", "instructions": VoiceCommand.instructions,
-                "output_modalities": ["audio"], "max_output_tokens": 320, "tools": VoiceCommand.tools,
+                "output_modalities": ["audio"], "max_output_tokens": 160, "tools": VoiceCommand.tools,
                 "audio": ["input": ["format": ["type": "audio/pcm", "rate": 24000],
                                     "turn_detection": ["type": "server_vad", "create_response": true, "interrupt_response": true]],
-                          "output": ["voice": "cedar", "format": ["type": "audio/pcm", "rate": 24000]]]]])
+                          "output": ["voice": "cedar", "speed": 1.2, "format": ["type": "audio/pcm", "rate": 24000]]]]])
         case "session.updated":
             guard configured, !receivedConfiguration else { return }
             receivedConfiguration = true

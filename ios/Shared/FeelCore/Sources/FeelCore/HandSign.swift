@@ -19,28 +19,43 @@ public struct HandJoints: Equatable, Sendable {
 /// rejected, which fails safe (no request).
 public enum HandSign {
     /// Tip-to-wrist over MCP-to-wrist. A straight finger is about 1.8–2.0, a folded one below 1.1.
-    public static let extendedRatio = 1.55
-    public static let foldedRatio = 1.25
+    public static let extendedRatio = 1.45
+    public static let foldedRatio = 1.35
     /// Angle between the index and middle fingers, and their tip gap relative to palm length.
     public static let minSpreadDegrees = 12.0
     public static let minTipGapOfPalm = 0.3
     /// Palm length (wrist to middle MCP) of an adult hand, used for a size-based range estimate.
     public static let palmLengthMeters = 0.095
     /// Only hands this close count, so bystanders' hands cannot request guidance.
-    public static let maxDistanceMeters = 0.55
+    public static let maxDistanceMeters = 0.9
+
+    /// Knuckle spacing (index to middle MCP) is about this fraction of the palm length; it stands in for
+    /// the palm when the wrist is out of frame, which is the normal case for a hand close to the lens.
+    public static let knuckleSpanOfPalm = 0.22
 
     public static func isVSign(_ hand: HandJoints) -> Bool {
-        guard let wrist=hand.wrist, let middleMCP=hand.middle.mcp else { return false }
-        let palm=wrist.distance(to:middleMCP)
+        guard let middleMCP=hand.middle.mcp, let indexMCP=hand.index.mcp else { return false }
+        let palm: Double
+        if let wrist=hand.wrist { palm=wrist.distance(to:middleMCP) } else { palm=indexMCP.distance(to:middleMCP)/knuckleSpanOfPalm }
         guard palm.isFinite, palm>1 else { return false }
+        // With the wrist in frame, the original wrist-relative ratios. Without it, each finger is judged
+        // from its own joints: straight when the tip is well beyond the PIP, folded when the tip stays near the PIP.
         func ratio(_ f: HandJoints.Finger) -> Double? {
             guard let mcp=f.mcp, let tip=f.tip else { return nil }
-            let base=wrist.distance(to:mcp)
-            return base>0 ? wrist.distance(to:tip)/base : nil
+            if let wrist=hand.wrist {
+                let base=wrist.distance(to:mcp)
+                return base>0 ? wrist.distance(to:tip)/base : nil
+            }
+            guard let pip=f.pip else { return nil }
+            let base=mcp.distance(to:pip)
+            // Map onto the same scale as the wrist ratios: a straight finger reads about 1.9, a folded one about 1.1.
+            return base>0 ? 1+mcp.distance(to:tip)/base*0.45 : nil
         }
+        // A hand close to the lens often has its folded fingers out of frame: a missing ring or little
+        // finger counts as folded. The two extended fingers must still be fully visible.
         guard let index=ratio(hand.index), let middle=ratio(hand.middle),
-              let ring=ratio(hand.ring), let little=ratio(hand.little),
-              index>=extendedRatio, middle>=extendedRatio, ring<=foldedRatio, little<=foldedRatio else { return false }
+              index>=extendedRatio, middle>=extendedRatio,
+              (ratio(hand.ring) ?? 0)<=foldedRatio, (ratio(hand.little) ?? 0)<=foldedRatio else { return false }
         // Both extended fingers must be straight: tip beyond the PIP, away from the MCP.
         for f in [hand.index, hand.middle] {
             guard let mcp=f.mcp, let pip=f.pip, let tip=f.tip, mcp.distance(to:tip)>mcp.distance(to:pip)*1.3 else { return false }
@@ -53,9 +68,15 @@ public enum HandSign {
 
     /// Range from apparent palm size: focal length in pixels times real size over pixel size.
     public static func estimatedDistance(_ hand: HandJoints, focalPixels: Double) -> Double? {
-        guard let w=hand.wrist, let m=hand.middle.mcp, focalPixels.isFinite, focalPixels>0 else { return nil }
-        let pixels=w.distance(to:m)
-        return pixels>1 ? focalPixels*palmLengthMeters/pixels : nil
+        guard focalPixels.isFinite, focalPixels>0 else { return nil }
+        if let w=hand.wrist, let m=hand.middle.mcp {
+            let pixels=w.distance(to:m)
+            return pixels>1 ? focalPixels*palmLengthMeters/pixels : nil
+        }
+        // Wrist out of frame: range from the knuckle spacing instead.
+        guard let i=hand.index.mcp, let m=hand.middle.mcp else { return nil }
+        let pixels=i.distance(to:m)
+        return pixels>1 ? focalPixels*palmLengthMeters*knuckleSpanOfPalm/pixels : nil
     }
 }
 
@@ -71,10 +92,11 @@ public struct HandSignObservation: Equatable, Sendable {
 
 /// Fires once when the sign is held, then waits for the hand to go away before it can fire again.
 public struct HandSignTrigger: Sendable {
-    public var holdSeconds = 0.5
-    public var minDetections = 3
-    /// A gap longer than this between detections restarts the hold.
-    public var maxGapSeconds = 0.4
+    public var holdSeconds = 0.4
+    public var minDetections = 2
+    /// A gap longer than this between detections restarts the hold. The detector shares a queue with the
+    /// pointing detector and runs every 0.15 to 0.5 s on a phone, and the pose can flicker for a frame.
+    public var maxGapSeconds = 0.7
     /// The sign must be absent this long before it can fire again.
     public var releaseSeconds = 0.8
     public private(set) var holding = false

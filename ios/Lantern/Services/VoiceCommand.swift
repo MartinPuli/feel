@@ -4,10 +4,12 @@ import FeelCore
 
 /// Only these commands can cross the model-to-device boundary.
 enum VoiceCommand: Equatable {
-    case startCamera, stop, pauseAssistant, status, scanPucks, listPucks, openSettings, foundIt
+    case startCamera, stop, pauseAssistant, status, scanPucks, listPucks, openSettings, foundIt, describeAhead
     case find(FinderMode)
     /// `photo` asks for the camera even when room memory remembers the thing.
     case whereIs(String, photo: Bool = false)
+    /// Lead the user to a remembered place along the route, one progress point at a time.
+    case leadMe(String)
     case venueInfo(String)
     case calibrate(Double)
     case connectPuck(UUID)
@@ -106,6 +108,8 @@ enum VoiceCommand: Equatable {
             } ?? false
             return .whereIs(try text("thing", limit: 60, others: args["photo"] == nil ? 0 : 1), photo: photo)
         case "found_it": return try noArguments(.foundIt)
+        case "describe_ahead": return try noArguments(.describeAhead)
+        case "lead_me": return .leadMe(try text("label", limit: 60))
         case "venue_info": return .venueInfo(try text("question", limit: 200))
         default: throw InvalidCommand()
         }
@@ -136,6 +140,8 @@ enum VoiceCommand: Equatable {
             tool("find_target", "Select the target the user asks for. This does not confirm a detection or start the camera.", properties: ["target": ["type": "string", "enum": ["obstacles", "door", "exit", "chair", "person", "teammate"]]]),
             tool("where_is", "Find one thing the user names that is not in find_target's list, such as the registration desk, a water fountain or the stairs. When this room's printed FEEL tag has been seen and the thing was found here on an earlier visit, the pins point to that remembered place at once and the result says so (remembered=true): read its status as given. Otherwise it takes one camera photo and points the pins at it when found; confirm once, the result arrives a few seconds later as an observation. photo=true only when the user asks to check again with the camera, for example by saying photo.", properties: ["thing": ["type": "string", "minLength": 1, "maxLength": 60], "photo": ["type": "boolean"]]),
             tool("found_it", "The user says they found the Where-is target (found it, got it, here it is). Ends the pointing and, when this room's printed FEEL tag has been seen, remembers the place for next time. Report the returned status; never claim it was remembered unless the result says so."),
+            tool("describe_ahead", "The user asks what is in front of them, what you see, or what is there: one camera photo is described in one short sentence, nearest things first. Call it every time the question is asked; each call takes a new photo and the app speaks the result."),
+            tool("lead_me", "Lead the user to a place remembered in this room (one stored by found_it or an arrival) when they ask to be led or taken there. The pins point to the next point of the way, about every 6 meters, and the app says next point and you're there. Needs this room's printed FEEL tag seen this session and a remembered label; otherwise the result is an error and where_is is the way to look with the camera. Read the returned status as given: a past sighting and a suggested direction, never a clear or safe path.", properties: ["label": ["type": "string", "minLength": 1, "maxLength": 60]]),
             tool("venue_info", "Answer a question about this venue, such as an entrance, restroom or accessibility notice, from the reviewed venue pack downloaded on the phone. Works without internet. Read the returned answer as given, including its source date; never add details or call a path clear.", properties: ["question": ["type": "string", "minLength": 1, "maxLength": 200]]),
             tool("calibrate_floor", "Manual override for automatic floor calibration. Use only after the user supplies a measured lens height in meters and confirms the phone is mounted upright with rear camera forward and top edge to their left. Never guess height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
             tool("set_camera_height", "Set the measured camera lens height without calibrating. Ask the user for their measurement in meters; never infer it from their body height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
@@ -169,8 +175,10 @@ enum VoiceCommand: Equatable {
     ## Conversation Flow
     Use the provided tools for actions. Wait for their results before confirming anything.
     Call get_status before describing the scene. You do not receive camera images.
+    Asked what is in front, around, nearby, or what you see: call describe_ahead EVERY time, even seconds after the last one, because the user has moved; it takes a new photo. Say only "Looking." and stop; the app speaks the description itself. Never repeat an earlier description, never answer from status fields, never say an obstacle is ahead, and never call a side clear: the pins show obstacles.
     For a thing not in find_target's list, call where_is with a short description and photo=false; it uses one camera photo, and the result comes later as an observation. Without Chalk setup or a connection it uses the phone's own detector, which knows exits, doors, people, chairs and common objects.
     If where_is returns remembered=true, the pins already point to a place found on an earlier visit: say its status as given, in the past tense, and nothing about the present. If the user then says photo, call where_is again with the same thing and photo=true. When the user says they found it, call found_it and report its status.
+    When the user asks to be led or taken to a place (lead me to the exit, take me to the desk), call lead_me with that label. On an error, say the place is not remembered here and offer where_is. Never call the way clear.
     For questions about the venue itself, such as entrances, restrooms or accessibility notices, call venue_info and read its answer as given. If no pack is downloaded or the answer says it can't be confirmed, say so; never fill the gap yourself.
     Say stop: call stop immediately, then keep listening. Say pause assistant or stop listening: call pause_assistant.
     Say silence yourself, mute, be quiet, or silenciate: call set_spoken_output with enabled=false. Keep listening and executing requested actions while muted.
@@ -195,8 +203,8 @@ enum VoiceCommand: Equatable {
     Do not invent abilities or suggest unsupported actions. Never read device IDs or internal status tokens aloud.
 
     ## Voice & Communication Style
-    Reply in the user's language. Give the result first, usually in one sentence of 3 to 12 words.
-    Use a second sentence only for a necessary next step or a requested explanation.
+    Reply in the user's language. One sentence, 3 to 10 words, result first. Never two sentences unless asked to explain.
+    Speak briskly; no pauses for effect, no trailing offers.
     Prefer ordinary spoken words and contractions. No introductions, filler, lists or repeated offers to help.
     Never begin with Certainly, Absolutely, Great question, or As an AI. Do not repeat the user's request.
     For an action, confirm once and finish. For an observation, name the object, approximate distance and relative side.

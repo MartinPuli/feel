@@ -3,6 +3,9 @@ import FeelCore
 
 /// Deterministic notification policy. The caller supplies only fresh, calibrated live frames.
 struct ProactiveVoicePolicy {
+    /// Spoken obstacle notices are off: the pins show obstacles continuously, and a spoken "obstacle ahead"
+    /// was judged noise by the wearer. Target notices stay on. Tests turn this on to cover the obstacle path.
+    var announcesObstacles = false
     enum Kind: String { case target, obstacle }
     enum Side: String { case left, ahead, right }
 
@@ -84,7 +87,7 @@ struct ProactiveVoicePolicy {
             if elapsed(since: targetAbsentSince, now: now, atLeast: 0.6) { targetBaseline = nil }
         }
 
-        let obstacle = Self.nearestObstacle(distances)
+        let obstacle = announcesObstacles ? Self.nearestObstacle(distances) : nil
         if let obstacle {
             if elapsed(since: obstacleAbsentSince, now: now, atLeast: 2) { obstacleBaseline = nil }
             obstacleAbsentSince = nil
@@ -166,11 +169,11 @@ struct ProactiveVoicePolicy {
     private static func nearestObstacle(_ distances: [Double?]) -> Observation? {
         guard distances.count == 7 else { return nil }
         let nearest = distances.enumerated().compactMap { column, distance -> (Int, Double)? in
-            guard let distance, distance.isFinite, distance > 0, distance <= 1.6 else { return nil }
+            guard PuckLayout.activeColumns.contains(column), let distance, distance.isFinite, distance > 0, distance <= 1.6 else { return nil }
             return (column, distance)
         }.min { lhs, rhs in lhs.1 == rhs.1 ? lhs.0 < rhs.0 : lhs.1 < rhs.1 }
         guard let (column, distance) = nearest else { return nil }
-        let bearing = -45 + (Double(column) + 0.5) * 90 / 7
+        let bearing = PuckLayout.bearing(ofColumn: column)
         return Observation(distance: distance, side: side(for: bearing))
     }
 }

@@ -32,6 +32,17 @@ public struct RoomFrame: Equatable, Codable, Sendable {
         let relative=point-origin; return Vector3(relative.dot(xAxis),relative.dot(yAxis),relative.dot(zAxis))
     }
     public func worldPoint(tag point: Vector3) -> Vector3 { origin + xAxis*point.x + yAxis*point.y + zAxis*point.z }
+    /// The same tag made upright and level: y out of the wall and x along it exactly horizontal, z exactly vertical
+    /// (down for a tag hung the right way up, up for one hung upside down, so left and right keep their meaning). Room
+    /// structure maps (RoomMap) are floor plans and live in this frame, so a slightly tilted print does not tilt the map.
+    /// Nil when the tag is not on a wall: its face must be within 60° of upright.
+    public var levelled: RoomFrame? {
+        guard isValid, abs(zAxis.y)>=0.5 else { return nil }
+        let out=Vector3(yAxis.x,0,yAxis.z), length=out.dot(out).squareRoot()
+        guard length>=0.5 else { return nil }
+        let y=out*(1/length), z=Vector3(0,zAxis.y<0 ? -1 : 1,0)
+        return RoomFrame(origin:origin,xAxis:Self.cross(y,z),yAxis:y,zAxis:z)
+    }
 }
 
 /// One recognition of a printed tag: its frame in the current ARKit world (`worldEpoch`); a tracking reset ends it.
@@ -104,8 +115,9 @@ public struct RememberedTarget: Equatable, Sendable {
 
 public enum RoomMemoryError: Error, Equatable { case invalidTagId(String) }
 
-/// Anchors per tag id on disk, as JSON under Application Support. A write replaces the file atomically, so a
-/// failed write leaves the previous anchors in place; a corrupt file reads as nothing remembered.
+/// Anchors per tag id on disk, as JSON under Application Support, and beside them the room's structure visits
+/// (`<tag>.structure.json`, RoomMap). A write replaces the file atomically, so a failed write leaves the previous
+/// contents in place; a corrupt file reads as nothing remembered.
 public final class RoomMemoryStore {
     /// Newest sightings kept per tag; the aggregation only ever looks at the last 20 per label.
     public static let keepPerTag = 200
@@ -118,6 +130,10 @@ public final class RoomMemoryStore {
     private func file(_ tagId: String) throws -> URL {
         guard Self.isTagId(tagId) else { throw RoomMemoryError.invalidTagId(tagId) }
         return directory.appendingPathComponent("\(tagId).json")
+    }
+    private func structureFile(_ tagId: String) throws -> URL {
+        guard Self.isTagId(tagId) else { throw RoomMemoryError.invalidTagId(tagId) }
+        return directory.appendingPathComponent("\(tagId).structure.json")
     }
 
     public func anchors(for tagId: String) -> [RoomAnchor] {
@@ -135,10 +151,32 @@ public final class RoomMemoryStore {
         try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
         try Self.encoder.encode(anchors).write(to:file,options:.atomic)
     }
+    /// Forgets the tag: its anchors and its structure visits.
     public func remove(tagId: String) throws {
-        let file=try file(tagId)
-        guard FileManager.default.fileExists(atPath:file.path) else { return }
-        try FileManager.default.removeItem(at:file)
+        for file in [try file(tagId),try structureFile(tagId)] where FileManager.default.fileExists(atPath:file.path) {
+            try FileManager.default.removeItem(at:file)
+        }
+    }
+
+    // MARK: Room structure (RoomMap.swift)
+
+    /// Newest visits kept per tag; `RoomMap.merge` of these seeds the route planner on the next visit.
+    public static let keepStructures = 10
+    /// The structure maps stored for a tag, oldest first; a corrupt file reads as no visits.
+    public func structures(for tagId: String) -> [RoomMap] {
+        guard let file=try? structureFile(tagId),let data=try? Data(contentsOf:file) else { return [] }
+        return (try? Self.decoder.decode([RoomMap].self,from:data)) ?? []
+    }
+    @discardableResult
+    public func appendStructure(_ map: RoomMap, tagId: String) throws -> [RoomMap] {
+        let kept=Array((structures(for:tagId)+[map]).suffix(Self.keepStructures))
+        try replaceStructures(kept,tagId:tagId)
+        return kept
+    }
+    public func replaceStructures(_ maps: [RoomMap], tagId: String) throws {
+        let file=try structureFile(tagId)
+        try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
+        try Self.encoder.encode(maps).write(to:file,options:.atomic)
     }
 
     private static let encoder: JSONEncoder={ let e=JSONEncoder(); e.dateEncodingStrategy = .iso8601; e.outputFormatting=[.sortedKeys]; return e }()

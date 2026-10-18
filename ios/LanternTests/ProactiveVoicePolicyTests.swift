@@ -5,9 +5,17 @@ import FeelCore
 final class ProactiveVoicePolicyTests: XCTestCase {
     private let empty = [Double?](repeating: nil, count: 7)
 
-    func testObstacleNoticeNamesTheSideWithMoreRoom() throws {
+    func testObstaclesAreSilentByDefault() {
         var policy = ProactiveVoicePolicy()
-        let wall: [Double?] = [3, 3, 0.8, 0.8, 0.8, 3, 0.8]
+        let wall: [Double?] = [3, 3, 0.4, 0.4, 0.4, 3, 3]
+        XCTAssertNil(policy.propose(target: nil, finder: .none, distances: wall, now: 0))
+        XCTAssertNil(policy.propose(target: nil, finder: .none, distances: wall, now: 1))
+        XCTAssertNil(policy.propose(target: nil, finder: .none, distances: wall, now: 2))
+    }
+
+    func testObstacleNoticeNamesTheSideWithMoreRoom() throws {
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
+        let wall: [Double?] = [nil, 3, 3, 0.8, 0.8, 3, 0.8]
         var finder = OpenSideFinder()
         let open = finder.update(distances: wall, now: 0)
         XCTAssertNil(policy.propose(target: nil, finder: .none, distances: wall, openSide: open, now: 0))
@@ -19,7 +27,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testTargetRequiresStabilityAndUnchangedObservationStaysSilent() throws {
-        var policy = ProactiveVoicePolicy()
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
         XCTAssertNil(policy.propose(target: target(at: 0), finder: .door, distances: empty, now: 0))
         XCTAssertNil(policy.propose(target: target(at: 0.7), finder: .door, distances: empty, now: 0.7))
         let notice = try XCTUnwrap(policy.propose(target: target(at: 0.8), finder: .door, distances: empty, now: 0.8))
@@ -32,7 +40,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testTargetMaterialMovementRequiresStabilityAndEightSecondGap() throws {
-        var policy = ProactiveVoicePolicy()
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
         _ = policy.propose(target: target(at: 0), finder: .person, distances: empty, now: 0)
         let first = try XCTUnwrap(policy.propose(target: target(at: 0.8), finder: .person, distances: empty, now: 0.8))
         policy.acknowledge(first, now: 0.8)
@@ -47,7 +55,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testSideJitterRestartsStabilityAndStaleTargetCannotTrigger() throws {
-        var policy = ProactiveVoicePolicy()
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
         _ = policy.propose(target: target(bearing: 16, at: 0), finder: .chair, distances: empty, now: 0)
         XCTAssertNil(policy.propose(target: target(bearing: 15, at: 0.5), finder: .chair, distances: empty, now: 0.5))
         XCTAssertNil(policy.propose(target: target(bearing: 16, at: 0.8), finder: .chair, distances: empty, now: 0.8))
@@ -60,8 +68,8 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testCloseObstacleHasPriorityThenTargetMayFollowAfterGap() throws {
-        var policy = ProactiveVoicePolicy()
-        let close = sectors(0.7, column: 0)
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
+        let close = sectors(0.7, column: 1)
         _ = policy.propose(target: target(at: 0), finder: .person, distances: close, now: 0)
         let obstacle = try XCTUnwrap(policy.propose(target: target(at: 0.8), finder: .person, distances: close, now: 0.8))
         XCTAssertEqual(obstacle.kind, .obstacle)
@@ -73,7 +81,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testObstacleApproachAndSideChangeAreMaterialButRecessionIsSilent() throws {
-        var policy = ProactiveVoicePolicy()
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
         _ = policy.propose(target: nil, finder: .none, distances: sectors(0.9), now: 0)
         let first = try XCTUnwrap(policy.propose(target: nil, finder: .none, distances: sectors(0.9), now: 0.8))
         policy.acknowledge(first, now: 0.8)
@@ -88,7 +96,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testFarInvalidAndMalformedObstacleDataNeverProducesNotice() {
-        var policy = ProactiveVoicePolicy()
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
         for now in [0.0, 1, 10] {
             XCTAssertNil(policy.propose(target: nil, finder: .none, distances: sectors(0.91), now: now))
         }
@@ -99,7 +107,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testSubThirtyCentimeterObstacleRemainsSupportedAndHasPriority() throws {
-        var policy = ProactiveVoicePolicy()
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
         _ = policy.propose(target: target(at: 0), finder: .person, distances: sectors(0.3), now: 0)
         let first = try XCTUnwrap(policy.propose(target: target(at: 0.8), finder: .person, distances: sectors(0.3), now: 0.8))
         XCTAssertEqual(first.kind, .obstacle)
@@ -117,7 +125,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testUnacknowledgedNoticeRetriesWithoutStartingCooldown() throws {
-        var policy = ProactiveVoicePolicy()
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
         _ = policy.propose(target: nil, finder: .none, distances: sectors(0.8), now: 0)
         let first = try XCTUnwrap(policy.propose(target: nil, finder: .none, distances: sectors(0.8), now: 0.8))
         let retry = try XCTUnwrap(policy.propose(target: nil, finder: .none, distances: sectors(0.8), now: 0.9))
@@ -128,7 +136,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testObstacleEpisodeRequiresTwoSecondsOfAbsence() throws {
-        var policy = ProactiveVoicePolicy()
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
         _ = policy.propose(target: nil, finder: .none, distances: sectors(0.8), now: 0)
         let first = try XCTUnwrap(policy.propose(target: nil, finder: .none, distances: sectors(0.8), now: 0.8))
         policy.acknowledge(first, now: 0.8)
@@ -142,7 +150,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testTargetAbsenceAndFinderChangePermitNewDetection() throws {
-        var policy = ProactiveVoicePolicy()
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
         _ = policy.propose(target: target(at: 0), finder: .person, distances: empty, now: 0)
         let first = try XCTUnwrap(policy.propose(target: target(at: 0.8), finder: .person, distances: empty, now: 0.8))
         policy.acknowledge(first, now: 0.8)
@@ -158,12 +166,12 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testSupportRejectsChangedSceneButDoesNotRequireTargetForObstacle() throws {
-        var policy = ProactiveVoicePolicy()
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
         _ = policy.propose(target: nil, finder: .none, distances: sectors(0.8), now: 0)
         let obstacle = try XCTUnwrap(policy.propose(target: nil, finder: .none, distances: sectors(0.8), now: 0.8))
         XCTAssertTrue(obstacle.isSupported(target: nil, finder: .none, distances: sectors(0.75), now: 1))
         XCTAssertFalse(obstacle.isSupported(target: nil, finder: .none, distances: sectors(0.3), now: 1))
-        XCTAssertFalse(obstacle.isSupported(target: nil, finder: .none, distances: sectors(0.8, column: 0), now: 1))
+        XCTAssertFalse(obstacle.isSupported(target: nil, finder: .none, distances: sectors(0.8, column: 1), now: 1))
         XCTAssertFalse(obstacle.isSupported(target: nil, finder: .none, distances: empty, now: 1))
         policy.reset()
         _ = policy.propose(target: target(at: 2), finder: .door, distances: empty, now: 2)
@@ -175,7 +183,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testResetClearsCooldownAndRejectsAcknowledgementFromOldScene() throws {
-        var policy = ProactiveVoicePolicy()
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
         _ = policy.propose(target: target(at: 0), finder: .person, distances: empty, now: 0)
         let old = try XCTUnwrap(policy.propose(target: target(at: 0.8), finder: .person, distances: empty, now: 0.8))
         policy.acknowledge(old, now: 0.8)
@@ -188,7 +196,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testDeliveryAfterFreshSamplesAcknowledgesTheSpokenObservation() throws {
-        var policy = ProactiveVoicePolicy()
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
         _ = policy.propose(target: target(at: 0), finder: .person, distances: empty, now: 0)
         let spoken = try XCTUnwrap(policy.propose(target: target(at: 0.8), finder: .person, distances: empty, now: 0.8))
         _ = policy.propose(target: target(distance: 2.1, at: 1), finder: .person, distances: empty, now: 1)
@@ -197,7 +205,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
     }
 
     func testUndeliveredObservationRemainsEligibleAfterNetworkDelay() throws {
-        var policy = ProactiveVoicePolicy()
+        var policy = ProactiveVoicePolicy(); policy.announcesObstacles = true
         _ = policy.propose(target: target(at: 0), finder: .person, distances: empty, now: 0)
         let first = try XCTUnwrap(policy.propose(target: target(at: 0.8), finder: .person, distances: empty, now: 0.8))
         // A request canceled before playback never acknowledges the proposal.

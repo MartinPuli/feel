@@ -1,3 +1,8 @@
+> Current layout — October 17: six active columns. GPIO32 / wire slot0 is unused.
+> Left to right: GPIO33,25,26,27,14,13 (wire slots1–6). The nine-byte packet
+> remains unchanged; the app reserves b0=0 and divides the whole ±45° field into
+> six sectors. Existing angle settings are unchanged. See [six-column guide](SIX-COLUMN-LAYOUT.md).
+
 # Seven-servo live configuration
 
 October17,2026. The user explicitly requested enabling all seven outputs with

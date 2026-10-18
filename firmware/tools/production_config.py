@@ -8,7 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 
-GPIO_BY_COLUMN = (32, 33, 25, 26, 27, 14, 13)
+GPIO_BY_COLUMN = (None, 33, 25, 26, 27, 14, 13)
 NOMINAL_MIN_US = 650
 NOMINAL_MAX_US = 2500
 CONFIG_NAME = "production-measurements.local.json"
@@ -54,14 +54,14 @@ def validate_document(document, base):
     require(parsed.tzinfo is not None, "verified_at must include a timezone")
     evidence(document.get("evidence_file"), base, "evidence_file")
     servos = document.get("servos")
-    require(isinstance(servos, list) and len(servos) == 7,
-            "servos must contain exactly seven measured column records")
+    require(isinstance(servos, list) and len(servos) == 6,
+            "servos must contain exactly six measured column records")
     columns = set()
     unit_ids = set()
     for record in servos:
         require(isinstance(record, dict), "each servo record must be an object")
         column = record.get("column")
-        require(type(column) is int and 0 <= column < 7, "servo column must be an integer0..6")
+        require(type(column) is int and 1 <= column < 7, "servo column must be an integer1..6")
         require(column not in columns, "duplicate servo column " + str(column))
         columns.add(column)
         label = "column " + str(column)
@@ -78,8 +78,8 @@ def validate_document(document, base):
         require(minimum <= NOMINAL_MIN_US and maximum >= NOMINAL_MAX_US,
                 label + " measured safe range must include the full assumed650..2500us service envelope")
         evidence(record.get("evidence_file"), base, label + " evidence_file")
-    require(columns == set(range(7)), "measured columns0..6 must all be present")
-    return {"minimum_us": NOMINAL_MIN_US, "maximum_us": NOMINAL_MAX_US, "columns": 7}
+    require(columns == set(range(1, 7)), "measured columns1..6 must all be present")
+    return {"minimum_us": NOMINAL_MIN_US, "maximum_us": NOMINAL_MAX_US, "columns": 6}
 
 
 def unique_object(pairs):
@@ -98,7 +98,7 @@ def load_measurements(path):
     path = Path(path)
     if not path.is_file():
         raise MeasurementError(
-            "Missing " + str(path) + ". Seven measured servo records are required. "
+            "Missing " + str(path) + ". Six measured servo records are required. "
             "See production-measurements.example.json; do not replace null fields with nominal guesses.")
     try:
         raw = path.read_bytes()
