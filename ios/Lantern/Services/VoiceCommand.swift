@@ -10,6 +10,8 @@ enum VoiceCommand: Equatable {
     case whereIs(String, photo: Bool = false)
     /// Lead the user to a remembered place along the route, one progress point at a time.
     case leadMe(String)
+    /// Where the user last confirmed an object, from their find history on Chalk; always a past sighting.
+    case lastSeen(String)
     case venueInfo(String)
     case calibrate(Double)
     case connectPuck(UUID)
@@ -110,6 +112,7 @@ enum VoiceCommand: Equatable {
         case "found_it": return try noArguments(.foundIt)
         case "describe_ahead": return try noArguments(.describeAhead)
         case "lead_me": return .leadMe(try text("label", limit: 60))
+        case "last_seen": return .lastSeen(try text("object", limit: 60))
         case "venue_info": return .venueInfo(try text("question", limit: 200))
         default: throw InvalidCommand()
         }
@@ -142,6 +145,7 @@ enum VoiceCommand: Equatable {
             tool("found_it", "The user says they found the Where-is target (found it, got it, here it is). Ends the pointing, saves the find to the user's history (for where did I last see it) and, when this room's printed FEEL tag has been seen, remembers the place for next time. Report the returned status; never claim it was remembered unless the result says so."),
             tool("describe_ahead", "The user asks what is in front of them, what you see, or what is there: one camera photo is described in one short sentence, nearest things first. Call it every time the question is asked; each call takes a new photo and the app speaks the result."),
             tool("lead_me", "Lead the user to a place remembered in this room (one stored by found_it or an arrival) when they ask to be led or taken there. The pins point to the next point of the way, about every 6 meters, and the app says next point and you're there. Needs this room's printed FEEL tag seen this session and a remembered label; otherwise the result is an error and where_is is the way to look with the camera. Read the returned status as given: a past sighting and a suggested direction, never a clear or safe path.", properties: ["label": ["type": "string", "minLength": 1, "maxLength": 60]]),
+            tool("last_seen", "The user asks where they last saw, left or found an object (where did I last see my keys). Looks the object up in the user's own find history, the finds saved by found_it, through FEEL's shared memory on Chalk. The answer is a past record, spoken by the app itself a few seconds later and also returned in get_status.room_memory.last_seen: read it as given, in the past tense, and never say the object is still there. Needs a sign-in and the memory setup; otherwise the result is an error to report plainly.", properties: ["object": ["type": "string", "minLength": 1, "maxLength": 60]]),
             tool("venue_info", "Answer a question about this venue, such as an entrance, restroom or accessibility notice, from the reviewed venue pack downloaded on the phone. Works without internet. Read the returned answer as given, including its source date; never add details or call a path clear.", properties: ["question": ["type": "string", "minLength": 1, "maxLength": 200]]),
             tool("calibrate_floor", "Manual override for automatic floor calibration. Use only after the user supplies a measured lens height in meters and confirms the phone is mounted upright with rear camera forward and top edge to their left. Never guess height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
             tool("set_camera_height", "Set the measured camera lens height without calibrating. Ask the user for their measurement in meters; never infer it from their body height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
@@ -179,6 +183,7 @@ enum VoiceCommand: Equatable {
     For a thing not in find_target's list, call where_is with a short description and photo=false; it uses one camera photo, and the result comes later as an observation. Without Chalk setup or a connection it uses the phone's own detector, which knows exits, doors, people, chairs and common objects.
     If where_is returns remembered=true, the pins already point to a place found on an earlier visit: say its status as given, in the past tense, and nothing about the present. If the user then says photo, call where_is again with the same thing and photo=true. When the user says they found it, call found_it and report its status.
     When the user asks to be led or taken to a place (lead me to the exit, take me to the desk), call lead_me with that label. On an error, say the place is not remembered here and offer where_is. Never call the way clear.
+    When the user asks where they last saw, left or found something (where did I last see my keys), call last_seen with the object. Say only "Checking." and stop; the app speaks the record itself. It is a past record from the user's own find history: never say the object is still there. On an error, say the history is not available and why, in one sentence.
     For questions about the venue itself, such as entrances, restrooms or accessibility notices, call venue_info and read its answer as given. If no pack is downloaded or the answer says it can't be confirmed, say so; never fill the gap yourself.
     Say stop: call stop immediately, then keep listening. Say pause assistant or stop listening: call pause_assistant.
     Say silence yourself, mute, be quiet, or silenciate: call set_spoken_output with enabled=false. Keep listening and executing requested actions while muted.

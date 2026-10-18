@@ -80,10 +80,44 @@ First live deployment and the verified queries are recorded in
 The phone's writes are in: a find after "found it", an anchor after every confirmed Where-is target, a visit's map
 when sensing stops and each kept journey go through Supabase REST with the user's JWT (`SupabaseWriter`, behind
 `RoomMemory.uploader` and `JourneyLog.uploader`), filed under the loaded venue pack's venue or `rubenstein-treehouse`
-and marked shared unless the user turned sharing off. Not done yet, in order: the `last_seen`, `room_anchors` and
-`room_structure` assistant tools calling Chalk with a scoped token (the second would fill the phone's local anchor
-store from the shared memory, the third its visits: `RoomMemory.fetchSharedStructure` is that empty function), and a
-scheduled query that rebuilds each venue's pack daily (`ScheduledQuery` over `Venue.pack`; `queries.py` is where it goes).
+and marked shared unless the user turned sharing off.
+
+The phone's reads are in too (`ios/Lantern/Services/ChalkContext.swift`): the `last_seen` assistant tool runs the
+`last_seen` named query for the signed-in user and speaks `ObjectHistory.spoken` as written; the first sighting of a
+tag in a run fetches `room_structure` (the merged map becomes one visit in the phone's store and seeds the route
+planner) and `room_anchors` (the remembered targets become sightings in its anchor store). See "How the phone
+reaches Chalk" below. Still not done: a scheduled query that rebuilds each venue's pack daily (`ScheduledQuery` over
+`Venue.pack`; `queries.py` is where it goes).
+
+## How the phone reaches Chalk
+
+The phone must never hold `CHALK_CLIENT_SECRET`, and `api.chalk.ai` does not answer online queries: the token
+grant names the environment's engine host (`engines[CHALK_ENV_ID]`), and the engine wants the bearer token plus
+`X-Chalk-Env-Id`, `X-Chalk-Client-Id` and `X-Chalk-Deployment-Type: engine`. Three ways were weighed:
+
+1. **The phone's restricted router key** (`FEEL_CHALK_KEY`, the Model Gateway key it already uses for
+   `/v1/router/chat/completions`). Not taken: whether the engine's `/v1/query/online` accepts a router key could not
+   be checked from this session (the probe against the live engine was blocked), and the phone would still need the
+   engine host, which only a token grant provides. To check it yourself: run the token exchange as `context.py`
+   does, then POST the `last_seen` body to `{engine}/v1/query/online` with `Authorization: Bearer <router key>` and
+   the three headers; a 200 with `object_history.spoken` means the key works and `ChalkQueryAccess` could take it.
+2. **A short-lived query token minted on the Mac** — the choice. `python -m feel_chalk.query_token` exchanges the
+   service credentials for an access token and prints the three build-config lines
+   (`FEEL_CHALK_QUERY_ENGINE`, `FEEL_CHALK_QUERY_TOKEN`, `FEEL_CHALK_CLIENT_ID`); `ios/scripts/supabase_config.sh`
+   pipes them into the git-ignored `ios/Config/Supabase.local.xcconfig` with the other keys, so the token travels
+   through the pipe only and the terminal shows when it expires. Limits: the token is the service token itself,
+   scoped to the environment, so a phone build carries full query rights for as long as the grant lasts
+   (`expires_in`; rerun the script before the demo build, and never ship such a build beyond the demo phone).
+   The phone reads the token's `exp` to skip a doomed query; an expired or missing token makes every read fail with
+   `access` and the phone keeps its own stores.
+3. **A proxy in the voice token service** (`services/voice-token`, `feel-v1-voice.vercel.app`): the service would hold
+   the Chalk credentials and forward the two named queries for a phone with a FEEL access token. The right shape for
+   a release (per-user limits, the secret in one place, no rebuild for a token), not done for the demo: it needs a
+   deploy that could not be verified here.
+
+Covered on this Mac by `chalk/tests/test_query_token.py` (the exchange and the lines, with a fake transport) and the
+app's `ChalkContextTests` and `SharedMemoryTests` against a stub server. Nothing has read from the live engine from a
+phone or a simulator yet.
 
 ## Room memory
 
@@ -134,8 +168,9 @@ camera overrides), free otherwise, unknown where no visit looked. Walls persist;
 more visits that see the floor there. `feel_chalk/room_map.py` is the same rule as FeelCore's `RoomMap.merge`,
 `protocol/room-map-v1.json` is the vector both must reproduce, and `sql/seed.sql` carries its three visits, so
 `room-structure --venue harvard-yard --tag feel-tag-01` prints the merged 8 × 6 map. The phone uploads a visit through
-`RoomMemory.uploader` (`SupabaseWriter`); its download of the merged map (`RoomMemory.fetchSharedStructure`) is the
-empty function still to wire, and the device test of the tag this all depends on is pending.
+`RoomMemory.uploader` (`SupabaseWriter`) and, the first time it sees the tag in a run, downloads the merged map
+(`RoomMemory.fetchSharedStructure`, over `ChalkContext.roomStructure`) as one more visit in its store, so a first visit
+can route; the device test of the tag this all depends on is pending.
 
 **Privacy.** A visit map says which cells of a named room someone walked through, so it is personal data like an
 anchor: it stays on the phone unless the user opted in, and Chalk reads only shared rows (`sql/access.sql`). It holds

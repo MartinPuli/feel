@@ -114,6 +114,32 @@ refreshed with the saved refresh token; `get_status.room_memory.uploads` counts 
 the last reason. `JourneyLog.export()` still writes every stored journey to `Documents/journeys.json` for the **Files**
 app (**On My iPhone → FEEL**), the way off a phone without a sign-in. Nothing of this has run on a device.
 
+### Reading the shared memory back
+
+The loop closes on the phone with Chalk's online queries (`Services/ChalkContext.swift`, the same request as
+`chalk/feel_chalk/context.py`: `POST {engine}/v1/query/online` with the bearer token and the `X-Chalk-Env-Id`,
+`X-Chalk-Client-Id` and `X-Chalk-Deployment-Type: engine` headers). Two reads:
+
+- **"Where did I last see my keys?"** calls the `last_seen` assistant tool. The app asks Chalk's `last_seen` named
+  query for the signed-in user (`SupabaseWriter.userId`) and the object as the finds table stores it, then speaks
+  Chalk's sentence itself ("Keys: last confirmed at the David Rubenstein Treehouse, about 4 m from tag feel-tag-01,
+  2 hours ago."), and `get_status.room_memory.last_seen` carries it. It is always a past record; the assistant is told
+  never to say the object is still there. Without a sign-in or query access the tool returns a plain error.
+- **A first visit can route.** The first time a tag is seen in a run, `RoomMemory.fetchSharedStructure` asks
+  `room_structure` for the venue (the loaded pack's, else `rubenstein-treehouse`) and tag, and the merged map Chalk
+  voted from every phone's shared visits is stored as one more visit (never twice) and seeds the route planner at
+  once if this world has no prior yet. `room_anchors` is read the same way: the shared targets become sightings in
+  the local anchor store (confidence 0.5, below this user's own confirmations). A failed fetch is retried a minute later;
+  `get_status.room_structure.shared` says what happened. The pins never read any of it.
+
+**Access.** The phone never holds the Chalk client secret. `ios/scripts/supabase_config.sh` runs
+`python -m feel_chalk.query_token`, which exchanges the service credentials in `chalk/.env` for a short-lived access
+token on the Mac and writes `FEEL_CHALK_QUERY_ENGINE`, `FEEL_CHALK_QUERY_TOKEN` and `FEEL_CHALK_CLIENT_ID` into the
+git-ignored `Config/Supabase.local.xcconfig` (the terminal shows only when the token expires). Rerun the script before
+the demo build; an expired or missing token makes every query fail and the phone keeps its own stores. Checked on this
+Mac against a stub server only (`LanternTests/ChalkContextTests.swift`, `SharedMemoryTests.swift`); no phone has read
+anything from Chalk yet.
+
 ## BLE and physical-output status
 
 Choose the intended device under **Puck connection**; the app does not automatically connect to an arbitrary puck. Packets use the UUIDs in `FeelBLE`, matching the firmware. Connection/status notifications do not prove actuation.

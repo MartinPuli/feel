@@ -75,6 +75,11 @@ final class LanternModel:ObservableObject {
     let journeyLog: JourneyLog
     /// Where finds, anchors, room maps and journeys leave the phone (SupabaseWriter); nil keeps everything on the phone.
     private let uploader: MemoryUploading?
+    /// Chalk's online queries (ChalkQueryClient): the read side of the shared memory. Nil when the build carries no query access.
+    private let chalkQuery: ChalkQuerying?
+    /// The last find-history record spoken, for get_status; a past record, never a claim the object is still there.
+    private(set) var lastSeenNotice: String?
+    private var lastSeenRequest = 0
     @Published private(set) var whereIsNotice: String?
     @Published private(set) var whereIsSelfTest = "Not run yet."
     @Published private(set) var whereIsSelfTestRunning = false
@@ -143,11 +148,21 @@ final class LanternModel:ObservableObject {
     init(voice: RealtimeVoiceSession = RealtimeVoiceSession(), chalkStore: ChalkConfigurationStoring = ChalkConfigurationStore(),
          gatewayFactory: @escaping (ChalkConfiguration) -> ChatGateway = { ChalkGateway(configuration: $0) },
          localFinder: LocalWhereIsFinding? = nil, roomMemory: RoomMemory = RoomMemory(), journeyLog: JourneyLog = JourneyLog(),
-         uploader: MemoryUploading? = SupabaseWriter.forLaunch()) {
+         uploader: MemoryUploading? = SupabaseWriter.forLaunch(), chalkQuery: ChalkQuerying? = ChalkQueryClient.forLaunch()) {
         self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory; self.roomMemory = roomMemory; self.journeyLog = journeyLog; self.uploader = uploader
+        self.chalkQuery = chalkQuery
         if roomMemory.uploader == nil { roomMemory.uploader = uploader }
         if journeyLog.uploader == nil { journeyLog.uploader = uploader }
+        if roomMemory.reader == nil, let chalkQuery { roomMemory.reader = ChalkSharedMemory(client: chalkQuery) }
         (uploader as? SupabaseWriter)?.venue = { [venueInfo] in venueInfo.pack.map { VenueRef(id: $0.venueId, name: $0.venueName) } ?? .demo }
+        roomMemory.venue = { [venueInfo] in venueInfo.pack?.venueId ?? VenueRef.demo.id }
+        // A shared map that arrives while the tag is in view seeds the planner now, unless this world was seeded already.
+        // A stop or a tracking reset forgets the sighting, so a map arriving after one seeds nothing.
+        roomMemory.onSharedStructure = { [weak self] tagId in
+            guard let self, let sighting = self.roomMemory.sighting, sighting.tagId == tagId,
+                  let map = self.roomMemory.structureToSeed(for: sighting) else { return }
+            self.floorGridSeeder(map, sighting.frame, sighting.worldEpoch)
+        }
         if let localFinder { self.localFinder = localFinder }
         chalkConfiguration = chalkStore.loadForLaunch()
         voice.onCommand = { [weak self] command in self?.performVoiceCommand(command) ?? ["error": "App unavailable"] }
@@ -211,6 +226,7 @@ final class LanternModel:ObservableObject {
     func sawTag(_ sighting: TagSighting) {
         roomMemory.sawTag(sighting)
         if let map = roomMemory.structureToSeed(for: sighting) { floorGridSeeder(map, sighting.frame, sighting.worldEpoch) }
+        roomMemory.fetchSharedStructure(venueId: nil, tagId: sighting.tagId)   // once per tag per run; a first visit can then route
     }
     /// Starts a timed grid-walk trial and records it (depth, plus camera video if enabled).
     func startTrial() {
@@ -287,6 +303,21 @@ final class LanternModel:ObservableObject {
             }
             return ["status": line, "remembered": true,
                     "note": "Say this as given: a place confirmed on an earlier visit. The pins point to the next point of the way, about every 6 meters; the route is a suggested direction, never a clear path."]
+        case .lastSeen(let object):
+            guard let userId = uploader?.userId else { return ["error": "Not signed in, so there is no find history to search."] }
+            guard let chalkQuery else { return ["error": "The find history needs the Chalk memory setup, which is missing on this phone."] }
+            lastSeenRequest += 1
+            let request = lastSeenRequest
+            ChalkContext.lastSeen(chalkQuery, userId: userId, object: object) { [weak self] result in
+                guard let self, self.lastSeenRequest == request else { return }
+                switch result {
+                case .success(let spoken): self.deliverLastSeen(spoken)
+                case .failure(.access): self.deliverLastSeen("The find history isn't available on this phone right now.")
+                case .failure: self.deliverLastSeen("I couldn't reach the find history just now.")
+                }
+            }
+            return ["status": "Checking the user's find history for the \(object). The record is spoken within a few seconds and appears in get_status.room_memory.last_seen. Say only Checking.",
+                    "pending": true, "note": "A past record: where the object was last confirmed, never where it is now."]
         case .foundIt:
             guard let target = heldTarget else { return ["error": "No Where-is target is held right now."] }
             let kept = roomMemory.confirm(target, confidence: 0.9) != nil
@@ -680,7 +711,14 @@ final class LanternModel:ObservableObject {
         journey["points"] = follower?.points.count ?? 0
         status["journey"] = journey
         status["uploads"] = uploader?.statusReport ?? ["configured": false]
+        status["last_seen"] = lastSeenNotice ?? "none"
+        status["shared_memory"] = chalkQuery == nil ? "no query access in this build" : "query access in this build"
         return status
+    }
+    /// The find-history record, spoken by the app as Chalk wrote it (past tense, never a claim the object is still there).
+    private func deliverLastSeen(_ line: String) {
+        lastSeenNotice = line
+        say(line)
     }
     private func say(_ line: String, sceneBound: Bool = false) {
         whereIsNotice = line

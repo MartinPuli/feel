@@ -30,4 +30,15 @@ if [ -n "$chalk_key" ] && [ -n "$chalk_env" ]; then
   [ -n "$chalk_host" ] && printf 'FEEL_CHALK_HOST = https:/$()/%s\n' "${chalk_host#https://}" >> Config/Supabase.local.xcconfig
   echo 'Chalk gateway included.'
 fi
+# Optional: short-lived Chalk query access (last_seen, room_structure, room_anchors on the phone), minted here from
+# the service credentials. The secret never leaves this Mac; the token lasts as long as the grant says, so rerun
+# this script before the demo build. Needs FEEL_CHALK_ENV above for the engine's X-Chalk-Env-Id header.
+if [ -n "$(read_value CHALK_CLIENT_ID)" ] && [ -n "$(read_value CHALK_CLIENT_SECRET)" ] && [ -n "$chalk_env" ]; then
+  env_path="$(cd "$(dirname "$env_file")" && pwd)/$(basename "$env_file")"
+  if (cd ../chalk && python3 -m feel_chalk.query_token --env "$env_path") >> Config/Supabase.local.xcconfig; then
+    echo 'Chalk query access included.'
+  else
+    echo 'Chalk query access skipped: the token exchange failed; the app keeps its own stores.' >&2
+  fi
+fi
 echo 'Wrote ios/Config/Supabase.local.xcconfig. Rebuild the Lantern app.'

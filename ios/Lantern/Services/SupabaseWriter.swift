@@ -10,6 +10,8 @@ import FeelCore
 protocol MemoryUploading: AnyObject {
     /// Whether a row can leave the phone now: Supabase settings in the build and a signed-in user.
     var isReady: Bool { get }
+    /// The signed-in user's id, the key the shared memory files finds under; nil without a sign-in.
+    var userId: String? { get }
     /// For get_status: rows sent, failed and skipped, the last reason, and who the rows are filed under.
     var statusReport: [String: Any] { get }
     func upload(find objectName: String, place: String, confidence: Double, foundAt: Date)

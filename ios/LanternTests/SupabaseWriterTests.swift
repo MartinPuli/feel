@@ -5,6 +5,8 @@ import FeelCore
 /// Records what the app hands to the shared memory, so the write path is checked without a network.
 final class RecordingUploader: MemoryUploading {
     var ready = true
+    var user: String? = "6f1d2c3b-4a5e-4f60-8b7a-9c0d1e2f3a4b"
+    var userId: String? { ready ? user : nil }
     var finds: [(objectName: String, place: String, confidence: Double, foundAt: Date)] = []
     var anchors: [(anchor: RoomAnchor, tagId: String)] = []
     var structures: [(map: RoomMap, tagId: String, seenAt: Date)] = []

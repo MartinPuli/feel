@@ -6,6 +6,20 @@ macOS reports the device unavailable. Physical six-servo integration NOT VERIFIE
 See [evidence](evidence/six-columns-20261017/REPORT.md) and [wiring](SIX-COLUMN-LAYOUT.md).
 Earlier seven-column statements below describe historical revisions.
 
+> **Chalk → phone reads (2026-10-17, night, this branch):** the loop closes on the phone. A `last_seen` assistant
+> tool ("where did I last see my keys") runs Chalk's `last_seen` named query for the signed-in user and the object as
+> the finds table stores it, and the app speaks `ObjectHistory.spoken` as written (a past record; `get_status.room_memory.last_seen`
+> carries it; a plain error without a sign-in or query access). The first sighting of a tag in a run fetches
+> `room_structure` and `room_anchors`: Chalk's merged map becomes one visit in the phone's store (never twice) and seeds the
+> route planner at once when the world has no prior yet, so a first visit can route; shared targets become sightings in
+> the anchor store. `ios/Lantern/Services/ChalkContext.swift` makes the same request as `feel_chalk/context.py`
+> (`POST {engine}/v1/query/online`, bearer token, the three Chalk headers). Access: a short-lived query token minted on the
+> Mac (`python -m feel_chalk.query_token`, piped into the git-ignored build config by `ios/scripts/supabase_config.sh`);
+> the phone never holds the client secret; whether the router key would also work was not checked (see
+> `chalk/feel_context/README.md`). Software checks on this Mac: Lantern unit tests on the simulator against a stub server
+> (217 tests, 12 new, 0 failures), chalk tests (139, 6 new, 10 skipped without chalkpy). NOT RUN on a device, and no phone or simulator has queried the
+> live engine: no sentence from Chalk has been heard on a phone yet.
+
 > **Phone → Supabase writes on `main` (2026-10-17, night):** the phone now writes the rows Chalk reads. "Found it"
 > sends a confirmed find (`confirmed_finds`, the table behind `last_seen`, placed by venue and distance from the room's
 > tag); every confirmed target sends an anchor, a visit's map goes when sensing stops, and each kept journey goes when

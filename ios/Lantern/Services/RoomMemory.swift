@@ -1,16 +1,47 @@
 import Foundation
 import FeelCore
 
+/// The shared memory read back: the room's structure as Chalk merged it (nil while nobody shared a visit) with the
+/// number of visits that voted, and the targets remembered at the tag as anchors. `ChalkContext` in the app;
+/// completions on the main thread.
+protocol SharedMemoryReading: AnyObject {
+    func fetchStructure(venueId: String, tagId: String, completion: @escaping (Result<(map: RoomMap?, visits: Int), ChalkQueryError>) -> Void)
+    func fetchAnchors(venueId: String, tagId: String, completion: @escaping (Result<[RoomAnchor], ChalkQueryError>) -> Void)
+}
+
+/// The app's reader: the two named queries over one query client.
+final class ChalkSharedMemory: SharedMemoryReading {
+    private let client: ChalkQuerying
+    init(client: ChalkQuerying) { self.client = client }
+    func fetchStructure(venueId: String, tagId: String, completion: @escaping (Result<(map: RoomMap?, visits: Int), ChalkQueryError>) -> Void) {
+        ChalkContext.roomStructure(client, venueId: venueId, tagId: tagId, completion: completion)
+    }
+    func fetchAnchors(venueId: String, tagId: String, completion: @escaping (Result<[RoomAnchor], ChalkQueryError>) -> Void) {
+        ChalkContext.roomAnchors(client, venueId: venueId, tagId: tagId, completion: completion)
+    }
+}
+
 /// What the phone remembers about the room it is in, keyed by the printed FEEL tag it last recognized: targets
 /// confirmed on earlier visits, kept in the tag's frame, so a later "where is the exit?" can point the pins at
 /// once instead of taking a photo, and the room's structure (the floor grid earlier sessions learned, FeelCore
 /// RoomMap), so the route arrows can plan before the camera has seen the room. Memory only shortcuts the question
 /// and seeds the planner; the pins always show live depth, and a remembered place is always spoken as a past
-/// sighting. A confirmed anchor and a kept visit also leave for the shared memory through `uploader`. Main thread.
+/// sighting. A confirmed anchor and a kept visit also leave for the shared memory through `uploader`, and what every
+/// phone shared comes back through `reader` as one more visit and more sightings in the local store. Main thread.
 final class RoomMemory {
     private let store: RoomMemoryStore
     /// Where anchors and room maps go beyond this phone (SupabaseWriter in the app); nil keeps them on the phone only.
     var uploader: MemoryUploading?
+    /// Where the shared memory is read back from (Chalk's `room_structure` and `room_anchors`); nil keeps the phone's own stores.
+    var reader: SharedMemoryReading?
+    /// The venue a room is filed under when `fetchSharedStructure` is given none: the loaded venue pack's, else the demo venue.
+    var venue: () -> String = { VenueRef.demo.id }
+    /// Called on the main thread after a download added to the tag's structure visits, so the planner can be seeded with it.
+    var onSharedStructure: ((String) -> Void)?
+    /// Tags whose shared memory was fetched this run, so the download happens once per tag; a failure allows one retry a minute later.
+    private var fetched: [String: Date] = [:]
+    private(set) var sharedStatus = "not fetched"
+    static let retryAfterFailure: TimeInterval = 60
     private let now: () -> Date
     /// The tag's frame in the current ARKit world, from the last recognition this session; a tracking reset clears it.
     private(set) var sighting: TagSighting?
@@ -94,16 +125,48 @@ final class RoomMemory {
     }
 
     /// The download of the room's structure as Chalk merged it from shared visits (named query `room_structure`,
-    /// `RoomMemory.structure`) into the local store as one more visit, so even a first visit can route. Not wired yet;
-    /// the upload of this phone's visits (`uploader`) is.
-    func fetchSharedStructure(venueId: String?, tagId: String) {}
+    /// `RoomMemory.structure`) into the local store as one more visit, so even a first visit can route, and of the
+    /// targets remembered there (`room_anchors`) as sightings the local store did not have. Once per tag per run;
+    /// nothing happens without a `reader`. The merged map counts as one visit among this phone's own, and the same
+    /// map is never stored twice, so a phone that visits daily keeps its own ten visits and Chalk's current vote.
+    func fetchSharedStructure(venueId: String?, tagId: String) {
+        guard let reader else { return }
+        let venue = venueId ?? self.venue(), at = now()
+        if let last = fetched[tagId], at < last { return }
+        fetched[tagId] = .distantFuture
+        sharedStatus = "fetching"
+        reader.fetchStructure(venueId: venue, tagId: tagId) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .failure(let error):
+                self.fetched[tagId] = self.now().addingTimeInterval(Self.retryAfterFailure)
+                self.sharedStatus = "failed: \(error)"
+            case .success(let shared):
+                self.sharedStatus = shared.map == nil ? "nothing shared yet" : "\(shared.visits) shared visit\(shared.visits == 1 ? "" : "s") merged"
+                guard let map = shared.map else { return }
+                let existing = self.anchorsTagId == tagId ? self.structures : self.store.structures(for: tagId)
+                guard !existing.contains(map), let kept = try? self.store.appendStructure(map, tagId: tagId) else { return }
+                if self.anchorsTagId == tagId { self.structures = kept }
+                self.onSharedStructure?(tagId)
+            }
+        }
+        reader.fetchAnchors(venueId: venue, tagId: tagId) { [weak self] result in
+            guard let self, case .success(let shared) = result else { return }
+            var kept = self.anchorsTagId == tagId ? self.anchors : self.store.anchors(for: tagId)
+            for anchor in shared where !kept.contains(anchor) {
+                guard let next = try? self.store.append(anchor, tagId: tagId) else { break }
+                kept = next
+            }
+            if self.anchorsTagId == tagId { self.anchors = kept }
+        }
+    }
 
-    /// For get_status: how much of the room's structure is remembered at the tag in use, from how many visits, and
-    /// whether the planner was seeded with it in this world.
+    /// For get_status: how much of the room's structure is remembered at the tag in use, from how many visits, whether
+    /// the planner was seeded with it in this world, and what the download of the shared structure did.
     var structureStatus: [String: Any] {
         let merged = RoomMap.merge(structures)
         return ["tag": anchorsTagId ?? "none", "visits": structures.count, "cells": merged?.observedCount ?? 0, "blocked": merged?.blockedCount ?? 0,
-                "seeded": seeded != nil,
+                "seeded": seeded != nil, "shared": reader == nil ? "no reader in this build" : sharedStatus,
                 "note": "Remembered structure only seeds the route planner before the camera has seen the room; the pins show live depth."]
     }
 
