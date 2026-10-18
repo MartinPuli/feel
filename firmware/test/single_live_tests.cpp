@@ -77,8 +77,11 @@ void allZeroReturnsEverySelectionToGap() {
         receive(c,p,2);
         assert(feel::singleLivePulse(c.snapshot()) == gaps[band-1]);
         assert(!c.snapshot().tapActive);
-        c.tick(501); assert(feel::singleLivePulse(c.snapshot()) == gaps[band-1]);
-        c.tick(502); assert(feel::singleLivePulse(c.snapshot()) == 0);
+        // A second zero packet makes it a real disappearance, not a held one-packet drop.
+        p.sequence = 2;
+        receive(c,p,3);
+        c.tick(502); assert(feel::singleLivePulse(c.snapshot()) == gaps[band-1]);
+        c.tick(503); assert(feel::singleLivePulse(c.snapshot()) == 0);
     }
 }
 void fourthHighlightWithinExtendedBound() {

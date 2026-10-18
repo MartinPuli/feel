@@ -12,6 +12,12 @@ constexpr std::size_t kActiveColumns = 6;
 constexpr std::size_t kPacketBytes = 9;
 constexpr uint8_t kNoHighlight = 255;
 constexpr uint32_t kWatchdogMs = 500;
+// Held drop: the phone drops a raised pin to its gap for exactly one packet
+// (presence tap, span tap). If the packet that would raise it again never
+// arrives within this window, the previous band is commanded again: a tap that
+// was never ended is a tap, not a disappearance. Any later accepted packet
+// wins, and the 500 ms watchdog above is unchanged. Not flashed; host-tested.
+constexpr uint32_t kHeldDropMs = 150;
 constexpr uint32_t kTapPeriodMs = 600;
 constexpr uint32_t kTapDipMs = 100;
 constexpr uint32_t kBenchArmMs = 30000;
@@ -93,6 +99,9 @@ private:
     uint32_t lastCommandMs_ = 0;
     uint32_t tapEpochMs_ = 0;
     uint32_t armEpochMs_ = 0;
+    // Per column: the raised band the last accepted packet dropped to 0, else 0.
+    std::array<uint8_t, kColumns> heldDrop_{};
+    uint32_t heldDropEpochMs_ = 0;
     uint8_t rawColumn_ = 0;
     uint16_t rawPulseUs_ = kMinPulseUs;
     void neutralize();
