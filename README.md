@@ -1,3 +1,8 @@
+> Current hardware: six columns, GPIO32 unused. Active slots1–6 map to
+> GPIO33,25,26,27,14,13. See [six-column wiring](docs/SIX-COLUMN-LAYOUT.md).
+> Existing angle settings are preserved. Earlier seven-column instructions below
+> are historical; update both phone and firmware for six-sector perception.
+
 > **FS0307 120° revision:** current CAD and firmware use 0/40/80/120° band positions.
 > See [design and validation](docs/FS0307-120-DESIGN.md). Old 175° shafts/calibration
 > are superseded. Default seven-servo PWM is disabled pending measured limits.

@@ -4,7 +4,7 @@ This source recreates the intended system from the handoff. No original Swift pr
 
 ## What is implemented
 
-- SwiftUI run screen, accessible labels, visible live/simulation/uncertain states, stop action and a seven-column virtual puck.
+- SwiftUI run screen, accessible labels, visible live/simulation/uncertain states, stop action and a six-column virtual puck.
 - ARKit world tracking and native LiDAR `sceneDepth`, pixel confidence filtering, scaled intrinsics, floor-relative height rejection and nearest horizontal range per sector.
 - Vision/CoreML adapter, built-in EXIT OCR, person detection and honestly labeled door candidates. Chair uses the separately downloaded genuine pretrained model.
 - BLE discovery and explicit puck selection, nine-byte commands at 10 Hz, write backpressure, newest-only queue, stale-queue expiry, callback identity checks, serialized same-device reconnect, and the firmware's 15-byte status decoder.
@@ -169,3 +169,15 @@ arrival assumptions, stateful CLI schema, lifecycle rules, and remaining validat
 `FeelCore` includes 20 spatial-memory regression tests. `LanternTests` adds three
 coordinator tests and `LanternUITests` adds the explicit simulation flow; these
 Apple-target tests require Xcode; current results are recorded in the integration report.
+
+## Six-column hardware layout
+
+The current app maps the entire −45°…+45° view into six 15° sectors. Left to
+right, visible columns 1–6 retain wire slots 1–6 and GPIOs 33, 25, 26, 27, 14, 13.
+Slot 0 is reserved and always suppressed before BLE transmission. Packets remain
+nine bytes; legacy packet decoding remains compatible. Do not pair this app with
+old seven-sector firmware for a six-column assembly.
+
+Straight tactile cues use the middle pair, columns 3 and 4. The pointing back-sheet
+keeps its existing printed coordinates; the removed leftmost physical slot is
+rejected. No new mechanical spacing or servo angle is inferred by this change.
