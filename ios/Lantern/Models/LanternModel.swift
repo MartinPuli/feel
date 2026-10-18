@@ -608,6 +608,7 @@ final class LanternModel:ObservableObject {
                 "spoken_replies": voice.spokenOutputEnabled, "useful_updates": voice.proactiveEnabled,
                 "notice": "Neutral pins do not mean a clear path. No safe-route claim is available.",
                 "open_side": openSide?.spoken ?? "Nothing within 1.6 meters ahead, or unknown.",
+                "obstacles": valid ? VoicePhrasing.obstacles(frame?.distances ?? []) : "no live sensing",
                 "room_memory": roomMemoryStatus, "room_structure": roomMemory.structureStatus]
     }
 

@@ -53,3 +53,18 @@ enum VoicePhrasing {
         abs(bearing) <= 15 ? "ahead" : bearing < 0 ? "to your left" : "to your right"
     }
 }
+
+
+extension VoicePhrasing {
+    /// What the pins show right now, for the assistant's status: nearest range per side. Columns 0-1 are
+    /// left, 2-4 ahead, 5-6 right. "nothing within 4 m" is what the sensor reports, never a clear path.
+    static func obstacles(_ distances: [Double?]) -> String {
+        guard distances.count == 7 else { return "unknown" }
+        func nearest(_ columns: ClosedRange<Int>) -> String {
+            let ranges = columns.compactMap { distances[$0] }.filter { $0.isFinite && $0 > 0 && $0 <= 4 }
+            guard let value = ranges.min() else { return "nothing within 4 m" }
+            return String(format: "%.1f m", locale: Locale(identifier: "en_US_POSIX"), value)
+        }
+        return "ahead \(nearest(2...4)), left \(nearest(0...1)), right \(nearest(5...6))"
+    }
+}
