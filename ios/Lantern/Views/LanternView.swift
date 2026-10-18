@@ -217,6 +217,7 @@ struct LanternView: View {
                         SavedWorldMapsPanel(maps: model.savedMaps, command: model.performVoiceCommand)
                         MemorySimulationControls(model: model)
                         ChalkCommandsPanel(coordinator: model.chalkCommands)
+                        CloudMemoryPanel(model: model)
                     } else {
                         settings
                     }

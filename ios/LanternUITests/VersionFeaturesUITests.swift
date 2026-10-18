@@ -108,4 +108,23 @@ final class VersionFeaturesUITests: XCTestCase {
         XCTAssertEqual(app.buttons["voiceControl"].value as? String, "Microphone off")
         XCTAssertEqual(app.staticTexts["sessionMode"].label, "STOPPED")
     }
+    /// Requires the simulator test app's fresh consent preferences. This test never
+    /// forces a consent value through launch arguments or switches uploads on.
+    func testCloudMemoryUploadAndSharingDefaultOff() {
+        let app = launch()
+        tap("Cloud memory", in: app)
+        let uploads = app.switches["memoryUploadConsent"]
+        reveal(uploads, in: app)
+        XCTAssertEqual(uploads.value as? String, "0", "A fresh installation must not upload memories without consent")
+        let shared = app.switches["Share future room records"]
+        reveal(shared, in: app)
+        XCTAssertEqual(shared.value as? String, "0")
+        XCTAssertFalse(shared.isEnabled, "Sharing cannot be enabled while uploads are off")
+        tap("Check upload status", in: app)
+        expectLabel(app.staticTexts["cloudMemoryResult"], contains: "Sent: 0")
+        capture("cloud-memory-consent-default-off")
+        app.buttons["closeCameraPanel"].tap()
+        XCTAssertEqual(app.buttons["voiceControl"].value as? String, "Microphone off")
+    }
+
 }

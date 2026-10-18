@@ -1,0 +1,23 @@
+{
+  "checked_at": "2026-10-18T02:47:39.877Z",
+  "environment_id": "flnyc749e8d9",
+  "method": "mcp__chalk__run_online_query repeat",
+  "input": {
+    "object_history.id": "00000000-0000-0000-0000-000000000001:keys"
+  },
+  "output": [
+    "object_history.finds_count",
+    "object_history.last_place",
+    "object_history.spoken"
+  ],
+  "response": {
+    "results": {
+      "object_history.finds_count": 0,
+      "object_history.last_place": null,
+      "object_history.spoken": "No confirmed find of keys is on record."
+    }
+  },
+  "operation_id_exposed": false,
+  "deployment_id_exposed": false,
+  "query_timestamp_exposed": false
+}

@@ -14,6 +14,7 @@ enum VoiceCommand: Equatable {
     case saveWorldMap, restoreWorldMap, deleteWorldMap, startMemorySimulation
     case moveMemorySimulation(Double), turnMemorySimulation(Double), setMemorySimulationTracking(Bool), exportJourneys
     case setTactileProfile(AdaptiveProfile)
+    case setMemoryUploads(Bool), setSharedRoomMemory(Bool)
     case leadMe(String)
     case venueInfo(String)
     case calibrate(Double)
@@ -62,6 +63,8 @@ enum VoiceCommand: Equatable {
         }
         switch name {
         case "set_direction_arrows": return .setDirectionArrows(try boolean("enabled"))
+        case "set_memory_uploads": return .setMemoryUploads(try boolean("enabled"))
+        case "set_shared_room_memory": return .setSharedRoomMemory(try boolean("enabled"))
         case "start_directions": return try noArguments(.startDirections)
         case "stop_directions": return try noArguments(.stopDirections)
         case "simulate_direction_sign": return try noArguments(.simulateDirectionSign)
@@ -155,6 +158,8 @@ enum VoiceCommand: Equatable {
                             "required": properties.keys.sorted(), "additionalProperties": false]]
         }
         return [
+            tool("set_memory_uploads", "Change uploads of future finds, room anchors, room structure and journeys. Before enabling, explain that these leave the phone and obtain the user's explicit consent. Requires sign-in and selected venue. Disabling stops future uploads; it does not delete existing cloud data.", properties: ["enabled": ["type": "boolean"]]),
+            tool("set_shared_room_memory", "Change sharing of future uploaded room records with other FEEL users. Explain who can use them and obtain explicit consent before enabling. Separate from upload consent. Disabling does not retract previously shared data.", properties: ["enabled": ["type": "boolean"]]),
             tool("set_direction_arrows", "Enable or disable tactile direction arrows when requested. Enabling does not start guidance or prove a safe route.", properties: ["enabled": ["type": "boolean"]]),
             tool("start_directions", "Start tactile arrows toward the currently selected target when requested, without requiring a hand sign. Select the requested target first if needed. Requires live sensing and arrows enabled. Report the returned pending or unavailable state; never promise safe passage."),
             tool("stop_directions", "Stop tactile direction arrows while leaving camera obstacle sensing running. For an unqualified stop, use stop instead."),

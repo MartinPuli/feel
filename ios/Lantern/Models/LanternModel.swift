@@ -60,7 +60,7 @@ final class LanternModel:ObservableObject {
     @Published var voiceControlsExpanded: Bool?
     private var voiceTeammates: [String: MCPeerID] = [:]
     let voice: RealtimeVoiceSession
-    let venueInfo = VenueInfo()
+    let venueInfo: VenueInfo
     let places = SessionPlaces()
     let savedMaps = SavedWorldMaps()
     private var restoredMapSession = false
@@ -89,6 +89,12 @@ final class LanternModel:ObservableObject {
     let journeyLog: JourneyLog
     /// Where finds, anchors, room maps and journeys leave the phone (SupabaseWriter); nil keeps everything on the phone.
     private let uploader: MemoryUploading?
+    var memoryUploadsEnabled: Bool { (uploader as? SupabaseWriter)?.uploadsEnabled ?? false }
+    var sharedRoomMemoryEnabled: Bool { (uploader as? SupabaseWriter)?.sharesRoomMemory ?? false }
+    var memoryUploadStatus: String {
+        guard let report = uploader?.statusReport else { return "Cloud memory unavailable." }
+        return "Sent: \(report["sent"] ?? 0). Failed: \(report["failed"] ?? 0). \(report["last_error"] as? String ?? "")"
+    }
     @Published private(set) var whereIsNotice: String?
     @Published private(set) var whereIsSelfTest = "Not run yet."
     @Published private(set) var whereIsSelfTestRunning = false
@@ -157,11 +163,11 @@ final class LanternModel:ObservableObject {
     init(voice: RealtimeVoiceSession = RealtimeVoiceSession(), chalkStore: ChalkConfigurationStoring = ChalkConfigurationStore(),
          gatewayFactory: @escaping (ChalkConfiguration) -> ChatGateway = { ChalkGateway(configuration: $0) },
          localFinder: LocalWhereIsFinding? = nil, roomMemory: RoomMemory = RoomMemory(), journeyLog: JourneyLog = JourneyLog(),
-         uploader: MemoryUploading? = SupabaseWriter.forLaunch()) {
-        self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory; self.roomMemory = roomMemory; self.journeyLog = journeyLog; self.uploader = uploader
+         uploader: MemoryUploading? = SupabaseWriter.forLaunch(), venueInfo: VenueInfo = VenueInfo()) {
+        self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory; self.roomMemory = roomMemory; self.journeyLog = journeyLog; self.uploader = uploader; self.venueInfo = venueInfo
         if roomMemory.uploader == nil { roomMemory.uploader = uploader }
         if journeyLog.uploader == nil { journeyLog.uploader = uploader }
-        (uploader as? SupabaseWriter)?.venue = { [venueInfo] in venueInfo.pack.map { VenueRef(id: $0.venueId, name: $0.venueName) } ?? .demo }
+        (uploader as? SupabaseWriter)?.venue = { [venueInfo] in venueInfo.pack.map { VenueRef(id: $0.venueId, name: $0.venueName) } }
         if let localFinder { self.localFinder = localFinder }
         chalkConfiguration = chalkStore.loadForLaunch()
         chalkCommands.captureContext = { [weak self] in
@@ -186,7 +192,7 @@ final class LanternModel:ObservableObject {
             }
             let line = result["error"] as? String ?? result["status"] as? String ?? "Request completed."
             if self.voice.isActive { self.say(line) }
-            else if self.voice.spokenOutputEnabled { self.localVoice.speak(String(line.prefix(160)), localeIdentifier: "en-US") }
+            else if self.voice.spokenOutputEnabled, !self.localVoice.hasPendingAttempt { self.localVoice.speak(String(line.prefix(160)), localeIdentifier: "en-US") }
             return line
         }
         localVoice.onCaptureWillStart = { [weak self] in
@@ -243,6 +249,8 @@ final class LanternModel:ObservableObject {
         perception.onHandSign={ [weak self] epoch,observation in self?.handleHandSign(observation,epoch:epoch) }
     }
     @discardableResult func performLocalCommand(_ text: String) -> [String: Any] {
+        localVoice.cancel()
+        chalkCommands.cancel(reason: "A local command replaced the request.")
         let response: [String: Any]
         do {
             let intent = try LocalCommandInterpreter.parse(text, language: localCommandLanguage)
@@ -397,6 +405,14 @@ final class LanternModel:ObservableObject {
             }
         }
         switch command {
+        case .setMemoryUploads(let enabled):
+            guard let writer = uploader as? SupabaseWriter else { return ["error": "Cloud memory unavailable."] }
+            writer.setUploadsEnabled(enabled); objectWillChange.send()
+            return ["status": enabled ? "Future memories can upload for the selected venue when signed in. Earlier local records are not uploaded." : "Memory uploads off. Existing cloud records have not been deleted."]
+        case .setSharedRoomMemory(let enabled):
+            guard let writer = uploader as? SupabaseWriter else { return ["error": "Cloud memory unavailable."] }
+            writer.setSharingEnabled(enabled); objectWillChange.send()
+            return ["status": enabled ? "Future uploaded room records can be shared with other FEEL users." : "Future room uploads will be private. Earlier shared records have not been changed."]
         case .saveWorldMap:
             guard mode == .live, let frame, places.hasFreshContext else { return ["error": "Start the camera and wait for fresh tracking first."] }
             savedMaps.save(snapshot: places.memory.snapshot, worldEpoch: frame.worldEpoch)
@@ -468,7 +484,7 @@ final class LanternModel:ObservableObject {
             clearHeldTarget(spokenLine: nil)
             return ["status": kept ? "Noted. The \(target.label) is remembered for this room." : "Noted. This room has no tag in view, so the place is not remembered.",
                     "remembered": kept,
-                    "history": saved ? "The find is being saved to the user's history, for where did I last see it." : "Not signed in, so the find is not saved to the user's history."]
+                    "history": saved ? "The find is being saved to the user's history, for where did I last see it." : "Cloud history was not updated. Upload consent, sign-in and a selected venue are required."]
         case .describeAhead:
             if let refusal = Self.whereIsRefusal(mode: mode, guidance: guidanceState) { return ["error": refusal] }
             guard let configuration = chalkConfiguration else {
@@ -503,7 +519,7 @@ final class LanternModel:ObservableObject {
             return ["status": "Connection requested. Call get_status to confirm; it is not connected yet."]
         case .setSpokenOutput(let enabled):
             voice.setSpokenOutput(enabled)
-            return ["status": enabled ? "Spoken replies enabled." : "Spoken replies muted. Microphone remains on; say speak again to unmute."]
+            return ["status": enabled ? "Spoken replies enabled." : "Spoken replies muted."]
         case .setProactiveUpdates(let enabled):
             voice.proactiveEnabled = enabled
             return ["status": enabled ? "Useful updates enabled." : "Useful updates paused. Replies to your questions remain available."]
@@ -833,13 +849,13 @@ final class LanternModel:ObservableObject {
     /// leave the phone (no Supabase settings, or not signed in).
     @discardableResult
     private func recordFind(_ target: HeldTarget, confidence: Double) -> Bool {
-        guard let uploader, uploader.isReady else { return false }
+        guard let uploader, uploader.isReady, let venueName = venueInfo.pack?.venueName else { return false }
         let tag = roomMemory.sighting.flatMap { sighting -> (id: String, distance: Double)? in
             guard sighting.worldEpoch == target.worldEpoch else { return nil }
             let p = sighting.frame.tagPoint(world: target.position)
             return (sighting.tagId, (p.x * p.x + p.y * p.y + p.z * p.z).squareRoot())
         }
-        uploader.upload(find: target.label, place: Self.findPlace(venue: venueInfo.pack?.venueName ?? VenueRef.demo.name, tag: tag),
+        uploader.upload(find: target.label, place: Self.findPlace(venue: venueName, tag: tag),
                         confidence: confidence, foundAt: Date())
         return true
     }

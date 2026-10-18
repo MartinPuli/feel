@@ -104,15 +104,16 @@ target ("You're there"). The arrows keep following the live route, and the pins 
 suggested direction, never a clear path. "Lead me to the exit" calls the `lead_me` tool for a place remembered in
 this room. `get_status.room_memory.journey` reports the walk being recorded and the point in use.
 
-Each kept journey is also uploaded: `SupabaseWriter` posts it to the `journeys` table through Supabase's REST API with
+After explicit upload consent, each future kept journey can also be uploaded: `SupabaseWriter` posts it to the `journeys` table through Supabase's REST API with
 the publishable key and the signed-in user's token. The same writer sends a confirmed find on "found it" (the
 `confirmed_finds` table behind Chalk's `last_seen`, placed by venue and distance from the room's tag), an anchor for
 every confirmed target and a visit's room map when sensing stops, so Chalk's `room_anchors`, `room_structure`, `path`
-and `progress_points` answer from what this phone saw. Rows are filed under the loaded venue pack's venue, else
-`rubenstein-treehouse`, and marked shared unless the user default `feel.shareRoomMemory` is false; an expired token is
-refreshed with the saved refresh token; `get_status.room_memory.uploads` counts what was sent, failed and skipped, with
+and `progress_points` can use shared records. Rows require a selected venue; there is no demo fallback. Uploads
+and sharing default off, with separate choices under Assistant → Cloud memory or explicit-consent voice tools.
+An expired token is refreshed only while its originating login and consent remain valid; `get_status.room_memory.uploads` counts what was sent, failed and skipped, with
 the last reason. `JourneyLog.export()` still writes every stored journey to `Documents/journeys.json` for the **Files**
-app (**On My iPhone → FEEL**), the way off a phone without a sign-in. Nothing of this has run on a device.
+app (**On My iPhone → FEEL**), accessible through Cloud memory or the export_journeys voice tool. A real device
+upload round trip remains unverified. See [integrated version features](../docs/VERSION-INTEGRATION.md).
 
 ## BLE and physical-output status
 

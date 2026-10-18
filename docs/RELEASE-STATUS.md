@@ -1,3 +1,39 @@
+## October 17 — V2–V4 integration and current-main validation
+
+This entry supersedes older integration and upload-default statements below.
+Useful session memory, saved-room restore, local commands, barcode finding,
+adaptive highlights and guarded Chalk intents are integrated with main `88c3900`.
+See [feature matrix and remaining gaps](VERSION-INTEGRATION.md).
+
+| Gate | Observed result |
+|---|---|
+| V1/V2 integrated native software | PASS: 268 native unit/integration tests and 12 UI tests; simulator build succeeds. |
+| Portable core | PASS: 360 tests. |
+| Deterministic six-column simulation | PASS with documented limitations: 13 scenarios ×3; 9 PASS, 4 KNOWN, 0 FAIL. Zero reserved-slot violations. |
+| Replay web diagnostics | PASS: nine tests and a local build with 13 synthetic sessions. Browser inspection unavailable. |
+| Firmware host contracts | PASS; no firmware, electrical or calibration changes in this integration. |
+| V3 software | PASS in software: local grammar, persistence/relocalization gates, barcode and tactile tests. |
+| V2/V3 physical hardware | NOT VERIFIED by this work. iPhone reports unavailable; no new install or physical test claimed. |
+| Chalk context | PASS: five direct-engine synthetic cases, twelve assertions. MCP parity FAIL; cause unproven. |
+| Chalk Python and intent backend | PASS: 135 and 36 tests respectively. |
+| Live intent quality/latency | PARTIAL MEASUREMENT; 16/19 measured cloud strict matches, 4/4 local Stop. Cloud p50 1.70 s, p95 2.55 s; 1 s latency target FAIL. |
+| Production cloud activation | NOT COMPLETE: optional intent HTTPS deployment, authenticated phone context reads and hosted FEEL eval verification remain. |
+
+Upload consent and public sharing now default off. The app requires a selected
+venue and sign-in, never invents a demo venue, and discards stale refresh/retries
+after logout, account switch or consent withdrawal. Source tests do not prove a
+phone-to-database-to-Chalk-to-phone round trip.
+
+[Chalk validation](evidence/chalk-context/INTEGRATION-VALIDATION.md),
+[live text eval](evidence/chalk-context/INTENT-EVALUATION.md), and
+[simulation evidence](../simulation/SIX-COLUMN-VALIDATION.md) retain limitations.
+The public intent service and the local timestamp fix were not deployed. A team
+notebook records FEEL context and feedback; no new support message was sent.
+
+Next human checks: reconnect/unlock the iPhone for installation; verify spoken
+commands/mute/headphones; then test real relocalization and tactile responses in
+a clear supervised area. These are device gates, not claims of certification.
+
 ## October 17 — six-column update
 
 Software checks PASS across current main and isolated V2/V3/V4; ESP32 six-live

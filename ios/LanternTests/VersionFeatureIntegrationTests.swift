@@ -56,7 +56,7 @@ final class VersionFeatureIntegrationTests: XCTestCase {
         XCTAssertNil(model.performLocalCommand("unmute")["error"])
         XCTAssertTrue(model.voice.spokenOutputEnabled)
         XCTAssertTrue(model.voice.isActive)
-        XCTAssertNil(model.performLocalCommand("please be quiet")["error"])
+        XCTAssertEqual(model.performLocalCommand("please be quiet")["status"] as? String, "Spoken replies muted.")
         XCTAssertFalse(model.voice.spokenOutputEnabled)
         XCTAssertTrue(model.voice.isActive)
         XCTAssertEqual(gateway.calls, 0)
@@ -168,6 +168,30 @@ final class VersionFeatureIntegrationTests: XCTestCase {
         XCTAssertThrowsError(try VoiceCommand.decode(name: "move_memory_simulation", arguments: #"{"meters":6}"#))
         XCTAssertThrowsError(try VoiceCommand.decode(name: "turn_memory_simulation", arguments: #"{"degrees":361}"#))
         XCTAssertThrowsError(try VoiceCommand.decode(name: "export_journeys", arguments: #"{"upload":true}"#))
+    }
+
+    func testFinalLocalTranscriptUsesSelectedLanguageAndKeepsMuteAndNetworkBoundary() throws {
+        let (model, gateway, transport) = fixture()
+        defer { model.stop(stopVoice: true) }
+        model.localCommandLanguage = .es
+        model.startMemorySimulation()
+        let messages = transport.sent.count
+        // Enter through the same final-only callback the recognizer invokes; no microphone is opened.
+        model.localVoice.onFinalTranscript?("guardá este lugar como Entrada")
+        XCTAssertEqual(model.places.memory.bookmarks.map(\.name), ["Entrada"])
+        model.moveMemorySimulation(-1)
+        model.localVoice.onFinalTranscript?("llevame a Entrada")
+        model.turnMemorySimulation(0)
+        XCTAssertTrue(model.places.active)
+        XCTAssertEqual(model.packet.bands[0], 0)
+        XCTAssertEqual(model.packet.bands[4], 2)
+        XCTAssertFalse(model.voice.spokenOutputEnabled)
+        XCTAssertEqual(gateway.calls, 0)
+        XCTAssertEqual(transport.sent.count, messages)
+        model.localVoice.onFinalTranscript?("no, llevame a Entrada y sali")
+        XCTAssertEqual(model.places.memory.bookmarks.count, 1)
+        XCTAssertEqual(gateway.calls, 0, "Unsupported final text must not escalate to a cloud model")
+        XCTAssertFalse(model.localVoice.hasPendingAttempt)
     }
 
 }

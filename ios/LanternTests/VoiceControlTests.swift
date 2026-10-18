@@ -94,10 +94,12 @@ final class VoiceControlTests: XCTestCase {
         XCTAssertFalse(voice.isListening)
         XCTAssertFalse(voice.canFinish)
         XCTAssertEqual(voice.transcript, "")
+        XCTAssertFalse(voice.hasPendingAttempt)
         voice.finish(); voice.cancel(); voice.cancel()
         XCTAssertFalse(voice.isListening)
         XCTAssertFalse(voice.canFinish)
         XCTAssertFalse(delivered)
         XCTAssertFalse(captureRequested)
+        XCTAssertFalse(voice.hasPendingAttempt)
     }
 }

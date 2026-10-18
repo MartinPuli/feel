@@ -81,7 +81,11 @@ def build(source: dict, generated: datetime, days: int) -> dict:
         raise VenuePackError('days must be a positive whole number')
     if not isinstance(source, dict) or not isinstance(source.get('entries'), list) or not source['entries']:
         raise VenuePackError('the source needs at least one entry')
-    generated = generated.astimezone(timezone.utc).replace(microsecond=0)
+    if not isinstance(generated, datetime) or generated.utcoffset() is None:
+        raise VenuePackError('generated_at must be a timezone-aware datetime')
+    # Compare original instants before formatting both timestamps to wire seconds.
+    # Rounding the build clock first rejects a legitimate same-second retrieval.
+    generated = generated.astimezone(timezone.utc)
     entries = [_entry(raw, generated) for raw in source['entries']]
     ids = [entry['id'] for entry in entries]
     if len(set(ids)) != len(ids):

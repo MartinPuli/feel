@@ -79,8 +79,8 @@ First live deployment and the verified queries are recorded in
 
 The phone's writes are in: a find after "found it", an anchor after every confirmed Where-is target, a visit's map
 when sensing stops and each kept journey go through Supabase REST with the user's JWT (`SupabaseWriter`, behind
-`RoomMemory.uploader` and `JourneyLog.uploader`), filed under the loaded venue pack's venue or `rubenstein-treehouse`
-and marked shared unless the user turned sharing off. Not done yet, in order: the `last_seen`, `room_anchors` and
+`RoomMemory.uploader` and `JourneyLog.uploader`). Uploads require explicit consent, sign-in and a selected venue.
+Public room sharing requires a separate opt-in; both choices default off. No demo venue is invented. Not done yet, in order: the `last_seen`, `room_anchors` and
 `room_structure` assistant tools calling Chalk with a scoped token (the second would fill the phone's local anchor
 store from the shared memory, the third its visits: `RoomMemory.fetchSharedStructure` is that empty function), and a
 scheduled query that rebuilds each venue's pack daily (`ScheduledQuery` over `Venue.pack`; `queries.py` is where it goes).
