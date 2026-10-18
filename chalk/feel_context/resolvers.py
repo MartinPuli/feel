@@ -228,7 +228,7 @@ def world_map_of_room(structure: RoomMemory.structure,
     return RoomMemory(world_map=world, world_map_journeys=count)
 
 
-@offline(cron="@daily")
+@offline(cron="0 3 * * *")
 def rooms_with_memory() -> DataFrame[RoomMemory.id, RoomMemory.venue_id, RoomMemory.tag_id]:
     """Every room with a shared visit or journey, ingested daily so the scheduled query world_map (queries.py) has
     the RoomMemory ids to recompute."""
