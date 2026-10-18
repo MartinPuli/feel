@@ -1,16 +1,72 @@
 {
   "title": "BLE packet loss and the 500 ms failsafe",
-  "description": "Wall 1.2 m ahead. Every packet is dropped from 2.0 to 3.2 s: the firmware holds the last bands, then neutralises 500 ms after the last packet. From 4 to 6 s, 30 % random loss (fixed seed) must not cause a dropout. The blackout begins right after the phone's presence tap at 1.95 s; the firmware's held-drop rule (kHeldDropMs = 150) raises the tapped pins again when no packet follows, so the wall is held, not the tap, until the watchdog fires.",
+  "description": "Wall 1.2 m ahead. Every packet is dropped from 2.0 to 3.2 s, beginning after a presence-tap neutral packet at 1.95 s. The controller must keep that neutral command, never infer a tap and resurrect stale bands; the 500 ms watchdog then expires. Fresh packets restore the wall. From 4 to 6 s, fixed-seed 30% loss exercises recovery.",
   "scene": {
     "duration": 6,
-    "path": [{"t": 0, "x": 0, "z": 0}],
-    "objects": [{"kind": "box", "min": [-10, 0, -1.4], "max": [10, 3, -1.2], "label": "wall"}],
-    "sensor": {"noise": 0.005, "seed": 4}
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0
+      }
+    ],
+    "objects": [
+      {
+        "kind": "box",
+        "min": [
+          -10,
+          0,
+          -1.4
+        ],
+        "max": [
+          10,
+          3,
+          -1.2
+        ],
+        "label": "wall"
+      }
+    ],
+    "sensor": {
+      "noise": 0.005,
+      "seed": 4
+    }
   },
-  "faults": {"seed": 20261017, "packetLoss": [{"from": 2.0, "to": 3.2, "rate": 1.0}, {"from": 4.0, "to": 6.0, "rate": 0.3}]},
+  "faults": {
+    "seed": 20261017,
+    "packetLoss": [
+      {
+        "from": 2.0,
+        "to": 3.2,
+        "rate": 1.0
+      },
+      {
+        "from": 4.0,
+        "to": 6.0,
+        "rate": 0.3
+      }
+    ]
+  },
   "expect": [
-    {"from": 0.3, "to": 2.4, "columns": "all", "band": 2, "label": "firmware holds last packet"},
-    {"from": 2.5, "to": 3.15, "columns": "all", "band": 0, "label": "watchdog neutral"},
-    {"from": 3.3, "to": 6.0, "columns": "all", "band": 2, "label": "recovered; survives 30 % loss"}
+    {
+      "from": 0.3,
+      "to": 1.85,
+      "columns": "all",
+      "band": 2,
+      "label": "wall before last accepted neutral"
+    },
+    {
+      "from": 1.95,
+      "to": 3.15,
+      "columns": "all",
+      "band": 0,
+      "label": "last neutral held, then watchdog expires"
+    },
+    {
+      "from": 3.3,
+      "to": 6.0,
+      "columns": "all",
+      "band": 2,
+      "label": "recovered; survives 30 % loss"
+    }
   ]
 }

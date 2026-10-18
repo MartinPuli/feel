@@ -141,24 +141,28 @@ TEST(disappearing_pin_uses_nearest_last_band_gap) {
     CLOSE(feel::nearestGap(116.01F), 145);
 }
 
-TEST(held_drop_restores_previous_band_after_150ms_then_watchdog_still_fires) {
-    Controller c;
-    c.connect(0);
-    CHECK(send(c, 0, 2, 100) == Result::Ok);
-    CHECK(send(c, 1, 0, 200) == Result::Ok); // one-packet drop
-    c.tick(349);
-    for (auto b : c.snapshot().bands) CHECK(b == 0);
-    c.tick(350);
-    for (auto b : c.snapshot().bands) CHECK(b == 2);
-    CLOSE(c.snapshot().angles[1], 58);
-    c.tick(699);
-    CHECK(c.snapshot().active);
-    c.tick(700); // 500 ms after the last accepted packet
-    neutral(c);
-    CHECK(c.snapshot().timeouts == 1);
+TEST(safety_neutral_does_not_resurrect_without_a_fresh_packet) {
+    // A zero packet is also used for tracking loss; the ABI does not identify a tap.
+    // Losing every subsequent packet must never make old obstacle guidance reappear.
+    for (uint32_t start : {100U, UINT32_MAX - 250U}) {
+        Controller c;
+        c.connect(start - 1U);
+        auto raised = wire(0, 3); raised[1] = 0; // reserved b0
+        CHECK(c.receive(raised.data(), raised.size(), start) == Result::Ok);
+        CHECK(send(c, 1, 0, start + 100U) == Result::Ok);
+        for (uint32_t delta : {149U, 150U, 499U}) {
+            c.tick(start + 100U + delta);
+            for (auto band : c.snapshot().bands) CHECK(band == 0);
+            CHECK(c.snapshot().highlight == feel::kNoHighlight);
+            CHECK(c.snapshot().active);
+        }
+        c.tick(start + 600U); // 500 ms from the accepted neutral, including wraparound.
+        neutral(c);
+        CHECK(c.snapshot().timeouts == 1);
+    }
 }
 
-TEST(held_drop_yields_to_later_packets) {
+TEST(neutral_waits_for_later_valid_packets) {
     // (a) drop then restore packet: unchanged behaviour.
     Controller c;
     c.connect(0);
@@ -502,7 +506,7 @@ TEST(seed_0xc0ffee_packet_fault_fuzz_preserves_output_bounds) {
         auto bytes = wire(static_cast<uint8_t>(step), static_cast<uint8_t>(step % 5));
         if (random() % 2) bytes[random() % 9] = static_cast<uint8_t>(random() >> 24);
         const uint32_t now = step * 17;
-        c.tick(now); // Time-driven changes (watchdog, held drop) happen here, not in the rejection.
+        c.tick(now); // Watchdog expiry happens here, not in the rejection.
         const auto before = c.snapshot();
         const Result result = c.receive(bytes.data(), bytes.size(), now);
         const auto& after = c.snapshot();

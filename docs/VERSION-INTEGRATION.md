@@ -74,3 +74,24 @@ Use an installed simulator rather than assuming that identifier exists on anothe
 The older V2/V3/V4 branch refs remain preserved. V4-Ben's earlier features were already present in main. The live intent evaluation is [recorded separately](evidence/chalk-context/INTENT-EVALUATION.md); strict contract and latency targets are not reported as passing.
 
 `claude/strange-swartz-7b6d9b` (`1a8945b`) appeared during the final fetch. It adds phone context reads, but currently embeds a Chalk client-credentials bearer in the app build and accepts feature/user identifiers on the client. Short expiry does not make that bearer user-scoped. It is not merged into this release: the authenticated server-boundary prerequisite above still applies. Its existence is recorded rather than reporting those reads as active.
+
+## October 18 — Ethan dot-tracking integration
+
+`origin/ethan/cad` at `765027e` was already merged into remote main by `9fe722a`.
+Local main was fast-forwarded from `c71fc01` to `8b0789c`; recovery ref
+`codex/before-ethan-dot-sync-20261018` preserves the previous local tip.
+Historical branches and pre-existing untracked files were retained.
+
+The merge adds the turning-triggered `PathWave` dot, stable depth sectors,
+brief offscreen target retention, replay comparisons and CAD refinements.
+The merge's adaptation keeps the wave in slots 1–6, reserves b0, disables GPIO32,
+and leaves the existing servo angle and pulse settings unchanged.
+
+Review found that the subsequent `d92cdac` held-drop feature could restore stale
+pins after a tracking-loss neutral command followed by packet loss. The focused
+controller fix and regressions from `a1f4313` were applied without importing that
+branch's unrelated work: neutral remains neutral until a fresh packet raises it.
+The new regression failed before the correction (43/44 controller tests).
+Phone-timed taps and the path wave remain available; a lost restoring packet can
+extend a neutral interval. No firmware was flashed. See the latest release entry
+for commands, results and physical-validation limits.

@@ -1,0 +1,34 @@
+[0/1] Planning build
+Building for production...
+[0/6] Write sources
+[3/6] Write swift-version--58304C5D6DBC2206.txt
+[5/7] Compiling FeelCore AdaptiveTactile.swift
+[6/8] Compiling FeelSim Replay.swift
+[7/9] Compiling FeelReplay main.swift
+[7/9] Write Objects.LinkFileList
+[8/9] Linking feel-replay
+Build of product 'feel-replay' complete! (15.44s)
+PASS   corridor-oncoming-people     accuracy 1.0     phantom 0    missed 0    changes/col/s 0.479  frame age 51.0 ms  baseline same
+PASS   doorway-open-leaf            accuracy 1.0     phantom 0    missed 0    changes/col/s 0.761  frame age 51.2 ms  baseline same
+KNOWN  doorway-open                 accuracy 0.695   phantom 86   missed 0    changes/col/s 0.192  frame age 55.7 ms  baseline same
+         window 0.3–5.0 s (opening is clear): 0.085 < 0.95  (known issue: A 1 m opening at 2 m is narrower than the two central 15° sectors. Each contains a jamb sample, so nearest-sample sector encoding cannot represent the opening as clear.)
+PASS   doorway-wide-open            accuracy 1.0     phantom 0    missed 0    changes/col/s 0.128  frame age 55.7 ms  baseline same
+KNOWN  doorway-with-lintel          accuracy 0.695   phantom 86   missed 0    changes/col/s 0.192  frame age 55.7 ms  baseline same
+         window 0.3–5.0 s (opening is clear): 0.085 < 0.95  (known issue: Obstacle height window tops out at 2.1 m (DepthProjector.sectors maxHeight), above a standard 2.03 m door head, so doorways read as blocked.)
+KNOWN  find-door-slow-detector      accuracy 0.9787  phantom 0    missed 0    changes/col/s 0.161  frame age 54.8 ms  baseline same
+         window 1.1–4.4 s (door taps column 5 steadily): 0.758 < 0.95  (known issue: Target freshness (0.5 s) is close to detector cadence (~0.4 s) plus inference; with ≥ 0.15 s inference the tap drops out for a tick every cycle.)
+PASS   find-door                    accuracy 1.0     phantom 0    missed 0    changes/col/s 0.161  frame age 54.8 ms  baseline same
+KNOWN  hallway-cluttered            accuracy 0.9821  phantom 0    missed 0    changes/col/s 0.578  frame age 51.0 ms  baseline same
+         window 3.25–5.15 s (left wall (band 3)): 0.750 < 0.95  (known issue: SectorFilter (Oct 17) needs four agreeing frames to move a pin farther; the console-table sliver at the left column edge keeps resetting the count, so the near pin lingers about 0.8 s after the table has passed (3.25–5.15 s window).)
+PASS   height-window                accuracy 1.0     phantom 0    missed 0    changes/col/s 0.079  frame age 57.0 ms  baseline same
+PASS   lidar-outliers               accuracy 1.0     phantom 0    missed 0    changes/col/s 0.0    frame age 54.8 ms  baseline same
+PASS   office-furnished             accuracy 1.0     phantom 0    missed 0    changes/col/s 0.73   frame age 50.8 ms  baseline same
+PASS   packet-loss-failsafe         accuracy 1.0     phantom 0    missed 0    changes/col/s 0.488  frame age 54.8 ms  baseline changed from t=2.15
+KNOWN  person-crossing              accuracy 0.9855  phantom 2    missed 0    changes/col/s 0.288  frame age 51.2 ms  baseline same
+         window 4.6–4.9 s: 0.778 < 0.95  (known issue: SectorFilter (Oct 17) lets a pin drop or move farther only after four agreeing frames, so the column the person just left stays raised about 0.3 s; the two short windows at 3.95 and 4.6 s fall inside that lag.)
+PASS   tracking-and-stale-depth     accuracy 1.0     phantom 0    missed 0    changes/col/s 0.492  frame age 56.2 ms  baseline same
+PASS   tracking-loss-packet-blackout accuracy 1.0     phantom 0    missed 0    changes/col/s 0.8    frame age 61.1 ms  baseline none
+PASS   turn-toward-pole             accuracy 1.0     phantom 0    missed 0    changes/col/s 0.108  frame age 54.8 ms  baseline same
+PASS   uncalibrated                 accuracy 1.0     phantom 0    missed 0    changes/col/s 0.0    frame age - ms  baseline same
+PASS   wall-approach                accuracy 1.0     phantom 0    missed 0    changes/col/s 0.429  frame age 51.0 ms  baseline same
+Report: /Users/martinezequielpulitano/hackharvard/simulation/out/report.html
