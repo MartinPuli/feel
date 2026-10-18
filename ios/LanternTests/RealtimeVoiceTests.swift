@@ -4,6 +4,16 @@ import UIKit
 @testable import Lantern
 
 final class RealtimeVoiceTests: XCTestCase {
+    func testBuildConfigSeedsTheVoiceServiceOnlyWhenComplete() {
+        let token = String(repeating: "a", count: 40)
+        let good = VoiceConfigurationStore.configuration(fromInfo: ["FEEL_VOICE_ENDPOINT": "https://feel-v1-voice.vercel.app/session", "FEEL_VOICE_ACCESS_TOKEN": token])
+        XCTAssertEqual(good?.endpoint, "https://feel-v1-voice.vercel.app/session")
+        XCTAssertNil(VoiceConfigurationStore.configuration(fromInfo: ["FEEL_VOICE_ENDPOINT": "$(FEEL_VOICE_ENDPOINT)", "FEEL_VOICE_ACCESS_TOKEN": "$(FEEL_VOICE_ACCESS_TOKEN)"]), "an unexpanded build setting is not a configuration")
+        XCTAssertNil(VoiceConfigurationStore.configuration(fromInfo: ["FEEL_VOICE_ENDPOINT": "https://feel-v1-voice.vercel.app/session"]))
+        XCTAssertNil(VoiceConfigurationStore.configuration(fromInfo: ["FEEL_VOICE_ENDPOINT": "http://insecure/session", "FEEL_VOICE_ACCESS_TOKEN": token]))
+        XCTAssertNil(VoiceConfigurationStore.configuration(fromInfo: ["FEEL_VOICE_ENDPOINT": "https://feel-v1-voice.vercel.app/session", "FEEL_VOICE_ACCESS_TOKEN": "sk-short"]))
+    }
+
     private let config = VoiceConfiguration(endpoint: "https://voice.example/session", accessToken: String(repeating: "a", count: 32))
 
     func testCommandAllowlistRejectsMalformedAndUnsafeArguments() throws {

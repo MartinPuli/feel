@@ -102,6 +102,8 @@ OpenAI key nor any usable credential is bundled with the app. Both phone setting
 are stored in Keychain. Audio streams directly to OpenAI. Optional Where-is requests can send one camera photo through the separately configured Chalk gateway.
 
 The production token endpoint is `https://feel-v1-voice.vercel.app/session`.
+
+To skip typing the setup on a development phone, put `FEEL_VOICE_ENDPOINT` and `FEEL_VOICE_ACCESS_TOKEN` in the git-ignored `chalk/.env`, run `ios/scripts/supabase_config.sh`, and rebuild: the first launch saves them to the Keychain (`VoiceConfigurationStore.provisionFromBundle`). The access code is a separate service credential, never an OpenAI key, and it still never enters the repository.
 OpenAI Realtime uses `gpt-realtime-2.1` and Cedar with 24 kHz PCM audio.
 The server retains the provider key and returns a five-minute client secret.
 A live provider probe completed readiness speech, 40 seconds of streamed silent
