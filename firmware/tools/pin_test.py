@@ -6,7 +6,7 @@ Two ways to say which pins:
   --pins 3:2 5:4            wire slot 3 to band 2 and slot 5 to band 4, nothing else
   --lidar -30:1.2 20:0.6    obstacles at a bearing (degrees, right positive) and range (metres);
                             they go through the production depth projector and encoder, so
-                            the pins that rise are the pins the phone would raise
+                            this is a synthetic projector/encoder check, not the full camera pipeline
 
 Slots are the six wire slots 1..6 (L3 L2 L1 R1 R2 R3). Bands: 1 near (<0.9 m), 2 (<1.6), 3 (<2.5),
 4 far (<=4 m). Slot 0 has no servo.
@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import math
 from pathlib import Path
 import subprocess
 import sys
@@ -70,10 +71,14 @@ def parse_obstacles(specs: list[str]) -> list[dict]:
     for spec in specs:
         parts = spec.split(':')
         try:
+            if len(parts) not in (2, 3):
+                raise ValueError('unexpected obstacle fields')
             bearing, distance = float(parts[0]), float(parts[1])
             height = float(parts[2]) if len(parts) > 2 else 1.0
         except (ValueError, IndexError):
             raise SystemExit(f'--lidar wants BEARING:DISTANCE[:HEIGHT], got {spec!r}')
+        if not all(math.isfinite(value) for value in (bearing, distance, height)):
+            raise SystemExit('obstacle bearing, distance, and height must be finite')
         if not -45 <= bearing <= 45:
             raise SystemExit(f'bearing {bearing} is outside the pins\' field (-45..45 degrees)')
         if not 0 < distance <= 4:
@@ -161,44 +166,88 @@ async def run_ble(bands: list[int], highlight: int, seconds: float, name: str) -
     if device is None:
         print(f'No BLE device named "{name}" found. Is the puck powered and not connected to the phone?')
         return 2
-    statuses: list[dict] = []
+    # Samples are collected only during the hold. Clear packets also report active=True,
+    # so an "active" status alone cannot distinguish hold evidence from cleanup.
+    statuses: list[tuple[float, dict]] = []
+    collecting = True
+    seq = 1
+    last_sent: tuple[int, float] | None = None
+    cleanup_failed = False
+    hold_failed = False
+    operation_timeout = 0.15  # keep each operation bounded below the 500 ms watchdog
 
     def on_status(_, data: bytearray):
-        statuses.append(decode_status(bytes(data)))
+        if collecting:
+            statuses.append((time.monotonic(), decode_status(bytes(data))))
 
     async with BleakClient(device) as client:
-        await client.start_notify(STATUS, on_status)
-        seq = 1
-        deadline = time.monotonic() + seconds
-        print(f'Connected. Holding for {seconds:.1f} s (packets every {int(PERIOD_S*1000)} ms; the watchdog drops pins after {int(WATCHDOG_S*1000)} ms of silence).', flush=True)
-        while time.monotonic() < deadline:
-            await client.write_gatt_char(COMMAND, packet(seq, bands, highlight), response=False)
-            seq = (seq + 1) % 256
-            await asyncio.sleep(PERIOD_S)
-        await asyncio.sleep(0.2)
+        notified = False
         try:
-            statuses.append(decode_status(bytes(await client.read_gatt_char(STATUS))))
-        except Exception as error:  # status read is best effort
-            print(f'(status read failed: {error})')
-        # Lower everything before leaving: three clear packets, then the watchdog finishes the job.
-        for _ in range(3):
-            await client.write_gatt_char(COMMAND, packet(seq, [0] * 7), response=False)
-            seq = (seq + 1) % 256
-            await asyncio.sleep(PERIOD_S)
-        await client.stop_notify(STATUS)
+            await asyncio.wait_for(client.start_notify(STATUS, on_status), 5.0)
+            notified = True
+            deadline = time.monotonic() + seconds
+            print(f'Connected. Holding for {seconds:.1f} s (packets every {int(PERIOD_S*1000)} ms; the watchdog drops pins after {int(WATCHDOG_S*1000)} ms of silence).', flush=True)
+            while time.monotonic() < deadline:
+                sent_seq, sent_at = seq, time.monotonic()
+                seq = (seq + 1) % 256
+                await asyncio.wait_for(client.write_gatt_char(
+                    COMMAND, packet(sent_seq, bands, highlight), response=False), operation_timeout)
+                last_sent = (sent_seq, sent_at)
+                await asyncio.sleep(PERIOD_S)
+            try:
+                data = await asyncio.wait_for(client.read_gatt_char(STATUS), operation_timeout)
+                on_status(None, data)
+            except Exception as error:
+                print(f'(status read failed: {error}; checking correlated notifications)')
+        except Exception as error:
+            hold_failed = True
+            print(f'Hold failed: {error}')
+        finally:
+            # Freeze evidence before lowering pins. Try every neutral even if a previous
+            # write failed. Context exit disconnects; the firmware watchdog is the fallback.
+            collecting = False
+            evidence_time = time.monotonic()
+            for _ in range(3):
+                clear_seq = seq
+                seq = (seq + 1) % 256
+                try:
+                    await asyncio.wait_for(client.write_gatt_char(
+                        COMMAND, packet(clear_seq, [0] * 7), response=False), operation_timeout)
+                except Exception as error:
+                    cleanup_failed = True
+                    print(f'Neutral write failed: {error}')
+                await asyncio.sleep(PERIOD_S)
+            if notified:
+                try:
+                    await asyncio.wait_for(client.stop_notify(STATUS), operation_timeout)
+                except Exception as error:
+                    cleanup_failed = True
+                    print(f'Status cleanup failed: {error}')
 
-    held = [s for s in statuses if s.get('active')]
-    if not held:
-        print('Firmware never reported an active hold. Output state: ' + (statuses[-1].get('output', '?') if statuses else 'no status received'))
-        print('If output is "disabled", this firmware build has PWM off; flash the live profile (esp32-six-live).')
+    if hold_failed or cleanup_failed:
+        print('Test failed. Disconnected; neutral delivery was not fully verified. Check the puck before continuing.')
         return 1
-    last = held[-1]
-    print(picture(last['bands'], last['highlight'], 'Firmware held:'))
+    correlated = [] if last_sent is None else [
+        status for received_at, status in statuses
+        if status.get('lastSequence') == last_sent[0]
+        and last_sent[1] <= received_at <= evidence_time
+        and evidence_time - last_sent[1] < WATCHDOG_S
+        and evidence_time - received_at < WATCHDOG_S
+    ]
+    if not correlated:
+        print('No fresh status acknowledged the final hold packet; the requested hold is unverified.')
+        return 1
+    last = correlated[-1]
     problems = compare(bands, last['bands'])
+    for field, expected in (('connected', True), ('active', True), ('sequenceValid', True),
+                            ('benchArmed', False), ('output', 'ready'), ('highlight', highlight)):
+        if last.get(field) != expected:
+            problems.append(f'{field}: expected {expected}, firmware reports {last.get(field)}')
+    print(picture(last['bands'], last['highlight'], 'Firmware reported during hold:'))
     if problems:
         print('MISMATCH between request and firmware:\n  ' + '\n  '.join(problems))
         return 1
-    print('Firmware held exactly the requested pins. Did the puck show the same picture? That part only your eyes can confirm.')
+    print('Firmware reported the requested pins with output ready. Physical movement remains unverified; observe the puck.')
     return 0
 
 
@@ -247,15 +296,23 @@ def run_serial(bands: list[int], highlight: int, seconds: float, port: str) -> i
             while time.monotonic() < deadline:
                 time.sleep(PERIOD_S)
                 command('KEEP')
-            print('Hold complete.')
+            print('Bench commands acknowledged. Serial mode does not verify held bands or physical movement.')
             return 0
         finally:
             connection.write(b'STOP\n')
             connection.flush()
 
 
+class PinArgumentParser(argparse.ArgumentParser):
+    def _parse_optional(self, arg_string):
+        # Negative BEARING:DISTANCE tokens are values, not short options.
+        if arg_string.startswith('-') and not arg_string.startswith('--') and ':' in arg_string:
+            return None
+        return super()._parse_optional(arg_string)
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = PinArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     what = parser.add_mutually_exclusive_group(required=True)
     what.add_argument('--pins', nargs='+', metavar='SLOT:BAND', help='raise these wire slots to these bands')
     what.add_argument('--lidar', nargs='+', metavar='BEARING:DISTANCE', help='obstacles seen by the camera; the projector decides the pins')
@@ -305,7 +362,9 @@ def main(argv: list[str] | None = None) -> int:
             code = asyncio.run(run_ble(bands, highlight, args.seconds, args.name))
         worst = max(worst, code)
         print()
-        if len(pictures) > 1 and code == 0:
+        if code != 0:
+            break  # Do not start another hold after a failed or unverified test.
+        if len(pictures) > 1:
             time.sleep(1.0)  # let the pins fall before the next slot
     return worst
 

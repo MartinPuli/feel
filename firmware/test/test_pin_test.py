@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Host checks for firmware/tools/pin_test.py: pin specs, packets, pictures, status decoding."""
 import sys
+import asyncio
+import contextlib
+import io
+import types
+from unittest.mock import patch
 import unittest
 from pathlib import Path
 
@@ -66,6 +71,123 @@ class PictureTests(unittest.TestCase):
     def test_dry_run_prints_without_hardware(self):
         self.assertEqual(pin_test.main(['--pins', '3:2', '5:4', '--dry-run']), 0)
         self.assertEqual(pin_test.main(['--each', '--band', '1', '--dry-run']), 0)
+
+
+class BLEVerificationTests(unittest.TestCase):
+    """A fake radio exercises transport ordering; these tests never discover hardware."""
+    bands = [0, 0, 0, 2, 0, 0, 0]
+
+    def exercise(self, *, overrides=None, cleanup_notify=True, fail_hold=False,
+                 fail_clear=False, read_fails=False, notifications=True, read_delay=0,
+                 fail_stop=False, cancel_hold=False):
+        clock = [0.0]
+        writes = []
+        state = {'callback': None, 'last': None, 'stopped': False, 'exited': False}
+        overrides = overrides or {}
+
+        def status(data):
+            fields = {'connected': 1, 'active': 1, 'sequenceValid': 1,
+                      'lastSequence': data[0], 'highlight': data[8],
+                      'benchArmed': 0, 'output': 1}
+            fields.update(overrides)
+            return bytes([1, fields['connected'], fields['active'], fields['sequenceValid'],
+                          fields['lastSequence'], fields['highlight'], fields['benchArmed'],
+                          fields['output']] + list(data[1:8]))
+
+        class Client:
+            def __init__(self, _): pass
+            async def __aenter__(self): return self
+            async def __aexit__(self, *args): state['exited'] = True
+            async def start_notify(self, _, callback): state['callback'] = callback
+            async def stop_notify(self, _):
+                state['stopped'] = True
+                if fail_stop: raise OSError('simulated stop failure')
+            async def write_gatt_char(self, _, data, **kwargs):
+                writes.append(data)
+                clear = not any(data[1:8])
+                if cancel_hold and not clear:
+                    raise asyncio.CancelledError()
+                if (fail_hold and not clear) or (fail_clear and clear):
+                    raise OSError('simulated write failure')
+                state['last'] = status(data)
+                if notifications and (not clear or cleanup_notify):
+                    state['callback'](None, bytearray(state['last']))
+            async def read_gatt_char(self, _):
+                clock[0] += read_delay
+                if read_fails: raise OSError('simulated read failure')
+                return state['last']
+
+        async def discover(*args, **kwargs): return object()
+        async def sleep(delay): clock[0] += delay
+        fake = types.SimpleNamespace(BleakClient=Client,
+                                     BleakScanner=types.SimpleNamespace(find_device_by_name=discover))
+        with patch.dict(sys.modules, {'bleak': fake}), \
+             patch.object(pin_test.time, 'monotonic', lambda: clock[0]), \
+             patch.object(pin_test.asyncio, 'sleep', sleep), contextlib.redirect_stdout(io.StringIO()):
+            try:
+                result = asyncio.run(pin_test.run_ble(self.bands, 3, 0.5, 'fake'))
+            except asyncio.CancelledError:
+                result = 'cancelled'
+        return result, writes, state
+
+    def test_cleanup_notifications_do_not_replace_hold_evidence(self):
+        self.assertEqual(self.exercise()[0], 0)
+
+    def test_unready_or_unrelated_status_never_proves_hold(self):
+        for overrides in ({'output': 0}, {'output': 2}, {'lastSequence': 99},
+                          {'highlight': 255}, {'connected': 0}, {'sequenceValid': 0},
+                          {'benchArmed': 1}, {'active': 0}):
+            with self.subTest(overrides=overrides):
+                self.assertEqual(self.exercise(overrides=overrides, cleanup_notify=False)[0], 1)
+
+    def test_read_failure_can_use_correlated_hold_notification(self):
+        self.assertEqual(self.exercise(read_fails=True)[0], 0)
+
+    def test_missing_evidence_is_failure(self):
+        self.assertEqual(self.exercise(read_fails=True, notifications=False)[0], 1)
+
+    def test_hold_write_failure_still_attempts_three_neutrals_and_disconnects(self):
+        code, writes, state = self.exercise(fail_hold=True)
+        self.assertEqual(code, 1)
+        self.assertEqual(sum(not any(data[1:8]) for data in writes), 3)
+        self.assertTrue(state['exited'])
+        self.assertTrue(state['stopped'])
+
+    def test_evidence_older_than_watchdog_is_rejected(self):
+        self.assertEqual(self.exercise(read_delay=0.6)[0], 1)
+
+    def test_cancellation_propagates_after_neutral_cleanup(self):
+        code, writes, state = self.exercise(cancel_hold=True)
+        self.assertEqual(code, 'cancelled')
+        self.assertEqual(sum(not any(data[1:8]) for data in writes), 3)
+        self.assertTrue(state['exited'])
+
+    def test_notification_cleanup_error_is_not_success(self):
+        self.assertEqual(self.exercise(fail_stop=True)[0], 1)
+
+    def test_clear_failure_retries_and_cannot_report_success(self):
+        code, writes, state = self.exercise(fail_clear=True)
+        self.assertEqual(code, 1)
+        self.assertEqual(sum(not any(data[1:8]) for data in writes), 3)
+        self.assertTrue(state['exited'])
+
+
+class LidarArgumentTests(unittest.TestCase):
+    def test_each_aborts_after_failed_hold(self):
+        with patch.object(pin_test, 'run_ble', return_value=1) as hold, contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(pin_test.main(['--each']), 1)
+        self.assertEqual(hold.call_count, 1)
+
+    def test_documented_negative_bearing_cli(self):
+        with patch.object(pin_test, 'lidar_to_bands', return_value=([0] * 7, [None] * 7)) as project, \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(pin_test.main(['--lidar', '-30:1.2', '20:0.6', '--dry-run']), 0)
+        self.assertEqual(project.call_args.args[0][0]['bearingDegrees'], -30.0)
+
+    def test_malformed_height_and_extra_fields_are_rejected(self):
+        for spec in ('0:1:nan', '0:1:inf', '0:1:1:2'):
+            with self.subTest(spec=spec), self.assertRaises(SystemExit):
+                pin_test.parse_obstacles([spec])
 
 
 if __name__ == '__main__':
