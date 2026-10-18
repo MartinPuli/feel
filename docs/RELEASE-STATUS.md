@@ -1,3 +1,18 @@
+> **Journey loop, Chalk side, on `claude/journey-chalk` (2026-10-17, night):** every walk from a printed tag toward a
+> remembered target is a journey (`journeys` table with its opt-in `shared` flag, `Journey` feature,
+> `feel_chalk/journeys.py`); the shared journeys of the last 60 days join the merged structure in
+> `RoomMemory.world_map` (recomputed daily by the scheduled query `world_map`); `Path` plans a suggested direction over
+> that map from a pose to a remembered label (A* on half-metre cells, `feel_chalk/path.py`) and serves the polyline and
+> progress points every 6 m through the named queries `path` and `progress_points` (`context.py path`);
+> `feel_chalk/journey_eval.py` scores frozen holdout journeys (arrived, min clearance, path efficiency, cue latency p95),
+> ranks collisions first, then efficiency, then latency, and promotes a candidate only when better in that order.
+> `protocol/journey-v1.json` is the vector both sides reproduce; `sql/upgrade-journeys.sql` is the delta for existing
+> databases. Software checks on this Mac: chalk 133 tests (10 skip without chalkpy, pass with it), `feel_context`
+> import-checked with chalkpy 2.163.1, `schema.sql`, `seed.sql`, `access.sql` and `upgrade-journeys.sql` run on a local
+> Postgres 17 with a stub `auth.uid()`. Pending: the phone's write of journeys and read of progress points, the device
+> test of the loop, the Chalk deployment (the scheduled query has never run), and the SQL against the live Postgres.
+> Nothing here is deployed yet. A path is a suggested direction, never a claim that the way is clear.
+
 > **Room structure memory on `feel/room-structure` (2026-10-17, night):** with the printed tag in view, the floor grid a
 > session learned is exported into the tag's levelled frame when sensing stops or tracking resets (FeelCore `RoomMap`:
 > 10 cm cells, run-length encoded) and kept per tag as one visit (the newest ten, `RoomMemoryStore`); the first sighting
