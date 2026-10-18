@@ -19,15 +19,15 @@ public struct HandJoints: Equatable, Sendable {
 /// rejected, which fails safe (no request).
 public enum HandSign {
     /// Tip-to-wrist over MCP-to-wrist. A straight finger is about 1.8–2.0, a folded one below 1.1.
-    public static let extendedRatio = 1.55
-    public static let foldedRatio = 1.25
+    public static let extendedRatio = 1.45
+    public static let foldedRatio = 1.35
     /// Angle between the index and middle fingers, and their tip gap relative to palm length.
     public static let minSpreadDegrees = 12.0
     public static let minTipGapOfPalm = 0.3
     /// Palm length (wrist to middle MCP) of an adult hand, used for a size-based range estimate.
     public static let palmLengthMeters = 0.095
     /// Only hands this close count, so bystanders' hands cannot request guidance.
-    public static let maxDistanceMeters = 0.55
+    public static let maxDistanceMeters = 0.9
 
     public static func isVSign(_ hand: HandJoints) -> Bool {
         guard let wrist=hand.wrist, let middleMCP=hand.middle.mcp else { return false }
@@ -71,8 +71,8 @@ public struct HandSignObservation: Equatable, Sendable {
 
 /// Fires once when the sign is held, then waits for the hand to go away before it can fire again.
 public struct HandSignTrigger: Sendable {
-    public var holdSeconds = 0.5
-    public var minDetections = 3
+    public var holdSeconds = 0.4
+    public var minDetections = 2
     /// A gap longer than this between detections restarts the hold.
     public var maxGapSeconds = 0.4
     /// The sign must be absent this long before it can fire again.

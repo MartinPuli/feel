@@ -61,7 +61,6 @@ final class LanternUITests: XCTestCase {
         capture("voice-setup")
         app.buttons["closeCameraPanel"].tap()
         XCTAssertEqual(app.buttons["voiceControl"].value as? String, "Microphone off")
-        XCTAssertTrue(app.staticTexts["feelWordmark"].exists)
         XCTAssertFalse(app.staticTexts["sessionMode"].exists)
         capture("voice-camera")
     }

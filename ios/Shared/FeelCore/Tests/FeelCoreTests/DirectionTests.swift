@@ -65,7 +65,8 @@ final class HandSignTests: XCTestCase {
     func testTriggerNeedsHoldAndFiresOnce() {
         var trigger=HandSignTrigger()
         let held=stride(from:0.0,through:2.0,by:0.15).map { ($0,true) }
-        XCTAssertEqual(run(&trigger,held),[0.6])
+        let fired=run(&trigger,held)   // 0.4 s hold, sampled every 0.15 s
+        XCTAssertEqual(fired.count,1); XCTAssertEqual(fired.first ?? 0,0.45,accuracy:1e-9)
     }
     func testBriefFlashDoesNotFire() {
         var trigger=HandSignTrigger()
@@ -73,7 +74,7 @@ final class HandSignTests: XCTestCase {
     }
     func testGapRestartsHold() {
         var trigger=HandSignTrigger()
-        XCTAssertEqual(run(&trigger,[(0,true),(0.15,true),(0.3,true),(0.9,true),(1.05,true),(1.2,true),(1.35,true),(1.5,true)]),[1.5])
+        XCTAssertEqual(run(&trigger,[(0,true),(0.15,true),(0.3,true),(0.9,true),(1.05,true),(1.2,true),(1.35,true),(1.5,true)]),[1.35])
     }
     func testReleaseThenFireAgain() {
         var trigger=HandSignTrigger()

@@ -56,6 +56,30 @@ enum VoicePhrasing {
 
 
 extension VoicePhrasing {
+    static let describePrompt = """
+    You help a blind person with one photo from a chest-mounted camera. Say what is directly ahead in one plain sentence of at most 14 words, nearest things first, with a rough distance in meters when it is obvious. Name objects and people as "a person". If nothing is identifiable say so. No preamble, no advice, no safety claims.
+    """
+
+    /// Chat body for the gateway: the describe prompt plus the photo, same shape as the Where-is request.
+    static func describeBody(model: String, jpegBase64: String) throws -> Data {
+        let body: [String: Any] = ["model": model, "max_tokens": 60, "messages": [
+            ["role": "system", "content": describePrompt],
+            ["role": "user", "content": [["type": "text", "text": "What is in front of me?"],
+                                         ["type": "image_url", "image_url": ["url": "data:image/jpeg;base64,\(jpegBase64)"]]]]]]
+        return try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
+    }
+
+    /// The first sentence of a reply, trimmed; nil when the reply is empty.
+    static func oneSentence(_ text: String) -> String? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if let end = trimmed.firstIndex(where: { ".!?".contains($0) }) {
+            let first = trimmed[...end].trimmingCharacters(in: .whitespaces)
+            return first.count >= 8 ? String(first) : trimmed
+        }
+        return trimmed
+    }
+
     /// What the pins show right now, for the assistant's status: nearest range per side. Columns 0-1 are
     /// left, 2-4 ahead, 5-6 right. "nothing within 4 m" is what the sensor reports, never a clear path.
     static func obstacles(_ distances: [Double?]) -> String {

@@ -246,15 +246,6 @@ struct LanternView: View {
     private var header: some View {
         HStack(spacing: 12) {
             HStack(spacing: 10) {
-                if !dynamicTypeSize.isAccessibilitySize {
-                    Text("FEEL").font(FeelTypography.headline).accessibilityAddTraits(.isHeader)
-                        .padding(.horizontal, 12)
-                        .frame(minHeight: 48)
-                        .foregroundStyle(FeelTheme.accent)
-                        .background(FeelTheme.inset, in: Capsule())
-                        .overlay(Capsule().strokeBorder(FeelTheme.border, lineWidth: 1))
-                        .accessibilityIdentifier("feelWordmark")
-                }
                 if model.mode == .simulation {
                     Text("SIMULATION").font(FeelTypography.label).foregroundStyle(.black)
                         .padding(.horizontal, 10).frame(minHeight: 48)

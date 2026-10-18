@@ -257,6 +257,14 @@ final class LanternModel:ObservableObject {
             clearHeldTarget(spokenLine: nil)
             return ["status": kept ? "Noted. The \(target.label) is remembered for this room." : "Noted. This room has no tag in view, so the place is not remembered.",
                     "remembered": kept]
+        case .describeAhead:
+            if let refusal = Self.whereIsRefusal(mode: mode, guidance: guidanceState) { return ["error": refusal] }
+            let ranges = VoicePhrasing.obstacles(frame?.distances ?? [])
+            guard let configuration = chalkConfiguration else {
+                return ["status": "No camera description without Chalk setup. Ranges: \(ranges).", "obstacles": ranges]
+            }
+            startDescribeAhead(configuration)
+            return ["status": "Looking at what's ahead; the description arrives in a few seconds as an observation.", "pending": true, "obstacles": ranges]
         case .venueInfo(let question): return venueInfo.answer(question)
         case .find(let target):
             cancelWhereIs()
@@ -465,6 +473,32 @@ final class LanternModel:ObservableObject {
         }
         journeyLog.targetChanged(now: now)
     }
+    private var describeTask: URLSessionTask?
+    /// One photo through the gateway, spoken as one sentence. A stopped camera or a newer ask drops the answer.
+    private func startDescribeAhead(_ configuration: ChalkConfiguration) {
+        describeTask?.cancel(); describeTask = nil
+        let generation = startGeneration
+        let gateway = gatewayFactory(configuration)
+        snapshotProvider { [weak self] snapshot in
+            guard let self, self.startGeneration == generation else { return }
+            guard let snapshot, let body = try? VoicePhrasing.describeBody(model: configuration.model, jpegBase64: snapshot.jpegBase64) else {
+                _ = self.voice.announce("I couldn't take a photo just now.", automatic: false); return
+            }
+            self.describeTask = gateway.complete(body: body, timeout: WhereIs.deadline) { [weak self] result in
+                DispatchQueue.main.async {
+                    guard let self, self.startGeneration == generation else { return }
+                    self.describeTask = nil
+                    switch result {
+                    case .success(let text):
+                        _ = self.voice.announce(VoicePhrasing.oneSentence(text) ?? "I couldn't make out what's ahead.", automatic: false)
+                    case .failure:
+                        _ = self.voice.announce("I couldn't reach the camera service. " + VoicePhrasing.obstacles(self.frame?.distances ?? []) + ".", automatic: false)
+                    }
+                }
+            }
+        }
+    }
+
     private func startWhereIs(_ thing: String) {
         let service = whereIsService ?? WhereIsService(gateway: chalkConfiguration.map(gatewayFactory), model: chalkConfiguration?.model ?? "", local: localFinder)
         whereIsService = service
