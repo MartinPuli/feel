@@ -1,3 +1,9 @@
+## October 17 — six-column layout
+
+This version keeps its features and uses six active columns, GPIO32 unused.
+See [evidence](evidence/six-columns-20261017/REPORT.md). Physical integration
+remains unverified; historical seven-column guidance below is superseded.
+
 # Current voice synchronization
 
 See [VERSION-VOICE-SYNC.md](VERSION-VOICE-SYNC.md) for the current integration.

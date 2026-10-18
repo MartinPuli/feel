@@ -45,7 +45,7 @@ final class SceneReplayTests: XCTestCase {
         let distances=DepthFrameProcessor.process(try XCTUnwrap(frames[0].depth),pose:frames[0].pose,floorY:frames[0].floorY).distances
         // Nearest sampled point per sector: the wall at 1.2 m divided by cos of the sector's innermost sampled bearing.
         XCTAssertEqual(distances[3]!,1.2,accuracy:0.002)
-        for (column,edge) in [(2,6.43),(4,6.43),(1,19.29),(5,19.29),(0,32.14),(6,32.14)] {
+        for (column,edge) in [(2,15.0),(4,0.0),(1,30.0),(5,15.0),(6,30.0)] {
             XCTAssertEqual(distances[column]!,1.2/cos(edge * .pi/180),accuracy:0.02,"column \(column)")
         }
     }
@@ -73,7 +73,7 @@ final class SceneReplayTests: XCTestCase {
         let frames=try scene(#"{"duration":3,"path":[{"t":0,"x":0,"z":0}],"objects":[\#(wall)],"trackingLost":[[1,1.5]],"frameGaps":[[2,2.6]]}"#)
         let ticks=SessionReplayer.run(frames)
         func at(_ t: Double) -> ReplayTick { ticks.min { abs($0.t-t)<abs($1.t-t) }! }
-        XCTAssertEqual(at(0.55).state,"live"); XCTAssertEqual(at(0.55).bands,[2,2,2,2,2,2,2])
+        XCTAssertEqual(at(0.55).state,"live"); XCTAssertEqual(at(0.55).bands,[0,2,2,2,2,2,2])
         XCTAssertEqual(at(1.25).state,"trackingLost"); XCTAssertEqual(at(1.25).bands,[0,0,0,0,0,0,0])
         XCTAssertEqual(at(2.45).state,"staleDepth"); XCTAssertEqual(at(2.45).bands,[0,0,0,0,0,0,0])
         XCTAssertEqual(at(2.85).state,"live")
@@ -88,7 +88,7 @@ final class SceneReplayTests: XCTestCase {
             let frames=try scene(#"{"duration":4,"path":[{"t":0,"x":0,"z":0}],"objects":[{"kind":"box","min":[-10,0,-2.2],"max":[10,3,-2.0]}],"target":{"position":[0.6,1.0,-2.0],"label":"door","latency":\#(latency)}}"#)
             return SessionReplayer.run(frames).filter { $0.t>=1 && $0.t<=4 }.map(\.highlight)
         }
-        XCTAssertTrue(try highlights(latency:0.1).allSatisfy { $0 == 4 },"0.1 s inference keeps every detection under 0.5 s old")
+        XCTAssertTrue(try highlights(latency:0.1).allSatisfy { $0 == 5 },"0.1 s inference keeps every detection under 0.5 s old")
         XCTAssertTrue(try highlights(latency:0.2).contains(255),"0.2 s inference lets the cached detection expire between results")
         XCTAssertTrue(try highlights(latency:0.6).allSatisfy { $0 == 255 },"a result older than 0.5 s at completion is discarded")
     }
@@ -97,6 +97,6 @@ final class SceneReplayTests: XCTestCase {
         let frames=try scene(#"{"duration":4,"path":[{"t":0,"x":0,"z":0,"yaw":0},{"t":4,"x":0,"z":0,"yaw":26.565}],"objects":[{"kind":"cylinder","center":[1,-2],"radius":0.1,"height":2}]}"#)
         let ticks=SessionReplayer.run(frames)
         XCTAssertEqual(ticks.first { $0.t>0.2 }!.bands,[0,0,0,0,0,3,0])
-        XCTAssertEqual(ticks.last { $0.frame == 4 && $0.state == "live" }!.bands,[0,0,0,3,0,0,0])
+        XCTAssertEqual(ticks.last { $0.frame == 4 && $0.state == "live" }!.bands,[0,0,0,3,3,0,0])
     }
 }

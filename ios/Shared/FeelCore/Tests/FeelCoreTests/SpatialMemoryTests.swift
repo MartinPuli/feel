@@ -68,7 +68,7 @@ final class SpatialMemoryTests: XCTestCase {
         let lost=m.encode(sequence:1,sample:sample(tracking:false),now:1,distances:[1,1,1,1,1,1,1])
         XCTAssertEqual(lost.guidance.state,.trackingLost); XCTAssertEqual(lost.output.packet,.neutral(sequence:1))
         XCTAssertEqual(m.bookmarks.count,1); XCTAssertEqual(m.activeID,"desk")
-        XCTAssertEqual(m.encode(sequence:2,sample:sample(time:4),now:4,distances:empty).output.packet.highlight,3)
+        XCTAssertEqual(m.encode(sequence:2,sample:sample(time:4),now:4,distances:empty).output.packet.highlight,4)
     }
     func testStaleFutureInvalidAndBoundaryPoses() throws {
         let m=try recalled(Vector3(0,0,-2))
@@ -98,7 +98,7 @@ final class SpatialMemoryTests: XCTestCase {
         for p in [pose(Vector3(0,0,2)),pose(Vector3(2,0,0),yaw:90),pose(Vector3(0,0,-2),yaw:180),pose(Vector3(-2,0,0),yaw:-90)] {
             let result=m.encode(sequence:2,sample:sample(p),now:1,distances:empty)
             XCTAssertEqual(result.guidance.state,.guiding); XCTAssertEqual(result.guidance.distance ?? -1,2,accuracy:1e-12)
-            XCTAssertEqual(result.guidance.bearingDegrees ?? 999,0,accuracy:1e-10); XCTAssertEqual(result.output.packet.highlight,3)
+            XCTAssertEqual(result.guidance.bearingDegrees ?? 999,0,accuracy:1e-10); XCTAssertEqual(result.output.packet.highlight,4)
         }
     }
     func testBearingSignAfterTranslation() throws {
@@ -124,12 +124,12 @@ final class SpatialMemoryTests: XCTestCase {
         }
     }
     func testEverySectorBoundaryAndOutsideFOV() throws {
-        for index in 0...7 {
-            let angle = -45 + Double(index)*90/7, r=angle * .pi / 180
+        for index in 0...6 {
+            let angle = -45 + Double(index)*15, r=angle * .pi / 180
             let m=try recalled(Vector3(sin(r)*2,0,-cos(r)*2))
             let result=m.encode(sequence:0,sample:sample(),now:1,distances:empty)
             XCTAssertEqual(result.guidance.state,.guiding,"angle \(angle)")
-            XCTAssertEqual(result.output.packet.highlight,UInt8(min(index,6)))
+            XCTAssertEqual(result.output.packet.highlight,UInt8(min(index+1,6)))
         }
         for angle in [-45.001,45.001] {
             let r=angle * .pi / 180,m=try recalled(Vector3(sin(r)*2,0,-cos(r)*2))
@@ -151,7 +151,7 @@ final class SpatialMemoryTests: XCTestCase {
             let m=try recalled(Vector3(0,0,-distance)),r=m.encode(sequence:7,sample:sample(),now:1,distances:empty)
             XCTAssertEqual(r.guidance.distance,distance)
             XCTAssertEqual(r.guidance.state,distance==4 ? .guiding : .beyondRange)
-            XCTAssertEqual(r.output.packet.highlight,distance==4 ? 3 : 255)
+            XCTAssertEqual(r.output.packet.highlight,distance==4 ? 4 : 255)
         }
     }
     func testArrivalAndVerticalToleranceBoundaries() throws {
@@ -162,12 +162,12 @@ final class SpatialMemoryTests: XCTestCase {
         }
     }
     func testCloserObstaclesRemainAndUnavailableTargetsKeepObstacleBands() throws {
-        let m=try recalled(Vector3(0,0,-3)),distances: [Double?]=[0.5,1,2,0.7,3,nil,nil]
+        let m=try recalled(Vector3(0,0,-3)),distances: [Double?]=[nil,0.5,1,2,0.7,3,nil]
         let r=m.encode(sequence:1,sample:sample(),now:1,distances:distances)
-        XCTAssertEqual(r.output.packet.bands,[1,2,3,1,4,0,0]); XCTAssertEqual(r.output.packet.highlight,3)
+        XCTAssertEqual(r.output.packet.bands,[0,1,2,3,1,4,0]); XCTAssertEqual(r.output.packet.highlight,4)
         for p in [pose(Vector3(0,0,-3)),pose(.zero,yaw:180),pose(Vector3(0,0,5))] {
             let r=m.encode(sequence:2,sample:sample(p),now:1,distances:distances)
-            XCTAssertEqual(r.output.packet.bands,[1,2,3,1,4,0,0]); XCTAssertEqual(r.output.packet.highlight,255)
+            XCTAssertEqual(r.output.packet.bands,[0,1,2,3,1,4,0]); XCTAssertEqual(r.output.packet.highlight,255)
         }
     }
     func testFloorAndDepthValidationStillGateMemoryPackets() throws {

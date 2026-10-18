@@ -1,0 +1,7 @@
+SIX_LIVE189_UNVERIFIED connected=0 active=0 ready=1 attached=0 accepted=0 rejected=0 timeouts=0
+c1 gpio=33 band=0 pulseUs=0 timerHz=50
+c2 gpio=25 band=0 pulseUs=0 timerHz=50
+c3 gpio=26 band=0 pulseUs=0 timerHz=50
+c4 gpio=27 band=0 pulseUs=0 timerHz=50
+c5 gpio=14 band=0 pulseUs=0 timerHz=50
+c6 gpio=13 band=0 pulseUs=0 timerHz=50

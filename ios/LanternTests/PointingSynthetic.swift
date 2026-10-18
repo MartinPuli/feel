@@ -10,7 +10,7 @@ import FeelCore
 /// Vision's corner order only: not real lighting, blur, hands or tape.
 struct PointingSynthetic {
     struct Failure: Error, CustomStringConvertible { let description: String }
-    enum Expect { case cell(PuckCell, codes: Int), uprightRejected, noFingertip, twoFingers(column: Int?) }
+    enum Expect { case cell(PuckCell, codes: Int), unusedCell, uprightRejected, noFingertip, twoFingers(column: Int?) }
     static let black=CGColor(gray:0.05,alpha:1), blue=CGColor(red:0.1,green:0.3,blue:0.85,alpha:1)
     struct Scenario {
         let name: String, tip: PuckCell?, angle: Double, hide: Set<String>, format: OSType, tipColor: CGColor, expect: Expect
@@ -25,7 +25,7 @@ struct PointingSynthetic {
     }
     static let scenarios: [Scenario] = {
         var list = [PuckCell(column:0,band:1),PuckCell(column:6,band:1),PuckCell(column:0,band:4),PuckCell(column:6,band:4),PuckCell(column:3,band:2)].map {
-            Scenario("fingers left, black tape, \($0)",tip:$0,expect:.cell($0,codes:3))
+            Scenario("fingers left, black tape, \($0)",tip:$0,expect:$0.column == 0 ? .unusedCell : .cell($0,codes:3))
         }
         list += [
             Scenario("fingers right (other hand), C2 B3",tip:PuckCell(column:2,band:3),angle:0,expect:.cell(PuckCell(column:2,band:3),codes:3)),
@@ -129,6 +129,9 @@ struct PointingSynthetic {
             if o.method != .marker { return "fingertip method \(String(describing:o.method))" }
             if o.cell != cell { return "cell \(String(describing:o.cell)), expected \(cell)" }
             if let tip=o.fingertip, tip.distance(to:PuckBackLayout.center(of:cell))>=2 { return String(format:"tip %.1f mm from centre",tip.distance(to:PuckBackLayout.center(of:cell))) }
+        case .unusedCell:
+            if o.gate?.ok != true { return "missing sheet fit for reserved column" }
+            if o.cell != nil || o.routeColumn != nil { return "removed column must not select or route" }
         case .uprightRejected:
             if o.codesSeen == 0 { return "no codes" }
             if o.gate?.upright != false { return "gate did not reject rotation" }

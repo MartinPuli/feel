@@ -39,7 +39,8 @@ final class LanternUITests: XCTestCase {
         XCTAssertEqual(app.staticTexts["sessionMode"].label, "STOPPED")
         let value = app.otherElements["Virtual puck"].value as? String ?? ""
         XCTAssertTrue(value.contains("No target highlight"))
-        for column in 1...7 { XCTAssertTrue(value.contains("Column \(column), band 0")) }
+        for column in 1...6 { XCTAssertTrue(value.contains("Column \(column), band 0")) }
+        XCTAssertFalse(value.contains("Column 7"))
     }
 
     func testVoiceSetupKeepsCameraAndMicrophoneUnderUserControl() {

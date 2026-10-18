@@ -1,5 +1,6 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "design_profile": "fs0307-assumed175-even-v4",
   "board": "esp32-classic",
   "verified": false,
   "verified_by": null,
@@ -7,15 +8,6 @@
   "evidence_file": null,
   "instructions": "UNVERIFIED TEMPLATE. Record actual measurements and evidence for each installed servo. Do not copy nominal design endpoints into measured fields without measuring. This example cannot enable production.",
   "servos": [
-    {
-      "column": 0,
-      "gpio": 32,
-      "unit_id": null,
-      "verified": false,
-      "measured_min_us": null,
-      "measured_max_us": null,
-      "evidence_file": null
-    },
     {
       "column": 1,
       "gpio": 33,
