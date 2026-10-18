@@ -1,1 +1,0 @@
-{"title":"Stationary person ahead","scene":{"duration":4,"path":[{"t":0,"x":0,"z":0}],"objects":[{"kind":"cylinder","center":[0,-1.5],"radius":0.22,"height":1.75,"label":"person"}],"sensor":{"noise":0,"seed":26}},"expect":[{"from":0.8,"to":3.8,"columns":[3],"band":2,"label":"stationary person remains ahead"}]}
