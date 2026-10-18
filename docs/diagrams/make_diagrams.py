@@ -259,6 +259,42 @@ def room_memory() -> Figure:
     return f
 
 
+def room_structure() -> Figure:
+    f = Figure(1100, 590, 'Room structure memory: the floor grid a visit learned comes back as a prior for the route planner',
+               'With a printed tag in view, the floor grid a session learned is exported into the tag frame when sensing stops or tracking resets and kept per tag as one visit; the first sighting of the tag on a later visit seeds the planner with the per-cell merge of the stored visits, so route arrows can head for a remembered place before the camera has seen the room, while live observations override the prior cell by cell and the pins read only live depth. Chalk merges shared visits by the same vote.')
+    f.group(20, 70, 680, 480, 'Phone')
+    f.box(40, 90, 200, 86, 'Floor grid, this session', ('LiDAR points → 10 cm cells', 'free · blocked · unknown', 'A* routes for the arrows'))
+    f.box(270, 90, 200, 86, 'Stop or tracking reset', ('the grid is about to go:', 'export the cells seen into', "the tag's levelled frame"))
+    f.box(500, 90, 180, 86, 'Visit map (RoomMap)', ('cell size · origin · size', 'cells 28f2b10f2u6b…', 'newest 10 per tag on disk'))
+    f.arrow(240, 133, 270, 133)
+    f.arrow(470, 133, 500, 133)
+    f.box(40, 230, 200, 86, 'Next visit: tag seen', ('first sighting in this world', 'ARKit image detection', 'frame bound to the world'), accent=True)
+    f.box(270, 230, 200, 86, 'Merge of the visits', ('per cell: blocked when ≥ half', 'of the visits that saw it did,', 'free otherwise, else unknown'))
+    f.box(500, 230, 180, 86, 'Prior in the new grid', ('fills cells the camera has', 'not classified yet; every live', 'classification overrides it'))
+    f.arrow(240, 273, 270, 273)
+    f.arrow(470, 273, 500, 273)
+    f.arrow(590, 176, 370, 230, color=MUTED, via=[(590, 203), (370, 203)], label='stored visits', label_dx=0, label_dy=-6)
+    f.box(40, 370, 320, 100, 'Arrows before the room is seen', ('"where is the exit": remembered anchor → route goal', 'A* around remembered walls → one arrow,', 'a suggested direction, never a clear path', 'a tracking reset drops prior and goal together'), accent=True)
+    f.arrow(590, 316, 200, 370, color=ACCENT, via=[(590, 343), (200, 343)])
+    f.box(390, 370, 290, 100, 'get_status: room_structure', ('tag · visits · cells · blocked · seeded', 'a session counts as a visit only after', 'the camera classified 20 cells', 'live depth drives the pins; memory seeds routes'), small=True)
+    f.note(40, 505, 'A different print size or a tag lying flat gives no map: the frame must be upright on a wall (RoomFrame.levelled), 20 cm wide as drawn.', size=10.5)
+
+    f.group(740, 70, 340, 480, 'Chalk: shared structure')
+    f.box(760, 90, 300, 70, 'room_maps table', ('Supabase Postgres, shared = true only', 'user · venue · tag · cell size · origin · cells'), fill=CLOUD, edge=CLOUD_EDGE, small=True)
+    f.box(760, 190, 300, 100, 'RoomMap → RoomMemory.structure', ('key "<venue>:<tag>", newest 50 visits', 'the same per-cell vote as the phone', 'feel_chalk/room_map.py', 'protocol/room-map-v1.json pins both'), fill=CHALK, edge=CHALK_EDGE, small=True)
+    f.box(760, 320, 300, 54, 'Named query room_structure', ('structure · structure_visits',), fill=CHALK, edge=CHALK_EDGE, small=True)
+    f.box(760, 404, 300, 86, 'context.py room-structure', ('"8 x 6 cells of 0.1 m, 46 remembered', '(38 free, 8 blocked), merged from 3 visits."', 'writes the merged map as JSON'), fill=CHALK, edge=CHALK_EDGE, small=True)
+    f.arrow(910, 160, 910, 190, color=CHALK_EDGE)
+    f.arrow(910, 290, 910, 320, color=CHALK_EDGE)
+    f.arrow(910, 374, 910, 404, color=CHALK_EDGE)
+    f.arrow(680, 112, 760, 112, color=MUTED, dashed=True)
+    f.arrow(760, 347, 720, 347, color=MUTED, dashed=True)
+    f.arrow(720, 347, 680, 273, color=MUTED, dashed=True, via=[(720, 273)])
+    f.note(20, 564, 'Dashed arrows are not wired yet: the upload of a visit (RoomMemory.shareStructure) and the download of the merged map (RoomMemory.fetchSharedStructure). No device test yet.', size=10.5)
+    f.note(20, 582, 'The pins always come from live depth. A remembered wall is only a reason for the planner to prefer another way; what the camera sees this session wins cell by cell.', color=ACCENT, size=10.5)
+    return f
+
+
 def chalk_overview() -> Figure:
     f = Figure(1040, 420, 'What Chalk does for the app',
                'Three short stories: a photo question answered through the Chalk Model Gateway and shown on the pins; a confirmed find kept in Chalk memory and answered on the next visit; every model or prompt change scored by Chalk evaluations before it goes live. Obstacles are sensed on the phone alone.')
@@ -286,5 +322,6 @@ def chalk_overview() -> Figure:
 
 if __name__ == '__main__':
     for build, name in ((system, 'feel-system.svg'), (where_is, 'where-is-path.svg'), (evaluation, 'chalk-eval-loop.svg'),
-                        (context, 'chalk-context.svg'), (sensing, 'sensing-to-pins.svg'), (chalk_overview, 'chalk-overview.svg'), (room_memory, 'room-memory.svg')):
+                        (context, 'chalk-context.svg'), (sensing, 'sensing-to-pins.svg'), (chalk_overview, 'chalk-overview.svg'), (room_memory, 'room-memory.svg'),
+                        (room_structure, 'room-structure.svg')):
         print(build().save(name))

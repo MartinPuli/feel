@@ -1,3 +1,18 @@
+> **Room structure memory on `feel/room-structure` (2026-10-17, night):** with the printed tag in view, the floor grid a
+> session learned is exported into the tag's levelled frame when sensing stops or tracking resets (FeelCore `RoomMap`:
+> 10 cm cells, run-length encoded) and kept per tag as one visit (the newest ten, `RoomMemoryStore`); the first sighting
+> of the tag in a later world seeds the route planner with the per-cell merge of those visits, so the arrows can head for
+> a remembered exit before the camera has seen the room. Live classifications override the prior cell by cell; the pins
+> never read it; `get_status` reports `room_structure` (visits, cells, blocked, seeded). Chalk merges shared visits by the
+> same vote (`room_maps` table with its opt-in `shared` flag, `RoomMap` → `RoomMemory.structure`, named query
+> `room_structure`, `context.py room-structure`, `sql/upgrade-room-maps.sql` for existing databases);
+> `protocol/room-map-v1.json` is the vector both sides reproduce. Software checks on this Mac: chalk 98 tests (7 skip
+> without chalkpy, pass with it), FeelCore 259, Lantern 174 unit tests on the iPhone Air simulator. NOT RUN on a device:
+> the tag recognition this depends on (still pending from room memory), the exported map of a real room, and the arrows
+> following a remembered wall. Still pending: the phone's upload of visits (`RoomMemory.shareStructure`) and download of
+> Chalk's merged map (`RoomMemory.fetchSharedStructure`), both empty functions, the Chalk deployment, and the SQL against
+> a live Postgres.
+
 > **Room memory on `feel/chalk-track` (2026-10-17, night):** a printed FEEL tag (`ios/Lantern/Resources/feel-tag-01.png`,
 > printed 20 cm wide) recognized by ARKit image detection gives the room a frame; targets confirmed with "found it" or by
 > arriving at a Where-is target are stored in that frame on the phone (`RoomMemoryStore`) and, when the user shares them,

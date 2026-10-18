@@ -2,7 +2,7 @@
 
 Figures: [FEEL at a glance](diagrams/feel-system.svg) · [one Where-is request](diagrams/where-is-path.svg) ·
 [the evaluation loop](diagrams/chalk-eval-loop.svg) · [memory and venue knowledge](diagrams/chalk-context.svg) ·
-[sensing to pins](diagrams/sensing-to-pins.svg) · [room memory](diagrams/room-memory.svg).
+[sensing to pins](diagrams/sensing-to-pins.svg) · [room memory](diagrams/room-memory.svg) · [room structure](diagrams/room-structure.svg).
 
 ## Product direction
 
@@ -38,6 +38,7 @@ No production model winner has been established. Physical sensing, headphone del
 | Next | Downloadable venue information | Read previously downloaded accessibility information without internet | Reviewed sources, local storage, expiry and update handling |
 | Later | Consented object history | Explain where and when an object was last seen | Ownership, retention, deletion and uncertainty handling. **`ObjectHistory` implemented** (latest confirmed find, relative-time sentence); the phone write path and the `last_seen` tool are pending |
 | Later | Room memory | Point the pins at a place found on an earlier visit as soon as the room's printed tag is recognized, instead of a 2–12 s photo round trip | A printed tag as the room frame, local and shared storage, honest past-tense wording. **Implemented in software** on `feel/chalk-track`: FeelCore `RoomFrame` and `RememberedTarget`, a per-tag anchor store, `where_is` answering from memory with "say photo", `found_it`, Chalk `Anchor`/`RoomMemory` with the `room_anchors` query (shared rows only). Not yet: the phone's write to Supabase, a download of the shared memory, and any device test of the tag recognition or the cue |
+| Later | Room structure memory | Route arrows toward a remembered place before the camera has seen the room, on a later visit | A per-visit floor-plan map in the printed tag's frame, merged across visits so walls persist and moved furniture does not. **Implemented in software** on `feel/room-structure`: FeelCore `RoomMap` (export of the session's floor grid, import as a prior that live classifications override, per-cell merge), the phone keeps the newest ten visits per tag and seeds the planner on the first tag sighting of a world, Chalk `RoomMap` → `RoomMemory.structure` with the `room_structure` query over shared rows, `get_status.room_structure`, and `protocol/room-map-v1.json` as the shared vector. Not yet: the phone's upload (`RoomMemory.shareStructure`), the download of Chalk's merged map (`RoomMemory.fetchSharedStructure`), and any device test of the tag or of the arrows following a remembered wall |
 | Later | External services | Extend the personal assistant through selected tools | Per-user authorization and independent action checks |
 
 ## Evaluations and model selection

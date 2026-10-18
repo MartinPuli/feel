@@ -10,17 +10,20 @@ The features Chalk serves to FEEL's assistant, and the database they read. Deplo
 | `VenueEntry` | entry id | One reviewed statement from an official HTTPS source, with effective dates |
 | `Venue` | venue slug | The downloadable venue pack built from its entries, with its SHA-256 |
 | `Anchor` | row id | One confirmed sighting of a target in a printed room tag's frame (x, y, z in metres), shared by its owner |
-| `RoomMemory` | `<venue_id>:<tag_id>` | Per label, the median place of the last 20 sightings, the count, the newest time, and the spoken summary |
+| `RoomMap` | row id | One visit's structural map of the room behind a tag: 10 cm cells (unknown, free, blocked) in the tag's levelled frame, run-length encoded, shared by its owner |
+| `RoomMemory` | `<venue_id>:<tag_id>` | Per label, the median place of the last 20 sightings, the count, the newest time, and the spoken summary; and the room's structure merged from the newest 50 shared visits |
 
 Named queries pin inputs and outputs: `last_seen` (`ObjectHistory.id` → `spoken`, `last_place`,
-`last_seen_at`, `finds_count`), `venue_pack` (`Venue.id` → `pack`, `pack_sha256`) and `room_anchors`
-(`RoomMemory.id` → `spoken`, `targets`, `targets_count`, `last_seen_at`).
+`last_seen_at`, `finds_count`), `venue_pack` (`Venue.id` → `pack`, `pack_sha256`), `room_anchors`
+(`RoomMemory.id` → `spoken`, `targets`, `targets_count`, `last_seen_at`) and `room_structure`
+(`RoomMemory.id` → `structure`, `structure_visits`).
 
-The sentences, the pack and the remembered places are produced by `feel_chalk/history.py`,
-`feel_chalk/venue_pack.py` and `feel_chalk/anchors.py`, the same code the local tools use, so
-`tests/test_history.py`, `tests/test_anchors.py` and `tests/test_feel_context.py` cover them without a
-deployment, a pack built by Chalk is byte-identical to one built locally, and the phone aggregates anchors
-exactly as Chalk does (`protocol/room-memory-v1.json` is the vector both sides must reproduce).
+The sentences, the pack, the remembered places and the merged map are produced by `feel_chalk/history.py`,
+`feel_chalk/venue_pack.py`, `feel_chalk/anchors.py` and `feel_chalk/room_map.py`, the same code the local tools
+use, so `tests/test_history.py`, `tests/test_anchors.py`, `tests/test_room_map.py` and `tests/test_feel_context.py`
+cover them without a deployment, a pack built by Chalk is byte-identical to one built locally, and the phone
+aggregates anchors and merges maps exactly as Chalk does (`protocol/room-memory-v1.json` and
+`protocol/room-map-v1.json` are the vectors both sides must reproduce).
 
 ## The database, and what the Supabase values are for
 
@@ -52,21 +55,27 @@ Then:
 python -m feel_chalk.context last-seen --user 00000000-0000-0000-0000-000000000001 --object keys
 python -m feel_chalk.context venue-pack --venue harvard-yard --output data/harvard-yard-from-chalk.json
 python -m feel_chalk.context room-anchors --venue harvard-yard --tag feel-tag-01
+python -m feel_chalk.context room-structure --venue harvard-yard --tag feel-tag-01 --output data/harvard-yard-structure.json
 ```
 
 The first prints "Keys: last confirmed at the kitchen table, 2 hours ago (2 finds on record)." from the
 seed rows. The second writes a pack the phone accepts unchanged. The third prints "Remembered here: exit
 about 6 meters ahead-right, seen 4 times, last 2 hours ago; water fountain about 3 meters ahead-left, seen
-twice, last yesterday." and one line per remembered target.
+twice, last yesterday." and one line per remembered target. The fourth prints "Room structure at
+harvard-yard:feel-tag-01: 8 x 6 cells of 0.1 m, 46 remembered (38 free, 8 blocked), merged from 3 visits."
+and writes the merged map the phone reads with FeelCore `RoomMap`. A database that ran the earlier files
+before the `room_maps` table existed gets it from `sql/upgrade-room-maps.sql`.
 
 First live deployment and the verified queries are recorded in
 [docs/evidence/chalk-context](../../docs/evidence/chalk-context/QUERIES.md).
 
-Not done yet, in order: the phone writing a find after "found it" and an anchor after a confirmed Where-is
-target (Supabase REST, user JWT; `RoomMemory.shareAnchor` in the app is the empty function for the latter),
-the `last_seen` and `room_anchors` assistant tools calling Chalk with a scoped token (the second would
-fill the phone's local anchor store from the shared memory), and a scheduled query that rebuilds each
-venue's pack daily (`ScheduledQuery` over `Venue.pack`; `queries.py` is where it goes).
+Not done yet, in order: the phone writing a find after "found it", an anchor after a confirmed Where-is
+target and a visit's map when sensing stops (Supabase REST, user JWT; `RoomMemory.shareAnchor` and
+`RoomMemory.shareStructure` in the app are the empty functions for the last two), the `last_seen`,
+`room_anchors` and `room_structure` assistant tools calling Chalk with a scoped token (the second would
+fill the phone's local anchor store from the shared memory, the third its visits: `RoomMemory.fetchSharedStructure`
+is that empty function), and a scheduled query that rebuilds each venue's pack daily (`ScheduledQuery` over
+`Venue.pack`; `queries.py` is where it goes).
 
 ## Room memory
 
@@ -96,6 +105,34 @@ venue, and a time; together they say where someone was and when. They stay on th
 reaches the shared memory only when the user opted in (`shared = true`, enforced by the row-level security
 policies in `sql/schema.sql` and `sql/access.sql`), and Chalk reads nothing else. Keep retention limited and
 deletion possible before anything leaves the demo. No photo, audio or GPS coordinate is ever part of an anchor.
+
+## Room structure
+
+![Room structure](../../docs/diagrams/room-structure.svg)
+
+**What the phone keeps.** While sensing runs, FeelCore's `FloorGrid` classifies 10 cm floor cells from LiDAR as free
+or blocked for the route arrows and forgets them when the session stops or tracking resets. With a printed tag in
+view, the grid is first exported into the tag's levelled frame (`RoomMap`: cell size, origin, width, height and
+run-length encoded cells) and stored per tag as one visit (`RoomMemoryStore`, the newest ten), provided the camera
+classified at least 20 cells. On the next visit the first sighting of the tag in a world seeds the new session's grid
+with the merge of the stored visits as a prior, so "where is the exit" with a remembered exit anchor gives a route
+arrow before the camera has seen the room. The prior fills only cells the camera has not classified yet; every live
+classification overrides it, a tracking reset drops it with the world, and the pins never read it.
+
+**What Chalk merges.** `RoomMap` rows whose owner set `shared = true` are read per `<venue_id>:<tag_id>`;
+`RoomMemory.structure` is the per-cell vote over the newest 50 visits: blocked when at least half of the visits that
+observed the cell saw it blocked (a tie goes to blocked, since a missed wall costs more than a spurious one the live
+camera overrides), free otherwise, unknown where no visit looked. Walls persist; a chair that moved is gone after two
+more visits that see the floor there. `feel_chalk/room_map.py` is the same rule as FeelCore's `RoomMap.merge`,
+`protocol/room-map-v1.json` is the vector both must reproduce, and `sql/seed.sql` carries its three visits, so
+`room-structure --venue harvard-yard --tag feel-tag-01` prints the merged 8 × 6 map once deployed. The phone's upload
+of a visit (`RoomMemory.shareStructure`) and its download of the merged map (`RoomMemory.fetchSharedStructure`) are
+the two empty functions still to wire; the device test of the tag this all depends on is pending.
+
+**Privacy.** A visit map says which cells of a named room someone walked through, so it is personal data like an
+anchor: it stays on the phone unless the user opted in, and Chalk reads only shared rows (`sql/access.sql`). It holds
+no photo, audio or GPS coordinate, and nothing in it is a claim about the room now: a remembered wall is only a reason
+for the planner to prefer another way.
 
 ## Privacy
 
