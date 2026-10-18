@@ -42,6 +42,23 @@ macOS reports the device unavailable. Physical six-servo integration NOT VERIFIE
 See [evidence](evidence/six-columns-20261017/REPORT.md) and [wiring](SIX-COLUMN-LAYOUT.md).
 Earlier seven-column statements below describe historical revisions.
 
+> **Presence taps on `main` (2026-10-17, night):** a raised pin is felt when it moves and fades within seconds when it
+> stays (steady pressure rides on slowly adapting afferents whose firing and felt intensity decay exponentially: Chung
+> et al. 2015, Bensmaia et al. 2005), so the puck now keeps obstacle pins felt by motion. FeelCore `TapRhythm`, applied
+> to the final packet of every 100 ms tick before the adaptive highlight gate: an obstacle pin whose band has not
+> changed for 1 s drops to its gap for one packet every 1.0 s, all steady pins together. Target columns keep their own,
+> faster taps (the firmware's 13° highlight dip every 600 ms for one column, gated by the tactile profile; the
+> encoder's one-in-six drop for a span) and arrows keep their 100 ms frames, so what points at something beats faster
+> than what is merely there. Servo budget: a drop is 29° of cam, about 50 ms each way on an FS0307 unloaded (0.10 s per
+> 60°) and up to twice that under load; no period may be shorter than three packets. The replayer applies the same
+> rhythm; the simulation harness counts a one-tick drop between two identical raised bands as a tap (held longer only
+> by lost packets), reports taps per column-second and checks a tap rate per window; `find-door` now also checks the
+> wall's presence beat, and `packet-loss-failsafe` records the one cost as a known issue: a BLE blackout that begins
+> right after a drop packet leaves the firmware holding that pin down until packets resume or the watchdog fires.
+> Software checks on this Mac: FeelCore 370 tests (both targets), Lantern 268 unit tests on the simulator,
+> simulation harness: 13 scenarios, 8 pass and 5 known (doorway-open, doorway-with-lintel, find-door-slow-detector, lidar-outliers, packet-loss-failsafe), 0 fail, zero reserved-slot violations, the find-door wall column at 1.0 taps per second, baselines regenerated with the taps; three journey tests that stamp their start at instance creation fail only when the Mac is loaded and passed 12 of 12 when run alone. NOT RUN on hardware: how crisp a 29° drop feels under the cam load and whether 1 s settle and 1 s period suit
+> the wearer; both are constants in `TapRhythm` to tune on the device.
+
 > **Phone → Supabase writes on `main` (2026-10-17, night):** the phone now writes the rows Chalk reads. "Found it"
 > sends a confirmed find (`confirmed_finds`, the table behind `last_seen`, placed by venue and distance from the room's
 > tag); every confirmed target sends an anchor, a visit's map goes when sensing stops, and each kept journey goes when

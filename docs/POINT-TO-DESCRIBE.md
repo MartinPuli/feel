@@ -10,6 +10,7 @@ A detected door, chair or person now covers every column its detection box spans
 - A neighbouring column joins the span only if the target covers at least 3° of it.
 - **One column:** unchanged. The firmware taps it.
 - **Several columns:** the phone taps them together. All span columns drop for one packet in every six (100 ms down every 600 ms, the same rhythm as the firmware tap).
+- **Steady obstacle pins** drop for one packet every second once they have stayed the same for a second (FeelCore `TapRhythm`), so they stay felt; target columns keep the faster taps above.
 - A closer obstacle in a span column still wins, as before.
 - The on-screen puck rings every span column. VoiceOver reads "Target columns 3 to 5".
 

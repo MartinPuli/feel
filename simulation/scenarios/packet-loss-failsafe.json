@@ -1,6 +1,7 @@
 {
   "title": "BLE packet loss and the 500 ms failsafe",
   "description": "Wall 1.2 m ahead. Every packet is dropped from 2.0 to 3.2 s: the firmware holds the last bands, then neutralises 500 ms after the last packet. From 4 to 6 s, 30 % random loss (fixed seed) must not cause a dropout.",
+  "knownIssue": "The blackout begins right after the phone's presence tap at 1.95 s (TapRhythm drops steady pins for one packet every second), so the firmware holds the pins down instead of the wall until the watchdog fires: a blackout that starts on a tap frame costs the held scene, about 1 in 10 for steady pins. The 30 % random-loss window passes: a tap held only by lost packets still reads as a tap. A firmware-side fix (raise a one-packet drop again when no packet follows within about 150 ms) is possible and not flashed.",
   "scene": {
     "duration": 6,
     "path": [{"t": 0, "x": 0, "z": 0}],

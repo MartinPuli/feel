@@ -138,6 +138,8 @@ final class LanternModel:ObservableObject {
     private var signTrigger=HandSignTrigger()
     private var guide=DirectionGuide()
     private var cuePlayer=CuePlayer()
+    /// Steady obstacle pins drop for one frame once a second (FeelCore TapRhythm): what keeps them felt. Target columns keep their own taps.
+    private var tapRhythm=TapRhythm()
     private var pendingSign=false
     /// Two-finger route: when the goal was handed to perception, waiting for its first route hint.
     private var pointingRouteSetAt: TimeInterval?
@@ -1315,7 +1317,7 @@ final class LanternModel:ObservableObject {
             let distances = [Double?](repeating: nil, count: 7)
             let output = places.encode(sequence: sequence, distances: distances, calibrated: true, at: now)
                 ?? TactileEncoder.encode(sequence: sequence, now: now, frameTimestamp: now, tracking: simulatedMemoryTracking, distances: distances, target: nil)
-            packet = adaptiveTactile.apply(packet: output.packet, profile: tactileProfile, session: places.memory.session ?? "simulation", now: now)
+            packet = adaptiveTactile.apply(packet: tapRhythm.apply(to: output).packet, profile: tactileProfile, session: places.memory.session ?? "simulation", now: now)
             guidanceState = output.state == .live ? .simulation : output.state
             calibrated = true; targetColumns=output.targetColumns
             targetDescription = "SIMULATION: " + (places.guidance?.state.rawValue ?? "Remember a place, move, then recall.")
@@ -1329,20 +1331,20 @@ final class LanternModel:ObservableObject {
             let encoded=TactileEncoder.encode(sequence:sequence,now:now,frameTimestamp:now,tracking:tracking,distances:[nil,near ? 0.7 : nil,1.1,2,3.5,nil,nil],target:target)
             // Simulated route: straight to the synthetic target, no floor map.
             let hint=tracking ? RouteHint(timestamp:now,status:.route,bearingDegrees:target.bearingDegrees,targetDistance:target.distance,routeLength:target.distance,label:"simulated target") : nil
-            let output=withDirections(EncoderOutput(packet:encoded.packet,state:encoded.state == .live ? .simulation : encoded.state),hint:hint,now:now)
+            let output=tapRhythm.apply(to:withDirections(EncoderOutput(packet:encoded.packet,state:encoded.state == .live ? .simulation : encoded.state),hint:hint,now:now),animating:cuePlayer.isAnimating)
             packet=output.packet; guidanceState=output.state
             targetDescription=tracking ? "SIMULATED target sweeping left to right" : "SIMULATED tracking loss. All pins neutral"
             return
         }
         guard mode == .live,let frame else {
             packet = .neutral(sequence:sequence); guidanceState = mode == .live ? .staleDepth : .stopped
-            cuePlayer.reset(); targetColumns=nil; openSideFinder.reset(); if openSide != nil { openSide=nil }
+            cuePlayer.reset(); tapRhythm.reset(); targetColumns=nil; openSideFinder.reset(); if openSide != nil { openSide=nil }
             tickRequest(now:now,candidates:[],hint:nil)
             _=withDirections(.init(packet:packet,state:guidanceState),hint:nil,now:now)
             if mode == .live { puck.send(packet) }; updateVoiceAwareness(targetAvailable: false); return
         }
         if let memoryOutput = places.encode(sequence: sequence, distances: frame.distances, calibrated: frame.floorY != nil, at: now) {
-            packet=adaptiveTactile.apply(packet: memoryOutput.packet, profile: tactileProfile, session: places.memory.session ?? "", now: now); guidanceState=memoryOutput.state; targetColumns=memoryOutput.targetColumns
+            packet=adaptiveTactile.apply(packet: tapRhythm.apply(to: memoryOutput).packet, profile: tactileProfile, session: places.memory.session ?? "", now: now); guidanceState=memoryOutput.state; targetColumns=memoryOutput.targetColumns
             targetDescription=places.guidance.map { "Remembered place: \($0.state.rawValue)" } ?? "Place tracking unavailable"
             voiceTargetPhrase=nil
             if places.guidance?.state == .arrived { featureNotice("You reached the remembered place.") }
@@ -1364,7 +1366,8 @@ final class LanternModel:ObservableObject {
         let open=encoded.state == .live && frozen == nil ? openSideFinder.update(distances:frame.distances,now:now) : nil
         if openSide != open { openSide=open }
         playOpenSideCue(open,now:now)
-        let output=frozen.map { EncoderOutput(packet:$0.packet,state:encoded.state,targetColumns:$0.targetColumns) } ?? withPointingHighlight(withDirections(encoded,hint:frame.routeHint,now:now),now:now)
+        let composed=frozen.map { EncoderOutput(packet:$0.packet,state:encoded.state,targetColumns:$0.targetColumns) } ?? withPointingHighlight(withDirections(encoded,hint:frame.routeHint,now:now),now:now)
+        let output=tapRhythm.apply(to:composed,animating:cuePlayer.isAnimating)
         packet=adaptiveTactile.apply(packet: output.packet, profile: tactileProfile, session: String(frame.worldEpoch), now: now); guidanceState=output.state; targetColumns=output.targetColumns; puck.send(packet)
         recordJourney(frame:frame,output:output,now:now)
         if pointing.isActive {
