@@ -4,7 +4,7 @@ FEEL turns indoor depth and a chosen target into a palm puck. The puck has seven
 
 `main` is the current V1 line: iOS apps, the shared Swift core, ESP32 firmware, OpenSCAD, the Chalk where-is path, and the validation tools. Older work stays on `feel/v1-foundation`, `feel/v2-spatial-memory`, and `feel/v3-advanced`. Do not merge those branches into V1 unless that is an explicit request.
 
-This tree is a greenfield recreation from `HANDOFF-v7.md`. The handoff is a specification. Passing tests here do not prove that a printed cam, a real servo, LiDAR, BLE, or UWB behaved as the tests describe. Servo body and horn sizes in CAD are still unmeasured placeholders. Default seven-servo PWM stays off. The opt-in GPIO32 profile has user-reported motion. Full travel, seven-column mechanics, and sensing accuracy are still open. FEEL is an experimental interface. It is not a certified mobility aid and it does not plan a route.
+This tree is a greenfield recreation from `docs/HANDOFF-v7.md`. The handoff is a specification. Passing tests here do not prove that a printed cam, a real servo, LiDAR, BLE, or UWB behaved as the tests describe. Servo body and horn sizes in CAD are still unmeasured placeholders. Default seven-servo PWM stays off. The opt-in GPIO32 profile has user-reported motion. Full travel, seven-column mechanics, and sensing accuracy are still open. FEEL is an experimental interface. It is not a certified mobility aid and it does not plan a route.
 
 The mechanical and firmware design uses the FS0307 nominal 120° map: band centers at 0°, 40°, 80°, and 120°, gaps at 20°, 60°, and 100°, pulses from 900 µs to 2100 µs. That map replaces the older 175° / 650 to 2500 µs notes. 120° is the selected design. Travel of the servo in hand is still unmeasured. See `docs/FS0307-120-DESIGN.md`.
 
@@ -40,7 +40,7 @@ Column 0 is the wearer's left and column 6 is the right, wrist toward the wearer
 | `scripts/` | Source checks, model fetch, iOS check wrapper, V1 check runner. |
 | `docs/` | Bring-up, protocol, release evidence, and this guide. |
 
-`HANDOFF-v7.md` and `AGENTS.md` describe intent and engineering rules. When they disagree with the code, the code is what runs. Record the disagreement instead of silently changing behavior.
+`docs/HANDOFF-v7.md` and `AGENTS.md` describe intent and engineering rules. When they disagree with the code, the code is what runs. Record the disagreement instead of silently changing behavior.
 
 ## iOS
 

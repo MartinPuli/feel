@@ -3,12 +3,16 @@ grid so they stay legible in a README; edit the figure functions, rerun, commit 
 from __future__ import annotations
 from pathlib import Path
 
-INK, MUTED, PAPER = '#1b1b1b', '#6b6b6b', '#ffffff'
-PHONE, PHONE_EDGE = '#f3efe6', '#8a7f6a'          # on the phone / on the body
-CHALK, CHALK_EDGE = '#e8f0fe', '#2b5fd9'          # through Chalk
-CLOUD, CLOUD_EDGE = '#f1f1f4', '#7a7a8c'          # other services
-ACCENT = '#ff5a1f'                                # FEEL's pin orange: the thing the figure is about
-FONT = "-apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif"
+# Chalkboard theme, matching docs/diagrams/chalk-journey-loop.webp: a dark green board, chalk-white text,
+# dark cards. Phone and body cards have a pale edge and blue arrows; Chalk cards have a yellow edge with a
+# hatched shadow and yellow arrows; other services are grey.
+INK, MUTED, PAPER = '#e9ece7', '#a9b8b0', '#24352f'
+PHONE, PHONE_EDGE = '#15231e', '#9db3aa'          # on the phone / on the body
+CHALK, CHALK_EDGE = '#15231e', '#e3c558'          # through Chalk
+CLOUD, CLOUD_EDGE = '#1a2b26', '#8e9aa6'          # other services
+ACCENT = '#f0a25a'                                # FEEL's pin orange, chalk-tinted: the thing the figure is about
+FLOW = '#8fbfe8'                                  # blue arrows: what the phone and body do on their own
+FONT = "'Avenir Next', 'Helvetica Neue', Helvetica, Arial, sans-serif"
 HERE = Path(__file__).resolve().parent
 
 
@@ -23,23 +27,26 @@ class Figure:
     def box(self, x, y, w, h, title, lines=(), fill=PHONE, edge=PHONE_EDGE, dashed=False, accent=False, small=False):
         dash = ' stroke-dasharray="6 4"' if dashed else ''
         stroke = ACCENT if accent else edge
-        self.parts.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="7" fill="{fill}" stroke="{stroke}" stroke-width="{2.2 if accent else 1.4}"{dash}/>')
-        size = 11.5 if small else 12.5
-        ty = y + (16 if small else 19)
+        if edge == CHALK_EDGE:  # Chalk cards carry a hatched shadow, as in the hand-drawn journey figure.
+            self.parts.append(f'<rect x="{x + 5}" y="{y + 5}" width="{w}" height="{h}" rx="9" fill="url(#hatch)"/>')
+        self.parts.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="9" fill="{fill}" stroke="{stroke}" stroke-width="{2.2 if accent else 1.6}"{dash}/>')
+        size = 12 if small else 13.5
+        ty = y + (17 if small else 20)
         self.parts.append(f'<text x="{x + w / 2}" y="{ty}" text-anchor="middle" font-size="{size}" font-weight="700" fill="{INK}">{self.esc(title)}</text>')
         for i, line in enumerate(lines):
-            self.parts.append(f'<text x="{x + w / 2}" y="{ty + 15 + i * 14}" text-anchor="middle" font-size="11" fill="{INK}">{self.esc(line)}</text>')
+            self.parts.append(f'<text x="{x + w / 2}" y="{ty + 16 + i * 14}" text-anchor="middle" font-size="11" fill="{MUTED}">{self.esc(line)}</text>')
 
     def group(self, x, y, w, h, label, edge=MUTED):
-        self.parts.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="10" fill="none" stroke="{edge}" stroke-width="1" stroke-dasharray="3 4"/>')
-        self.parts.append(f'<text x="{x + 10}" y="{y - 6}" font-size="11.5" font-weight="700" fill="{edge}" letter-spacing="0.6">{self.esc(label.upper())}</text>')
+        self.parts.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="12" fill="none" stroke="{edge}" stroke-width="1" stroke-dasharray="3 5" opacity="0.7"/>')
+        self.parts.append(f'<text x="{x + 10}" y="{y - 7}" font-size="11.5" font-weight="700" fill="{edge}" letter-spacing="1">{self.esc(label.upper())}</text>')
 
-    def arrow(self, x1, y1, x2, y2, label='', color=INK, dashed=False, via=None, label_dx=0, label_dy=-6):
-        marker = {INK: 'ink', CHALK_EDGE: 'chalk', ACCENT: 'accent', MUTED: 'muted', PHONE_EDGE: 'phone'}[color]
+    def arrow(self, x1, y1, x2, y2, label='', color=FLOW, dashed=False, via=None, label_dx=0, label_dy=-6):
+        if color in (INK, PHONE_EDGE): color = FLOW  # phone and body flows are blue, as in the journey figure
+        marker = {FLOW: 'flow', CHALK_EDGE: 'chalk', ACCENT: 'accent', MUTED: 'muted', PHONE_EDGE: 'phone'}[color]
         dash = ' stroke-dasharray="5 4"' if dashed else ''
         points = [(x1, y1)] + (via or []) + [(x2, y2)]
         path = 'M ' + ' L '.join(f'{px} {py}' for px, py in points)
-        self.parts.append(f'<path d="{path}" fill="none" stroke="{color}" stroke-width="1.6"{dash} marker-end="url(#{marker})"/>')
+        self.parts.append(f'<path d="{path}" fill="none" stroke="{color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"{dash} marker-end="url(#{marker})"/>')
         if label:
             mid = points[len(points) // 2] if len(points) > 2 else ((x1 + x2) / 2, (y1 + y2) / 2)
             lx, ly = mid[0] + label_dx, mid[1] + label_dy
@@ -57,12 +64,15 @@ class Figure:
         markers = ''.join(
             f'<marker id="{mid}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">'
             f'<path d="M 0 0 L 10 5 L 0 10 z" fill="{color}"/></marker>'
-            for mid, color in (('ink', INK), ('chalk', CHALK_EDGE), ('accent', ACCENT), ('muted', MUTED), ('phone', PHONE_EDGE)))
+            for mid, color in (('flow', FLOW), ('chalk', CHALK_EDGE), ('accent', ACCENT), ('muted', MUTED), ('phone', PHONE_EDGE)))
+        hatch = (f'<pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+                 f'<line x1="0" y1="0" x2="0" y2="7" stroke="{CHALK_EDGE}" stroke-width="1.2" opacity="0.45"/></pattern>'
+                 f'<radialGradient id="board" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#2b4039"/><stop offset="1" stop-color="{PAPER}"/></radialGradient>')
         svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {self.w} {self.h}" width="{self.w}" height="{self.h}" '
                f'role="img" aria-label="{self.esc(self.label)}" font-family="{FONT}">'
-               f'<title>{self.esc(self.title)}</title><defs>{markers}</defs>'
-               f'<rect x="0" y="0" width="{self.w}" height="{self.h}" fill="{PAPER}"/>'
-               f'<text x="20" y="28" font-size="16" font-weight="800" fill="{INK}">{self.esc(self.title)}</text>'
+               f'<title>{self.esc(self.title)}</title><defs>{markers}{hatch}</defs>'
+               f'<rect x="0" y="0" width="{self.w}" height="{self.h}" rx="18" fill="url(#board)"/>'
+               f'<text x="20" y="30" font-size="16" font-weight="700" fill="{INK}">{self.esc(self.title)}</text>'
                + ''.join(self.parts) + '</svg>\n')
         path = HERE / name
         path.write_text(svg, encoding='utf-8')
@@ -74,14 +84,14 @@ def system() -> Figure:
                'FEEL system: the LiDAR phone drives the tactile puck directly; the assistant reaches OpenAI for voice and Chalk for the vision gateway, context features and evaluations.')
     f.group(20, 70, 250, 500, 'On the body')
     f.box(40, 288, 210, 86, 'iPhone, chest-mounted', ('LiDAR depth 60 Hz · camera', 'microphone · ARKit pose'))
-    f.box(40, 452, 210, 86, 'FEEL puck', ('ESP32 · BLE · seven servos', '7 columns × 4 rows of pins'))
+    f.box(40, 452, 210, 86, 'FEEL puck', ('ESP32 · BLE · six servos', '6 columns × 4 rows of pins'))
     f.arrow(250, 331, 320, 331, color=PHONE_EDGE, label='depth + pose', label_dy=-8)
     f.arrow(320, 352, 250, 495, color=PHONE_EDGE, via=[(285, 352), (285, 495)], label='9-byte packet, 10 Hz, BLE\nneutral when unsure', label_dx=-110, label_dy=-72)
 
     f.group(300, 70, 330, 500, 'On the phone, always')
     f.box(320, 90, 290, 72, 'Assistant tools', ('find_target · where_is · venue_info', 'start_directions · get_status · stop'))
     f.box(320, 182, 290, 86, 'Local detectors', ('EXIT text · door shapes · people', 'Core ML objects · hand signs', 'the Where-is fallback'))
-    f.box(320, 288, 290, 86, 'Depth to pins', ('floor-calibrated samples → 7 sectors', 'nearest range → 4 distance rows', 'open side: which way has more room'))
+    f.box(320, 288, 290, 86, 'Depth to pins', ('floor-calibrated samples → 6 sectors', 'nearest range → 4 distance rows', 'open side: which way has more room'))
     f.box(320, 394, 290, 86, 'Offline stores', ('venue pack (hashed, expiring)', 'floor grid + route arrows', 'confirmed finds (pending)'))
 
     f.group(660, 70, 460, 500, 'When connected')

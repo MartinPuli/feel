@@ -18,7 +18,7 @@ are not inherited. This file describes the new implementation.
 ## Source of truth
 
 - User directive: recreate every missing component; do not wait for original code.
-- `HANDOFF-v7.md`: mechanical dimensions and intended behavior, retained verbatim.
+- `docs/HANDOFF-v7.md`: mechanical dimensions and intended behavior, retained verbatim.
 - `docs/PROTOCOL.md` and `protocol/vectors.json`: newly settled wire/edge policies.
 - Source, executed logs, and `docs/RELEASE-STATUS.md`: what actually exists/passes.
 - `cad/params.scad`: geometry and nominal **UNMEASURED** hardware placeholders.

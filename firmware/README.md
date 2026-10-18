@@ -15,7 +15,7 @@
 
 # FEEL V1 firmware — greenfield implementation
 
-This is newly written code derived from `HANDOFF-v7.md`. It is **not** the missing original firmware. Its portable production controller is exercised on the host; board compilation and physical testing are separate gates. Never infer servo motion, pin return, force, or BLE reliability from a passing host test.
+This is newly written code derived from `docs/HANDOFF-v7.md`. It is **not** the missing original firmware. Its portable production controller is exercised on the host; board compilation and physical testing are separate gates. Never infer servo motion, pin return, force, or BLE reliability from a passing host test.
 
 **Selected hardware:** the team confirmed two **ESP32-WROOM boards with USB-C** (one main, one spare), so use the `esp32` environment and the classic GPIO map after checking the actual board's exposed labels. The `esp32s3` environment is a secondary portability build; it does not describe a board in the confirmed inventory. A USB data cable, 400-point breadboards, perfboards/headers, 22-AWG solid wire, a multimeter, soldering tools and an Adafruit 5 V / 4 A supply are available. The supply's availability does **not** establish that 5 V is correct for the unconfirmed servo variant. Check the capacitor's actual value/polarity/rating (target inventory check: 1000 µF / 25 V) and identify every servo label before powering it. Breadboards are for logic prototyping, not an assumed adequate six-servo current path.
 

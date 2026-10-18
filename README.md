@@ -61,6 +61,14 @@ More figures: [sensing to pins](docs/diagrams/sensing-to-pins.svg),
 
 ## Hardware
 
+![Exploded view of the Pin Puck: the 6 × 4 pin plate on top, the guide plate with 24 pins below it, six cam shafts with one lobe per row, the servos at the side, and the ESP32 board in the chassis](docs/diagrams/puck-exploded.webp)
+
+<p align="center">
+  <img src="docs/media/puck-explode.gif" width="440" alt="The puck assembly exploding layer by layer in the 3D viewer: face plate, pins, foam, guide plate, cam shafts, servos and chassis">
+</p>
+
+Full clip with the layer toggles and the forearm pack: [puck-assembly.mp4](docs/media/puck-assembly.mp4) (24 s, 0.5 MB).
+
 | Part | Spec |
 |---|---|
 | Phone | iPhone with LiDAR (developed on an iPhone 14 Pro Max), held landscape-left, rear camera forward |
@@ -107,7 +115,7 @@ About **$95 in parts**, not counting the iPhone.
 | **Total** | | | **≈ $94** | |
 
 Prices checked October 17, 2026, before shipping and tax. Not included: the LiDAR iPhone, a
-spare servo, a battery bank for walking use ([power options](BATTERY.md)), and printer time.
+spare servo, a battery bank for walking use ([power options](docs/BATTERY.md)), and printer time.
 For context, commercial refreshable braille displays, the closest pin-based devices, start
 around $1,500, though they display text rather than space.
 Sources: [Pololu FS0307](https://www.pololu.com/product/3420),
@@ -115,6 +123,8 @@ Sources: [Pololu FS0307](https://www.pololu.com/product/3420),
 [braille display buyer's guide](https://www.disabilityworld.org/articles/refreshable-braille-displays-buyers-guide/).
 
 ## Where Chalk is used
+
+![How Chalk is used: a question becomes a scan, a Chalk path query over past journeys and this trip's obstacles, progress points, the next point on the LiDAR view and pins on the puck; every step is stored as a journey, journeys build room and world maps, and frozen holdout journeys replay through Chalk Evaluations before a change is promoted](docs/diagrams/chalk-journey-loop.webp)
 
 FEEL's voice assistant has a `where_is` tool. "Where is the registration desk?" sends one camera
 photo and the question through **Chalk's Model Gateway** to a vision model. The phone places the
@@ -223,12 +233,13 @@ Hardware: [Mac and ESP32 setup](docs/SETUP-MAC-ESP32.md), [bring-up](docs/HARDWA
 | [`services/voice-token/`](services/voice-token) | Small service that issues short-lived voice credentials |
 | [`validation/`](validation/production/README.md) | Cross-layer replay of the real Swift and C++ code |
 | [`web/`](web) | FEEL site with `/replay` |
+| [`docs/`](docs) | All documentation: handoffs, protocol, hardware, release status, demo script and diagrams |
 
 [Codebase guide](docs/CODEBASE.md) · [demo script](docs/DEMO.md) · [Devpost draft](docs/DEVPOST.md)
 
 ## Provenance
 
-The FEEL concept and its design handoff ([HANDOFF-v7.md](HANDOFF-v7.md)) predate this
+The FEEL concept and its design handoff ([HANDOFF-v7.md](docs/HANDOFF-v7.md)) predate this
 repository. No original app, firmware or CAD source was available, so this code is a new
 implementation written from that handoff. Third-party model weights keep their own source,
 hash and license. See [eligibility and disclosure](docs/ELIGIBILITY.md).

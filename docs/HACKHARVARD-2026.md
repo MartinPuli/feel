@@ -270,7 +270,7 @@ Do not force sponsor SDKs into the product just to chase prizes.
 
 ## 8. Instructions for the coding agent
 
-Read `AGENTS.md`, `HANDOFF-v7.md`, and this file.
+Read `AGENTS.md`, `docs/HANDOFF-v7.md`, and this file.
 
 1.  Treat the opening ceremony slides as the source for event dates,
     track descriptions, prizes, and venue rules.
