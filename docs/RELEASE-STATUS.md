@@ -4,6 +4,45 @@
 
 The unsafe 150 ms restoration of old pin bands after a neutral packet has been removed. Only a fresh valid command can raise them again. Angles and wiring are unchanged; this firmware has not been flashed. Shared context reads now have a verified-user server boundary, but remain disabled until FEEL's database identity is configured.
 
+## October 18 — Ethan dot tracking synchronized into main
+
+Validation timestamp: 2026-10-18T00:05:12-04:00 (America/New_York). Local main advanced from
+`c71fc01` to `8b0789c`; Ethan's `765027e` was already merged by `9fe722a`.
+See [integration scope](VERSION-INTEGRATION.md#october-18--ethan-dot-tracking-integration).
+This entry supersedes the held-drop behavior described in the historical entry below.
+
+Independent review found and reproduced unsafe stale-band restoration after neutral plus
+packet loss. The focused correction keeps neutral latched until a fresh accepted command.
+The new regression failed before the fix (43/44), then passed (44/44). Dot animation,
+phone-timed taps, six-column mapping, reserved b0 and angle/pulse settings are preserved.
+
+| Gate and command | Result | Evidence / next action |
+|---|---|---|
+| `sh ios/scripts/test_portable.sh` | PASS: 395 tests | `evidence/ethan-dot-integration-20261018/summary.txt` |
+| `sh ios/scripts/build.sh` | PASS: Lantern and Beacon unsigned simulator builds | Xcode 26.6; same summary |
+| `sh firmware/test/run_host_tests.sh` | PASS: 44/44 controller tests and all sibling suites | `firmware.log` in the evidence folder |
+| `python3 simulation/pin_diagnostics.py` | PASS: 24/24 app-to-controller pin commands | `pin-diagnostics.log`; physical motion unverified |
+| `python3 -m unittest discover -s simulation/tests -v` | PASS: 4 tests | `scorer.log` |
+| `cd web && npm test` | PASS: 9 tests | `web.log`; rerun outside sandbox to permit local server |
+| `python3 simulation/run.py --repeat 2 --no-web` | PASS with existing limitations: 13 PASS, 5 KNOWN, no FAIL; deterministic repeats | `replay.log`; reserved slot invariant passes |
+| `python3 simulation/run.py simulation/scenarios/packet-loss-failsafe.json simulation/scenarios/tracking-loss-packet-blackout.json --no-build --no-web --repeat 2 --update-baselines --out /tmp/feel-ethan-neutral-replay` | PASS: both safety scenarios, accuracy 1.0 | `neutral-replay.log`; only these baselines accepted after review |
+| `python3 scripts/check_sources.py` | PASS: required source files present | Presence only, not a readiness claim |
+| `python3 validation/check_cam_contract.py` | BLOCKED: OpenSCAD unavailable | Install/use existing CAD validation environment, rerun |
+| Full iOS UI/device tests; ESP32 build/flash | NOT RUN in this integration | Existing historical results are not new validation |
+| Physical hardware | NOT VERIFIED | No flashing, signing, wiring or powered movement performed |
+
+[Evidence folder](evidence/ethan-dot-integration-20261018/summary.txt). The five known replay
+limits remain: narrow doorway sector resolution, lintel height, slow detector freshness,
+cluttered-hallway filter delay and crossing-person filter delay. The new path wave is covered
+by core tests; replay does not model tactile perception, radio transport or servo mechanics.
+No new claim of complete product readiness is made.
+
+Next three human actions:
+1. Review the integrated moving-dot behavior and the safety-neutral correction before publishing.
+2. Validate the dot's left/right direction and target retention on the LiDAR phone.
+3. After hardware approval, load the corrected firmware and check all six columns, Stop,
+   tracking loss, disconnect and timeout in the supervised bench setup.
+
 ## October 17 — firmware held-drop rule (not flashed)
 
 The portable controller now restores a one-packet drop that no packet follows: when an accepted

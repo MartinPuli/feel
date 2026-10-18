@@ -1,0 +1,5 @@
+Building for production...
+[0/2] Write swift-version--58304C5D6DBC2206.txt
+Build of product 'feel-replay' complete! (0.13s)
+PASS: 24/24 app-to-firmware pin command tests passed
+Replay data: /Users/martinezequielpulitano/hackharvard/simulation/out/web/pin-diagnostics.json

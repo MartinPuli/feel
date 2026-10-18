@@ -10,6 +10,8 @@
 - Fixed replay request races, incorrect tap-band scoring and missing public snapshots in static builds.
 - Evaluated all 20 movement fixtures from the other branch with six-sector geometry. Seventeen join the default suite. Three conservative filter-latency failures remain visible in `simulation/pending-scenarios`, with unchanged acceptance thresholds.
 
+A concurrent local-main commit `e0dba1b` was also integrated, preserving its Ethan dot-tracking evidence, protocol clarification and updated safety baselines. It adds no different production source behavior beyond the already verified safety fix. A post-merge replay run again returned 30 PASS / 5 KNOWN / 0 FAIL, including both corrected safety baselines.
+
 The V2 session-memory, V3 saved-room/local-command and V4 guarded-intent features previously ported to main remain present. See [feature inventory](VERSION-INTEGRATION.md) and [branch/regression evidence](../simulation/PRODUCTION-REGRESSION-20261018.md). Integration is selective: older core implementations and app-embedded service credentials were not merged over newer code.
 
 ## Verified gates

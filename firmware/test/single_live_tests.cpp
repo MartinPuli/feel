@@ -77,7 +77,7 @@ void allZeroReturnsEverySelectionToGap() {
         receive(c,p,2);
         assert(feel::singleLivePulse(c.snapshot()) == gaps[band-1]);
         assert(!c.snapshot().tapActive);
-        // A second zero packet makes it a real disappearance, not a held one-packet drop.
+        // Repeated neutral packets keep the gap and refresh only the normal watchdog.
         p.sequence = 2;
         receive(c,p,3);
         c.tick(502); assert(feel::singleLivePulse(c.snapshot()) == gaps[band-1]);

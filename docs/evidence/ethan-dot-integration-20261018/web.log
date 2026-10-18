@@ -1,0 +1,22 @@
+
+> test
+> node --test
+
+dist/ ready: 1 replay session(s), 1 recording(s) withheld (set "publish": true to include)
+✔ six physical columns ignore reserved slot zero and retain exact label expectations (7.442959ms)
+✔ unlabelled moments never manufacture a passing check (0.972417ms)
+✔ diagnostic output escapes report data and cannot claim physical validation (18.277541ms)
+✔ empty PASS reports are not rendered as successful evidence (1.312ms)
+✔ public report excludes raw errors and unrecognized payloads (0.23775ms)
+✔ static build excludes private recordings and raw report errors (4.698916ms)
+✔ paths resolve inside their roots only (2.10375ms)
+✔ byte ranges (0.540292ms)
+✔ serves video ranges and rejects other methods (45.703334ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 174.804334

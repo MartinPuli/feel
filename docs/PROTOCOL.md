@@ -97,7 +97,8 @@ pins felt by motion:
 - Arrows (`DirectionCue`) keep their own 100 ms frames and are the fastest motion on the puck.
 
 Servo budget: an FS0307 turns 60° in about 0.10 s unloaded, so the 29° drop to the gap is about
-50 ms each way and up to twice that under the cam; a dropped packet is back up within about 200 ms,
+50 ms each way and up to twice that under the cam; with a fresh restoring packet delivered, a tap
+is expected to return within about 200 ms,
 and no period may be shorter than three packets. None of this is measured on hardware yet.
 
 Neutral commands remain neutral until a fresh accepted packet raises a band. The nine-byte ABI

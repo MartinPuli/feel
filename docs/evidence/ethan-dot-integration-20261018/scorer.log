@@ -1,0 +1,9 @@
+test_actual_physical_miss_still_fails_unmodified_accuracy_gate (test_scoring.ScoringTests) ... ok
+test_all_means_six_physical_columns_not_reserved_wire_slot (test_scoring.ScoringTests) ... ok
+test_flicker_denominator_is_six_and_fault_neutralization_is_excluded (test_scoring.ScoringTests) ... ok
+test_reserved_slot_is_enforced_on_both_sides_even_for_known_or_unlabelled_cases (test_scoring.ScoringTests) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.000s
+
+OK
