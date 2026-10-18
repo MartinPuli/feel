@@ -38,9 +38,11 @@ public enum HandSign {
             let base=wrist.distance(to:mcp)
             return base>0 ? wrist.distance(to:tip)/base : nil
         }
+        // A hand close to the lens often has its folded fingers out of frame: a missing ring or little
+        // finger counts as folded. The two extended fingers must still be fully visible.
         guard let index=ratio(hand.index), let middle=ratio(hand.middle),
-              let ring=ratio(hand.ring), let little=ratio(hand.little),
-              index>=extendedRatio, middle>=extendedRatio, ring<=foldedRatio, little<=foldedRatio else { return false }
+              index>=extendedRatio, middle>=extendedRatio,
+              (ratio(hand.ring) ?? 0)<=foldedRatio, (ratio(hand.little) ?? 0)<=foldedRatio else { return false }
         // Both extended fingers must be straight: tip beyond the PIP, away from the MCP.
         for f in [hand.index, hand.middle] {
             guard let mcp=f.mcp, let pip=f.pip, let tip=f.tip, mcp.distance(to:tip)>mcp.distance(to:pip)*1.3 else { return false }

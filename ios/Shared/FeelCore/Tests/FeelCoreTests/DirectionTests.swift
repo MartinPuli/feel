@@ -42,7 +42,7 @@ final class HandSignTests: XCTestCase {
     }
     func testMissingJointsRejected() {
         var h=Self.hand(index:true,middle:true,ring:false,little:false)
-        h.ring.tip=nil; XCTAssertFalse(HandSign.isVSign(h))
+        h.index.tip=nil; XCTAssertFalse(HandSign.isVSign(h), "an extended finger must be seen")
         h=Self.hand(index:true,middle:true,ring:false,little:false); h.wrist=nil; XCTAssertFalse(HandSign.isVSign(h))
     }
     func testDistanceEstimate() {
@@ -62,6 +62,16 @@ final class HandSignTests: XCTestCase {
     private func run(_ trigger: inout HandSignTrigger, _ seq: [(Double,Bool)]) -> [Double] {
         seq.compactMap { t,v in trigger.update(.init(timestamp:t,vSign:v,distance:0.3)) ? t : nil }
     }
+    func testFoldedFingersOutOfFrameStillCountAsAV() {
+        // A hand close to the lens: the folded ring and little fingers are not detected at all.
+        var h=Self.hand(index:true,middle:true,ring:false,little:false)
+        h.ring = .init(mcp:nil,pip:nil,tip:nil); h.little = .init(mcp:nil,pip:nil,tip:nil)
+        XCTAssertTrue(HandSign.isVSign(h), "missing folded fingers count as folded")
+        var open=Self.hand(index:true,middle:true,ring:true,little:true)
+        open.ring.tip=nil
+        XCTAssertFalse(HandSign.isVSign(open), "a visible straight ring finger still rejects, a missing tip alone does not make it a V") 
+    }
+
     func testTriggerNeedsHoldAndFiresOnce() {
         var trigger=HandSignTrigger()
         let held=stride(from:0.0,through:2.0,by:0.15).map { ($0,true) }

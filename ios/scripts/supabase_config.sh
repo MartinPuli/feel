@@ -21,4 +21,13 @@ if [ -n "$voice_url" ] && [ -n "$voice_token" ]; then
   printf 'FEEL_VOICE_ENDPOINT = https:/$()/%s\nFEEL_VOICE_ACCESS_TOKEN = %s\n' "${voice_url#https://}" "$voice_token" >> Config/Supabase.local.xcconfig
   echo 'Voice service included.'
 fi
+# Optional: the Chalk gateway (restricted router key), so Where-is and describe_ahead work on first launch.
+chalk_key=$(read_value CHALK_ROUTER_API_KEY); chalk_env=$(read_value CHALK_ENV_ID); chalk_model=$(read_value FEEL_CHALK_MODEL); chalk_host=$(read_value CHALK_API_HOST)
+if [ -n "$chalk_key" ] && [ -n "$chalk_env" ]; then
+  case "$chalk_key" in sk-*) echo 'CHALK_ROUTER_API_KEY must be the Chalk gateway key, never a provider key.' >&2; exit 2;; esac
+  printf 'FEEL_CHALK_KEY = %s\nFEEL_CHALK_ENV = %s\n' "$chalk_key" "$chalk_env" >> Config/Supabase.local.xcconfig
+  [ -n "$chalk_model" ] && printf 'FEEL_CHALK_MODEL = %s\n' "$chalk_model" >> Config/Supabase.local.xcconfig
+  [ -n "$chalk_host" ] && printf 'FEEL_CHALK_HOST = https:/$()/%s\n' "${chalk_host#https://}" >> Config/Supabase.local.xcconfig
+  echo 'Chalk gateway included.'
+fi
 echo 'Wrote ios/Config/Supabase.local.xcconfig. Rebuild the Lantern app.'
