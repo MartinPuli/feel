@@ -136,15 +136,43 @@ def columns_of(spec):
     return columns
 
 
+def annotate_taps(ticks, max_held=3):
+    """Mark the taps. The phone drops a pin for exactly one tick between two ticks of the same raised band: steady
+    obstacle pins once a second (TapRhythm) and a target span once per six packets (the encoder's group tap). On the
+    firmware side the same tap may last longer only because the packets that would have raised the pin again were
+    lost (the firmware holds its last packet); up to `max_held` such held ticks count as the one tap.
+    tick['taps'][source] lists the columns tapping at that tick."""
+    n = len(ticks)
+    for tick in ticks:
+        tick['taps'] = {'phone': [], 'firmware': []}
+    for name in ('phone', 'firmware'):
+        for c in range(7):
+            band = lambda j: ticks[j][name]['bands'][c]
+            i = 1
+            while i < n - 1:
+                if band(i) != 0 or band(i - 1) == 0:
+                    i += 1
+                    continue
+                j = i
+                while name == 'firmware' and j + 1 < n and band(j + 1) == 0 and ticks[j + 1]['dropped'] and j + 1 - i < max_held:
+                    j += 1
+                if j + 1 < n and band(j + 1) == band(i - 1):
+                    for k in range(i, j + 1):
+                        ticks[k]['taps'][name].append(c)
+                i = j + 1
+
+
 def check_tick(expect, tick):
-    """Return (checks, failures) for one expectation at one tick. A failure is (column|None, wanted, got)."""
+    """Return (checks, failures) for one expectation at one tick. A failure is (column|None, wanted, got).
+    A tap (see annotate_taps) satisfies a band check: the pin is still that band, it is being kept felt."""
     checks, failures = 0, []
-    source = tick['firmware'] if expect.get('source', 'firmware') == 'firmware' else tick['phone']
+    name = expect.get('source', 'firmware')
+    source = tick['firmware'] if name == 'firmware' else tick['phone']
     if 'band' in expect or 'bands' in expect:
         allowed = expect['bands'] if 'bands' in expect else [expect['band']]
         for c in columns_of(expect.get('columns')):
             checks += 1
-            if source['bands'][c] not in allowed:
+            if source['bands'][c] not in allowed and not (source['bands'][c] == 0 and c in tick.get('taps', {}).get(name, [])):
                 failures.append((c, allowed, source['bands'][c]))
     if 'highlight' in expect:
         want = 255 if expect['highlight'] is None else expect['highlight']
@@ -164,8 +192,21 @@ def score(scenario, ticks, base=0.0):
     rules = {'minAccuracy': 0.95, **scenario.get('pass', {})}
     total = passed = phantom = missed = 0
     per_expect = []
+    annotate_taps(ticks)
     for index, expect in enumerate(expects):
         lo, hi = base + expect['from'] + expect.get('grace', 0), base + expect['to']
+        if 'taps' in expect:
+            # A window-level check: how often one column taps, per second, within [min, max].
+            spec, name = expect['taps'], expect.get('source', 'firmware')
+            window = [t for t in ticks if lo <= t['t'] <= hi]
+            count = sum(1 for t in window if spec['column'] in t['taps'][name])
+            rate = count / (hi - lo) if hi > lo else 0.0
+            ok = spec.get('min', 0.0) <= rate <= spec.get('max', float('inf'))
+            total += 1; passed += int(ok)
+            per_expect.append({'index': index, 'label': expect.get('label', ''), 'from': expect['from'], 'to': expect['to'],
+                               'checks': 1, 'passed': int(ok), 'accuracy': 1.0 if ok else 0.0, 'firstMatch': None,
+                               'tapsPerSecond': round(rate, 2), 'taps': count})
+            continue
         e_total = e_pass = 0
         first_ok = None
         for tick in ticks:
@@ -188,8 +229,11 @@ def score(scenario, ticks, base=0.0):
                            'firstMatch': None if first_ok is None else round(first_ok - expect['from'], 3)})
     # Flicker counts only changes between two live ticks, so going neutral on a fault is not flicker.
     live = [(a, b) for a, b in zip(ticks, ticks[1:]) if a['phone']['state'] == b['phone']['state'] == 'live' and not a['dropped'] and not b['dropped']]
-    changes = sum(1 for a, b in live for c in ACTIVE_COLUMNS if a['firmware']['bands'][c] != b['firmware']['bands'][c])
+    # A tap's two moves are deliberate, so they do not count as flicker; they are reported on their own.
+    changes = sum(1 for a, b in live for c in ACTIVE_COLUMNS
+                  if a['firmware']['bands'][c] != b['firmware']['bands'][c] and c not in a['taps']['firmware'] and c not in b['taps']['firmware'])
     live_seconds = sum(b['t'] - a['t'] for a, b in live) or 1e-9
+    taps = sum(len(t['taps']['firmware']) for t in ticks if t['phone']['state'] == 'live')
     ages = [t['t'] - t['phone']['frame'] for t in ticks if t['phone']['frame'] is not None and t['phone']['state'] == 'live']
     accuracy = passed / total if total else None
     flicker = changes / len(ACTIVE_COLUMNS) / live_seconds if live else 0.0
@@ -216,6 +260,7 @@ def score(scenario, ticks, base=0.0):
         'phantomChecks': phantom, 'missedChecks': missed,
         'bandChangesPerColumnSecond': round(flicker, 3),
         'reservedSlotViolations': reserved_violations,
+        'tapsPerColumnSecond': round(taps / len(ACTIVE_COLUMNS) / live_seconds, 3) if live else 0.0,
         # Modelled: simulated tick phase plus delivery latency, not a phone measurement.
         'frameAgeMs': {'mean': round(1000 * sum(ages) / len(ages), 1), 'max': round(1000 * max(ages), 1)} if ages else None,
         'expectations': per_expect, 'passed': not reasons, 'reasons': reasons,

@@ -115,6 +115,26 @@ the last reason. `JourneyLog.export()` still writes every stored journey to `Doc
 app (**On My iPhone → FEEL**), accessible through Cloud memory or the export_journeys voice tool. A real device
 upload round trip remains unverified. See [integrated version features](../docs/VERSION-INTEGRATION.md).
 
+## Tap rhythms (why raised pins pulse)
+
+A pin is felt when it moves and fades within seconds when it stays: steady skin pressure rides on slowly adapting
+nerve fibres whose firing, and the felt intensity with it, decay exponentially (Chung et al. 2015, *BMC Neuroscience*;
+Bensmaia et al. 2005, *J. Neurophysiol.*, where SA1 afferents adapt fastest). So the puck keeps pins felt by motion,
+sparse enough to remind rather than buzz:
+
+| What | Rhythm | Where |
+|---|---|---|
+| Obstacle pin unchanged for 1 s | one drop to the gap every 1.0 s, all steady pins together | `TapRhythm` (FeelCore), applied to the final packet of every tick after cues and highlights |
+| One target column | the firmware's 13° dip for 100 ms of every 600 ms | the highlight byte, gated by the tactile profile |
+| A target span | every span column dropped for one packet in six | `TactileEncoder.groupTapPeriod` |
+| Direction arrows | a new frame every 100 ms | `DirectionCue` |
+
+What points at something beats faster than what is merely there, and the arrows are the fastest motion. A drop
+commands the nearest gap, 29° of cam travel; the FS0307 turns 60° in about 0.10 s unloaded, so a drop is about 50 ms
+each way and up to twice that under the cam, a dropped packet is back up within about 200 ms, and no period may be
+shorter than three packets (`TapRhythm.minimumPeriod`). Not run on hardware yet: pin return speed under load decides
+how crisp a drop feels, and the settle time and period are constants in `TapRhythm` to tune on the device.
+
 ## BLE and physical-output status
 
 Choose the intended device under **Puck connection**; the app does not automatically connect to an arbitrary puck. Packets use the UUIDs in `FeelBLE`, matching the firmware. Connection/status notifications do not prove actuation.

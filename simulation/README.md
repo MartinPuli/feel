@@ -77,7 +77,8 @@ The tool samples every object surface inside the 0.6–2.1 m window, keeps what 
 - `scene` (synthetic) or `recording` (a path relative to the scenario file).
   - Scene fields: `duration`, `path` keyframes `{t, x, z, yaw}` (yaw 0 faces −z, positive turns right), `cameraHeight` (default 1.2), `pitch`, `objects` (`box` with `min`/`max`, or `cylinder` with `center` [x, z], `radius`, `height`; optional `velocity` [vx, vz], `from`, `to`), `target` (`position`, `label`, `halfWidth`, `from`, `to`, `period`, `latency`), `sensor` (`noise`, `outlierRate`, `outlierConfidence`, `seed`), `trackingLost` and `frameGaps` (`[[from, to]]`), `floorCalibrated`.
 - `expect`: windows `{from, to}` with any of the following:
-  - `columns` (unique wire slots 1–6, or `"all"` for all six physical columns; b0 is reserved) plus `band` or `bands` (allowed values; 0 means the pin is down)
+  - `columns` (unique wire slots 1–6, or `"all"` for all six physical columns; b0 is reserved) plus `band` or `bands` (allowed values; 0 means the pin is down). A one-tick drop between two ticks of the same raised band is a tap (the phone's `TapRhythm` drops steady pins once a second; the encoder drops a target span once per six packets) and satisfies the check; on the firmware side a tap held only by lost packets counts too.
+  - `taps`: `{"column", "min", "max"}`, taps per second of that column across the window. `tapsPerColumnSecond` is reported per scenario, and taps do not count as flicker.
   - `highlight` (a column, or `null` for none)
   - `state` (the phone's guidance state)
   - `source: "phone"` checks the packet the phone sent instead of what the firmware applied
