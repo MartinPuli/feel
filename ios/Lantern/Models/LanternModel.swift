@@ -182,7 +182,7 @@ final class LanternModel:ObservableObject {
         if journeyLog.uploader == nil { journeyLog.uploader = uploader }
         if roomMemory.reader == nil, let chalkQuery { roomMemory.reader = ChalkSharedMemory(client: chalkQuery) }
         (uploader as? SupabaseWriter)?.venue = { [venueInfo] in venueInfo.pack.map { VenueRef(id: $0.venueId, name: $0.venueName) } }
-        roomMemory.venue = { [venueInfo] in venueInfo.pack?.venueId ?? VenueRef.demo.id }
+        roomMemory.venue = { [venueInfo] in venueInfo.pack?.venueId }
         // A shared map that arrives while the tag is in view seeds the planner now, unless this world was seeded already.
         // A stop or a tracking reset forgets the sighting, so a map arriving after one seeds nothing.
         roomMemory.onSharedStructure = { [weak self] tagId in
@@ -505,7 +505,7 @@ final class LanternModel:ObservableObject {
             guard let chalkQuery else { return ["error": "The find history needs the Chalk memory setup, which is missing on this phone."] }
             lastSeenRequest += 1
             let request = lastSeenRequest
-            ChalkContext.lastSeen(chalkQuery, userId: userId, object: object) { [weak self] result in
+            ChalkMemory.lastSeen(chalkQuery, userId: userId, object: object) { [weak self] result in
                 guard let self, self.lastSeenRequest == request else { return }
                 switch result {
                 case .success(let spoken): self.deliverLastSeen(spoken)

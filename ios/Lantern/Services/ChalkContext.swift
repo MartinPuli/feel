@@ -131,7 +131,7 @@ final class ChalkQueryClient: NSObject, ChalkQuerying, URLSessionTaskDelegate {
 
 /// The named queries the phone reads, keyed exactly as chalk/feel_chalk/context.py keys them, and the shapes it
 /// accepts back. Each is a past record: where an object was last confirmed, what shared visits saw of a room.
-enum ChalkContext {
+enum ChalkMemory {
     /// ObjectHistory.id: the user and the object as the finds table stores it (lower case, single spaces).
     static func lastSeenKey(userId: String, object: String) -> String {
         "\(userId.trimmingCharacters(in: .whitespaces)):\(RoomAnchor.normalized(object))"

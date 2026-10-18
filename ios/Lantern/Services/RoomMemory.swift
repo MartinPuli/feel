@@ -2,7 +2,7 @@ import Foundation
 import FeelCore
 
 /// The shared memory read back: the room's structure as Chalk merged it (nil while nobody shared a visit) with the
-/// number of visits that voted, and the targets remembered at the tag as anchors. `ChalkContext` in the app;
+/// number of visits that voted, and the targets remembered at the tag as anchors. `ChalkMemory` in the app;
 /// completions on the main thread.
 protocol SharedMemoryReading: AnyObject {
     func fetchStructure(venueId: String, tagId: String, completion: @escaping (Result<(map: RoomMap?, visits: Int), ChalkQueryError>) -> Void)
@@ -14,10 +14,10 @@ final class ChalkSharedMemory: SharedMemoryReading {
     private let client: ChalkQuerying
     init(client: ChalkQuerying) { self.client = client }
     func fetchStructure(venueId: String, tagId: String, completion: @escaping (Result<(map: RoomMap?, visits: Int), ChalkQueryError>) -> Void) {
-        ChalkContext.roomStructure(client, venueId: venueId, tagId: tagId, completion: completion)
+        ChalkMemory.roomStructure(client, venueId: venueId, tagId: tagId, completion: completion)
     }
     func fetchAnchors(venueId: String, tagId: String, completion: @escaping (Result<[RoomAnchor], ChalkQueryError>) -> Void) {
-        ChalkContext.roomAnchors(client, venueId: venueId, tagId: tagId, completion: completion)
+        ChalkMemory.roomAnchors(client, venueId: venueId, tagId: tagId, completion: completion)
     }
 }
 
@@ -34,8 +34,8 @@ final class RoomMemory {
     var uploader: MemoryUploading?
     /// Where the shared memory is read back from (Chalk's `room_structure` and `room_anchors`); nil keeps the phone's own stores.
     var reader: SharedMemoryReading?
-    /// The venue a room is filed under when `fetchSharedStructure` is given none: the loaded venue pack's, else the demo venue.
-    var venue: () -> String = { VenueRef.demo.id }
+    /// The venue a room is filed under when `fetchSharedStructure` is given none: the loaded venue pack's; nil (no venue selected) fetches nothing.
+    var venue: () -> String? = { nil }
     /// Called on the main thread after a download added to the tag's structure visits, so the planner can be seeded with it.
     var onSharedStructure: ((String) -> Void)?
     /// Tags whose shared memory was fetched this run, so the download happens once per tag; a failure allows one retry a minute later.
@@ -131,7 +131,8 @@ final class RoomMemory {
     /// map is never stored twice, so a phone that visits daily keeps its own ten visits and Chalk's current vote.
     func fetchSharedStructure(venueId: String?, tagId: String) {
         guard let reader else { return }
-        let venue = venueId ?? self.venue(), at = now()
+        guard let venue = venueId ?? self.venue() else { sharedStatus = "no venue selected"; return }
+        let at = now()
         if let last = fetched[tagId], at < last { return }
         fetched[tagId] = .distantFuture
         sharedStatus = "fetching"

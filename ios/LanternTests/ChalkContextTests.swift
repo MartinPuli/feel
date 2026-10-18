@@ -85,7 +85,7 @@ final class ChalkContextTests: XCTestCase {
     // MARK: Wire shape
     func testLastSeenIsOneOnlineQueryWithChalksHeadersAndKey() throws {
         StubURLProtocol.handler = { _, _ in (200, self.reply([["field": "object_history.spoken", "value": "Keys: last confirmed at the kitchen table, 2 hours ago."]])) }
-        let result: Result<String, ChalkQueryError>? = run { ChalkContext.lastSeen(self.client(), userId: self.user, object: "  My   Keys ", completion: $0) }
+        let result: Result<String, ChalkQueryError>? = run { ChalkMemory.lastSeen(self.client(), userId: self.user, object: "  My   Keys ", completion: $0) }
         XCTAssertEqual(try XCTUnwrap(result).get(), "Keys: last confirmed at the kitchen table, 2 hours ago.")
         let request = try XCTUnwrap(StubURLProtocol.lastRequest)
         XCTAssertEqual(request.url?.absoluteString, "https://engine.example.test/v1/query/online", "the environment's engine answers, not api.chalk.ai")
@@ -101,7 +101,7 @@ final class ChalkContextTests: XCTestCase {
     func testRepliesAreCheckedNotGuessed() throws {
         func failure(_ status: Int, _ body: Data) throws -> ChalkQueryError {
             StubURLProtocol.handler = { _, _ in (status, body) }
-            let result: Result<String, ChalkQueryError>? = run { ChalkContext.lastSeen(self.client(), userId: self.user, object: "keys", completion: $0) }
+            let result: Result<String, ChalkQueryError>? = run { ChalkMemory.lastSeen(self.client(), userId: self.user, object: "keys", completion: $0) }
             return try XCTUnwrap(XCTUnwrap(result).failureValue)
         }
         XCTAssertEqual(try failure(401, Data("{}".utf8)), .http(401))
@@ -124,7 +124,7 @@ final class ChalkContextTests: XCTestCase {
     func testRoomStructureIsKeyedLikeTheChalkClientAndDecodesTheMergedMap() throws {
         let structure = #"{"cell_size": 0.1, "cells": "28f2b10f2u6b", "height": 6, "origin_x": -0.2, "origin_y": 0.0, "schema": 1, "width": 8}"#
         StubURLProtocol.handler = { _, _ in (200, self.reply([["field": "room_memory.structure", "value": structure], ["field": "room_memory.structure_visits", "value": 3]])) }
-        let result: Result<(map: RoomMap?, visits: Int), ChalkQueryError>? = run { ChalkContext.roomStructure(self.client(), venueId: " Harvard-Yard ", tagId: "FEEL-TAG-01 ", completion: $0) }
+        let result: Result<(map: RoomMap?, visits: Int), ChalkQueryError>? = run { ChalkMemory.roomStructure(self.client(), venueId: " Harvard-Yard ", tagId: "FEEL-TAG-01 ", completion: $0) }
         let shared = try XCTUnwrap(result).get()
         XCTAssertEqual(shared.map, merged, "the same map FeelCore reads from the room_maps columns")
         XCTAssertEqual(shared.visits, 3)
@@ -134,15 +134,15 @@ final class ChalkContextTests: XCTestCase {
 
     func testARoomNobodySharedIsNoMapAndAMalformedMapIsAFailure() throws {
         StubURLProtocol.handler = { _, _ in (200, self.reply([["field": "room_memory.structure", "value": NSNull()], ["field": "room_memory.structure_visits", "value": 0]])) }
-        var result: Result<(map: RoomMap?, visits: Int), ChalkQueryError>? = run { ChalkContext.roomStructure(self.client(), venueId: "v", tagId: "t", completion: $0) }
+        var result: Result<(map: RoomMap?, visits: Int), ChalkQueryError>? = run { ChalkMemory.roomStructure(self.client(), venueId: "v", tagId: "t", completion: $0) }
         XCTAssertNil(try XCTUnwrap(result).get().map)
         XCTAssertEqual(try XCTUnwrap(result).get().visits, 0)
         StubURLProtocol.handler = { _, _ in (200, self.reply([["field": "room_memory.structure", "value": #"{"cell_size": 0.1, "cells": "3f", "height": 6, "origin_x": 0, "origin_y": 0, "width": 8}"#],
                                                               ["field": "room_memory.structure_visits", "value": 1]])) }
-        result = run { ChalkContext.roomStructure(self.client(), venueId: "v", tagId: "t", completion: $0) }
+        result = run { ChalkMemory.roomStructure(self.client(), venueId: "v", tagId: "t", completion: $0) }
         XCTAssertEqual(try XCTUnwrap(result).failureValue, .malformedReply, "48 cells promised, 3 encoded")
         StubURLProtocol.handler = { _, _ in (200, self.reply([["field": "room_memory.structure", "value": NSNull()], ["field": "room_memory.structure_visits", "value": true]])) }
-        result = run { ChalkContext.roomStructure(self.client(), venueId: "v", tagId: "t", completion: $0) }
+        result = run { ChalkMemory.roomStructure(self.client(), venueId: "v", tagId: "t", completion: $0) }
         XCTAssertEqual(try XCTUnwrap(result).failureValue, .malformedReply, "a boolean is not a count")
     }
 
@@ -150,11 +150,11 @@ final class ChalkContextTests: XCTestCase {
         let targets = #"[{"label": "exit", "x": 1.5, "y": 6.0, "z": 0.0, "sightings": 4, "last_seen_at": "2026-10-17T12:00:00+00:00"}, "#
             + #"{"label": "Water Fountain", "x": -1.0, "y": 3.0, "z": 0.1, "sightings": 2, "last_seen_at": "2026-10-16T09:30:00.250000+00:00"}, {"label": "bad", "x": "no"}]"#
         StubURLProtocol.handler = { _, _ in (200, self.reply([["field": "room_memory.targets", "value": targets]])) }
-        let result: Result<[RoomAnchor], ChalkQueryError>? = run { ChalkContext.roomAnchors(self.client(), venueId: "harvard-yard", tagId: "feel-tag-01", completion: $0) }
+        let result: Result<[RoomAnchor], ChalkQueryError>? = run { ChalkMemory.roomAnchors(self.client(), venueId: "harvard-yard", tagId: "feel-tag-01", completion: $0) }
         let anchors = try XCTUnwrap(result).get()
         XCTAssertEqual(anchors.map(\.label), ["exit", "water fountain"], "a malformed item is skipped, never guessed")
         XCTAssertEqual(anchors.first?.position, Vector3(1.5, 6, 0))
-        XCTAssertEqual(anchors.first?.confidence, ChalkContext.sharedConfidence)
+        XCTAssertEqual(anchors.first?.confidence, ChalkMemory.sharedConfidence)
         XCTAssertEqual(anchors.first?.seenAt, ISO8601DateFormatter().date(from: "2026-10-17T12:00:00Z"))
         XCTAssertEqual(anchors.last?.seenAt.timeIntervalSince1970 ?? 0, ISO8601DateFormatter().date(from: "2026-10-16T09:30:00Z")!.timeIntervalSince1970 + 0.25, accuracy: 0.001)
         XCTAssertEqual(try json(StubURLProtocol.lastBody)["query_name"] as? String, "room_anchors")
