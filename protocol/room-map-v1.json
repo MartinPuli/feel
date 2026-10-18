@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "about": "Shared test vector for room structure memory: chalk/feel_chalk/room_map.py and FeelCore RoomMap must turn the same visit maps into the same merged structure. A map is a floor plan of 10 cm cells in the printed tag's levelled frame (x right along the tag, y out of the tag into the room, metres; the origin is the corner of the cell with the smallest indices and sits on the cell lattice). Cells are run-length encoded over the row-major array from the origin, +x within a row, rows in +y: <count><state> with u unknown, f free, b blocked; the canonical encoding uses maximal runs. Merge rule per cell: unknown when no visit observed it; blocked when at least half of the visits that observed it saw it blocked (a tie goes to blocked: a missed wall costs more than a spurious one, which the live camera overrides); free otherwise.",
+  "encoding": {"width": 4, "height": 2, "states": ["f", "f", "b", "u", "u", "u", "f", "f"], "cells": "2f1b3u2f"},
+  "venue_id": "harvard-yard",
+  "tag_id": "feel-tag-01",
+  "visits": [
+    {"cell_size": 0.1, "origin_x": 0.0, "origin_y": 0.0, "width": 6, "height": 6, "cells": "14f2b4f2b8f6b",
+     "about": "First visit: free floor, a chair at x 2-3 y 2-3, the far wall along y 5."},
+    {"cell_size": 0.1, "origin_x": -0.2, "origin_y": 0.0, "width": 8, "height": 6, "cells": "40f2u6b",
+     "about": "Second visit, two cells farther left: the chair is gone, the wall's left end was not seen."},
+    {"cell_size": 0.1, "origin_x": 0.1, "origin_y": 0.1, "width": 4, "height": 5, "cells": "9f1u1b5f4b",
+     "about": "Third visit, a smaller view: the chair's cells are free except one unseen and one with a bag."}
+  ],
+  "merged": {"cell_size": 0.1, "origin_x": -0.2, "origin_y": 0.0, "width": 8, "height": 6, "cells": "28f2b10f2u6b", "visits": 3,
+             "about": "The wall stays (blocked on every visit that saw it), the chair goes (blocked on one visit of three), the chair cell no third visit saw stays blocked (one blocked, one free: a tie), the bag stays (two of three)."}
+}
