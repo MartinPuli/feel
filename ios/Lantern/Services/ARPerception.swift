@@ -203,6 +203,13 @@ final class ARPerception: NSObject, ARSessionDelegate {
     /// Seeds the floor grid with a remembered map (RoomMap) as a prior, placed through the tag's frame in the world the
     /// tag was seen in; a later world ignores it. The route is planned again at once, so the arrows can point along a
     /// remembered room before the camera has seen it. Live classifications override the prior cell by cell.
+    /// Withdraw remembered geometry only from the world that received it; live classifications remain intact.
+    func clearFloorPrior(worldEpoch: Int) {
+        queue.async {
+            guard self.isRunning, worldEpoch == self.worldEpoch else { return }
+            self.grid.clearPrior(); self.lastHint = nil; self.lastPlan = -.infinity
+        }
+    }
     func seedFloorGrid(_ map: RoomMap, frame: RoomFrame, worldEpoch: Int) {
         queue.async {
             guard self.isRunning, worldEpoch==self.worldEpoch else { return }

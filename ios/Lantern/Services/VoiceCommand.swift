@@ -14,7 +14,8 @@ enum VoiceCommand: Equatable {
     case saveWorldMap, restoreWorldMap, deleteWorldMap, startMemorySimulation
     case moveMemorySimulation(Double), turnMemorySimulation(Double), setMemorySimulationTracking(Bool), exportJourneys
     case setTactileProfile(AdaptiveProfile)
-    case setMemoryUploads(Bool), setSharedRoomMemory(Bool)
+    case setMemoryUploads(Bool), setSharedRoomMemory(Bool), setContextReads(Bool)
+    case lastSeen(String)
     case leadMe(String)
     case venueInfo(String)
     case calibrate(Double)
@@ -63,6 +64,8 @@ enum VoiceCommand: Equatable {
         }
         switch name {
         case "set_direction_arrows": return .setDirectionArrows(try boolean("enabled"))
+        case "set_context_reads": return .setContextReads(try boolean("enabled"))
+        case "last_seen": return .lastSeen(try text("object", limit: 80))
         case "set_memory_uploads": return .setMemoryUploads(try boolean("enabled"))
         case "set_shared_room_memory": return .setSharedRoomMemory(try boolean("enabled"))
         case "start_directions": return try noArguments(.startDirections)
@@ -158,6 +161,8 @@ enum VoiceCommand: Equatable {
                             "required": properties.keys.sorted(), "additionalProperties": false]]
         }
         return [
+            tool("set_context_reads", "Enable or disable reading past finds and approved shared room memories. Before enabling, explain that object names and recognized room tag identifiers leave the phone for the authenticated memory service and obtain explicit consent. Separate from uploading or sharing records.", properties: ["enabled": ["type": "boolean"]]),
+            tool("last_seen", "Retrieve where an object was last confirmed for the signed-in user, with cloud read consent. A past location is never a current detection. Say only Checking until the app returns its record.", properties: ["object": ["type": "string", "maxLength": 80]]),
             tool("set_memory_uploads", "Change uploads of future finds, room anchors, room structure and journeys. Before enabling, explain that these leave the phone and obtain the user's explicit consent. Requires sign-in and selected venue. Disabling stops future uploads; it does not delete existing cloud data.", properties: ["enabled": ["type": "boolean"]]),
             tool("set_shared_room_memory", "Change sharing of future uploaded room records with other FEEL users. Explain who can use them and obtain explicit consent before enabling. Separate from upload consent. Disabling does not retract previously shared data.", properties: ["enabled": ["type": "boolean"]]),
             tool("set_direction_arrows", "Enable or disable tactile direction arrows when requested. Enabling does not start guidance or prove a safe route.", properties: ["enabled": ["type": "boolean"]]),

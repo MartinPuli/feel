@@ -37,6 +37,8 @@ public struct FloorGrid: Sendable {
     public var priorCellCount: Int { prior.count }
     /// A new world: everything goes, the prior included (it was placed in the old world's coordinates).
     public mutating func reset() { floorHits=[:]; obstacleHits=[:]; prior=[:] }
+    /// Withdraw remembered structure without discarding observations from the live camera.
+    public mutating func clearPrior() { prior = [:] }
     /// The floor level changed: live heights are stale, the remembered structure is not.
     public mutating func clearObservations() { floorHits=[:]; obstacleHits=[:] }
 

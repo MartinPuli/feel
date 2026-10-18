@@ -89,6 +89,16 @@ final class LanternModel:ObservableObject {
     let journeyLog: JourneyLog
     /// Where finds, anchors, room maps and journeys leave the phone (SupabaseWriter); nil keeps everything on the phone.
     private let uploader: MemoryUploading?
+    private let chalkQuery: ChalkQuerying?
+    @Published private(set) var lastSeenNotice: String?
+    private var lastSeenRequest = 0
+    private var contextIdentity: UUID?
+    private var contextVenue: String?
+    private var sharedPriorWorld: Int?
+    var contextReadsEnabled: Bool { chalkQuery?.isEnabled ?? false }
+    var contextReadsAvailable: Bool { chalkQuery != nil }
+    lazy var floorPriorClearer: (Int) -> Void = { [perception] world in perception.clearFloorPrior(worldEpoch: world) }
+
     var memoryUploadsEnabled: Bool { (uploader as? SupabaseWriter)?.uploadsEnabled ?? false }
     var sharedRoomMemoryEnabled: Bool { (uploader as? SupabaseWriter)?.sharesRoomMemory ?? false }
     var memoryUploadStatus: String {
@@ -169,8 +179,30 @@ final class LanternModel:ObservableObject {
     init(voice: RealtimeVoiceSession = RealtimeVoiceSession(), chalkStore: ChalkConfigurationStoring = ChalkConfigurationStore(),
          gatewayFactory: @escaping (ChalkConfiguration) -> ChatGateway = { ChalkGateway(configuration: $0) },
          localFinder: LocalWhereIsFinding? = nil, roomMemory: RoomMemory = RoomMemory(), journeyLog: JourneyLog = JourneyLog(),
-         uploader: MemoryUploading? = SupabaseWriter.forLaunch(), venueInfo: VenueInfo = VenueInfo()) {
+         uploader: MemoryUploading? = SupabaseWriter.forLaunch(), venueInfo: VenueInfo = VenueInfo(),
+         chalkQuery: ChalkQuerying? = ChalkQueryClient.forLaunch()) {
         self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory; self.roomMemory = roomMemory; self.journeyLog = journeyLog; self.uploader = uploader; self.venueInfo = venueInfo
+        self.chalkQuery = chalkQuery
+        contextIdentity = chalkQuery?.sessionIdentity; contextVenue = venueInfo.pack?.venueId
+        if roomMemory.reader == nil, let chalkQuery { roomMemory.reader = ChalkSharedMemory(client: chalkQuery) }
+        roomMemory.venue = { [venueInfo] in venueInfo.pack?.venueId }
+        roomMemory.isLive = { [weak self] in
+            guard let self, self.mode == .live, let frame = self.frame, frame.tracking,
+                  frame.epoch == self.startGeneration, !self.savedMaps.isRestoring else { return false }
+            let age = ProcessInfo.processInfo.systemUptime - frame.timestamp
+            return age >= 0 && age <= 0.5
+        }
+        roomMemory.onSharedStructure = { [weak self] sighting in
+            guard let self, self.mode == .live, let frame = self.frame, frame.tracking,
+                  frame.worldEpoch == sighting.worldEpoch, !self.savedMaps.isRestoring,
+                  let map = self.roomMemory.structureToSeed(for: sighting) else { return }
+            self.sharedPriorWorld = sighting.worldEpoch
+            self.floorGridSeeder(map, sighting.frame, sighting.worldEpoch)
+        }
+        roomMemory.onSharedInvalidated = { [weak self] in
+            guard let self, let world = self.sharedPriorWorld else { return }
+            self.sharedPriorWorld = nil; self.floorPriorClearer(world)
+        }
         if roomMemory.uploader == nil { roomMemory.uploader = uploader }
         if journeyLog.uploader == nil { journeyLog.uploader = uploader }
         (uploader as? SupabaseWriter)?.venue = { [venueInfo] in venueInfo.pack.map { VenueRef(id: $0.venueId, name: $0.venueName) } }
@@ -203,6 +235,7 @@ final class LanternModel:ObservableObject {
         }
         localVoice.onCaptureWillStart = { [weak self] in
             guard let self else { return }
+            self.cancelLastSeen()
             self.chalkCommands.cancel(reason: "Local voice command started.")
             self.resetDirections(); self.pointingSpeech.stopSpeaking(at: .immediate)
             self.voice.pauseForLocalCommand()
@@ -255,6 +288,7 @@ final class LanternModel:ObservableObject {
         perception.onHandSign={ [weak self] epoch,observation in self?.handleHandSign(observation,epoch:epoch) }
     }
     @discardableResult func performLocalCommand(_ text: String) -> [String: Any] {
+        cancelLastSeen()
         localVoice.cancel()
         chalkCommands.cancel(reason: "A local command replaced the request.")
         let response: [String: Any]
@@ -346,8 +380,10 @@ final class LanternModel:ObservableObject {
     /// A printed tag is in view: load what is remembered there and, the first time in this world, seed the route planner
     /// with the room's remembered structure, so the arrows can route to a remembered place before the camera has seen the room.
     func sawTag(_ sighting: TagSighting) {
+        syncContextScope()
         roomMemory.sawTag(sighting)
         if let map = roomMemory.structureToSeed(for: sighting) { floorGridSeeder(map, sighting.frame, sighting.worldEpoch) }
+        roomMemory.fetchSharedStructure(venueId: nil, tagId: sighting.tagId)
     }
     /// Starts a timed grid-walk trial and records it (depth, plus camera video if enabled).
     func startTrial() {
@@ -374,6 +410,7 @@ final class LanternModel:ObservableObject {
     /// Leaving grid walk ends any running trial.
     func stopGridWalk() { if trialStart != nil { endTrial("ended") } }
     func stop(stopVoice: Bool = false, preservingMapRestore: Bool = false) {
+        cancelLastSeen(); lastSeenNotice = nil; chalkQuery?.cancelAll()
         if !preservingMapRestore { savedMaps.cancel() }
         restoredMapSession=false
         chalkCommands.cancel(reason: "Stopped.")
@@ -401,6 +438,7 @@ final class LanternModel:ObservableObject {
         self.timer=timer; RunLoop.main.add(timer,forMode:.common); tick()
     }
     func performVoiceCommand(_ command: VoiceCommand) -> [String: Any] {
+        cancelLastSeen(); syncContextScope()
         if chalkCommands.isBusy { chalkCommands.cancel(reason: "A new command replaced the request.") }
         voiceNotice = nil
         if savedMaps.isRestoring {
@@ -411,6 +449,29 @@ final class LanternModel:ObservableObject {
             }
         }
         switch command {
+        case .setContextReads(let enabled):
+            guard let chalkQuery else { return ["error": "Cloud memory reading is not configured on this phone."] }
+            chalkQuery.setEnabled(enabled); syncContextScope(); objectWillChange.send()
+            return ["status": enabled ? "Cloud memory reads enabled. Signed-in history and approved shared rooms may be retrieved. No recording is sent." : "Cloud memory reads off. Shared guidance and pending history replies cleared."]
+        case .lastSeen(let object):
+            guard let chalkQuery, chalkQuery.isEnabled, let identity = chalkQuery.sessionIdentity else {
+                return ["error": "Enable cloud memory reads and sign in before checking past finds."]
+            }
+            let request = lastSeenRequest, session = startGeneration
+            ChalkMemory.lastSeen(chalkQuery, object: object) { [weak self] result in
+                guard let self, self.lastSeenRequest == request, self.startGeneration == session,
+                      self.chalkQuery?.sessionIdentity == identity, self.contextReadsEnabled,
+                      !self.localVoice.hasPendingAttempt else { return }
+                let line: String
+                switch result {
+                case .success(let value): line = value
+                case .failure: line = "The find history is unavailable right now."
+                }
+                self.lastSeenNotice = line
+                if self.voice.spokenOutputEnabled { self.say(line, sceneBound: true) }
+            }
+            return ["status": "Checking past finds.", "pending": true,
+                    "note": "This is a past confirmed location, never a current detection. Wait for the result; do not invent a place."]
         case .setMemoryUploads(let enabled):
             guard let writer = uploader as? SupabaseWriter else { return ["error": "Cloud memory unavailable."] }
             writer.setUploadsEnabled(enabled); objectWillChange.send()
@@ -879,7 +940,24 @@ final class LanternModel:ObservableObject {
         journey["points"] = follower?.points.count ?? 0
         status["journey"] = journey
         status["uploads"] = uploader?.statusReport ?? ["configured": false]
+        status["reads_enabled"] = contextReadsEnabled
+        status["last_seen"] = lastSeenNotice ?? "none"
         return status
+    }
+    private func cancelLastSeen() {
+        lastSeenRequest += 1
+        if lastSeenNotice != nil { voice.invalidateSceneSpeech() }
+        if let lastSeenNotice, unspokenLine?.line == lastSeenNotice { unspokenLine = nil }
+    }
+    /// Run before guidance and callbacks. Account/venue changes revoke previously selected shared targets as well.
+    private func syncContextScope() {
+        let identity = chalkQuery?.sessionIdentity, venue = venueInfo.pack?.venueId
+        guard identity != contextIdentity || venue != contextVenue else { return }
+        contextIdentity = identity; contextVenue = venue
+        cancelLastSeen(); lastSeenNotice = nil
+        roomMemory.invalidateSharedMemory()
+        clearHeldTarget(spokenLine: nil); resetDirections(); clearPointingRoute()
+        voice.invalidateSceneSpeech(); objectWillChange.send()
     }
     private func say(_ line: String, sceneBound: Bool = false) {
         whereIsNotice = line
@@ -1321,6 +1399,7 @@ final class LanternModel:ObservableObject {
     }
 
     private func tick() {
+        syncContextScope()
         let now=ProcessInfo.processInfo.systemUptime; sequence &+= 1
         retryUnspokenLine(now: now)
         savedMaps.checkDeadline()

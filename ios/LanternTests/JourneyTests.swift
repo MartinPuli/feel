@@ -18,7 +18,7 @@ final class JourneyTests: XCTestCase {
     /// A route from 10 m behind the camera's origin to the remembered exit at (−1, 0, −2): 13 m, so three progress points.
     private let route = [Vector3(0, 0, 10), Vector3(0, 0, -2), Vector3(-1, 0, -2)]
     /// The model stamps a journey's start with the system uptime; ticks are timed after it.
-    private let t0 = ProcessInfo.processInfo.systemUptime + 1
+    private lazy var t0 = ProcessInfo.processInfo.systemUptime + 1
 
     override func setUpWithError() throws {
         directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

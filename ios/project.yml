@@ -37,6 +37,7 @@ targets:
         CFBundleVersion: '$(CURRENT_PROJECT_VERSION)'
         CFBundleShortVersionString: '$(MARKETING_VERSION)'
         CFBundleDisplayName: FEEL
+        FEEL_CONTEXT_URL: '$(FEEL_CONTEXT_URL)'
         SUPABASE_URL: '$(SUPABASE_URL)'
         SUPABASE_PUBLISHABLE_KEY: '$(SUPABASE_PUBLISHABLE_KEY)'
         FEEL_VOICE_ENDPOINT: '$(FEEL_VOICE_ENDPOINT)'

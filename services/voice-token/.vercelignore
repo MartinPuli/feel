@@ -4,6 +4,7 @@
 !api/**
 !public
 !public/.gitkeep
+!context-handler.mjs
 !server.mjs
 !vercel-handler.mjs
 !package.json
