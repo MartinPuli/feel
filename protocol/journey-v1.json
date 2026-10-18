@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "about": "Shared test vector for the journey loop: chalk/feel_chalk/journeys.py and path.py and the phone must turn the same journeys into the same scores, the same world map, the same progress points and, when planning with the same rules, the same path. Positions are in the printed tag's levelled frame (x right along the tag, y out of the tag into the room, metres); heading_deg is the direction of travel clockwise from +y; t is seconds after started_at; obstacles are the centres of blocked cells seen on that trip; cue_latency_ms is how long each cue took. The three journeys are the rows of chalk/sql/seed.sql. Nothing here claims a path is clear or safe: a path is a suggested direction over remembered cells.",
+  "venue_id": "harvard-yard",
+  "tag_id": "feel-tag-01",
+  "now": "2026-10-18T00:00:00Z",
+  "journeys": [
+    {"venue_id": "harvard-yard", "tag_id": "feel-tag-01", "user_id": "00000000-0000-0000-0000-000000000001", "session_id": "seed-session-01",
+     "started_at": "2026-10-15T18:00:00Z", "target_label": "exit",
+     "steps": [{"t": 0, "x": -1.0, "y": 1.1, "heading_deg": 0}, {"t": 2, "x": -1.0, "y": 2.1, "heading_deg": 0}, {"t": 4, "x": -1.0, "y": 3.1, "heading_deg": 0},
+               {"t": 6, "x": -1.0, "y": 4.1, "heading_deg": 0}, {"t": 8, "x": -1.0, "y": 5.1, "heading_deg": 270}, {"t": 10, "x": -2.0, "y": 5.1, "heading_deg": 270},
+               {"t": 12, "x": -3.0, "y": 5.1, "heading_deg": 270}, {"t": 14, "x": -4.0, "y": 5.1, "heading_deg": 270}],
+     "obstacles": [{"x": -2.05, "y": 4.05}],
+     "cue_latency_ms": [120, 95, 140, 110, 400],
+     "arrived_at": "2026-10-15T18:00:14Z", "arrival_distance_m": 0.0,
+     "about": "Arrived by an L: 4 m up, then 3 m left, a 3-4-5 triangle, so efficiency is 5/7. The obstacle is 1.05 m from the nearest steps. Latencies sorted: 95 110 120 140 400; the nearest-rank 95th percentile of five is the fifth.",
+     "scores": {"arrived": true, "min_clearance_m": 1.051, "collisions": 0, "path_efficiency": 0.7143, "cue_latency_p95_ms": 400}},
+    {"venue_id": "harvard-yard", "tag_id": "feel-tag-01", "user_id": "00000000-0000-0000-0000-000000000001", "session_id": "seed-session-02",
+     "started_at": "2026-10-16T18:00:00Z", "target_label": "exit",
+     "steps": [{"t": 0, "x": -1.0, "y": 1.1, "heading_deg": 323.1}, {"t": 2, "x": -1.6, "y": 1.9, "heading_deg": 323.1}, {"t": 4, "x": -2.2, "y": 2.7, "heading_deg": 323.1},
+               {"t": 6, "x": -2.8, "y": 3.5, "heading_deg": 323.1}, {"t": 8, "x": -3.4, "y": 4.3, "heading_deg": 323.1}, {"t": 10, "x": -4.0, "y": 5.1, "heading_deg": 323.1}],
+     "obstacles": [{"x": -2.25, "y": 2.85}],
+     "cue_latency_ms": [90, 100, 110, 130],
+     "arrived_at": "2026-10-16T18:00:10Z", "arrival_distance_m": 0.0,
+     "about": "Arrived in a straight line of five 1 m steps, so efficiency is 1. The obstacle is 0.158 m from the third step: under 0.3 m, one collision. The 95th percentile of four latencies is the fourth.",
+     "scores": {"arrived": true, "min_clearance_m": 0.158, "collisions": 1, "path_efficiency": 1.0, "cue_latency_p95_ms": 130}},
+    {"venue_id": "harvard-yard", "tag_id": "feel-tag-01", "user_id": "00000000-0000-0000-0000-000000000001", "session_id": "seed-session-03",
+     "started_at": "2026-10-17T18:00:00Z", "target_label": "exit",
+     "steps": [{"t": 0, "x": -1.0, "y": 1.1, "heading_deg": 0}, {"t": 2, "x": -1.0, "y": 2.1, "heading_deg": 0}, {"t": 4, "x": -1.0, "y": 3.1, "heading_deg": 0}],
+     "obstacles": [{"x": -1.05, "y": 3.55}],
+     "cue_latency_ms": [150, 160],
+     "arrived_at": null, "arrival_distance_m": 3.606,
+     "about": "Stopped after 2 m, 3.606 m short of the exit (a 3-2 right triangle). Not arrived, so efficiency is 0 whatever was walked. The obstacle is 0.453 m from the last step: no collision.",
+     "scores": {"arrived": false, "min_clearance_m": 0.453, "collisions": 0, "path_efficiency": 0.0, "cue_latency_p95_ms": 160}}
+  ],
+  "ranking": ["seed-session-01", "seed-session-03", "seed-session-02"],
+  "ranking_about": "Collisions ascending first (the second journey's brush past the obstacle puts it last), then efficiency descending (5/7 before 0), then latency ascending.",
+  "stale_journey": {
+    "venue_id": "harvard-yard", "tag_id": "feel-tag-01", "user_id": "00000000-0000-0000-0000-000000000001", "session_id": "seed-session-00",
+    "started_at": "2026-08-01T18:00:00Z", "target_label": "exit",
+    "steps": [{"t": 0, "x": -1.0, "y": 1.1, "heading_deg": 323.1}, {"t": 2, "x": -1.6, "y": 1.9, "heading_deg": 323.1}],
+    "obstacles": [{"x": -1.55, "y": 1.85}],
+    "cue_latency_ms": [100],
+    "arrived_at": null, "arrival_distance_m": 4.5,
+    "about": "78 days before now: outside the 60-day window, so it is not in the world map below and its obstacle does not block the path."
+  },
+  "world_map": {
+    "about": "The room's merged structure (protocol/room-map-v1.json, 10 cm cells) plus the three journeys within 60 days of now: the 15 cells their steps stood in are free, the 3 cells their obstacles were seen in are blocked; the stale journey is left out. Cells are run-length encoded over the row-major array like a room map. A point belongs to the cell floor(round(coordinate / cell_size, 6)), so an obstacle centre at -2.05 is in cell -21.",
+    "structure": {"cell_size": 0.1, "origin_x": -0.2, "origin_y": 0.0, "width": 8, "height": 6, "cells": "28f2b10f2u6b"},
+    "cell_size": 0.1, "origin_x": -4.0, "origin_y": 0.0, "width": 46, "height": 52,
+    "cells": "38u8f38u8f38u8f38u4f2b2f38u8f40u6b260u1f361u1f97u1f263u1f44u1b150u1f165u1f16u1b219u1b56u1f67u1f361u1f9u1f9u1f9u1f15u",
+    "observed": 61, "blocked": 11, "journeys": 3
+  },
+  "plan": {
+    "about": "The world map coarsened to 0.5 m planning cells, rows in +y order from the origin (-4.0, 0.0), columns in +x: u unknown, f free, b blocked. A coarse cell is blocked when any 10 cm cell whose centre falls in it is blocked, free when any is free and none blocked. The three blocked journey cells are the obstacles; the two at the right end of the first rows are the structure's chair and far wall.",
+    "cell_size": 0.5, "origin_x": -4.0, "origin_y": 0.0,
+    "rows": ["uuuuuuufbf", "uuuuuuuubb", "uuuuuufuuu", "uuuufuuuuu", "uuuuuufuuu", "uuubuuuuuu", "uuuuuufuuu", "uufuubuuuu", "ufubuufuuu", "uuuuuuuuuu", "fufufufuuu"]
+  },
+  "path": {
+    "about": "A* from the current pose 0.3 m left of and in front of the tag to the remembered exit (the median of the seed anchors, -4.0, 5.1). A move costs its length times 1 for a free cell, 2 for an unknown one, plus 1 when the cell touches a blocked cell; blocked cells are never entered except the goal; diagonals may not cut a blocked corner; ties open the lower heuristic first. The cheapest way heads for the free cells earlier walks left, keeps a cell of clearance from the three obstacles by going up the column x -3.5..-3.0, and turns toward the exit at the end. The polyline is the start, the centre of each coarse cell where the path turns, and the target.",
+    "from": [-0.3, 0.3], "label": "exit", "target": [-4.0, 5.1],
+    "cells": [[-1, 0], [-2, 1], [-3, 2], [-4, 3], [-5, 3], [-6, 3], [-7, 4], [-7, 5], [-7, 6], [-7, 7], [-7, 8], [-7, 9], [-8, 10]],
+    "polyline": [[-0.3, 0.3], [-1.75, 1.75], [-2.75, 1.75], [-3.25, 2.25], [-3.25, 4.75], [-4.0, 5.1]],
+    "length_m": 7.085,
+    "progress_spacing_m": 6.0,
+    "progress_points": [[-3.25, 4.492], [-4.0, 5.1]],
+    "progress_about": "6 m along the polyline (2.051 + 1 + 0.707 = 3.758 m to the third corner, then 2.242 m up the column) and the target itself, always last."
+  }
+}
