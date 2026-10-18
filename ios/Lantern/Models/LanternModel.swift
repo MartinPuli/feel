@@ -262,8 +262,8 @@ final class LanternModel:ObservableObject {
             guard let configuration = chalkConfiguration else {
                 return ["error": "The camera description needs the Chalk gateway setup, which is missing on this phone."]
             }
-            describeNotice = nil; startDescribeAhead(configuration)
-            return ["status": "Taking one photo now; the description is spoken within a few seconds. Say only Looking.", "pending": true]
+            describeRetry?.cancel(); describeRetry = nil; describeNotice = nil; startDescribeAhead(configuration)
+            return ["status": "Taking a new photo now; the description is spoken within a few seconds. Say only Looking.", "pending": true]
         case .venueInfo(let question): return venueInfo.answer(question)
         case .find(let target):
             cancelWhereIs()
@@ -652,7 +652,6 @@ final class LanternModel:ObservableObject {
                 "spoken_replies": voice.spokenOutputEnabled, "useful_updates": voice.proactiveEnabled,
                 "notice": "Neutral pins do not mean a clear path. No safe-route claim is available.",
                 "open_side": openSide?.spoken ?? "Nothing within 1.6 meters ahead, or unknown.",
-                "description": describeNotice ?? "none yet",
                 "room_memory": roomMemoryStatus, "room_structure": roomMemory.structureStatus]
     }
 
