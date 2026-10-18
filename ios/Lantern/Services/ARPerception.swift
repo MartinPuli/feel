@@ -95,6 +95,15 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private var lastPointing: TimeInterval = -.infinity
     private lazy var detector=ObjectDetector()
     private var floorY: Double?
+    /// Camera height above the floor, latched by manual or automatic calibration. The phone is worn at a
+    /// fixed height, so the floor is recomputed from it every frame: stairs, ramps and ARKit height drift
+    /// keep the 0.6–2.1 m sector window on real obstacles instead of on a floor level left behind.
+    private var cameraHeight: Double?
+    /// Floor level the map was built at; a new level (stairs) starts the map again.
+    private var gridFloorY: Double?
+    /// A detected target that turns out of the camera's view keeps its route this long, so the path
+    /// wave and arrows can say "keep turning". One still in view but no longer detected is dropped at once.
+    static let retainSeconds = 8.0
     private var automaticFloor=AutomaticFloorCalibration()
     private var isRunning=false
     private var isInterrupted=false
@@ -132,7 +141,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private func runSession(epoch: Int,restoredMap:ARWorldMap?=nil,mapID:String?=nil) {
         loadedMapID=mapID
         isInterrupted=false; sessionEpoch=epoch; worldEpoch += 1; earliestFrame=ProcessInfo.processInfo.systemUptime
-        floorY=nil; automaticFloor.reset(); lastTarget=nil; generation += 1; lastProcessed = -.infinity
+        floorY=nil; cameraHeight=nil; gridFloorY=nil; automaticFloor.reset(); lastTarget=nil; generation += 1; lastProcessed = -.infinity
         publishRoomMap(); grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil
         let config=ARWorldTrackingConfiguration(); config.frameSemantics=[.sceneDepth]
         config.initialWorldMap=restoredMap
@@ -145,7 +154,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
         publishStatus(ARPlaneAnchor.isClassificationSupported ? "Looking for floor — move slowly with the floor in view" : "Automatic floor detection unavailable — calibrate measured camera height")
     }
     func stop() {
-        queue.async { self.publishSavedWorldEnded(); self.loadedMapID=nil; self.isRunning=false; self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.automaticFloor.reset(); self.publishRoomMap(); self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.publishStatus("Stopped") }
+        queue.async { self.publishSavedWorldEnded(); self.loadedMapID=nil; self.isRunning=false; self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.cameraHeight=nil; self.gridFloorY=nil; self.automaticFloor.reset(); self.publishRoomMap(); self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.publishStatus("Stopped") }
     }
     /// Captures map bytes and a unique origin marker for this exact active world. No camera photo is stored.
     func captureWorldMap(worldEpoch expectedWorld:Int,completion:@escaping (Result<CapturedWorldMap,Error>)->Void) {
@@ -209,6 +218,12 @@ final class ARPerception: NSObject, ARSessionDelegate {
         }
     }
     private static func flatDistance(_ a: Vector3,_ b: Vector3) -> Double { hypot(a.x-b.x,a.z-b.z) }
+    /// Whether a world point lies inside the camera's horizontal field (3° inside the edge), so the detector could see it.
+    private static func inView(_ position: Vector3,pose: CameraPose,intrinsics k: CameraIntrinsics) -> Bool {
+        let p=pose.cameraPoint(world:position)
+        guard let bearing=TactileGeometry.bearing(x:p.x,z:p.z), k.fx>0 else { return false }
+        return abs(bearing)<=atan(k.cx/k.fx)*180 / .pi-3
+    }
     private static func nearest(_ targets: [CapturedTarget],to point: Vector3) -> CapturedTarget? {
         targets.filter { flatDistance($0.position,point)<=1.5 }.min { flatDistance($0.position,point)<flatDistance($1.position,point) }
     }
@@ -218,7 +233,8 @@ final class ARPerception: NSObject, ARSessionDelegate {
             let pose=Self.pose(frame.camera.transform)
             guard Self.mountValid(pose) else { self.publishStatus("Hold camera landscape-left, upright and facing forward"); return }
             // Heights in the floor map depend on the floor level, so the live map starts again; a remembered prior stays.
-            self.floorY=pose.position.y-cameraHeight; self.automaticFloor.reset(); self.grid.clearObservations(); self.lastHint=nil; self.publishStatus("Floor calibrated from measured camera height")
+            self.floorY=pose.position.y-cameraHeight; self.cameraHeight=cameraHeight; self.gridFloorY=self.floorY
+            self.automaticFloor.reset(); self.grid.clearObservations(); self.lastHint=nil; self.publishStatus("Floor calibrated from measured camera height; it follows the phone at that height")
         }
     }
     /// One frame for Where-is: photo, depth and pose captured together, or nil when the
@@ -300,6 +316,8 @@ final class ARPerception: NSObject, ARSessionDelegate {
             DispatchQueue.main.async { self.onSavedMapObservation?(observation) }
         }
         let depthMap=frame.sceneDepth.flatMap { DepthFrame($0,camera:frame.camera) }
+        // Once the floor is known it stays the calibrated distance below the worn camera.
+        if let cameraHeight { floorY=pose.position.y-cameraHeight }
         // Stability is sampled across fresh frames containing the same classified anchor,
         // not independent classification events. A manual calibration or accepted automatic floor
         // remains latched until the AR session resets; automatic updates never overwrite it.
@@ -314,8 +332,8 @@ final class ARPerception: NSObject, ARSessionDelegate {
             if let accepted=automaticFloor.observe(planes:planes,timestamp:frame.timestamp,
                 now:ProcessInfo.processInfo.systemUptime,cameraY:pose.position.y,
                 trackingNormal:normal && depthMap != nil,mountValid:Self.mountValid(pose)) {
-                floorY=accepted; grid.clearObservations(); lastHint=nil
-                publishStatus("Floor calibrated automatically")
+                floorY=accepted; cameraHeight=pose.position.y-accepted; gridFloorY=accepted; grid.clearObservations(); lastHint=nil
+                publishStatus("Floor calibrated automatically; it follows the phone at this height")
             }
         }
         guard normal,Self.mountValid(pose),let map=depthMap else {
@@ -331,7 +349,12 @@ final class ARPerception: NSObject, ARSessionDelegate {
         let processed=DepthFrameProcessor.process(map,pose:pose,floorY:floorY)
         let distances=processed.distances
         let target=lastTarget?.observation(pose:pose,now:frame.timestamp)
-        if let floorY { grid.integrate(points:processed.mapPoints,floorY:floorY,camera:pose.position) }
+        if let floorY {
+            // Cell heights are relative to the floor, so a new level (stairs) starts the map again.
+            if let level=gridFloorY, abs(floorY-level)>0.4 { grid.reset(); lastHint=nil; gridFloorY=floorY }
+            if gridFloorY == nil { gridFloorY=floorY }
+            grid.integrate(points:processed.mapPoints,floorY:floorY,camera:pose.position)
+        }
         // A pointing goal is a fixed world point, so it needs no target in view. Otherwise route only
         // to a target that is in view right now. Either way, a few times a second.
         var blockedNow: [Vector3]?
@@ -343,11 +366,14 @@ final class ARPerception: NSObject, ARSessionDelegate {
                 blockedNow=grid.observedCells.compactMap { $0.value == .blocked ? grid.center($0.key) : nil }
             }
         }
-        else if target == nil { lastHint=nil }
-        else if let goal=lastTarget, floorY != nil, frame.timestamp-lastPlan>=0.4 {
-            lastPlan=frame.timestamp
-            lastHint=RouteHint.make(path:grid.route(from:pose.position,to:goal.position),pose:pose,target:goal.position,timestamp:frame.timestamp,label:goal.label)
+        else if let goal=lastTarget, frame.timestamp-goal.timestamp<=Self.retainSeconds {
+            // Also while the target has turned out of view (retained above): the route then says which way to turn.
+            if floorY != nil, frame.timestamp-lastPlan>=0.4 {
+                lastPlan=frame.timestamp
+                lastHint=RouteHint.make(path:grid.route(from:pose.position,to:goal.position),pose:pose,target:goal.position,timestamp:frame.timestamp,label:goal.label)
+            }
         }
+        else { lastHint=nil }
         var published=PerceptionFrame(epoch:sessionEpoch,finderEpoch:finderEpoch,worldEpoch:worldEpoch,timestamp:frame.timestamp,tracking:true,distances:distances,target:target,pose:pose,floorY:floorY)
         published.routeHint=lastHint; published.routePath=lastPath; published.blockedCells=blockedNow; published.cellSize=grid.cellSize
         published.candidates=candidates.compactMap { c in c.observation(pose:pose,now:frame.timestamp).map { VisibleCandidate(position:c.position,observation:$0) } }
@@ -379,11 +405,17 @@ final class ARPerception: NSObject, ARSessionDelegate {
                 for t in targets.filter({ $0.observation(pose:pose,now:now) != nil }).sorted(by: { $0.confidence > $1.confidence })
                 where !distinct.contains(where: { Self.flatDistance($0.position,t.position)<1.0 }) { distinct.append(t) }
                 self.candidates=distinct
+                let fresh: CapturedTarget?
                 if let lock=self.lockPosition {
                     // Never jump to a different one: losing the chosen target means no target.
-                    self.lastTarget=Self.nearest(distinct,to:lock)
-                    if let kept=self.lastTarget { self.lockPosition=kept.position }
-                } else { self.lastTarget=distinct.first }
+                    fresh=Self.nearest(distinct,to:lock)
+                    if let fresh { self.lockPosition=fresh.position }
+                } else { fresh=distinct.first }
+                if let fresh { self.lastTarget=fresh }
+                // Not detected this pass: a target that has turned out of the camera's view is kept for a
+                // while; one the camera can still see was really lost.
+                else if let kept=self.lastTarget, !Self.inView(kept.position,pose:pose,intrinsics:k), now-kept.timestamp<=Self.retainSeconds {}
+                else { self.lastTarget=nil }
                 if let failure { self.publishStatus(failure) }
             }
         }

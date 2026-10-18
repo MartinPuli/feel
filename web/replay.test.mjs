@@ -25,7 +25,7 @@ test('six physical columns ignore reserved slot zero and retain exact label expe
   const { run, element } = replay();
   run(`session = {start:0,expect:[{from:0,to:1,columns:'all',band:2}]};
     drawPins({t:0,fw:[4,2,1,0,2,2,2],dist:[null,1,2,null,1,1,1],hl:255,tap:false,state:'live'});`);
-  assert.equal((element('pins').innerHTML.match(/class="pin /g) || []).length, 24);
+  assert.equal((element('pinsNow').innerHTML.match(/class="pin /g) || []).length, 24);
   assert.match(element('pins')['aria-label'], /column 1, L3: band 2/);
   assert.doesNotMatch(element('pins')['aria-label'], /column 0/);
   assert.match(element('pinChecks').innerHTML, /L2 · slot 2/);

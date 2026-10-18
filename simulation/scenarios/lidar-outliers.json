@@ -1,14 +1,33 @@
 {
   "title": "Stress: LiDAR outliers in an empty room",
-  "description": "Nothing within 4 m between 0.6 and 2.1 m. 1 % depth noise plus 0.02 % of pixels replaced by random medium-confidence ranges (a synthetic artifact model, not measured iPhone behaviour). Any phantom pin here comes from a single stray sample.",
-  "knownIssue": "Each column takes the single nearest sample with no outlier rejection, so one stray medium-confidence pixel raises a pin for a frame.",
+  "description": "Nothing within 4 m between 0.6 and 2.1 m. 1 % depth noise plus 0.02 % of pixels replaced by random medium-confidence ranges (a synthetic artifact model, not measured iPhone behaviour). Any phantom pin here comes from a single stray sample. Each sector reports its third-nearest confident point and the sector filter steadies bands between frames, so stray pixels raise nothing.",
   "scene": {
     "duration": 6,
-    "path": [{"t": 0, "x": 0, "z": 0}],
-    "sensor": {"noise": 0.01, "outlierRate": 0.0002, "outlierConfidence": 1, "seed": 13}
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0
+      }
+    ],
+    "sensor": {
+      "noise": 0.01,
+      "outlierRate": 0.0002,
+      "outlierConfidence": 1,
+      "seed": 13
+    }
   },
   "expect": [
-    {"from": 0.3, "to": 6.0, "columns": "all", "band": 0, "label": "nothing there"}
+    {
+      "from": 0.3,
+      "to": 6.0,
+      "columns": "all",
+      "band": 0,
+      "label": "nothing there"
+    }
   ],
-  "pass": {"minAccuracy": 0.99, "maxFlicker": 0.1}
+  "pass": {
+    "minAccuracy": 0.99,
+    "maxFlicker": 0.1
+  }
 }

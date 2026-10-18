@@ -31,6 +31,7 @@ REPO = HERE.parent.parent
 
 DELIVERABLES = {  # file stem: (qty, size mm)
     'chassis': (1, (100.5, 92.5, 26.7)),
+    'chassis_loose': (1, (100.5, 92.5, 26.7)),
     'guide': (1, (84.1, 56.5, 6.0)),
     'face': (1, (88.5, 92.5, 7.9)),
     'shaft': (7, (11.0, 10.9, 58.2)),
@@ -58,8 +59,8 @@ DERIVED_TOL = {'crown_R': 0.05}
 SWEEP_ANGLES = [-5, 0, 29, 58, 87, 116, 145, 174, 180]
 # shaft4 lobes and gaps, plus the tap reach either side of the end lobes.
 SWEEP_ANGLES_120 = [-13, -5, 0, 20, 40, 60, 80, 100, 120, 125, 133]
-SHAFT_PAIRS = ['x_shaft_chassis', 'x_shaft_servo', 'x_shaft_guide', 'x_shaft_shaft']
-STATIC_PAIRS = ['x_servo_chassis', 'x_servo_guide', 'x_servo_servo']
+SHAFT_PAIRS = ['x_shaft_chassis', 'x_shaft_chassis_loose', 'x_shaft_servo', 'x_shaft_guide', 'x_shaft_shaft']
+STATIC_PAIRS = ['x_servo_chassis', 'x_servo_chassis_loose', 'x_servo_guide', 'x_servo_servo']
 HORN_OFFSETS = [0, 1, 2, 3, 3.4]
 # Coincident faces (allowed at full insertion) export as a zero-thickness shell.
 TOUCH_MM3 = 1e-6
