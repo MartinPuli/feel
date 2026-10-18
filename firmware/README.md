@@ -1,3 +1,5 @@
+> October 18 adjustment: experimental live output slot2 / GPIO25 uses +307us total trim (previously +159us), moving every band and neutral gap by +148us, with the unchanged2648us cap. Band1 is nominal29 degrees, not a measured physical angle. Band4 remains capped. Other columns are unchanged.
+
 > Current six-column hardware: use `esp32-six-live`. The leftmost old column is
 > removed: GPIO32 is never configured or driven by the main firmware. The nine-byte
 > protocol retains slot0 as reserved; slots1..6 drive GPIO33,25,26,27,14,13.
