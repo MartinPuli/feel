@@ -95,3 +95,16 @@ The new regression failed before the correction (43/44 controller tests).
 Phone-timed taps and the path wave remain available; a lost restoring packet can
 extend a neutral interval. No firmware was flashed. See the latest release entry
 for commands, results and physical-validation limits.
+
+## Latest main sync and ESP32 handoff
+
+Main `27a5abc`, Ethan's pin diagnostic (`c0c0c8e`) and the user GPIO25 adjustment
+(`70854ab`) are consolidated. The diagnostic's false-pass and cleanup defects were
+corrected with 21 tests. All 301 native tests and 41 server tests pass; all 35 replay
+scenarios repeat deterministically with 30 PASS / 5 KNOWN / 0 FAIL.
+
+Optional account-bound voice and durable admission support are source-complete and
+disabled by default. Current demo voice and Chalk gateway use do not require a new
+Supabase login. Existing FEEL connection settings are in ignored local configuration;
+cloud consent remains off. No live database policies were changed. See the current
+[production report](PRODUCTION-READINESS.md) and [ESP32 programming handoff](ESP32-PROGRAMMING.md).

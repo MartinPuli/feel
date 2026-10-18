@@ -2,7 +2,7 @@
 
 **Not ready for unrestricted production.** Latest source, cloud checks and remaining device/configuration gates are recorded in [PRODUCTION-READINESS.md](PRODUCTION-READINESS.md). That report supersedes the historical counts and branch/deployment statements below.
 
-The unsafe 150 ms restoration of old pin bands after a neutral packet has been removed. Only a fresh valid command can raise them again. Angles and wiring are unchanged; this firmware has not been flashed. Shared context reads now have a verified-user server boundary, but remain disabled until FEEL's database identity is configured.
+The unsafe 150 ms restoration of old pin bands after a neutral packet has been removed. Only a fresh valid command can raise them again. The latest user-selected GPIO25 calibration is now merged; wiring is unchanged and this firmware has not been flashed. Shared context reads now have a verified-user server boundary, but remain opt-in and inactive until their server deployment is verified. Chalk and existing voice remain usable without that optional connection. See [ESP32 programming](ESP32-PROGRAMMING.md).
 
 ## October 18 — Ethan dot tracking synchronized into main
 
