@@ -1,0 +1,208 @@
+{
+  "title": "Person crossing close ahead",
+  "scene": {
+    "duration": 8,
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0
+      }
+    ],
+    "objects": [
+      {
+        "kind": "cylinder",
+        "center": [
+          -1.1,
+          -0.75
+        ],
+        "radius": 0.2,
+        "height": 1.75,
+        "velocity": [
+          0.3,
+          0
+        ],
+        "label": "person"
+      }
+    ],
+    "sensor": {
+      "noise": 0,
+      "seed": 29
+    }
+  },
+  "expect": [
+    {
+      "from": 0.3,
+      "to": 0.85,
+      "columns": [
+        1
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 0.3,
+      "to": 1.05,
+      "columns": [
+        2
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 0.3,
+      "to": 1.95,
+      "columns": [
+        3
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 0.3,
+      "to": 2.65,
+      "columns": [
+        4
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 0.3,
+      "to": 3.25,
+      "columns": [
+        5
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 0.3,
+      "to": 3.95,
+      "columns": [
+        6
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 1.85,
+      "to": 2.55,
+      "columns": [
+        1
+      ],
+      "band": 1,
+      "label": "person (band 1)"
+    },
+    {
+      "from": 1.95,
+      "to": 3.25,
+      "columns": [
+        2
+      ],
+      "band": 1,
+      "label": "person (band 1)"
+    },
+    {
+      "from": 2.75,
+      "to": 3.95,
+      "columns": [
+        3
+      ],
+      "band": 1,
+      "label": "person (band 1)"
+    },
+    {
+      "from": 3.35,
+      "to": 8,
+      "columns": [
+        1
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 3.45,
+      "to": 4.55,
+      "columns": [
+        4
+      ],
+      "band": 1,
+      "label": "person (band 1)"
+    },
+    {
+      "from": 4.05,
+      "to": 5.35,
+      "columns": [
+        5
+      ],
+      "band": 1,
+      "label": "person (band 1)"
+    },
+    {
+      "from": 4.05,
+      "to": 8,
+      "columns": [
+        2
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 4.75,
+      "to": 5.55,
+      "columns": [
+        6
+      ],
+      "band": 1,
+      "label": "person (band 1)"
+    },
+    {
+      "from": 4.75,
+      "to": 8,
+      "columns": [
+        3
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 5.45,
+      "to": 8,
+      "columns": [
+        4
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 6.25,
+      "to": 8,
+      "columns": [
+        5
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 6.55,
+      "to": 8,
+      "columns": [
+        6
+      ],
+      "band": 0,
+      "label": "clear"
+    }
+  ],
+  "labelProvenance": {
+    "sourceBranch": "movement-simulation-tests",
+    "sourceRevision": "3c041c0",
+    "generator": "simulation/geometry_labels.py",
+    "physicalColumns": 6,
+    "samplingStepMeters": 0.03,
+    "rangeTolerance": 0.04,
+    "edgeExclusionDegrees": 0.7,
+    "transitionTrimSeconds": 0.35,
+    "outputIndependent": true
+  }
+}

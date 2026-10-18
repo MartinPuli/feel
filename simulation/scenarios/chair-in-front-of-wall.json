@@ -1,0 +1,82 @@
+{
+  "title": "Near chair takes priority over far wall",
+  "scene": {
+    "duration": 4,
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0
+      }
+    ],
+    "objects": [
+      {
+        "kind": "box",
+        "min": [
+          -10,
+          0.6,
+          -3.3
+        ],
+        "max": [
+          10,
+          2.1,
+          -2.9
+        ],
+        "label": "far wall"
+      },
+      {
+        "kind": "box",
+        "min": [
+          -0.35,
+          0.6,
+          -1.6
+        ],
+        "max": [
+          0.35,
+          1.4,
+          -1.2
+        ],
+        "label": "near chair"
+      }
+    ],
+    "sensor": {
+      "noise": 0,
+      "seed": 43
+    }
+  },
+  "expect": [
+    {
+      "from": 0.3,
+      "to": 4,
+      "columns": [
+        1,
+        6
+      ],
+      "band": 4,
+      "label": "far wall (band 4)"
+    },
+    {
+      "from": 0.3,
+      "to": 4,
+      "columns": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "band": 2,
+      "label": "near chair (band 2)"
+    }
+  ],
+  "labelProvenance": {
+    "sourceBranch": "movement-simulation-tests",
+    "sourceRevision": "3c041c0",
+    "generator": "simulation/geometry_labels.py",
+    "physicalColumns": 6,
+    "samplingStepMeters": 0.03,
+    "rangeTolerance": 0.04,
+    "edgeExclusionDegrees": 0.7,
+    "transitionTrimSeconds": 0.35,
+    "outputIndependent": true
+  }
+}

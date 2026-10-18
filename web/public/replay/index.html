@@ -251,6 +251,7 @@ function validReport(report) {
 const STATE_TEXT = { live: null, trackingLost: 'TRACKING LOST · pins neutral', staleDepth: 'NO FRESH DEPTH · pins neutral', uncalibrated: 'FLOOR NOT CALIBRATED · pins neutral', invalidFrame: 'INVALID FRAME · pins neutral' };
 
 let index = [], session = null, depthFrames = new Map(), t = 0, playing = false, speed = 1, lastFrameTime = 0, tickIndex = 0;
+let sessionRequest = 0, compareRequest = 0;
 let snapshots = [], compare = null;   // compare: { label, snap, aligned[], diffs[], diffSet }
 const video = $('video');
 
@@ -338,9 +339,14 @@ async function loadUnitTests() {
 }
 
 async function open(name) {
+  const request = ++sessionRequest;
+  ++compareRequest; // Invalidate snapshot loads for the previous session immediately.
+  compare = null;
   stopExport(false); pause();
   const url = new URL(location.href); url.searchParams.set('session', name); history.replaceState(null, '', url);
-  session = await (await fetch(`data/sessions/${encodeURIComponent(name)}/session.json`, { cache: 'no-cache' })).json();
+  const loaded = await (await fetch(`data/sessions/${encodeURIComponent(name)}/session.json`, { cache: 'no-cache' })).json();
+  if (request !== sessionRequest) return;
+  session = loaded;
   depthFrames = new Map(Object.entries(session.depth?.frames ?? {}));
   const decoded = new Map();
   session._depth = key => {
@@ -363,6 +369,7 @@ async function open(name) {
     `<option value="${esc(s.label)}">${esc(s.label)}${s.commit ? ' · ' + esc(s.commit) : ''}${s.generated ? ' · ' + esc(s.generated.slice(5, 16)) : ''}</option>`).join('');
   const wantedCompare = new URLSearchParams(location.search).get('compare') || $('compare').dataset.last || '';
   await setCompare(available.some(s => s.label === wantedCompare) ? wantedCompare : '');
+  if (request !== sessionRequest) return;
   seek(session.ticks[0]?.t ?? 0);
   resize();
 }
@@ -370,10 +377,13 @@ async function open(name) {
 // Compare mode: a snapshot of an earlier run of the same recording (simulation/run.py --snapshot LABEL, or
 // "previous" for the run before this one), aligned to the current ticks by time.
 async function setCompare(label) {
+  const request = ++compareRequest, owner = session, ownerRequest = sessionRequest;
+  const current = () => request === compareRequest && ownerRequest === sessionRequest && owner === session;
   compare = null;
   if (label) {
     try {
-      const snap = await (await fetch(`data/snapshots/${encodeURIComponent(label)}/${encodeURIComponent(session.name)}.json`, { cache: 'no-cache' })).json();
+      const snap = await (await fetch(`data/snapshots/${encodeURIComponent(label)}/${encodeURIComponent(owner.name)}.json`, { cache: 'no-cache' })).json();
+      if (!current()) return;
       const byTime = new Map(snap.ticks.map(k => [k.t.toFixed(3), k]));
       const nearest = time => {   // snapshot tick within 60 ms, when tick phases differ
         let lo = 0, hi = snap.ticks.length - 1;
@@ -385,8 +395,9 @@ async function setCompare(label) {
       const differs = (a, b) => !b || a.fw.some((v, c) => v !== b.fw[c]) || a.hl !== b.hl || !!a.tap !== !!b.tap;
       const diffs = []; aligned.forEach((b, i) => { if (differs(session.ticks[i], b)) diffs.push(i); });
       compare = { label, snap, aligned, diffs, diffSet: new Set(diffs) };
-    } catch { compare = null; }
+    } catch { if (!current()) return; compare = null; }
   }
+  if (!current()) return;
   $('compare').value = compare ? compare.label : ''; $('compare').dataset.last = compare ? compare.label : '';
   const url = new URL(location.href); if (compare) url.searchParams.set('compare', compare.label); else url.searchParams.delete('compare'); history.replaceState(null, '', url);
   $('diffNav').hidden = $('diffLegend').hidden = $('pinsThen').hidden = !compare; $('pins').classList.toggle('two', !!compare);

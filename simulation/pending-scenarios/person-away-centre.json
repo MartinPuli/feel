@@ -1,0 +1,106 @@
+{
+  "title": "Person moving away in the centre",
+  "scene": {
+    "duration": 6,
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0
+      }
+    ],
+    "objects": [
+      {
+        "kind": "cylinder",
+        "center": [
+          0,
+          -0.55
+        ],
+        "radius": 0.22,
+        "height": 1.75,
+        "velocity": [
+          0,
+          -0.45
+        ],
+        "label": "person"
+      }
+    ],
+    "sensor": {
+      "noise": 0,
+      "seed": 23
+    }
+  },
+  "expect": [
+    {
+      "from": 0.3,
+      "to": 0.75,
+      "columns": [
+        3,
+        4
+      ],
+      "band": 1,
+      "label": "person (band 1)"
+    },
+    {
+      "from": 0.3,
+      "to": 6,
+      "columns": [
+        1,
+        6
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 1.05,
+      "to": 6,
+      "columns": [
+        2,
+        5
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 1.75,
+      "to": 2.25,
+      "columns": [
+        3,
+        4
+      ],
+      "band": 2,
+      "label": "person (band 2)"
+    },
+    {
+      "from": 3.35,
+      "to": 4.25,
+      "columns": [
+        3,
+        4
+      ],
+      "band": 3,
+      "label": "person (band 3)"
+    },
+    {
+      "from": 5.45,
+      "to": 6,
+      "columns": [
+        3,
+        4
+      ],
+      "band": 4,
+      "label": "person (band 4)"
+    }
+  ],
+  "labelProvenance": {
+    "sourceBranch": "movement-simulation-tests",
+    "sourceRevision": "3c041c0",
+    "generator": "simulation/geometry_labels.py",
+    "physicalColumns": 6,
+    "samplingStepMeters": 0.03,
+    "rangeTolerance": 0.04,
+    "edgeExclusionDegrees": 0.7,
+    "transitionTrimSeconds": 0.35,
+    "outputIndependent": true
+  }
+}

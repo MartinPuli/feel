@@ -1,0 +1,114 @@
+{
+  "title": "Person moving toward on the right",
+  "description": "A person starts far on the right and walks straight toward the phone.",
+  "scene": {
+    "duration": 6,
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0
+      }
+    ],
+    "objects": [
+      {
+        "kind": "cylinder",
+        "center": [
+          0.65,
+          -3.0
+        ],
+        "radius": 0.22,
+        "height": 1.75,
+        "velocity": [
+          0,
+          0.42
+        ],
+        "label": "person",
+        "from": 0,
+        "to": 6
+      }
+    ],
+    "sensor": {
+      "noise": 0,
+      "seed": 12
+    }
+  },
+  "expect": [
+    {
+      "from": 0.3,
+      "to": 3.05,
+      "columns": [
+        6
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 0.3,
+      "to": 6,
+      "columns": [
+        1,
+        2,
+        3
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 1.45,
+      "to": 2.55,
+      "columns": [
+        5
+      ],
+      "band": 3,
+      "label": "person (band 3)"
+    },
+    {
+      "from": 1.45,
+      "to": 2.75,
+      "columns": [
+        4
+      ],
+      "band": 3,
+      "label": "person (band 3)"
+    },
+    {
+      "from": 3.65,
+      "to": 4.55,
+      "columns": [
+        5
+      ],
+      "band": 2,
+      "label": "person (band 2)"
+    },
+    {
+      "from": 3.75,
+      "to": 6,
+      "columns": [
+        4
+      ],
+      "band": 0,
+      "label": "clear"
+    },
+    {
+      "from": 3.95,
+      "to": 4.45,
+      "columns": [
+        6
+      ],
+      "band": 2,
+      "label": "person (band 2)"
+    }
+  ],
+  "labelProvenance": {
+    "sourceBranch": "movement-simulation-tests",
+    "sourceRevision": "3c041c0",
+    "generator": "simulation/geometry_labels.py",
+    "physicalColumns": 6,
+    "samplingStepMeters": 0.03,
+    "rangeTolerance": 0.04,
+    "edgeExclusionDegrees": 0.7,
+    "transitionTrimSeconds": 0.35,
+    "outputIndependent": true
+  }
+}

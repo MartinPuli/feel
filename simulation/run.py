@@ -145,8 +145,9 @@ def annotate_taps(ticks, max_held=3):
     n = len(ticks)
     for tick in ticks:
         tick['taps'] = {'phone': [], 'firmware': []}
+        tick['tapBands'] = {'phone': {}, 'firmware': {}}
     for name in ('phone', 'firmware'):
-        for c in range(7):
+        for c in ACTIVE_COLUMNS:
             band = lambda j: ticks[j][name]['bands'][c]
             i = 1
             while i < n - 1:
@@ -156,9 +157,12 @@ def annotate_taps(ticks, max_held=3):
                 j = i
                 while name == 'firmware' and j + 1 < n and band(j + 1) == 0 and ticks[j + 1]['dropped'] and j + 1 - i < max_held:
                     j += 1
-                if j + 1 < n and band(j + 1) == band(i - 1):
+                if j + 1 < n and band(j + 1) == band(i - 1) and all(
+                    ticks[k]['phone']['state'] in ('live', 'simulation') for k in range(i - 1, j + 2)
+                ):
                     for k in range(i, j + 1):
                         ticks[k]['taps'][name].append(c)
+                        ticks[k]['tapBands'][name][c] = band(i - 1)
                 i = j + 1
 
 
@@ -172,7 +176,7 @@ def check_tick(expect, tick):
         allowed = expect['bands'] if 'bands' in expect else [expect['band']]
         for c in columns_of(expect.get('columns')):
             checks += 1
-            if source['bands'][c] not in allowed and not (source['bands'][c] == 0 and c in tick.get('taps', {}).get(name, [])):
+            if source['bands'][c] not in allowed and not (source['bands'][c] == 0 and tick.get('tapBands', {}).get(name, {}).get(c) in allowed):
                 failures.append((c, allowed, source['bands'][c]))
     if 'highlight' in expect:
         want = 255 if expect['highlight'] is None else expect['highlight']

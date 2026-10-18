@@ -49,6 +49,19 @@ class ScoringTests(unittest.TestCase):
                     self.assertEqual(harness.status(dict(scenario, result=result, knownIssue='perception limitation')), 'FAIL')
                     self.assertEqual(harness.status({'result': result}), 'FAIL')
 
+    def test_tap_only_satisfies_its_actual_band_and_never_tracking_loss(self):
+        states = [tick([0, 2, 0, 0, 0, 0, 0], 0),
+                  tick([0, 0, 0, 0, 0, 0, 0], 1),
+                  tick([0, 2, 0, 0, 0, 0, 0], 2)]
+        for source in ('phone', 'firmware'):
+            def scenario(band):
+                return {'expect':[{'from':1,'to':1,'columns':[1],'band':band,'source':source}]}
+            self.assertTrue(harness.score(scenario(2), states)['passed'])
+            self.assertFalse(harness.score(scenario(3), states)['passed'])
+            states[1]['phone']['state'] = 'trackingLost'
+            self.assertFalse(harness.score(scenario(2), states)['passed'])
+            states[1]['phone']['state'] = 'live'
+
     def test_flicker_denominator_is_six_and_fault_neutralization_is_excluded(self):
         before = tick([0, 0, 0, 0, 0, 0, 0], 0)
         after = tick([0, 2, 0, 0, 0, 0, 0], 1)

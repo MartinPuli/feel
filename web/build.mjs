@@ -40,6 +40,35 @@ export function build({ dist = resolve(here, 'dist'), data = resolve(here, '..',
     const source = join(data, `${kind}.json`);
     if (existsSync(source)) writeFileSync(join(target, `${kind}.json`), JSON.stringify(publicReport(JSON.parse(readFileSync(source, 'utf8')), kind), null, 1) + '\n');
   }
+  // A snapshot is publishable only when its session is explicitly publishable now.
+  // Reconstruct payloads from allowlisted fields; never copy an entire snapshot folder.
+  const snapshotIndexPath = join(data, 'snapshots', 'index.json');
+  const publishedNames = new Set(published.map(session => session.name));
+  const snapshotIndex = [];
+  if (existsSync(snapshotIndexPath)) {
+    const sourceIndex = JSON.parse(readFileSync(snapshotIndexPath, 'utf8'));
+    for (const entry of sourceIndex.snapshots || []) {
+      if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,40}$/.test(entry.label)) throw new Error('Invalid snapshot label');
+      const sessions = [];
+      for (const name of entry.sessions || []) {
+        if (!publishedNames.has(name)) continue;
+        const source = join(data, 'snapshots', entry.label, `${name}.json`);
+        if (!existsSync(source)) continue;
+        const snapshot = JSON.parse(readFileSync(source, 'utf8'));
+        if (snapshot.name !== name || !Array.isArray(snapshot.ticks)) throw new Error('Invalid snapshot session');
+        const output = pick(snapshot, ['name', 'title', 'generated', 'commit', 'status', 'accuracy', 'bandChangesPerColumnSecond']);
+        output.label = entry.label;
+        output.ticks = snapshot.ticks.map(tick => pick(tick, ['t', 'fw', 'hl', 'tap', 'state', 'dropped']));
+        const folder = join(target, 'snapshots', entry.label);
+        mkdirSync(folder, {recursive:true});
+        writeFileSync(join(folder, `${name}.json`), JSON.stringify(output) + '\n');
+        sessions.push(name);
+      }
+      if (sessions.length) snapshotIndex.push({...pick(entry, ['label', 'generated', 'commit']), sessions});
+    }
+  }
+  mkdirSync(join(target, 'snapshots'), {recursive:true});
+  writeFileSync(join(target, 'snapshots', 'index.json'), JSON.stringify({snapshots:snapshotIndex}) + '\n');
   const withheld = index.sessions.length - published.length;
   console.log(`dist/ ready: ${published.length} replay session(s)` + (withheld ? `, ${withheld} recording(s) withheld (set "publish": true to include)` : ''));
   if (!index.sessions.length) console.log('No replay data found. Run python3 simulation/run.py first.');
