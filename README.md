@@ -136,6 +136,32 @@ answer in the room with LiDAR depth, and the puck taps toward it until you arriv
 Voice runs on OpenAI Realtime directly; audio does not pass through Chalk.
 Setup, evaluation commands and current status: [chalk/README.md](chalk/README.md).
 
+## Limitations
+
+We built FEEL in a weekend from parts we could buy in person: Micro Center, Walmart and hardware
+stores in Cambridge. That shaped the mechanism:
+
+- **The cam rods are big.** Each column is driven by a 3D-printed cam rod about 11 × 11 × 58 mm.
+  The rods, not the pins, set the 12 mm column spacing and most of the puck's size.
+- **One servo per column means one pin per column.** Each servo turns one rod, and the rod can
+  raise only one of its four pins. A column shows only the nearest obstacle in that direction,
+  so a chair close by hides the door behind it. Moving between distant rows also sweeps the cam
+  past the rows in between.
+- **No feedback from the pins.** The servos report nothing back, so the puck can't tell whether
+  a pin actually rose or jammed.
+
+With more time and freedom to test, we would:
+
+1. **Shrink the rods.** Machined metal shafts, or finer resin-printed cams, would cut the column
+   spacing and puck thickness. That leaves room for more columns and finer direction.
+2. **Drive each pin on its own.** One small actuator per pin, such as a micro solenoid or a
+   shape-memory-alloy pin, would let a column show near and far together, with no sweep between
+   rows. It costs more actuators and more power, so we would prototype one column first.
+3. **Measure the mechanism.** Servo travel, pin lift, phone-to-pin latency and supply behaviour
+   with every servo moving, plus position sensing to catch a jammed pin.
+4. **Test with blind users.** Which spacing, stroke and tap rhythm people can read, and how many
+   directions are actually useful, should set the next design. Our own fingers shouldn't.
+
 ## Verification status
 
 What has run, and what hasn't:
