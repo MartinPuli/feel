@@ -61,6 +61,8 @@ More figures: [sensing to pins](docs/diagrams/sensing-to-pins.svg),
 
 ## Hardware
 
+![Exploded view of the Pin Puck: the 6 × 4 pin plate on top, the guide plate with 24 pins below it, six cam shafts with one lobe per row, the servos at the side, and the ESP32 board in the chassis](docs/diagrams/puck-exploded.webp)
+
 | Part | Spec |
 |---|---|
 | Phone | iPhone with LiDAR (developed on an iPhone 14 Pro Max), held landscape-left, rear camera forward |
