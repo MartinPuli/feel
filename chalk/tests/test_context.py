@@ -136,6 +136,52 @@ class ContextTests(unittest.TestCase):
                     context.room_structure('v', 't', transport=FakeTransport(data=[{'field': 'room_memory.structure', 'value': None},
                                                                                      {'field': 'room_memory.structure_visits', 'value': visits}]))
 
+    PATH = [{'field': 'path.polyline', 'value': '[[-0.3, 0.3], [-1.75, 1.75], [-2.75, 1.75], [-3.25, 2.25], [-3.25, 4.75], [-4.0, 5.1]]'},
+            {'field': 'path.progress_points', 'value': '[[-3.25, 4.492], [-4.0, 5.1]]'},
+            {'field': 'path.length_m', 'value': 7.085}, {'field': 'path.status', 'value': 'ok'}]
+
+    def test_path_runs_the_named_query_with_the_pose_in_the_key(self):
+        transport = FakeTransport(data=self.PATH)
+        got = context.path(' Harvard-Yard ', 'FEEL-TAG-01', -0.3, 0.3, ' Exit ', transport=transport)
+        self.assertEqual(got, {'status': 'ok', 'polyline': [(-0.3, 0.3), (-1.75, 1.75), (-2.75, 1.75), (-3.25, 2.25), (-3.25, 4.75), (-4.0, 5.1)],
+                               'progress_points': [(-3.25, 4.492), (-4.0, 5.1)], 'length_m': 7.085})
+        query_url, query_body, query_headers = transport.calls[1]
+        self.assertEqual(query_url, 'https://engine.example.test/v1/query/online')
+        self.assertEqual(query_body, {'inputs': {'path.id': 'harvard-yard:feel-tag-01:-0.3,0.3:exit'},
+                                      'outputs': ['path.polyline', 'path.progress_points', 'path.length_m', 'path.status'], 'query_name': 'path'})
+        self.assertEqual(query_headers['X-Chalk-Env-Id'], 'env1')
+        self.assertEqual(context.path_key('v', 't', 1.0, 2.5, 'x'), 'v:t:1,2.5:x')
+
+    def test_path_without_a_way_is_empty_and_malformed_replies_are_refused(self):
+        empty = [{'field': 'path.polyline', 'value': '[]'}, {'field': 'path.progress_points', 'value': '[]'}, {'field': 'path.length_m', 'value': 0.0}]
+        for status in ('no target', 'no map', 'no path'):
+            got = context.path('v', 't', 0.0, 0.0, 'exit', transport=FakeTransport(data=empty + [{'field': 'path.status', 'value': status}]))
+            self.assertEqual(got, {'status': status, 'polyline': [], 'progress_points': [], 'length_m': 0.0})
+        bad = [(dict(self.PATH[0], value='nope'), 'not a list of points'), (dict(self.PATH[1], value='[[1]]'), 'not a list of points'),
+               (dict(self.PATH[1], value='[[1, 2]]'), 'do not agree'), (dict(self.PATH[2], value=-1), 'not a distance'),
+               (dict(self.PATH[3], value='lost'), 'path.status'), (dict(self.PATH[3], value='no path'), 'must be empty')]
+        for replacement, reason in bad:
+            with self.subTest(replacement=replacement):
+                data = [replacement if item['field'] == replacement['field'] else item for item in self.PATH]
+                with self.assertRaisesRegex(context.ContextError, reason):
+                    context.path('v', 't', 0.0, 0.0, 'exit', transport=FakeTransport(data=data))
+
+    def test_path_command_prints_the_progress_points(self):
+        result = {'status': 'ok', 'polyline': [(-0.3, 0.3), (-4.0, 5.1)], 'progress_points': [(-3.25, 4.492), (-4.0, 5.1)], 'length_m': 7.085}
+        with mock.patch.object(context, 'path', return_value=result) as call, contextlib.redirect_stdout(io.StringIO()) as printed:
+            self.assertEqual(context.main(['path', '--venue', 'harvard-yard', '--tag', 'feel-tag-01', '--from=-0.3,0.3', '--label', 'exit']), 0)
+        self.assertEqual(call.call_args.args, ('harvard-yard', 'feel-tag-01', -0.3, 0.3, 'exit'))
+        self.assertEqual(printed.getvalue().splitlines(), [
+            'Suggested direction to exit at harvard-yard:feel-tag-01: 7.1 m over the remembered map, 2 progress points; the live camera decides each step.',
+            '  1: x -3.25 y +4.49 m in the tag frame', '  2: x -4.00 y +5.10 m in the tag frame (the target)'])
+        with mock.patch.object(context, 'path', return_value={'status': 'no target', 'polyline': [], 'progress_points': [], 'length_m': 0.0}), \
+                contextlib.redirect_stdout(io.StringIO()) as printed:
+            self.assertEqual(context.main(['path', '--venue', 'v', '--tag', 't', '--from', '0,0', '--label', 'stairs']), 0)
+        self.assertEqual(printed.getvalue().strip(), 'Nothing is remembered as stairs at v:t.')
+        with contextlib.redirect_stdout(io.StringIO()) as printed:
+            self.assertEqual(context.main(['path', '--venue', 'v', '--tag', 't', '--from', 'here', '--label', 'exit']), 2)
+        self.assertIn('--from must be X,Y', printed.getvalue())
+
     def test_room_structure_command_writes_the_map_and_says_what_it_holds(self):
         output = Path(tempfile.mkdtemp()) / 'structure.json'
         with mock.patch.object(context, 'room_structure', return_value={'map': self.MERGED, 'visits': 3}), contextlib.redirect_stdout(io.StringIO()) as printed:

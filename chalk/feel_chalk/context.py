@@ -1,10 +1,13 @@
 """Ask Chalk what FEEL knows: the last confirmed find of an object, a venue's downloadable pack, what
-is remembered at a printed room tag, or the structure of the room behind it.
+is remembered at a printed room tag, the structure of the room behind it, or a suggested path across it.
 
 python -m feel_chalk.context last-seen --user <user id> --object keys
 python -m feel_chalk.context venue-pack --venue harvard-yard --output pack.json
 python -m feel_chalk.context room-anchors --venue harvard-yard --tag feel-tag-01
 python -m feel_chalk.context room-structure --venue harvard-yard --tag feel-tag-01 --output structure.json
+python -m feel_chalk.context path --venue harvard-yard --tag feel-tag-01 --from=-0.3,0.3 --label exit
+
+(write --from=X,Y with the equals sign: a pose starting with a minus sign is otherwise read as an option)
 
 All run Chalk online queries over the features in chalk/feel_context, authenticated with the
 service token in chalk/.env (CHALK_CLIENT_ID and CHALK_CLIENT_SECRET, scoped to CHALK_ENV_ID).
@@ -14,6 +17,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import urllib.error
@@ -152,6 +156,62 @@ def room_structure(venue_id: str, tag_id: str, *, transport=post) -> dict:
     return {'map': built, 'visits': visits}
 
 
+PATH_STATUSES = ('ok', 'no target', 'no map', 'no path')
+
+
+def path_key(venue_id: str, tag_id: str, from_x: float, from_y: float, label: str) -> str:
+    """Path.id: the room key, the pose in the tag frame and the remembered label, '<venue>:<tag>:<x>,<y>:<label>'."""
+    return f'{room_key(venue_id, tag_id)}:{from_x:g},{from_y:g}:{anchors.normalize_label(label)}'
+
+
+def _points(raw, name: str) -> list[tuple[float, float]]:
+    try:
+        items = json.loads(raw)
+        points = [(float(x), float(y)) for x, y in items]
+    except (TypeError, ValueError):
+        raise ContextError(f'{name} is not a list of points') from None
+    if not all(math.isfinite(x) and math.isfinite(y) for x, y in points):
+        raise ContextError(f'{name} is not a list of points')
+    return points
+
+
+def path(venue_id: str, tag_id: str, from_x: float, from_y: float, label: str, *, transport=post) -> dict:
+    """A suggested direction from the pose to the target remembered under `label`: the polyline, the progress points every
+    6 m (the target last), the length and the status ("ok", "no target", "no map" or "no path"). Never a claim the way is clear."""
+    key = path_key(venue_id, tag_id, from_x, from_y, label)
+    values = query({'path.id': key}, ['path.polyline', 'path.progress_points', 'path.length_m', 'path.status'], query_name='path', transport=transport)
+    status = values['path.status']
+    if status not in PATH_STATUSES:
+        raise ContextError(f'path.status {status!r} is not one of {", ".join(PATH_STATUSES)}')
+    polyline, points = _points(values['path.polyline'], 'path.polyline'), _points(values['path.progress_points'], 'path.progress_points')
+    length = values['path.length_m']
+    if isinstance(length, bool) or not isinstance(length, (int, float)) or not math.isfinite(length) or length < 0:
+        raise ContextError('path.length_m is not a distance')
+    if status == 'ok' and (len(polyline) < 2 or not points or points[-1] != polyline[-1]):
+        raise ContextError('path.polyline and path.progress_points do not agree')
+    if status != 'ok' and (polyline or points):
+        raise ContextError(f'a path with status {status!r} must be empty')
+    return {'status': status, 'polyline': polyline, 'progress_points': points, 'length_m': float(length)}
+
+
+def path_summary(venue_id: str, tag_id: str, label: str, result: dict) -> list[str]:
+    """What the command prints: one line of status, then one progress point per line, the target last."""
+    key = room_key(venue_id, tag_id)
+    label = anchors.normalize_label(label)
+    if result['status'] == 'no target':
+        return [f'Nothing is remembered as {label} at {key}.']
+    if result['status'] == 'no map':
+        return [f'No world map is remembered at {key} yet; nothing to plan over.']
+    if result['status'] == 'no path':
+        return [f'No suggested direction to {label} at {key} over the remembered map.']
+    lines = [f'Suggested direction to {label} at {key}: {result["length_m"]:.1f} m over the remembered map, {len(result["progress_points"])} '
+             f'progress point{"s" if len(result["progress_points"]) != 1 else ""}; the live camera decides each step.']
+    for index, (x, y) in enumerate(result['progress_points'], 1):
+        last = index == len(result['progress_points'])
+        lines.append(f'  {index}: x {x:+.2f} y {y:+.2f} m in the tag frame{" (the target)" if last else ""}')
+    return lines
+
+
 def room_structure_summary(venue_id: str, tag_id: str, built: room_map.RoomMap, visits: int) -> str:
     free = built.observed - built.blocked
     return (f'Room structure at {room_key(venue_id, tag_id)}: {built.width} x {built.height} cells of {built.cell_size:g} m, '
@@ -174,8 +234,22 @@ def main(argv=None) -> int:
     structure.add_argument('--venue', required=True)
     structure.add_argument('--tag', required=True)
     structure.add_argument('--output', type=Path, required=True)
+    route = commands.add_parser('path', help='a suggested direction over the remembered world map, as progress points every 6 m')
+    route.add_argument('--venue', required=True)
+    route.add_argument('--tag', required=True)
+    route.add_argument('--from', dest='pose', required=True, metavar='X,Y', help='the pose in the tag frame, metres; write --from=-0.3,0.3')
+    route.add_argument('--label', required=True, help='the remembered target, for example exit')
     args = parser.parse_args(argv)
     try:
+        if args.command == 'path':
+            try:
+                from_x, from_y = (float(part) for part in args.pose.split(','))
+            except ValueError:
+                print('--from must be X,Y in metres, for example -0.3,0.3')
+                return 2
+            for line in path_summary(args.venue, args.tag, args.label, path(args.venue, args.tag, from_x, from_y, args.label)):
+                print(line)
+            return 0
         if args.command == 'last-seen':
             print(last_seen(args.user, args.object))
             return 0
