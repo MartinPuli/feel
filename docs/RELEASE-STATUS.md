@@ -12,6 +12,19 @@
 > Postgres 17 with a stub `auth.uid()`. Pending: the phone's write of journeys and read of progress points, the device
 > test of the loop, the Chalk deployment (the scheduled query has never run), and the SQL against the live Postgres.
 > Nothing here is deployed yet. A path is a suggested direction, never a claim that the way is clear.
+> **Journey loop, phone side (2026-10-17, night):** every walk toward a chosen target is a `Journey` (FeelCore
+> `Journey.swift`: pose steps every 0.5 m or 2 s with a heading, the blocked floor cells seen on the trip, cue
+> latencies, arrival time and distance) recorded in the printed tag's levelled frame and kept as JSON under
+> `Application Support/Journeys` (`JourneyLog`, beside room memory); `JourneyLog.export` writes them all to
+> `Documents/journeys.json` for the Files app, and `JourneyLog.share` is the empty Supabase write. A route to a held
+> or remembered target is split once into progress points every 6 m (`ProgressPoints`, last point the target) and the
+> pins point to the next one (`WaypointFollower`, advance within 1 m, "Next point." once per point, "You're there"
+> at the end); a target without a route keeps the straight bearing, and the pins show live depth throughout. New
+> assistant tool `lead_me(label)` for a remembered place; `get_status.room_memory.journey` reports steps, obstacles
+> and the next point. `protocol/journey-v1.json` is the vector shared with Chalk. Software checks on this Mac:
+> FeelCore 276 tests, Lantern 186 unit tests on the iPhone Air simulator. NOT RUN on a device: the recorded walk of
+> a real room, the planner's route split and the pins following its points, the spoken "Next point." through the
+> assistant, and the export from the Files app. No upload yet.
 
 > **Room structure memory on `feel/room-structure` (2026-10-17, night):** with the printed tag in view, the floor grid a
 > session learned is exported into the tag's levelled frame when sensing stops or tracking resets (FeelCore `RoomMap`:
