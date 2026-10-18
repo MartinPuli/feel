@@ -93,3 +93,9 @@ These artifacts are ignored build outputs, not Git-tracked release binaries.
 Rebuild from the updated canonical checkout before uploading there; an older
 binary in a different checkout may predate the GPIO25 adjustment. Compilation
 passed; programming and physical behavior remain unverified.
+
+The canonical checkout was then fast-forwarded to main and rebuilt successfully
+with the same command (2.85 seconds using its existing cache). The ready local
+application binary is `firmware/.pio/build/esp32-six-live/firmware.bin` under
+`/Users/martinezequielpulitano/hackharvard`. The canonical build log is
+`/private/tmp/feel-main-esp32-build.log`. It has not been uploaded.
