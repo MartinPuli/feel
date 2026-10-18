@@ -82,12 +82,34 @@ class Anchor:
 
 
 @features
+class RoomMap:
+    """One visit's structural map of the room behind a printed tag: the floor grid the phone's route planner learned,
+    as cells (unknown, free or blocked) in the tag's levelled frame, run-length encoded (feel_chalk/room_map.py).
+    Written by the phone to the room_maps table (chalk/sql/schema.sql); only rows their owner chose to share are read."""
+    id: Primary[str]
+    user_id: str
+    venue_id: str
+    tag_id: str
+    cell_size: float
+    origin_x: float
+    origin_y: float
+    width: int
+    height: int
+    cells: str
+    shared: bool
+    seen_at: FeatureTime
+    # "<venue_id>:<tag_id>": the RoomMemory this visit belongs to.
+    room_id: str
+
+
+@features
 class RoomMemory:
-    """What FEEL remembers at one printed tag, across the users who shared their sightings there."""
+    """What FEEL remembers at one printed tag, across the users who shared their sightings and visits there."""
     id: Primary[str]
     venue_id: str
     tag_id: str
     anchors: DataFrame[Anchor] = has_many(lambda: Anchor.room_id == RoomMemory.id)
+    maps: DataFrame[RoomMap] = has_many(lambda: RoomMap.room_id == RoomMemory.id)
     # JSON list of remembered targets (label, x, y, z, sightings, last_seen_at), one per label, the position
     # being the median of that label's last 20 sightings; the phone reads it with FeelCore RememberedTarget.
     targets: str
@@ -95,3 +117,8 @@ class RoomMemory:
     last_seen_at: datetime | None
     # The sentence the assistant reads out; past sightings only, never a claim about what is there now.
     spoken: str
+    # The room's structure merged across the newest 50 shared visits (per cell: blocked when at least half of the visits
+    # that saw it did, free otherwise), as the JSON the phone reads with FeelCore RoomMap to seed its route planner
+    # before the camera has seen the room; None while nobody has shared a visit. Never a source for the pins.
+    structure: str | None
+    structure_visits: int

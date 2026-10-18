@@ -1,6 +1,6 @@
 -- Demo rows for chalk/feel_context: the reviewed Harvard Yard entries (protocol/harvard-yard-source.json),
--- three confirmed finds for one demo user, and that user's shared room memory at the printed tag feel-tag-01.
--- Run after schema.sql; safe to run twice.
+-- three confirmed finds for one demo user, that user's shared room memory at the printed tag feel-tag-01, and three
+-- shared visits of the room's structure behind it. Run after schema.sql; safe to run twice.
 
 insert into public.venues (id, name) values ('harvard-yard', 'Harvard Yard')
 on conflict (id) do update set name = excluded.name;
@@ -42,4 +42,15 @@ insert into public.anchors (id, user_id, venue_id, tag_id, label, x, y, z, confi
 ('20000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001', 'harvard-yard', 'feel-tag-01', 'exit', -3.7, 5.6, 0.2, 0.95, true, now() - interval '2 hours'),
 ('20000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000001', 'harvard-yard', 'feel-tag-01', 'water fountain', 2.0, 2.5, 0.3, 0.9, true, now() - interval '1 day'),
 ('20000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000001', 'harvard-yard', 'feel-tag-01', 'water fountain', 2.2, 2.3, 0.3, 0.6, true, now() - interval '1 day')
+on conflict (id) do nothing;
+
+-- The room's structure at the same tag, shared by the demo user: three visits (the visit maps of protocol/room-map-v1.json;
+-- 10 cm cells in the tag's levelled frame, run-length encoded). Chalk merges them per cell into one 8 x 6 map, "28f2b10f2u6b":
+-- the far wall stays, the chair seen on one visit of three goes. `python -m feel_chalk.context room-structure --venue harvard-yard
+-- --tag feel-tag-01 --output structure.json` prints "Room structure at harvard-yard:feel-tag-01: 8 x 6 cells of 0.1 m,
+-- 46 remembered (38 free, 8 blocked), merged from 3 visits."
+insert into public.room_maps (id, user_id, venue_id, tag_id, cell_size, origin_x, origin_y, width, height, cells, shared, seen_at) values
+('30000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'harvard-yard', 'feel-tag-01', 0.1, 0.0, 0.0, 6, 6, '14f2b4f2b8f6b', true, now() - interval '3 days'),
+('30000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'harvard-yard', 'feel-tag-01', 0.1, -0.2, 0.0, 8, 6, '40f2u6b', true, now() - interval '1 day'),
+('30000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 'harvard-yard', 'feel-tag-01', 0.1, 0.1, 0.1, 4, 5, '9f1u1b5f4b', true, now() - interval '2 hours')
 on conflict (id) do nothing;

@@ -27,3 +27,12 @@ room_anchors = NamedQuery(
     description="What is remembered at one printed FEEL tag, from shared sightings; id is '<venue_id>:<tag_id>'.",
     owner="feel",
 )
+
+room_structure = NamedQuery(
+    name="room_structure",
+    input=[RoomMemory.id],
+    output=[RoomMemory.structure, RoomMemory.structure_visits],
+    description="The structure of the room behind one printed FEEL tag, merged from shared visits: the floor-plan map the "
+                "phone seeds its route planner with before the camera has seen the room; id is '<venue_id>:<tag_id>'.",
+    owner="feel",
+)

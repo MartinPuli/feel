@@ -1,9 +1,10 @@
-"""Ask Chalk what FEEL knows: the last confirmed find of an object, a venue's downloadable pack, or
-what is remembered at a printed room tag.
+"""Ask Chalk what FEEL knows: the last confirmed find of an object, a venue's downloadable pack, what
+is remembered at a printed room tag, or the structure of the room behind it.
 
 python -m feel_chalk.context last-seen --user <user id> --object keys
 python -m feel_chalk.context venue-pack --venue harvard-yard --output pack.json
 python -m feel_chalk.context room-anchors --venue harvard-yard --tag feel-tag-01
+python -m feel_chalk.context room-structure --venue harvard-yard --tag feel-tag-01 --output structure.json
 
 All run Chalk online queries over the features in chalk/feel_context, authenticated with the
 service token in chalk/.env (CHALK_CLIENT_ID and CHALK_CLIENT_SECRET, scoped to CHALK_ENV_ID).
@@ -18,7 +19,7 @@ from pathlib import Path
 import urllib.error
 import urllib.request
 
-from . import anchors, history
+from . import anchors, history, room_map
 from .config import DEFAULT_API_HOST, load_env_file
 
 NAMES = ('CHALK_ENV_ID', 'CHALK_CLIENT_ID', 'CHALK_CLIENT_SECRET')
@@ -113,9 +114,14 @@ def venue_pack(venue_id: str, *, transport=post) -> dict:
     return pack
 
 
+def room_key(venue_id: str, tag_id: str) -> str:
+    """RoomMemory.id: the venue slug and the tag id as printed, '<venue_id>:<tag_id>'."""
+    return f'{venue_id.strip().lower()}:{tag_id.strip().lower()}'
+
+
 def room_anchors(venue_id: str, tag_id: str, *, transport=post) -> dict:
     """The spoken summary and the remembered targets (feel_chalk.anchors.Remembered) at one printed tag."""
-    key = f'{venue_id.strip().lower()}:{tag_id.strip().lower()}'
+    key = room_key(venue_id, tag_id)
     values = query({'room_memory.id': key}, ['room_memory.spoken', 'room_memory.targets'], query_name='room_anchors', transport=transport)
     spoken, raw = values['room_memory.spoken'], values['room_memory.targets']
     if not isinstance(spoken, str) or not spoken or not isinstance(raw, str) or not raw:
@@ -130,6 +136,28 @@ def room_anchors(venue_id: str, tag_id: str, *, transport=post) -> dict:
     return {'spoken': spoken, 'targets': targets}
 
 
+def room_structure(venue_id: str, tag_id: str, *, transport=post) -> dict:
+    """The structure of the room behind one printed tag as Chalk merged it from shared visits (feel_chalk.room_map.RoomMap),
+    with the number of visits that voted; the map is None while nobody has shared a visit."""
+    values = query({'room_memory.id': room_key(venue_id, tag_id)}, ['room_memory.structure', 'room_memory.structure_visits'],
+                   query_name='room_structure', transport=transport)
+    raw, visits = values['room_memory.structure'], values['room_memory.structure_visits']
+    if isinstance(visits, bool) or not isinstance(visits, int) or visits < 0:
+        raise ContextError('room_memory.structure_visits is not a count')
+    if raw is None:
+        return {'map': None, 'visits': visits}
+    built = room_map.from_json(raw) if isinstance(raw, str) else None
+    if built is None:
+        raise ContextError('room_memory.structure is not a room map')
+    return {'map': built, 'visits': visits}
+
+
+def room_structure_summary(venue_id: str, tag_id: str, built: room_map.RoomMap, visits: int) -> str:
+    free = built.observed - built.blocked
+    return (f'Room structure at {room_key(venue_id, tag_id)}: {built.width} x {built.height} cells of {built.cell_size:g} m, '
+            f'{built.observed} remembered ({free} free, {built.blocked} blocked), merged from {visits} visit{"s" if visits != 1 else ""}.')
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = parser.add_subparsers(dest='command', required=True)
@@ -142,6 +170,10 @@ def main(argv=None) -> int:
     room = commands.add_parser('room-anchors', help='what is remembered at a printed room tag')
     room.add_argument('--venue', required=True)
     room.add_argument('--tag', required=True)
+    structure = commands.add_parser('room-structure', help='the floor-plan map remembered behind a printed room tag, merged from shared visits')
+    structure.add_argument('--venue', required=True)
+    structure.add_argument('--tag', required=True)
+    structure.add_argument('--output', type=Path, required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == 'last-seen':
@@ -153,6 +185,19 @@ def main(argv=None) -> int:
             for target in result['targets']:
                 print(f"  {target.label}: x {target.x:+.2f} y {target.y:+.2f} z {target.z:+.2f} m in the tag frame, "
                       f"{target.sightings} sighting{'s' if target.sightings != 1 else ''}, last {target.last_seen_at.isoformat()}")
+            return 0
+        if args.command == 'room-structure':
+            result = room_structure(args.venue, args.tag)
+            if result['map'] is None:
+                print(f'Nothing is remembered about the structure of the room at {room_key(args.venue, args.tag)} yet.')
+                return 0
+            try:
+                with args.output.open('x', encoding='utf-8') as output:
+                    output.write(result['map'].to_json() + '\n')
+            except OSError:
+                print('Output path must be new and writable; nothing was written.')
+                return 2
+            print(room_structure_summary(args.venue, args.tag, result['map'], result['visits']) + f' Wrote {args.output}.')
             return 0
         built = venue_pack(args.venue)
         try:

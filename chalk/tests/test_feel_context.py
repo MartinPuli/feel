@@ -3,11 +3,11 @@ environment and chalk/feel_context/requirements.txt need it)."""
 import json
 import sys
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from feel_chalk import anchors, venue_pack  # noqa: E402
+from feel_chalk import anchors, room_map, venue_pack  # noqa: E402
 
 try:
     from feel_context import features, queries, resolvers
@@ -74,6 +74,37 @@ class FeelContextTests(unittest.TestCase):
         self.assertEqual(resolvers.pack_source('v', 'V', [{'id': 'a', 'kind': 'place', 'name': 'A', 'text': 't',
                                                            'source_url': 'https://x', 'retrieved_at': datetime(2026, 1, 1, 12)}])
                          ['entries'][0]['retrieved_at'], '2026-01-01T12:00:00+00:00')
+
+    def test_room_structure_is_the_merge_of_shared_visits_served_by_a_named_query(self):
+        for name in ('room_id', 'user_id', 'venue_id', 'tag_id', 'cell_size', 'origin_x', 'origin_y', 'width', 'height', 'cells', 'shared', 'seen_at'):
+            self.assertTrue(hasattr(features.RoomMap, name), name)
+        for name in ('maps', 'structure', 'structure_visits'):
+            self.assertTrue(hasattr(features.RoomMemory, name), name)
+        self.assertEqual(queries.room_structure.name, 'room_structure')
+        self.assertEqual([str(f) for f in queries.room_structure.input], ['room_memory.id'])
+        self.assertEqual([str(f) for f in queries.room_structure.output], ['room_memory.structure', 'room_memory.structure_visits'])
+        self.assertIn('where shared', resolvers.MAP_SQL, 'Chalk merges only visits their owner chose to share')
+        self.assertIn(f'limit {room_map.KEEP}', resolvers.MAP_SQL)
+        vector = json.loads((PROTOCOL / 'room-map-v1.json').read_text())
+        # Rows as the join hands them over, oldest first here: the merge must not care about their order.
+        rows = [dict(visit, id=str(i), shared=True, seen_at=datetime(2026, 10, 17, 12 + i, tzinfo=timezone.utc)) for i, visit in enumerate(vector['visits'])]
+        structure, visits = resolvers.room_structure(rows + [{'id': 'bad', 'cell_size': 0.1, 'origin_x': 0.0, 'origin_y': 0.0, 'width': 1, 'height': 1, 'cells': '2f'}])
+        self.assertEqual(visits, 3, 'a row that does not validate is not a visit')
+        want = vector['merged']
+        self.assertEqual(room_map.from_json(structure),
+                         room_map.RoomMap(want['cell_size'], want['origin_x'], want['origin_y'], want['width'], want['height'], want['cells']))
+        self.assertEqual(resolvers.room_structure([]), (None, 0))
+
+    def test_only_the_newest_shared_visits_vote_on_the_structure(self):
+        def row(i, cells, hours):
+            return {'id': str(i), 'cell_size': 0.1, 'origin_x': 0.0, 'origin_y': 0.0, 'width': 1, 'height': 1, 'cells': cells,
+                    'seen_at': datetime(2026, 10, 1, tzinfo=timezone.utc) + timedelta(hours=hours) if hours is not None else None}
+        rows = [row(i, '1b', i) for i in range(room_map.KEEP)] + [row(99, '1f', 100), row(98, '1f', None)]   # the newest is free; one row has no time
+        structure, visits = resolvers.room_structure(rows)
+        self.assertEqual(visits, room_map.KEEP, 'the oldest blocked visit and the timeless one fall off')
+        self.assertEqual(room_map.from_json(structure).cells, '1b', 'one free visit among fifty is not half')
+        structure, visits = resolvers.room_structure(rows[-1:] + rows[:1])
+        self.assertEqual((visits, room_map.from_json(structure).cells), (2, '1b'), 'a tie goes to blocked; a row without a time still votes, as the oldest')
 
 
 if __name__ == '__main__':

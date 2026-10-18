@@ -1,13 +1,16 @@
+import contextlib
 import hashlib
+import io
 import json
 import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from feel_chalk import context  # noqa: E402
+from feel_chalk import context, room_map  # noqa: E402
 
 ENV = {'CHALK_API_HOST': 'https://api.example.test', 'CHALK_ENV_ID': 'env1', 'CHALK_CLIENT_ID': 'id1', 'CHALK_CLIENT_SECRET': 'secret1'}
 
@@ -104,6 +107,48 @@ class ContextTests(unittest.TestCase):
                 with self.assertRaisesRegex(context.ContextError, reason):
                     context.room_anchors('v', 't', transport=FakeTransport(data=[{'field': 'room_memory.spoken', 'value': 'x'},
                                                                                    {'field': 'room_memory.targets', 'value': value}]))
+
+    MERGED = room_map.RoomMap(0.1, -0.2, 0.0, 8, 6, '28f2b10f2u6b')
+
+    def test_room_structure_runs_the_named_query_and_returns_the_merged_map(self):
+        transport = FakeTransport(data=[{'field': 'room_memory.structure', 'value': self.MERGED.to_json()}, {'field': 'room_memory.structure_visits', 'value': 3}])
+        got = context.room_structure(' Harvard-Yard ', 'FEEL-TAG-01 ', transport=transport)
+        self.assertEqual(got, {'map': self.MERGED, 'visits': 3})
+        query_url, query_body, query_headers = transport.calls[1]
+        self.assertEqual(query_url, 'https://engine.example.test/v1/query/online')
+        self.assertEqual(query_body, {'inputs': {'room_memory.id': 'harvard-yard:feel-tag-01'},
+                                      'outputs': ['room_memory.structure', 'room_memory.structure_visits'], 'query_name': 'room_structure'})
+        self.assertEqual(query_headers['X-Chalk-Env-Id'], 'env1')
+
+    def test_room_structure_without_shared_visits_is_no_map(self):
+        transport = FakeTransport(data=[{'field': 'room_memory.structure', 'value': None}, {'field': 'room_memory.structure_visits', 'value': 0}])
+        self.assertEqual(context.room_structure('v', 't', transport=transport), {'map': None, 'visits': 0})
+
+    def test_room_structure_rejects_malformed_maps_instead_of_guessing(self):
+        for value in ['nope', '{"width": 1}', '{"schema": 1, "cell_size": 0.1, "origin_x": 0, "origin_y": 0, "width": 1, "height": 1, "cells": "2f"}', 7, '']:
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(context.ContextError, 'not a room map'):
+                    context.room_structure('v', 't', transport=FakeTransport(data=[{'field': 'room_memory.structure', 'value': value},
+                                                                                     {'field': 'room_memory.structure_visits', 'value': 1}]))
+        for visits in ['three', -1, True, None]:
+            with self.subTest(visits=visits):
+                with self.assertRaisesRegex(context.ContextError, 'structure_visits'):
+                    context.room_structure('v', 't', transport=FakeTransport(data=[{'field': 'room_memory.structure', 'value': None},
+                                                                                     {'field': 'room_memory.structure_visits', 'value': visits}]))
+
+    def test_room_structure_command_writes_the_map_and_says_what_it_holds(self):
+        output = Path(tempfile.mkdtemp()) / 'structure.json'
+        with mock.patch.object(context, 'room_structure', return_value={'map': self.MERGED, 'visits': 3}), contextlib.redirect_stdout(io.StringIO()) as printed:
+            self.assertEqual(context.main(['room-structure', '--venue', ' Harvard-Yard', '--tag', 'feel-tag-01', '--output', str(output)]), 0)
+        self.assertEqual(room_map.from_json(output.read_text()), self.MERGED)
+        self.assertEqual(printed.getvalue().strip(), 'Room structure at harvard-yard:feel-tag-01: 8 x 6 cells of 0.1 m, 46 remembered (38 free, 8 blocked), '
+                         f'merged from 3 visits. Wrote {output}.')
+        with mock.patch.object(context, 'room_structure', return_value={'map': self.MERGED, 'visits': 3}), contextlib.redirect_stdout(io.StringIO()) as printed:
+            self.assertEqual(context.main(['room-structure', '--venue', 'harvard-yard', '--tag', 'feel-tag-01', '--output', str(output)]), 2, 'the output path must be new')
+        with mock.patch.object(context, 'room_structure', return_value={'map': None, 'visits': 0}), contextlib.redirect_stdout(io.StringIO()) as printed:
+            self.assertEqual(context.main(['room-structure', '--venue', 'v', '--tag', 't', '--output', str(output.with_name('none.json'))]), 0)
+        self.assertEqual(printed.getvalue().strip(), 'Nothing is remembered about the structure of the room at v:t yet.')
+        self.assertFalse(output.with_name('none.json').exists())
 
 
 if __name__ == '__main__':

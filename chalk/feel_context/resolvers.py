@@ -1,7 +1,8 @@
 """Resolvers: rows from Postgres, the latest confirmed find per object, the spoken sentence, the venue
-pack, and the room memory behind a printed tag. The sentences, the pack and the remembered positions
-come from feel_chalk (history.py, venue_pack.py, anchors.py), so they are unit-tested without Chalk and
-identical to what the local tools and the phone compute."""
+pack, and the room memory behind a printed tag (remembered targets and the room's merged structure). The
+sentences, the pack, the remembered positions and the merged map come from feel_chalk (history.py,
+venue_pack.py, anchors.py, room_map.py), so they are unit-tested without Chalk and identical to what the
+local tools and the phone compute."""
 from __future__ import annotations
 from datetime import datetime, timezone
 import json
@@ -9,8 +10,8 @@ import json
 from chalk import Now, online
 from chalk.features import DataFrame, Features
 
-from feel_chalk import anchors, history, venue_pack
-from .features import Anchor, Find, ObjectHistory, RoomMemory, Venue, VenueEntry
+from feel_chalk import anchors, history, room_map, venue_pack
+from .features import Anchor, Find, ObjectHistory, RoomMap, RoomMemory, Venue, VenueEntry
 from .sources import feel_finds
 
 PACK_DAYS = 7
@@ -35,6 +36,14 @@ ANCHOR_FIELDS = {"id": Anchor.id, "user_id": Anchor.user_id, "venue_id": Anchor.
 ANCHOR_SQL = ("select id::text as id, user_id::text as user_id, venue_id, tag_id, label, x, y, z, confidence, shared, seen_at, "
               "venue_id || ':' || tag_id as room_id from anchors where shared and venue_id || ':' || tag_id = :room_id "
               "order by seen_at desc limit 500")
+
+MAP_FIELDS = {"id": RoomMap.id, "user_id": RoomMap.user_id, "venue_id": RoomMap.venue_id, "tag_id": RoomMap.tag_id,
+              "cell_size": RoomMap.cell_size, "origin_x": RoomMap.origin_x, "origin_y": RoomMap.origin_y, "width": RoomMap.width,
+              "height": RoomMap.height, "cells": RoomMap.cells, "shared": RoomMap.shared, "seen_at": RoomMap.seen_at, "room_id": RoomMap.room_id}
+# Only visits their owner chose to share leave that user's phone for the room's structure; the newest room_map.KEEP vote.
+MAP_SQL = ("select id::text as id, user_id::text as user_id, venue_id, tag_id, cell_size, origin_x, origin_y, width, height, cells, shared, "
+           "seen_at, venue_id || ':' || tag_id as room_id from room_maps where shared and venue_id || ':' || tag_id = :room_id "
+           f"order by seen_at desc limit {room_map.KEEP}")
 
 
 def rows(frame: DataFrame) -> list[dict]:
@@ -146,3 +155,32 @@ def remembered_targets(sightings: RoomMemory.anchors[Anchor.label, Anchor.x, Anc
 @online
 def spoken_room(targets: RoomMemory.targets, now: Now) -> RoomMemory.spoken:
     return anchors.spoken(anchors.from_json(targets), now)
+
+
+def _newest_first(rows: list[dict]) -> list[dict]:
+    """Rows by seen_at, newest first; naive database times are read as UTC and rows without a time count as oldest."""
+    oldest = datetime.min.replace(tzinfo=timezone.utc)
+    return sorted(rows, key=lambda row: _aware(row.get('seen_at')) if isinstance(row.get('seen_at'), datetime) else oldest, reverse=True)
+
+
+def room_structure(map_rows: list[dict]) -> tuple[str | None, int]:
+    """The room's structure merged from its newest room_map.KEEP shared visits, as the JSON the phone reads with FeelCore
+    RoomMap, and how many visits voted. Rows room_map.validate cannot use are ignored, never guessed; (None, 0) without any."""
+    visits = room_map.usable(_newest_first(map_rows))[:room_map.KEEP]
+    merged = room_map.merge(visits)
+    return (merged.to_json() if merged else None, len(visits))
+
+
+@online
+def maps_of_room(id: RoomMemory.id) -> DataFrame[RoomMap.id, RoomMap.user_id, RoomMap.venue_id, RoomMap.tag_id, RoomMap.cell_size, RoomMap.origin_x,
+                                                 RoomMap.origin_y, RoomMap.width, RoomMap.height, RoomMap.cells, RoomMap.shared, RoomMap.seen_at,
+                                                 RoomMap.room_id]:
+    """The visits behind RoomMemory.maps, matched to the has_many join on room_id (shared rows only)."""
+    return feel_finds.query_string(MAP_SQL, fields=MAP_FIELDS, args={"room_id": id}).all()
+
+
+@online
+def merged_structure(visits: RoomMemory.maps[RoomMap.cell_size, RoomMap.origin_x, RoomMap.origin_y, RoomMap.width, RoomMap.height, RoomMap.cells,
+                                             RoomMap.seen_at]) -> Features[RoomMemory.structure, RoomMemory.structure_visits]:
+    structure, count = room_structure(rows(visits))
+    return RoomMemory(structure=structure, structure_visits=count)
