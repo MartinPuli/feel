@@ -62,7 +62,9 @@ extension VoicePhrasing {
 
     /// Chat body for the gateway: the describe prompt plus the photo, same shape as the Where-is request.
     static func describeBody(model: String, jpegBase64: String) throws -> Data {
-        let body: [String: Any] = ["model": model, "max_completion_tokens": 400, "messages": [
+        // Low reasoning effort: measured through the gateway, about 2.7 s and 50 completion tokens for a
+        // one-sentence description, against 3.5 s or more at the default effort.
+        let body: [String: Any] = ["model": model, "max_completion_tokens": 400, "reasoning_effort": "low", "messages": [
             ["role": "system", "content": describePrompt],
             ["role": "user", "content": [["type": "text", "text": "What is in front of me?"],
                                          ["type": "image_url", "image_url": ["url": "data:image/jpeg;base64,\(jpegBase64)"]]]]]]

@@ -3,6 +3,9 @@ import FeelCore
 
 /// Deterministic notification policy. The caller supplies only fresh, calibrated live frames.
 struct ProactiveVoicePolicy {
+    /// Spoken obstacle notices are off: the pins show obstacles continuously, and a spoken "obstacle ahead"
+    /// was judged noise by the wearer. Target notices stay on. Tests turn this on to cover the obstacle path.
+    var announcesObstacles = false
     enum Kind: String { case target, obstacle }
     enum Side: String { case left, ahead, right }
 
@@ -84,7 +87,7 @@ struct ProactiveVoicePolicy {
             if elapsed(since: targetAbsentSince, now: now, atLeast: 0.6) { targetBaseline = nil }
         }
 
-        let obstacle = Self.nearestObstacle(distances)
+        let obstacle = announcesObstacles ? Self.nearestObstacle(distances) : nil
         if let obstacle {
             if elapsed(since: obstacleAbsentSince, now: now, atLeast: 2) { obstacleBaseline = nil }
             obstacleAbsentSince = nil
