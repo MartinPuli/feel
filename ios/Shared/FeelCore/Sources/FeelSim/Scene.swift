@@ -208,6 +208,37 @@ public struct SceneRenderer {
         return best
     }
 
+    /// 0 = plain surface, up to 1 = on a mortar line or box edge.
+    static func surfaceLine(_ p: Vector3, normal n: Vector3, shape o: SceneSpec.Object, t: Double) -> Double {
+        func near(_ v: Double, _ period: Double, _ width: Double) -> Bool { let f=v/period-floor(v/period); return f<width/period || f>1-width/period }
+        // Coordinates across the surface: height plus the horizontal axis lying in the face.
+        let along=abs(n.x)>0.5 ? p.z : abs(n.z)>0.5 ? p.x : p.x+p.z
+        var line=0.0
+        if o.kind == "box", abs(n.y)<0.5 {
+            let course=Int(floor(p.y/0.25))
+            if near(p.y,0.25,0.012) { line=1 }
+            else if near(along+(course & 1 == 0 ? 0 : 0.25),0.5,0.012) { line=0.8 }
+        }
+        if o.kind == "box", let a=o.min, let b=o.max {
+            let v=o.velocity ?? [0,0], s=t-(o.from ?? 0)
+            let lo=[a[0]+v[0]*s,a[1],a[2]+v[1]*s], hi=[b[0]+v[0]*s,b[1],b[2]+v[1]*s], q=[p.x,p.y,p.z]
+            let edges=(0..<3).filter { abs(q[$0]-lo[$0])<0.02 || abs(q[$0]-hi[$0])<0.02 }.count
+            if edges>=2 { line=1 }
+        }
+        return line
+    }
+
+    /// The find target drawn as a door (0.9 m or its detected width, 2 m tall) on whatever surface is behind it.
+    func doorDecal(_ p: Vector3, t: Double) -> (Double,Double,Double)? {
+        guard let target=spec.target, target.position.count == 3 else { return nil }
+        if let from=target.from, t<from { return nil }; if let to=target.to, t>to { return nil }
+        let half=max(0.45,target.halfWidth ?? 0), off=hypot(p.x-target.position[0],p.z-target.position[2])
+        guard off<=half+0.06, p.y<=2.06, abs(p.z-target.position[2])<0.3 || abs(p.x-target.position[0])<0.3 else { return nil }
+        if off>half || p.y>2.0 { return (0.25,0.17,0.10) }                      // frame
+        if abs(p.x-target.position[0]-half*0.7)<0.04, abs(p.y-1.0)<0.04 { return (0.85,0.75,0.35) }  // handle
+        return (0.55,0.36,0.20)
+    }
+
     /// A shaded, colour-coded view through the same camera (no sensor noise), for watching a synthetic
     /// session the way a phone recording is watched. RGB, row-major, origin top-left.
     public func cameraImage(pose: CameraPose, t: Double, width: Int, height: Int) -> [UInt8] {
@@ -230,7 +261,12 @@ public struct SceneRenderer {
                         let base=o.kind == "cylinder" ? (0.30,0.42,0.68) : palette[hit.object % palette.count]
                         let shade=0.45+0.55*abs(hit.normal.dot(light))
                         rgb=(base.0*shade,base.1*shade,base.2*shade)
+                        // Surface texture so a wall that fills the view still shows distance and motion:
+                        // 0.25 m courses and staggered 0.5 m joints, plus darker box edges.
+                        let line=Self.surfaceLine(p,normal:hit.normal,shape:o,t:t)
+                        if line>0 { let k=1-0.35*line; rgb=(rgb.0*k,rgb.1*k,rgb.2*k) }
                     }
+                    if let door=doorDecal(p,t:t) { rgb=door }
                     // Gentle distance haze so depth reads at a glance.
                     let haze=min(0.55,max(0,hit.t-1.5)/12)
                     rgb=(rgb.0*(1-haze)+0.86*haze,rgb.1*(1-haze)+0.88*haze,rgb.2*(1-haze)+0.92*haze)

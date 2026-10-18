@@ -454,9 +454,21 @@ public enum PointingDescriber {
         let text=r == r.rounded() ? String(format:"%.0f",locale:Locale(identifier:"en_US_POSIX"),r) : String(format:"%.1f",locale:Locale(identifier:"en_US_POSIX"),r)
         return "\(text) \(r == 1 ? "meter" : "meters")"
     }
-    /// `targetName` is how to say the selected target ("possible door"); nil uses its label.
+    /// One finger on a cell: just the name. "Possible door." / "Chair." / "Obstacle." / "Nothing measured."
+    /// `targetName` is how to say the selected target; nil uses its label.
     public static func describe(_ cell: PuckCell, in scene: CachedScene, targetName: String? = nil) -> String {
         guard PuckLayout.activeColumns.contains(cell.column), scene.distances.count == 7 else { return "Point at one of the pins." }
+        let c=cell.column
+        if let t=scene.target, t.valid(at:scene.timestamp), let span=t.columns, span.contains(c) {
+            let name=(targetName ?? t.label).trimmingCharacters(in:.whitespaces)
+            return name.hasSuffix(".") ? name : name+"."
+        }
+        if let d=scene.distances[c], TactileGeometry.band(distance:d)>0 { return "Obstacle." }
+        return "Nothing measured."
+    }
+    /// Long form: direction, target, nearest reading, and whether the raised pin matches the touched row.
+    public static func describeDetailed(_ cell: PuckCell, in scene: CachedScene, targetName: String? = nil) -> String {
+        guard (0..<7).contains(cell.column), scene.distances.count == 7 else { return "Point at one of the pins." }
         let c=cell.column
         var parts: [String] = []
         var shown: UInt8=0

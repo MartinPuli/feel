@@ -17,6 +17,7 @@ struct LanternView: View {
     @State private var presentedPanel: CameraPanel?
     @State private var attemptedInitialStart = false
     @State private var controlsExpanded = false
+    @State private var gridWalk = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AccessibilityFocusState private var modalFocused: Bool
 
@@ -53,6 +54,7 @@ struct LanternView: View {
         .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: presentedPanel)
         .font(FeelTypography.body)
         .tint(FeelTheme.accent)
+        .fullScreenCover(isPresented: $gridWalk) { GridWalkView(model: model) }
         .onChange(of: presentedPanel) { panel in modalFocused = panel != nil }
         .onChange(of: model.voicePanel) { panel in
             guard let panel else { return }
@@ -75,6 +77,8 @@ struct LanternView: View {
         .task {
             guard !attemptedInitialStart else { return }
             attemptedInitialStart = true
+            // `-feelGridWalkDemo YES` opens grid walk on the synthetic scene (simulator screenshots, demo videos).
+            if UserDefaults.standard.bool(forKey: "feelGridWalkDemo") { model.startSimulation(); gridWalk = true; return }
             if !ProcessInfo.processInfo.arguments.contains("--uitesting") {
                 model.startLive()
                 model.voice.enterForeground()
@@ -255,6 +259,13 @@ struct LanternView: View {
             }
             Spacer(minLength: 0)
             VoiceControl(voice: voice) { presentedPanel = .voice }
+            Button { gridWalk = true } label: {
+                Image(systemName: "square.grid.3x3.fill").frame(width: 48, height: 48)
+            }
+            .background(FeelTheme.inset, in: Circle())
+            .accessibilityLabel("Grid walk")
+            .accessibilityHint("Full-screen pin grid without the camera image, for walking by the grid alone.")
+            .accessibilityIdentifier("gridWalk")
             CameraConnectionButton(puck: model.puck) { presentedPanel = .connection }
             Button { presentedPanel = .settings } label: {
                 Image(systemName: "slider.horizontal.3").font(.system(size: 17, weight: .bold))

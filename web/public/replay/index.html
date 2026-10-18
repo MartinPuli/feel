@@ -39,7 +39,7 @@ select { font: 500 14px var(--sans); color: var(--ink); background: var(--panel)
   background-position: calc(100% - 16px) 55%, calc(100% - 11px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
 select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .chip { font: 500 11px/1 var(--mono); letter-spacing: 0.04em; padding: 5px 7px; border-radius: 5px; border: 1px solid currentColor; white-space: nowrap; }
-.PASS { color: var(--pass); } .FAIL { color: var(--fail); } .KNOWN { color: var(--known); } .SKIP { color: var(--muted); }
+.UNLABELLED { color: var(--accent); } .PASS { color: var(--pass); } .FAIL { color: var(--fail); } .KNOWN { color: var(--known); } .SKIP { color: var(--muted); }
 .src { color: var(--muted); font: 12px var(--mono); }
 .stage { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 16px; align-items: start; }
 @media (max-width: 900px) { .stage { grid-template-columns: 1fr; } }
@@ -53,7 +53,9 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .media .empty { position: absolute; inset: 0; display: grid; place-items: center; color: #9a9a9a; font-size: 13px; text-align: center; padding: 24px; }
 .badge { position: absolute; left: 12px; top: 12px; font: 500 12px var(--mono); padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,.65); color: #fff; }
 .badge.warn { background: rgba(209,36,47,.85); }
-.right { display: flex; flex-direction: column; gap: 16px; }
+.right, .left { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.topview { position: relative; aspect-ratio: 16 / 9; background: var(--well); }
+.topview canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .pins { display: grid; grid-template-columns: 34px repeat(7, 1fr); gap: 8px 10px; padding: 14px; align-items: center; }
 .pins .lab { font: 11px var(--mono); color: var(--faint); text-align: center; }
 .pins .row { font: 11px var(--mono); color: var(--faint); text-align: right; }
@@ -92,6 +94,7 @@ th { font-weight: 500; color: var(--muted); }
 td.num { font-family: var(--mono); }
 .bad { color: var(--fail); }
 .section { margin-top: 16px; }
+.jump { font: 12px var(--sans); color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
 .note { color: var(--faint); font-size: 12px; margin-top: 16px; }
 .toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
@@ -111,6 +114,7 @@ td.num { font-family: var(--mono); }
 
   <div id="app" hidden>
     <div class="stage">
+      <div class="left">
       <section class="panel" aria-labelledby="camHead">
         <div class="head"><h2 id="camHead">Recording</h2><span id="camNote"></span></div>
         <div class="media" id="media">
@@ -120,6 +124,16 @@ td.num { font-family: var(--mono); }
           <div class="badge" id="badge" hidden></div>
         </div>
       </section>
+      <section class="panel" aria-labelledby="topHead">
+        <div class="head"><h2 id="topHead">Top view</h2><span id="topNote">LiDAR points from above · forward is up</span></div>
+        <div class="topview"><canvas id="top" aria-label="Depth points seen from above, with the seven column sectors and their commanded bands"></canvas></div>
+        <div class="legend" style="padding-top:0">
+          <span><span class="sw" style="background:var(--ink)"></span>obstacle height 0.6–2.1 m</span>
+          <span><span class="sw" style="background:var(--faint)"></span>other heights (floor, low, overhead)</span>
+          <span><span class="sw" style="border:1.5px solid var(--accent);background:transparent"></span>scene objects (simulated only)</span>
+        </div>
+      </section>
+      </div>
       <div class="right">
         <section class="panel" aria-labelledby="pinHead">
           <div class="head"><h2 id="pinHead">Pin grid</h2><span id="pinNote">as commanded by the firmware</span></div>
@@ -141,6 +155,8 @@ td.num { font-family: var(--mono); }
       <input id="scrub" type="range" min="0" max="1000" value="0" step="1" aria-label="Time">
       <span class="clock" id="clock">0.00 s</span>
       <label class="toggle"><input type="checkbox" id="showCols" checked> column guides</label>
+      <button id="export" type="button" title="Record a 1920 × 1080 video of this replay">Export video</button>
+      <a id="download" hidden></a>
     </div>
 
     <section class="panel timeline">
@@ -159,6 +175,7 @@ td.num { font-family: var(--mono); }
 
     <section class="panel section">
       <div class="info" id="info"></div>
+      <div id="events"></div>
       <table><thead><tr><th>Label</th><th>Window</th><th>Agreement</th><th>First match</th></tr></thead><tbody id="labels"></tbody></table>
     </section>
     <p class="note">Pins and packets come from the production Swift encoder and C++ firmware controller replaying the recorded depth. Servo motion and how the pins feel are not simulated. Simulated sessions show a rendered view of an idealised scene.</p>
@@ -189,20 +206,21 @@ async function load() {
     const group = document.createElement('optgroup'); group.label = label;
     for (const s of items) {
       const o = document.createElement('option'); o.value = s.name;
-      o.textContent = `${s.title} · ${s.status}${s.hasVideo ? '' : ' · no video'}`;
+      o.textContent = `${s.title} · ${s.status}${s.outcome ? ` · ${s.outcome}, ${s.bumps} bump${s.bumps === 1 ? '' : 's'}` : ''}${s.hasVideo ? '' : ' · no video'}`;
       group.appendChild(o);
     }
     select.appendChild(group);
   }
   const wanted = new URLSearchParams(location.search).get('session');
-  select.value = index.some(s => s.name === wanted) ? wanted : index[0].name;
+  const fallback = index.find(s => s.source === 'iphone') || index.find(s => s.name === 'person-crossing') || index[0];
+  select.value = index.some(s => s.name === wanted) ? wanted : fallback.name;
   select.onchange = () => open(select.value);
   $('app').hidden = false;
   await open(select.value);
 }
 
 async function open(name) {
-  pause();
+  stopExport(false); pause();
   const url = new URL(location.href); url.searchParams.set('session', name); history.replaceState(null, '', url);
   session = await (await fetch(`data/sessions/${encodeURIComponent(name)}/session.json`, { cache: 'no-cache' })).json();
   depthFrames = new Map(Object.entries(session.depth?.frames ?? {}));
@@ -220,7 +238,7 @@ async function open(name) {
     video.removeAttribute('src'); video.load(); video.hidden = true; $('noVideo').hidden = false; $('camNote').textContent = '';
   }
   $('depthNote').textContent = session.depth ? `${session.depth.w} × ${session.depth.h} · near = warm` : 'no depth';
-  renderInfo(); renderMetrics();
+  renderInfo(); renderMetrics(); renderEvents();
   seek(session.ticks[0]?.t ?? 0);
   resize();
 }
@@ -257,7 +275,7 @@ function loop(now) {
   if (session.media && video.paused && !video.ended && t - session.media.start >= 0 && t - session.media.start < (video.duration || 0)) {
     video.currentTime = t - session.media.start; video.playbackRate = speed; video.play().catch(() => {});
   }
-  if (t >= end()) { t = end(); draw(); pause(); return; }
+  if (t >= end()) { t = end(); draw(); pause(); if (exporter) setTimeout(() => stopExport(true), 400); return; }
   draw(); requestAnimationFrame(loop);
 }
 
@@ -267,7 +285,8 @@ function draw() {
   const tick = session.ticks[tickIndex];
   $('clock').textContent = `${(t - session.start).toFixed(2)} / ${(end() - session.start).toFixed(2)} s`;
   $('scrub').value = Math.round((t - start()) / Math.max(end() - start(), 1e-9) * 1000);
-  drawPins(tick); drawDepth(tick); drawOverlay(tick); drawTimeline();
+  drawPins(tick); drawDepth(tick); drawOverlay(tick); drawTop(tick); drawTimeline();
+  if (exporter) { drawComposite(); $('export').textContent = `Recording ${Math.round((t - start()) / Math.max(end() - start(), 1e-9) * 100)}% · cancel`; }
 }
 
 // Label windows are seconds from the recording's first frame (session.start).
@@ -349,7 +368,6 @@ function drawColumns(g, W, H, fxn, cxn, tick, onDepth) {
     const lo = Math.max(columnX(COLUMN_EDGES[c], fxn, cxn, W), 0), hi = Math.min(columnX(COLUMN_EDGES[c + 1], fxn, cxn, W), W);
     if (hi - lo < 14) continue;
     const band = tick.fw[c];
-    if (band) { g.fillStyle = css(`--b${band}`); g.globalAlpha = onDepth ? 0.0 : 0.16; g.fillRect(lo, 0, hi - lo, H); g.globalAlpha = 1; }
     const label = band ? `B${band}` : '·';
     g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect((lo + hi) / 2 - 15, H - 24, 30, 18);
     g.fillStyle = band ? '#fff' : 'rgba(255,255,255,.6)'; g.fillText(label, (lo + hi) / 2, H - 11);
@@ -372,8 +390,84 @@ function drawOverlay(tick) {
     g.fillRect(Math.min(Math.max(x - tw / 2 - 6, 0), dw - tw - 12), 10, tw + 12, 20); g.fillStyle = '#fff'; g.fillText(text, Math.min(Math.max(x - tw / 2, 6), dw - tw - 6), 24);
   }
   g.restore();
-  const badge = $('badge'), text = tick.dropped ? 'PACKET DROPPED' : STATE_TEXT[tick.state];
+  const recent = (session.events || []).find(e => t - e.t >= 0 && t - e.t <= 1.0 && e.kind !== 'start');
+  const badge = $('badge'), text = recent ? recent.kind.toUpperCase() : tick.dropped ? 'PACKET DROPPED' : STATE_TEXT[tick.state];
   badge.hidden = !text; badge.textContent = text || ''; badge.className = 'badge' + (text ? ' warn' : '');
+}
+
+
+// Top-down view, heading-up: the camera sits at the bottom centre looking up the canvas.
+const EVENT_COLOR = kind => kind === 'bump' ? css('--mark') : kind === 'arrived' ? css('--pass') : kind === 'hesitated' ? css('--known') : css('--muted');
+const BAND_RANGES = [null, [0.3, 0.9], [0.9, 1.6], [1.6, 2.5], [2.5, 4]];
+function drawTop(tick) {
+  const [g, W, H] = fitCanvas($('top'));
+  g.clearRect(0, 0, W, H);
+  const key = tick.frame == null ? null : tick.frame.toFixed(3), pose = key && session.poses ? session.poses[key] : null;
+  const scale = Math.min(H / 5.3, W / 9), ox = W / 2, oy = H - 14;
+  const P = (lat, ahead) => [ox + lat * scale, oy - ahead * scale];
+  const rad = d => d * Math.PI / 180;
+  // Range rings and column sectors.
+  g.strokeStyle = css('--line'); g.fillStyle = css('--faint'); g.font = `10px ${css('--mono')}`; g.lineWidth = 1;
+  for (const r of [1, 2, 3, 4]) { g.beginPath(); g.arc(ox, oy, r * scale, rad(-90 - 60), rad(-90 + 60)); g.stroke(); g.fillText(r + ' m', ox + 4, oy - r * scale - 3); }
+  // Commanded band per column, as the ring segment that band means.
+  for (let c = 0; c < 7; c++) {
+    const band = tick.fw[c]; if (!band) continue;
+    const [r0, r1] = BAND_RANGES[band], a0 = rad(-90 + COLUMN_EDGES[c]), a1 = rad(-90 + COLUMN_EDGES[c + 1]);
+    g.fillStyle = css(`--b${band}`); g.globalAlpha = 0.45;
+    g.beginPath(); g.arc(ox, oy, r1 * scale, a0, a1); g.arc(ox, oy, r0 * scale, a1, a0, true); g.closePath(); g.fill(); g.globalAlpha = 1;
+  }
+  g.strokeStyle = css('--line');
+  for (const b of COLUMN_EDGES) { const [x, y] = P(4 * Math.sin(rad(b)), 4 * Math.cos(rad(b))); g.beginPath(); g.moveTo(ox, oy); g.lineTo(x, y); g.stroke(); }
+  if (!pose) { drawCamera(g, ox, oy, scale); return; }
+  const [px, py, pz, rx, ry, rz, ux, uy, uz, bx, by, bz, floorY] = pose;
+  const rl = Math.hypot(rx, rz) || 1, rhx = rx / rl, rhz = rz / rl, fhx = rhz, fhz = -rhx;
+  const toView = (wx, wz) => { const dx = wx - px, dz = wz - pz; return P(dx * rhx + dz * rhz, dx * fhx + dz * fhz); };
+  // Ground-truth scene (simulated sessions).
+  if (session.scene?.objects) {
+    g.strokeStyle = css('--accent'); g.lineWidth = 1.5;
+    for (const o of session.scene.objects) {
+      if (o.from != null && tick.t < o.from || o.to != null && tick.t > o.to) continue;
+      const v = o.velocity || [0, 0], s = tick.t - (o.from || 0), dx = v[0] * s, dz = v[1] * s;
+      const yLow = o.kind === 'box' ? o.min[1] : (o.base || 0), yHigh = o.kind === 'box' ? o.max[1] : (o.base || 0) + o.height;
+      g.setLineDash(yHigh < 0.6 || yLow > 2.1 ? [4, 4] : []);
+      g.beginPath();
+      if (o.kind === 'box') {
+        [[o.min[0], o.min[2]], [o.max[0], o.min[2]], [o.max[0], o.max[2]], [o.min[0], o.max[2]]].forEach(([x, z], i) => { const [X, Y] = toView(x + dx, z + dz); i ? g.lineTo(X, Y) : g.moveTo(X, Y); });
+        g.closePath();
+      } else { const [X, Y] = toView(o.center[0] + dx, o.center[1] + dz); g.arc(X, Y, o.radius * scale, 0, Math.PI * 2); }
+      g.stroke();
+    }
+    g.setLineDash([]);
+    const tg = session.scene.target;
+    if (tg && !(tg.from != null && tick.t < tg.from) && !(tg.to != null && tick.t > tg.to)) {
+      const [X, Y] = toView(tg.position[0], tg.position[2]); g.fillStyle = css('--accent'); g.beginPath(); g.arc(X, Y, 5, 0, Math.PI * 2); g.fill();
+      g.fillText(tg.label || 'target', X + 8, Y + 4);
+    }
+  }
+  // LiDAR points from the depth frame this tick used.
+  const d = session.depth, px8 = d ? session._depth(key) : null;
+  if (px8) {
+    const ink = css('--ink'), faint = css('--faint'), dot = Math.max(1.5, scale * 0.035);
+    for (let v = 0; v < d.h; v++) for (let u = 0; u < d.w; u++) {
+      const q = px8[v * d.w + u]; if (!q) continue;
+      const z = q / 255 * d.maxRange, xc = (u - d.cx) / d.fx * z, yc = -(v - d.cy) / d.fy * z;
+      // camera (xc, yc, -z) → world
+      const wx = px + rx * xc + ux * yc - bx * z, wy = py + ry * xc + uy * yc - by * z, wz = pz + rz * xc + uz * yc - bz * z;
+      const height = floorY == null ? null : wy - floorY, inWindow = height != null && height >= 0.6 && height <= 2.1;
+      if (!inWindow && (u + v) % 2) continue;   // thin the floor so obstacles stand out
+      const [X, Y] = toView(wx, wz); if (Y < 0 || X < 0 || X > W) continue;
+      g.fillStyle = inWindow ? ink : faint; g.globalAlpha = inWindow ? 0.9 : 0.35; g.fillRect(X - dot / 2, Y - dot / 2, dot, dot);
+    }
+    g.globalAlpha = 1;
+  }
+  drawCamera(g, ox, oy, scale);
+}
+function drawCamera(g, ox, oy, scale) {
+  const half = session.depth ? Math.atan(0.5 / session.depth.fxn) : 0.585;
+  g.strokeStyle = css('--muted'); g.setLineDash([2, 4]); g.lineWidth = 1;
+  for (const s of [-1, 1]) { g.beginPath(); g.moveTo(ox, oy); g.lineTo(ox + Math.sin(half) * s * 5 * scale, oy - Math.cos(half) * 5 * scale); g.stroke(); }
+  g.setLineDash([]); g.fillStyle = css('--ink');
+  g.beginPath(); g.moveTo(ox, oy - 9); g.lineTo(ox - 6, oy + 5); g.lineTo(ox + 6, oy + 5); g.closePath(); g.fill();
 }
 
 function drawTimeline() {
@@ -400,6 +494,11 @@ function drawTimeline() {
   g.fillStyle = css('--faint'); g.textBaseline = 'alphabetic';
   const span = t1 - session.start, every = span > 120 ? 30 : span > 40 ? 10 : span > 15 ? 2 : 1;
   for (let s = 0; s <= span; s += every) if (session.start + s >= t0) g.fillText(s + 's', x(session.start + s) - 6, H - 6);
+  for (const e of session.events || []) {
+    if (e.t < t0 || e.t > t1) continue;
+    g.strokeStyle = EVENT_COLOR(e.kind); g.lineWidth = 2; g.beginPath(); g.moveTo(x(e.t), top - 6); g.lineTo(x(e.t), top + 7 * rowH); g.stroke();
+    g.fillStyle = EVENT_COLOR(e.kind); g.font = `500 10px ${css('--mono')}`; g.fillText(e.kind, x(e.t) + 3, top - 1);
+  }
   const cx = x(t); g.strokeStyle = css('--ink'); g.lineWidth = 1.5; g.beginPath(); g.moveTo(cx, 4); g.lineTo(cx, labelsTop + 28); g.stroke();
 }
 
@@ -417,6 +516,12 @@ function renderInfo() {
     <td class="num">${e.from}–${e.to} s</td><td class="num ${e.accuracy != null && e.accuracy < 1 ? 'bad' : ''}">${e.accuracy == null ? '–' : (100 * e.accuracy).toFixed(1) + '%'} (${e.passed}/${e.checks})</td>
     <td class="num">${e.firstMatch == null ? 'never' : '+' + e.firstMatch.toFixed(2) + ' s'}</td></tr>`).join('') : '<tr><td colspan="4">No labels yet: watch the replay, then add labelled windows to the scenario.</td></tr>';
 }
+function renderEvents() {
+  const events = (session.events || []).filter(e => e.kind !== 'start');
+  $('events').innerHTML = events.length ? `<table><thead><tr><th>Trial event</th><th>Time</th><th></th></tr></thead><tbody>${events.map((e, i) =>
+    `<tr><td style="color:${EVENT_COLOR(e.kind)}">${esc(e.kind)}</td><td class="num">${(e.t - session.start).toFixed(1)} s</td><td><button type="button" data-event="${i}" class="jump">Show 2 s before</button></td></tr>`).join('')}</tbody></table>` : '';
+  $('events').querySelectorAll('.jump').forEach(b => b.onclick = () => { pause(); seek(events[+b.dataset.event].t - 2); scrollTo({ top: 0, behavior: 'smooth' }); });
+}
 function renderMetrics() {
   const r = session.result, age = r.frameAgeMs;
   const m = (v, l) => `<div class="metric"><b>${esc(v)}</b><span>${esc(l)}</span></div>`;
@@ -425,8 +530,91 @@ function renderMetrics() {
     + m(r.bandChangesPerColumnSecond, 'live band changes / column / s') + m(age ? age.mean + ' ms' : '–', 'modelled depth age at send');
 }
 
+
+// ---- Video export: a 1920 × 1080 composite (recording left; pin grid over LiDAR right; timeline below),
+// recorded in real time from a canvas while the session plays at 1×.
+let exporter = null;
+function drawComposite() {
+  const { g } = exporter, W = 1920, H = 1080, tick = session.ticks[tickIndex];
+  const bg = '#0a0a0a', panel = '#141414', line = '#262626', ink = '#ededed', muted = '#a1a1a1';
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  g.fillStyle = ink; g.font = '600 34px Geist, sans-serif'; g.textBaseline = 'middle'; g.fillText('FEEL', 40, 52);
+  g.fillStyle = muted; g.font = '400 26px Geist, sans-serif'; g.fillText(session.title, 140, 52);
+  g.textAlign = 'right'; g.font = '400 26px "Geist Mono", monospace'; g.fillText(`${(t - session.start).toFixed(1)} s`, W - 40, 52); g.textAlign = 'left';
+  const card = (x, y, w, h, title) => {
+    g.fillStyle = panel; g.strokeStyle = line; g.lineWidth = 2; g.beginPath(); g.roundRect(x, y, w, h, 18); g.fill(); g.stroke();
+    g.fillStyle = muted; g.font = '500 20px Geist, sans-serif'; g.fillText(title, x + 22, y + 30);
+  };
+  // Recording.
+  const vx = 40, vy = 100, vw = 1080, vh = 810;
+  card(vx, vy, vw, vh + 52, session.media?.kind === 'recorded' ? 'iPhone camera' : session.media ? 'Simulated scene' : 'No camera video');
+  g.save(); g.beginPath(); g.roundRect(vx + 2, vy + 52, vw - 4, vh - 2, [0, 0, 16, 16]); g.clip();
+  g.fillStyle = '#000'; g.fillRect(vx, vy + 52, vw, vh);
+  if (session.media && !video.hidden && video.readyState >= 2) {
+    const s2 = Math.min(vw / video.videoWidth, vh / video.videoHeight), dw = video.videoWidth * s2, dh = video.videoHeight * s2;
+    g.drawImage(video, vx + (vw - dw) / 2, vy + 52 + (vh - dh) / 2, dw, dh);
+  }
+  g.drawImage($('overlay'), vx, vy + 52, vw, vh);
+  const badge = $('badge'); if (!badge.hidden) {
+    g.font = '500 24px "Geist Mono", monospace'; const bw = g.measureText(badge.textContent).width + 28;
+    g.fillStyle = 'rgba(209,36,47,.9)'; g.beginPath(); g.roundRect(vx + 20, vy + 72, bw, 42, 8); g.fill(); g.fillStyle = '#fff'; g.fillText(badge.textContent, vx + 34, vy + 94);
+  }
+  g.restore();
+  // Pin grid.
+  const px = 1160, pw = 720;
+  card(px, vy, pw, 380, 'Pin grid');
+  const colors = [null, '#ff6a2b', '#f2690d', '#b9561c', '#7a3b19'], r = 30, gap = 92, gx = px + 80, gy = vy + 92;
+  g.font = '400 18px "Geist Mono", monospace'; g.fillStyle = muted; g.textAlign = 'center';
+  ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].forEach((l, c) => g.fillText(l, gx + c * gap, gy + 4 * 68 + 4));
+  g.textAlign = 'right'; g.fillText('far', gx - 44, gy); g.fillText('near', gx - 44, gy + 3 * 68); g.textAlign = 'left';
+  for (let band = 4; band >= 1; band--) for (let c = 0; c < 7; c++) {
+    const up = tick.fw[c] === band, cx = gx + c * gap, cy = gy + (4 - band) * 68;
+    const tapping = up && tick.hl === c && tick.tap;
+    g.fillStyle = up ? colors[band] : '#242424'; g.beginPath(); g.arc(cx, cy, tapping ? r * 0.72 : r, 0, Math.PI * 2); g.fill();
+    if (up && tick.hl === c) { g.strokeStyle = '#52a8ff'; g.lineWidth = 5; g.beginPath(); g.arc(cx, cy, r + 9, 0, Math.PI * 2); g.stroke(); }
+  }
+  // LiDAR.
+  card(px, vy + 400, pw, 462, 'LiDAR depth');
+  const dc = $('depth'), dh = 392, dw = dh * 4 / 3;
+  g.drawImage(dc, px + (pw - dw) / 2, vy + 452, dw, dh);
+  // Timeline.
+  const t0 = start(), t1 = end(), lx = 100, lw = W - 140, ly = 952, rowH = 13, X = time => lx + (time - t0) / Math.max(t1 - t0, 1e-9) * lw;
+  g.font = '400 11px "Geist Mono", monospace'; g.fillStyle = muted;
+  ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].forEach((l, c) => g.fillText(l, 64, ly + c * rowH + rowH / 2));
+  g.fillStyle = '#1a1a1a'; g.fillRect(lx, ly, lw, 7 * rowH);
+  const step = Math.max(1, lw / session.ticks.length + 0.6);
+  for (const k of session.ticks) for (let c = 0; c < 7; c++) if (k.fw[c]) { g.fillStyle = colors[k.fw[c]]; g.fillRect(X(k.t), ly + c * rowH, step, rowH - 2); }
+  for (const e of session.events || []) if (e.kind !== 'start') { g.fillStyle = EVENT_COLOR(e.kind); g.fillRect(X(e.t) - 1.5, ly - 6, 3, 7 * rowH + 12); }
+  g.fillStyle = ink; g.fillRect(X(t) - 1.5, ly - 10, 3, 7 * rowH + 20);
+}
+async function startExport() {
+  if (exporter) { stopExport(false); return; }
+  const types = ['video/mp4;codecs=avc1.640028', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+  const type = window.MediaRecorder && types.find(x => MediaRecorder.isTypeSupported(x));
+  if (!type || !HTMLCanvasElement.prototype.captureStream) { $('export').textContent = 'Export not supported in this browser'; return; }
+  await document.fonts.ready;
+  const canvas = document.createElement('canvas'); canvas.width = 1920; canvas.height = 1080;
+  const recorder = new MediaRecorder(canvas.captureStream(30), { mimeType: type, videoBitsPerSecond: 12_000_000 });
+  const chunks = []; recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
+  exporter = { g: canvas.getContext('2d'), recorder, type, chunks, cancelled: false };
+  recorder.onstop = () => {
+    const done = exporter; exporter = null; $('export').textContent = 'Export video';
+    if (done.cancelled) return;
+    const blob = new Blob(done.chunks, { type: done.type.split(';')[0] }), a = $('download');
+    a.href = URL.createObjectURL(blob); a.download = `${session.name.startsWith('feel-') ? '' : 'feel-'}${session.name}.${done.type.includes('mp4') ? 'mp4' : 'webm'}`; a.click();
+  };
+  speed = 1; video.playbackRate = 1; document.querySelectorAll('.speed button').forEach(o => o.setAttribute('aria-pressed', o.dataset.speed === '1'));
+  seek(start()); await new Promise(r => setTimeout(r, 300)); drawComposite();
+  recorder.start(250); play();
+}
+function stopExport(finished) {
+  if (!exporter) return;
+  exporter.cancelled = !finished; exporter.recorder.stop(); if (!finished) pause();
+}
+
 function resize() { if (session) draw(); }
 $('play').onclick = () => playing ? pause() : play();
+$('export').onclick = startExport;
 $('scrub').oninput = e => { pause(); seek(start() + e.target.value / 1000 * (end() - start())); };
 $('showCols').onchange = draw;
 document.querySelectorAll('.speed button').forEach(b => b.onclick = () => {

@@ -69,6 +69,12 @@ shaft3_angles = [0, 55, 110];
 shaft3_flat = 5;
 shaft3_ramp = 22.5;
 
+// Four-lobe variant for a 120 degree servo: all four rows, lobes 40 degrees apart. Steeper ramps
+// (flat + ramp = 20 = half the spacing): hold window +-6.2 degrees, tap dip 1.6 mm at 13 degrees.
+shaft4_angles = [0, 40, 80, 120];
+shaft4_flat = 5;
+shaft4_ramp = 15;
+
 function wrap180(d) = d - 360 * floor((d + 180) / 360);
 function lobe_s(d, flat = cam_flat, ramp = cam_ramp) = let(a = abs(wrap180(d)))
     a <= flat ? 1 : a >= flat + ramp ? 0 : 0.5 * (1 + cos(180 * (a - flat) / ramp));

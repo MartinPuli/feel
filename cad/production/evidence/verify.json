@@ -369,6 +369,45 @@
    },
    "warnings": []
   },
+  "shaft4": {
+   "triangles": 20888,
+   "components": 1,
+   "collapsed": 0,
+   "duplicate_edges": 0,
+   "unpaired_edges": 0,
+   "volume_mm3": 1545.71,
+   "slivers_lt_1e8_mm2": 50,
+   "min": [
+    -5.5,
+    -5.4966,
+    0.0
+   ],
+   "max": [
+    5.5,
+    5.45,
+    58.2
+   ],
+   "size": [
+    11.0,
+    10.9466,
+    58.2
+   ],
+   "stated_size": [
+    11.0,
+    10.9,
+    58.2
+   ],
+   "max_bbox_dev": 0.0466,
+   "checks": {
+    "export_clean": true,
+    "one_body": true,
+    "watertight": true,
+    "volume_positive": true,
+    "on_bed": "True",
+    "bbox": "True"
+   },
+   "warnings": []
+  },
   "pins": {
    "triangles": 80140,
    "components": 1,
@@ -993,6 +1032,314 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis",
+   "angle": -13,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_servo",
+   "angle": -13,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_guide",
+   "angle": -13,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_shaft",
+   "angle": -13,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis",
+   "angle": -5,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_servo",
+   "angle": -5,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_guide",
+   "angle": -5,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_shaft",
+   "angle": -5,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis",
+   "angle": 0,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_servo",
+   "angle": 0,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_guide",
+   "angle": 0,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_shaft",
+   "angle": 0,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis",
+   "angle": 20,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_servo",
+   "angle": 20,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_guide",
+   "angle": 20,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_shaft",
+   "angle": 20,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis",
+   "angle": 40,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_servo",
+   "angle": 40,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_guide",
+   "angle": 40,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_shaft",
+   "angle": 40,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis",
+   "angle": 60,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_servo",
+   "angle": 60,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_guide",
+   "angle": 60,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_shaft",
+   "angle": 60,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis",
+   "angle": 80,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_servo",
+   "angle": 80,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_guide",
+   "angle": 80,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_shaft",
+   "angle": 80,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis",
+   "angle": 100,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_servo",
+   "angle": 100,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_guide",
+   "angle": 100,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_shaft",
+   "angle": 100,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis",
+   "angle": 120,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_servo",
+   "angle": 120,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_guide",
+   "angle": 120,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_shaft",
+   "angle": 120,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis",
+   "angle": 125,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_servo",
+   "angle": 125,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_guide",
+   "angle": 125,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_shaft",
+   "angle": 125,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis",
+   "angle": 133,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_servo",
+   "angle": 133,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_guide",
+   "angle": 133,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_shaft",
+   "angle": 133,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_servo_chassis",
    "volume_mm3": 0.0,
    "result": "empty"
@@ -1078,6 +1425,41 @@
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
+  },
+  {
+   "check": "x_horn",
+   "offset": 0,
+   "variant": 44,
+   "volume_mm3": 6.069219201284189e-15,
+   "result": "250 triangles, coincident faces only"
+  },
+  {
+   "check": "x_horn",
+   "offset": 1,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_horn",
+   "offset": 2,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_horn",
+   "offset": 3,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_horn",
+   "offset": 3.4,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
   }
  ],
  "cam": {
@@ -1146,6 +1528,43 @@
     "0": 6.8899999999998975,
     "2": 6.8899999999998975,
     "3": 6.8899999999998975
+   }
+  },
+  "shaft4": {
+   "strokes": {
+    "0": 2.5500000000000003,
+    "1": 2.5500000000000003,
+    "2": 2.5500000000000003,
+    "3": 2.5500000000000003
+   },
+   "gap_rise": {
+    "20.0": 0.0,
+    "60.0": 0.0,
+    "100.0": 0.0
+   },
+   "tap": {
+    "0": {
+     "neighbour_rise": 0.0,
+     "selected_dip_at_20": 2.5500000000000003
+    },
+    "1": {
+     "neighbour_rise": 0.0,
+     "selected_dip_at_20": 2.5500000000000003
+    },
+    "2": {
+     "neighbour_rise": 0.0,
+     "selected_dip_at_20": 2.5500000000000003
+    },
+    "3": {
+     "neighbour_rise": 0.0,
+     "selected_dip_at_20": 2.5500000000000003
+    }
+   },
+   "hold_half_window": {
+    "0": 6.239999999999911,
+    "1": 6.239999999999911,
+    "2": 6.239999999999911,
+    "3": 6.239999999999911
    }
   }
  },

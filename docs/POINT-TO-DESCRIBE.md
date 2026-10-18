@@ -19,7 +19,7 @@ The user asks about a pin without speaking:
 
 1. Hold the puck's back toward the phone, palm toward the camera, thumb up. Either hand works.
 2. After half a second the phone says "Pointing". The pins now **freeze** on the scene from just before the hand came up.
-3. Point at a cell with the other hand's taped fingertip and hold still for 0.4 s. The phone describes that cell, for example "Slightly left: Possible door, 2.1 meters. Nearest reading 1.2 meters."
+3. Point at a cell with the other hand's taped fingertip and hold still for 0.4 s. The phone says one thing: the target's name if it's in that cell ("Possible door.", "Chair.", "Person."), "Obstacle." if only a depth reading is there, or "Nothing measured." A longer form with direction and distances exists in code (`PointingDescriber.describeDetailed`) but isn't used.
 4. Move to another cell to hear about it. Lower the puck to return to live sensing.
 
 ### Two fingers: ask for a route
@@ -45,7 +45,7 @@ Lay two taped fingers **along one column** (wrist to fingers) and hold for 0.6 s
 **Rules:**
 - The frozen scene expires 3 s after it was captured.
 - It is refused if the phone turned more than 10° since then, or lost tracking for more than a second.
-- An empty column is never called clear: the phone says "Nothing measured within 4 meters. Not confirmed clear."
+- An empty column is never called clear: the phone says "Nothing measured."
 - Speech is local (VoiceOver if it's running, otherwise the phone's own voice), so it isn't throttled like the assistant's announcements.
 
 ### Setup

@@ -190,7 +190,7 @@ final class PointingControllerTests: XCTestCase {
         guard case .armed(let ref)=c.phase else { return XCTFail("not armed") }
         XCTAssertEqual(ref.timestamp,0.9,accuracy:1e-9)        // newest clean frame before the arm came up
         XCTAssertEqual(events.filter { if case .described=$0 { return true }; return false }.count,1)
-        XCTAssertEqual(events.last,.described(cell,"Slightly left: Nearest reading 1.2 meters."))
+        XCTAssertEqual(events.last,.described(cell,"Obstacle."))
     }
     func testFrozenPacketIsTheCachedScene() {
         var c=controller()
@@ -234,14 +234,26 @@ final class PointingControllerTests: XCTestCase {
 }
 
 final class PointingDescriberTests: XCTestCase {
-    func testNothingMeasuredIsNotCalledClear() {
-        let s=CachedScene(timestamp:1,pose:.identity,tracking:true,distances:Array(repeating:nil,count:7),target:nil)
-        XCTAssertEqual(PointingDescriber.describe(PuckCell(column:6,band:2),in:s),"Far right: Nothing measured within 4 meters. Not confirmed clear.")
+    let door=TargetObservation(bearingDegrees:-15,distance:2.1,timestamp:1,label:"Door candidate",halfWidthDegrees:12)
+    func testShortFormIsJustTheName() {
+        let empty=CachedScene(timestamp:1,pose:.identity,tracking:true,distances:Array(repeating:nil,count:7),target:nil)
+        XCTAssertEqual(PointingDescriber.describe(PuckCell(column:6,band:2),in:empty),"Nothing measured.")
+        // In the six-active-column layout, the door spans columns 2-3.
+        let s=CachedScene(timestamp:1,pose:.identity,tracking:true,distances:[nil,1.2,nil,nil,0.7,nil,nil],target:door)
+        XCTAssertEqual(PointingDescriber.describe(PuckCell(column:1,band:3),in:s,targetName:"Possible door"),"Obstacle.")
+        XCTAssertEqual(PointingDescriber.describe(PuckCell(column:3,band:3),in:s),"Door candidate.")
+        XCTAssertEqual(PointingDescriber.describe(PuckCell(column:4,band:1),in:s),"Obstacle.")
+        XCTAssertEqual(PointingDescriber.describe(PuckCell(column:5,band:1),in:s),"Nothing measured.")
+        XCTAssertEqual(PointingDescriber.describe(PuckCell(column:2,band:4),in:s,targetName:"Chair."),"Chair.")
     }
     func testTargetInSpanNamedFirst() {
         let t=TargetObservation(bearingDegrees:-15,distance:2.1,timestamp:1,label:"Door candidate",halfWidthDegrees:12)
         let s=CachedScene(timestamp:1,pose:.identity,tracking:true,distances:[nil,nil,1.2,nil,nil,nil,nil],target:t)
-        XCTAssertEqual(PointingDescriber.describe(PuckCell(column:2,band:3),in:s,targetName:"Possible door"),
+        XCTAssertEqual(PointingDescriber.describe(PuckCell(column:2,band:3),in:s,targetName:"Possible door"), "Possible door.")
+    }
+    func testDetailedFormKeepsDirectionAndReadings() {
+        let s=CachedScene(timestamp:1,pose:.identity,tracking:true,distances:[nil,nil,1.2,nil,nil,nil,nil],target:door)
+        XCTAssertEqual(PointingDescriber.describeDetailed(PuckCell(column:2,band:3),in:s,targetName:"Possible door"),
                        "Left: Possible door, 2.1 meters. Nearest reading 1.2 meters. The raised pin is closer than where you're pointing.")
     }
 }

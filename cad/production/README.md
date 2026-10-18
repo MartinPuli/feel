@@ -9,6 +9,8 @@ Parametric OpenSCAD rebuilt from [CAD.md](../../CAD.md). It is kept separate fro
 | `puck.scad` | Part selector: `-D part="chassis"` and so on, plus `assembly`, `derived` and the `x_*` checks |
 | `verify.py` | Exports every deliverable and runs the §5 checks. Writes `evidence/verify.{log,json}` |
 
+Shaft choice: `shaft` (4 lobes, needs ~175° of servo travel), `shaft4` (4 lobes in 120°, steeper), `shaft3` (3 lobes in 120°, row 1 never rises). Which one depends on the measured travel of the actual FS0307s; see `docs/SERVO-TRAVEL-TEST.md`.
+
 ```sh
 python3 cad/production/verify.py                     # export to stl/production/ and verify (~15 s)
 openscad --backend Manifold -D 'part="shaft3"' -o shaft3.stl cad/production/puck.scad
@@ -30,6 +32,7 @@ These checks cover geometry only. Nothing has been printed, fitted or measured.
 - **Collision sweep:** passes. All 75 intersections are empty: 4 shaft pairs × 9 angles × 2 shaft variants, plus 3 servo pairs.
 - **Horn insertion:** passes. All 10 offsets are empty for both shafts. Full insertion leaves only coincident faces, at 6e-15 mm³.
 - **Cam, `shaft`:** passes. Stroke is 2.5500, rise at the gaps is 0, neighbour rise during a ±20° tap is 0 (the selected pin dips 1.97 mm), and the hold window is ±7.02°.
+- **Cam, `shaft4` (added Oct 17, four lobes in 120°):** passes. Stroke 2.550, 0 rise at the gaps (20/60/100), 0 neighbour rise during a tap, hold window **±6.24°**. The verifier holds it to ±6 rather than CAD.md's ±7, because a 40° lobe spacing with a 5° flat cannot reach ±7; it is the widest hold that spacing allows. The tap at the firmware's 13° dips the pin 1.57 mm (vs 1.97 on `shaft`). The collision sweep covers it at 11 angles including the tap reach past both end lobes. Untested: the steeper ramps need more servo force than `shaft`.
 - **Cam, `shaft3`:** **fails one criterion.** The hold window is **±6.89°**. Stroke, gap rise and tap rise all pass, and the selected pin dips 2.14 mm.
 
 The "hold window" is the range around a band centre where lift stays at least 2.50 mm (stroke − 0.05). The spec doesn't define it. This reading gives the 4-lobe shaft ±7.02°, just inside the requirement. With `shaft3_ramp = 22.5`, the same reading gives ±6.89°. The geometry follows the spec and was not changed.
