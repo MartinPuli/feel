@@ -56,7 +56,7 @@ Lay two taped fingers **along one column** (wrist to fingers) and hold for 0.6 s
    - The codes go at the wrist end (the cable-slot end); the rounded corners go at the finger end.
    - The bare strip left at the wrist end keeps the zip-tie slots clear.
    - Four loops of tape under the corners are enough.
-   - The sheet fits only the production chassis in CAD.md.
+   - The sheet fits only the production chassis in docs/CAD.md.
 3. **Tape the pointing fingertips** with a short band (about 1 cm) of black, blue or green tape. Red, orange and yellow look too much like skin to be detected.
    - **Use black on the index finger and blue on the middle finger.** Different colours stay apart even when the fingers touch.
    - Two same-colour bands pressed together are split by the blob's length. Don't wrap tape lengthwise along a finger, or one finger can look like two.

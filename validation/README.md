@@ -1,6 +1,6 @@
 # FEEL offline specification model — SIMULATION ONLY
 
-This is newly written validation tooling based on the supplied `HANDOFF-v7.md`.
+This is newly written validation tooling based on the supplied `docs/HANDOFF-v7.md`.
 The supplied GitHub repository had no production source when inspected. Therefore
 this does **not** reuse or validate the missing iOS encoder, ESP32 decoder, CAD,
 or servo implementation. A passing result here does not clear the V2 software
