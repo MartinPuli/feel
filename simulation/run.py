@@ -31,6 +31,7 @@ REPLAY = PACKAGE / '.build/release/feel-replay'
 FIRMWARE = ROOT / 'firmware'
 FEEL_SIM = FIRMWARE / 'build/feel-sim'
 WATCHED = [PACKAGE / 'Sources', FIRMWARE / 'src', FIRMWARE / 'include', FIRMWARE / 'host', SIM / 'scenarios', SIM / 'recordings']
+ACTIVE_COLUMNS = tuple(range(1, 7))  # Six physical columns; wire slot b0 stays reserved.
 MS_OFFSET = 1000  # firmware clock = 1 s + scenario time, so CONNECT precedes every packet
 
 
@@ -128,7 +129,10 @@ def dropped(t, faults, rng):
 # ---------------------------------------------------------------- scoring
 
 def columns_of(spec):
-    return list(range(7)) if spec in (None, 'all') else list(spec)
+    columns = list(ACTIVE_COLUMNS) if spec in (None, 'all') else list(spec)
+    if not columns or len(set(columns)) != len(columns) or any(type(c) is not int or c not in ACTIVE_COLUMNS for c in columns):
+        raise ValueError('Label physical wire slots 1 through 6; b0 is checked by the reserved-slot invariant')
+    return columns
 
 
 def check_tick(expect, tick):
@@ -183,12 +187,21 @@ def score(scenario, ticks, base=0.0):
                            'firstMatch': None if first_ok is None else round(first_ok - expect['from'], 3)})
     # Flicker counts only changes between two live ticks, so going neutral on a fault is not flicker.
     live = [(a, b) for a, b in zip(ticks, ticks[1:]) if a['phone']['state'] == b['phone']['state'] == 'live' and not a['dropped'] and not b['dropped']]
-    changes = sum(1 for a, b in live for c in range(7) if a['firmware']['bands'][c] != b['firmware']['bands'][c])
+    changes = sum(1 for a, b in live for c in ACTIVE_COLUMNS if a['firmware']['bands'][c] != b['firmware']['bands'][c])
     live_seconds = sum(b['t'] - a['t'] for a, b in live) or 1e-9
     ages = [t['t'] - t['phone']['frame'] for t in ticks if t['phone']['frame'] is not None and t['phone']['state'] == 'live']
     accuracy = passed / total if total else None
-    flicker = changes / 7 / live_seconds if live else 0.0
+    flicker = changes / len(ACTIVE_COLUMNS) / live_seconds if live else 0.0
     reasons = []
+    reserved_violations = 0
+    for tick in ticks:
+        for source in ('phone', 'firmware'):
+            if tick[source]['bands'][0] != 0 or tick[source]['highlight'] == 0:
+                reserved_violations += 1
+                tick.setdefault('mismatch', []).append({'expect': 'reserved-slot', 'column': 0,
+                    'want': 'b0=0 and no highlight', 'got': source})
+    if reserved_violations:
+        reasons.append(f'reserved wire slot b0 activated in {reserved_violations} phone/firmware states')
     if total == 0 and expects:
         reasons.append('no labelled checks fell inside the timeline')
     # Every labelled window must agree on its own; a short tap dropout must not hide behind many wall checks.
@@ -201,6 +214,7 @@ def score(scenario, ticks, base=0.0):
         'accuracy': None if accuracy is None else round(accuracy, 4), 'checks': total, 'failedChecks': total - passed,
         'phantomChecks': phantom, 'missedChecks': missed,
         'bandChangesPerColumnSecond': round(flicker, 3),
+        'reservedSlotViolations': reserved_violations,
         # Modelled: simulated tick phase plus delivery latency, not a phone measurement.
         'frameAgeMs': {'mean': round(1000 * sum(ages) / len(ages), 1), 'max': round(1000 * max(ages), 1)} if ages else None,
         'expectations': per_expect, 'passed': not reasons, 'reasons': reasons,
@@ -365,6 +379,8 @@ def compare_baseline(entry, baselines: Path, update: bool):
 def status(entry):
     if 'skipped' in entry:
         return 'SKIP'
+    if entry['result'].get('reservedSlotViolations', 0):
+        return 'FAIL'  # A perception exception never waives the hardware-layout invariant.
     if not entry.get('expect'):
         return 'UNLABELLED'
     if entry['result']['passed']:

@@ -1,16 +1,67 @@
 {
   "title": "Find a door: tap column",
-  "description": "Wall 2 m ahead (all columns band 3). A door detection at bearing +16.7° (column 4) is visible from 0.5 to 4.0 s; the detector runs every ≥ 0.35 s with 0.1 s inference. Column 4 must tap while the door is detected and stop within 0.5 s after.",
+  "description": "Wall 2 m ahead (all columns band 3). A door detection at bearing +16.7\u00b0 (column 5) is visible from 0.5 to 4.0 s; the detector runs every \u2265 0.35 s with 0.1 s inference. Column 5 must tap while the door is detected and stop within 0.5 s after.",
   "scene": {
     "duration": 6,
-    "path": [{"t": 0, "x": 0, "z": 0}],
-    "objects": [{"kind": "box", "min": [-10, 0, -2.2], "max": [10, 3, -2.0], "label": "wall"}],
-    "target": {"position": [0.6, 1.0, -2.0], "label": "door", "from": 0.5, "to": 4.0, "period": 0.35, "latency": 0.1},
-    "sensor": {"noise": 0.005, "seed": 6}
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0
+      }
+    ],
+    "objects": [
+      {
+        "kind": "box",
+        "min": [
+          -10,
+          0,
+          -2.2
+        ],
+        "max": [
+          10,
+          3,
+          -2.0
+        ],
+        "label": "wall"
+      }
+    ],
+    "target": {
+      "position": [
+        0.6,
+        1.0,
+        -2.0
+      ],
+      "label": "door",
+      "from": 0.5,
+      "to": 4.0,
+      "period": 0.35,
+      "latency": 0.1
+    },
+    "sensor": {
+      "noise": 0.005,
+      "seed": 6
+    }
   },
   "expect": [
-    {"from": 0.3, "to": 6.0, "columns": "all", "band": 3, "label": "wall"},
-    {"from": 1.0, "to": 4.4, "highlight": 4, "label": "door taps column 4"},
-    {"from": 4.6, "to": 6.0, "highlight": null, "label": "tapping stops"}
+    {
+      "from": 0.3,
+      "to": 6.0,
+      "columns": "all",
+      "band": 3,
+      "label": "wall"
+    },
+    {
+      "from": 1.0,
+      "to": 4.4,
+      "highlight": 5,
+      "label": "door taps column 5"
+    },
+    {
+      "from": 4.6,
+      "to": 6.0,
+      "highlight": null,
+      "label": "tapping stops"
+    }
   ]
 }

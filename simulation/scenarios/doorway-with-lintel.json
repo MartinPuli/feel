@@ -1,20 +1,101 @@
 {
   "title": "Real doorway: 2.03 m lintel",
-  "description": "The same opening with a standard 80-inch (2.03 m) door head above it. The obstacle height window is 0.6–2.1 m, so the lintel's bottom 7 cm counts as an obstacle at 2 m and the opening reads as blocked. Labelled as the user would want it: centre clear.",
+  "description": "The same opening with a standard 80-inch (2.03 m) door head above it. The obstacle height window is 0.6\u20132.1 m, so the lintel's bottom 7 cm counts as an obstacle at 2 m and the opening reads as blocked. Labelled as the user would want it: centre clear. Six-column labels use centre slots 3 and 4; this 1 m aperture also has the narrow-opening sector limitation.",
   "knownIssue": "Obstacle height window tops out at 2.1 m (DepthProjector.sectors maxHeight), above a standard 2.03 m door head, so doorways read as blocked.",
   "scene": {
     "duration": 5,
-    "path": [{"t": 0, "x": 0, "z": 0}],
-    "objects": [
-      {"kind": "box", "min": [-10, 0, -2.2], "max": [-0.5, 3, -2.0], "label": "wall left"},
-      {"kind": "box", "min": [0.5, 0, -2.2], "max": [10, 3, -2.0], "label": "wall right"},
-      {"kind": "box", "min": [-0.5, 2.03, -2.2], "max": [0.5, 3, -2.0], "label": "door head"},
-      {"kind": "box", "min": [-10, 0, -7.2], "max": [10, 3, -7.0], "label": "far wall"}
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0
+      }
     ],
-    "sensor": {"noise": 0.005, "seed": 11}
+    "objects": [
+      {
+        "kind": "box",
+        "min": [
+          -10,
+          0,
+          -2.2
+        ],
+        "max": [
+          -0.5,
+          3,
+          -2.0
+        ],
+        "label": "wall left"
+      },
+      {
+        "kind": "box",
+        "min": [
+          0.5,
+          0,
+          -2.2
+        ],
+        "max": [
+          10,
+          3,
+          -2.0
+        ],
+        "label": "wall right"
+      },
+      {
+        "kind": "box",
+        "min": [
+          -0.5,
+          2.03,
+          -2.2
+        ],
+        "max": [
+          0.5,
+          3,
+          -2.0
+        ],
+        "label": "door head"
+      },
+      {
+        "kind": "box",
+        "min": [
+          -10,
+          0,
+          -7.2
+        ],
+        "max": [
+          10,
+          3,
+          -7.0
+        ],
+        "label": "far wall"
+      }
+    ],
+    "sensor": {
+      "noise": 0.005,
+      "seed": 11
+    }
   },
   "expect": [
-    {"from": 0.3, "to": 5.0, "columns": [3], "band": 0, "label": "opening is clear"},
-    {"from": 0.3, "to": 5.0, "columns": [0, 1, 2, 4, 5, 6], "band": 3, "label": "wall either side"}
+    {
+      "from": 0.3,
+      "to": 5.0,
+      "columns": [
+        3,
+        4
+      ],
+      "band": 0,
+      "label": "opening is clear"
+    },
+    {
+      "from": 0.3,
+      "to": 5.0,
+      "columns": [
+        1,
+        2,
+        5,
+        6
+      ],
+      "band": 3,
+      "label": "wall either side"
+    }
   ]
 }
