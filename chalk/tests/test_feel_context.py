@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from feel_chalk import anchors, room_map, venue_pack  # noqa: E402
+from feel_chalk import anchors, journeys, room_map, venue_pack  # noqa: E402
 
 try:
     from feel_context import features, queries, resolvers
@@ -105,6 +105,62 @@ class FeelContextTests(unittest.TestCase):
         self.assertEqual(room_map.from_json(structure).cells, '1b', 'one free visit among fifty is not half')
         structure, visits = resolvers.room_structure(rows[-1:] + rows[:1])
         self.assertEqual((visits, room_map.from_json(structure).cells), (2, '1b'), 'a tie goes to blocked; a row without a time still votes, as the oldest')
+
+    def test_journeys_feed_the_world_map_and_the_path_is_served_by_named_queries(self):
+        for name in ('room_id', 'user_id', 'venue_id', 'tag_id', 'session_id', 'target_label', 'started_at', 'arrived_at', 'arrival_distance_m',
+                     'steps', 'obstacles', 'cue_latency_ms', 'shared'):
+            self.assertTrue(hasattr(features.Journey, name), name)
+        for name in ('journeys', 'world_map', 'world_map_journeys'):
+            self.assertTrue(hasattr(features.RoomMemory, name), name)
+        for name in ('venue_id', 'tag_id', 'from_x', 'from_y', 'label', 'room_id', 'room', 'polyline', 'progress_points', 'length_m', 'status'):
+            self.assertTrue(hasattr(features.Path, name), name)
+        self.assertEqual(str(features.Path.room.world_map), 'path.room.world_map', 'the planner reads the room through the has-one join')
+        self.assertEqual([str(f) for f in queries.path.input], ['path.id'])
+        self.assertEqual([str(f) for f in queries.path.output], ['path.polyline', 'path.progress_points', 'path.length_m', 'path.status'])
+        self.assertEqual([str(f) for f in queries.progress_points.output], ['path.progress_points', 'path.status'])
+        self.assertEqual(queries.world_map.name, 'world_map')
+        self.assertEqual([str(f) for f in queries.world_map.output], ['room_memory.world_map', 'room_memory.world_map_journeys'])
+        self.assertIn('where shared', resolvers.JOURNEY_SQL, 'Chalk reads only journeys their owner chose to share')
+        self.assertIn('steps::text', resolvers.JOURNEY_SQL, 'the JSON columns travel as text')
+        self.assertIn('where shared', resolvers.ROOMS_SQL)
+
+    def test_path_ids_carry_the_pose_and_the_label(self):
+        self.assertEqual(resolvers.split_path_id('harvard-yard:feel-tag-01:-0.3,0.3:exit'), ('harvard-yard', 'feel-tag-01', -0.3, 0.3, 'exit'))
+        self.assertEqual(resolvers.split_path_id('v:t:1,2: Water  Fountain ')[4], 'water fountain')
+        for bad in ['harvard-yard:feel-tag-01:exit', 'v:t:0.3:exit', 'v:t:a,b:exit', 'v:t:0,0:', 'v::0,0:exit', 'v:t:0,0:a:b', 'v:t:200,0:exit']:
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):
+                    resolvers.split_path_id(bad)
+
+    def test_world_map_and_path_from_rows_match_the_shared_vector(self):
+        vector = json.loads((PROTOCOL / 'journey-v1.json').read_text())
+        now = datetime.fromisoformat(vector['now'].replace('Z', '+00:00'))
+        structure = room_map.validate(**vector['world_map']['structure']).to_json()
+        # Rows as the join hands them over: JSON columns as text, a naive time, and one row that does not validate.
+        rows = [dict(journey, steps=json.dumps(journey['steps']), obstacles=json.dumps(journey['obstacles']), cue_latency_ms=json.dumps(journey['cue_latency_ms']),
+                     started_at=datetime.fromisoformat(journey['started_at'].replace('Z', '')), id=str(i), shared=True)
+                for i, journey in enumerate(vector['journeys'])]
+        rows += [vector['stale_journey'], {'id': 'bad', 'steps': 'nope'}]
+        world, count = resolvers.room_world_map(structure, rows, now)
+        want = vector['world_map']
+        self.assertEqual(count, want['journeys'], 'the stale journey and the unusable row are not in the map')
+        self.assertEqual(room_map.from_json(world), room_map.RoomMap(want['cell_size'], want['origin_x'], want['origin_y'], want['width'], want['height'], want['cells']))
+        self.assertEqual(resolvers.room_world_map(None, [], now), (None, 0))
+        self.assertEqual(room_map.from_json(resolvers.room_world_map(structure, [], now)[0]).cells, want['structure']['cells'], 'without journeys the world map is the structure')
+        targets = anchors.to_json([anchors.Remembered('exit', -4.0, 5.1, 0.05, 4, now), anchors.Remembered('water fountain', 2.0, 2.5, 0.3, 2, now)])
+        case = vector['path']
+        got = resolvers.suggested_path(case['from'][0], case['from'][1], 'exit', world, targets)
+        self.assertEqual(got['status'], 'ok')
+        self.assertEqual(json.loads(got['polyline']), case['polyline'])
+        self.assertEqual(json.loads(got['progress_points']), case['progress_points'])
+        self.assertEqual(got['length_m'], case['length_m'])
+        self.assertEqual(resolvers.suggested_path(0.0, 0.0, 'stairs', world, targets), {'polyline': '[]', 'progress_points': '[]', 'length_m': 0.0, 'status': 'no target'})
+        self.assertEqual(resolvers.suggested_path(0.0, 0.0, 'exit', None, targets)['status'], 'no map')
+        self.assertEqual(resolvers.suggested_path(0.0, 0.0, 'exit', world, None)['status'], 'no target')
+        self.assertEqual(resolvers.suggested_path(0.0, 0.0, 'exit', 'not a map', targets)['status'], 'no map')
+        boxed = room_map.RoomMap(0.5, -0.5, -0.5, 3, 3, '4b1f4b').to_json()
+        self.assertEqual(resolvers.suggested_path(0.25, 0.25, 'exit', boxed, targets)['status'], 'no path')
+        self.assertEqual(journeys.WINDOW_DAYS, 60)
 
 
 if __name__ == '__main__':

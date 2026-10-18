@@ -1,6 +1,6 @@
 # Six-column release evidence — October 17, 2026
 
-Base: current main54f5cd7, including room-memory, venue packs, Chalk and sign-in.
+Base: main54f5cd7, then merged upstream2bf9f9b to preserve the new journey/waypoint features as well as room-memory, venue packs, Chalk and sign-in.
 V2 base0e46eb6, V3 base42626ec, V4 base5f0ff56. Version features stay isolated.
 
 ## Change
@@ -23,12 +23,12 @@ shell with its leftmost position empty; no geometry or fit claim was added.
 
 | Check | Status | Evidence |
 |---|---|---|
-| Main portable core/replay | PASS |264 tests; /tmp/feel-six-core.log; final direction/layout10 tests /tmp/feel-six-final-targeted.log |
-| Main iOS unit tests | PASS |174 tests; /tmp/feel-six-ios-final.log |
-| Main simulator interface | PASS |8 tests; /tmp/feel-six-ios.log |
+| Main portable core/replay | PASS |281 tests after the upstream journey merge; /tmp/feel-six-merged-core.log |
+| Main iOS unit tests | PASS |186 tests after the upstream merge; /tmp/feel-six-merged-ios.log |
+| Main simulator interface | PASS |8 tests before the final upstream journey merge; /tmp/feel-six-ios.log |
 | Firmware host suites / board guards | PASS | /tmp/feel-six-host-final.log; /tmp/feel-six-pin-map.log |
 | Firmware esp32 / single-live / six-live builds | PASS | /tmp/feel-six-build-final.log |
-| Main signed iPhone build19 | PASS | /tmp/feel-six-device.log |
+| Main signed iPhone build19 | PASS | /tmp/feel-six-merged-device.log |
 | V2 portable core/replay | PASS |209 tests; /tmp/feel-six-v2-core.log |
 | V3 / V4 portable core/replay | PASS |241 tests each; /tmp/feel-six-v3-core.log; /tmp/feel-six-v4-core.log |
 | V2 / V3 / V4 simulator app builds | PASS | /tmp/feel-six-v2-build.log; v3-build.log; v4-build.log |

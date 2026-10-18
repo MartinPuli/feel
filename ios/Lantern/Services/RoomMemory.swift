@@ -51,6 +51,12 @@ final class RoomMemory {
         return HeldTarget(position: sighting.frame.worldPoint(tag: target.position), label: target.label, worldEpoch: sighting.worldEpoch, setAt: uptime)
     }
 
+    /// Whether `recall` would answer for `thing`, without counting a hit or a miss.
+    func remembers(_ thing: String, worldEpoch: Int?) -> Bool {
+        guard let sighting, let worldEpoch, sighting.worldEpoch == worldEpoch else { return false }
+        return RememberedTarget.remembered(thing, in: anchors) != nil
+    }
+
     /// Keep a confirmed target for next time, in the tag frame. Nothing is kept without a tag frame from the target's world.
     @discardableResult
     func confirm(_ target: HeldTarget, confidence: Double) -> RoomAnchor? {

@@ -11,19 +11,24 @@ The features Chalk serves to FEEL's assistant, and the database they read. Deplo
 | `Venue` | venue slug | The downloadable venue pack built from its entries, with its SHA-256 |
 | `Anchor` | row id | One confirmed sighting of a target in a printed room tag's frame (x, y, z in metres), shared by its owner |
 | `RoomMap` | row id | One visit's structural map of the room behind a tag: 10 cm cells (unknown, free, blocked) in the tag's levelled frame, run-length encoded, shared by its owner |
-| `RoomMemory` | `<venue_id>:<tag_id>` | Per label, the median place of the last 20 sightings, the count, the newest time, and the spoken summary; and the room's structure merged from the newest 50 shared visits |
+| `Journey` | row id | One walk from a tag toward a remembered target: the steps, the blocked cells seen, the cue latencies, whether it arrived; shared by its owner |
+| `RoomMemory` | `<venue_id>:<tag_id>` | Per label, the median place of the last 20 sightings, the count, the newest time, and the spoken summary; the room's structure merged from the newest 50 shared visits; and the world map, that structure plus the last 60 days of shared journeys |
+| `Path` | `<venue_id>:<tag_id>:<from_x>,<from_y>:<label>` | A suggested direction over the world map from that pose to the remembered target: the polyline, the progress points every 6 m, the length and a status |
 
 Named queries pin inputs and outputs: `last_seen` (`ObjectHistory.id` → `spoken`, `last_place`,
 `last_seen_at`, `finds_count`), `venue_pack` (`Venue.id` → `pack`, `pack_sha256`), `room_anchors`
-(`RoomMemory.id` → `spoken`, `targets`, `targets_count`, `last_seen_at`) and `room_structure`
-(`RoomMemory.id` → `structure`, `structure_visits`).
+(`RoomMemory.id` → `spoken`, `targets`, `targets_count`, `last_seen_at`), `room_structure`
+(`RoomMemory.id` → `structure`, `structure_visits`), `path` (`Path.id` → `polyline`, `progress_points`,
+`length_m`, `status`) and `progress_points` (`Path.id` → `progress_points`, `status`). The scheduled query
+`world_map` recomputes `RoomMemory.world_map` daily for every room with a shared visit or journey.
 
-The sentences, the pack, the remembered places and the merged map are produced by `feel_chalk/history.py`,
-`feel_chalk/venue_pack.py`, `feel_chalk/anchors.py` and `feel_chalk/room_map.py`, the same code the local tools
-use, so `tests/test_history.py`, `tests/test_anchors.py`, `tests/test_room_map.py` and `tests/test_feel_context.py`
+The sentences, the pack, the remembered places, the maps and the path are produced by `feel_chalk/history.py`,
+`feel_chalk/venue_pack.py`, `feel_chalk/anchors.py`, `feel_chalk/room_map.py`, `feel_chalk/journeys.py` and
+`feel_chalk/path.py`, the same code the local tools use, so `tests/test_history.py`, `tests/test_anchors.py`,
+`tests/test_room_map.py`, `tests/test_journeys.py`, `tests/test_path.py` and `tests/test_feel_context.py`
 cover them without a deployment, a pack built by Chalk is byte-identical to one built locally, and the phone
-aggregates anchors and merges maps exactly as Chalk does (`protocol/room-memory-v1.json` and
-`protocol/room-map-v1.json` are the vectors both sides must reproduce).
+aggregates anchors, merges maps and scores journeys exactly as Chalk does (`protocol/room-memory-v1.json`,
+`protocol/room-map-v1.json` and `protocol/journey-v1.json` are the vectors both sides must reproduce).
 
 ## The database, and what the Supabase values are for
 
@@ -56,6 +61,7 @@ python -m feel_chalk.context last-seen --user 00000000-0000-0000-0000-0000000000
 python -m feel_chalk.context venue-pack --venue harvard-yard --output data/harvard-yard-from-chalk.json
 python -m feel_chalk.context room-anchors --venue harvard-yard --tag feel-tag-01
 python -m feel_chalk.context room-structure --venue harvard-yard --tag feel-tag-01 --output data/harvard-yard-structure.json
+python -m feel_chalk.context path --venue harvard-yard --tag feel-tag-01 --from=-0.3,0.3 --label exit
 ```
 
 The first prints "Keys: last confirmed at the kitchen table, 2 hours ago (2 finds on record)." from the
@@ -63,8 +69,10 @@ seed rows. The second writes a pack the phone accepts unchanged. The third print
 about 6 meters ahead-right, seen 4 times, last 2 hours ago; water fountain about 3 meters ahead-left, seen
 twice, last yesterday." and one line per remembered target. The fourth prints "Room structure at
 harvard-yard:feel-tag-01: 8 x 6 cells of 0.1 m, 46 remembered (38 free, 8 blocked), merged from 3 visits."
-and writes the merged map the phone reads with FeelCore `RoomMap`. A database that ran the earlier files
-before the `room_maps` table existed gets it from `sql/upgrade-room-maps.sql`.
+and writes the merged map the phone reads with FeelCore `RoomMap`. The fifth prints "Suggested direction to exit
+at harvard-yard:feel-tag-01: 7.1 m over the remembered map, 2 progress points; the live camera decides each step."
+and the two points of `protocol/journey-v1.json`. A database that ran the earlier files before the `room_maps`
+or `journeys` tables existed gets them from `sql/upgrade-room-maps.sql` and `sql/upgrade-journeys.sql`.
 
 First live deployment and the verified queries are recorded in
 [docs/evidence/chalk-context](../../docs/evidence/chalk-context/QUERIES.md).
@@ -133,6 +141,25 @@ the two empty functions still to wire; the device test of the tag this all depen
 anchor: it stays on the phone unless the user opted in, and Chalk reads only shared rows (`sql/access.sql`). It holds
 no photo, audio or GPS coordinate, and nothing in it is a claim about the room now: a remembered wall is only a reason
 for the planner to prefer another way.
+
+## Journey loop
+
+Every walk is a journey, journeys and scans make the room's map, a path is planned over that map, and holdout
+journeys score each path version. Box by box:
+
+| Box | Code |
+|---|---|
+| Journey (every walk, stored in Chalk) | `journeys` table (`sql/schema.sql`, `sql/upgrade-journeys.sql`), `Journey` feature, `feel_chalk/journeys.py` (`from_row`, `usable`); the record is `protocol/journey-v1.json` |
+| Room map, held 60 days | `RoomMemory.world_map`: `resolvers.room_world_map` merges `RoomMemory.structure` with the shared journeys of the last 60 days through `journeys.world_map` (a cell a step stood in is free, a cell an obstacle was seen in is blocked, obstacle over step, both over the structure's vote); `journeys.within_days` is the window |
+| World map, scheduled | `ScheduledQuery` `world_map` (`queries.py`), daily at 04:00 over the room ids the cron resolver `rooms_with_memory` ingests; today it combines scans (the merged structure) and journeys, floor plans and venue facts are not yet inputs |
+| Path, pose to remembered target | `Path` feature keyed `<venue>:<tag>:<from_x>,<from_y>:<label>`; `resolvers.suggested_path` reads the target from `RoomMemory.targets` and plans with `feel_chalk/path.py` (A* on half-metre cells: free 1, unknown 2, plus 1 next to a blocked cell, blocked never entered except the target); named query `path` |
+| Progress points every 6 m, for the pins | `path.progress_points` (the first 6 m in, the target last); named query `progress_points`; `context.py path` prints them |
+| Evaluation on frozen holdout journeys | `feel_chalk/journey_eval.py` over an export of the table split by `protocol/journey-holdout.json`; scores arrived, min clearance, path efficiency and cue latency p95 per journey (`journeys.score`), ranks collisions first, then efficiency, then latency (`journeys.rank`), and says `promote: yes` for a candidate export only when it is better in that order |
+
+A path is a suggested direction over remembered cells, never a claim that the way is clear or safe; the live
+camera decides each step, and the pins never read the map. Journeys are personal data like anchors (where
+someone walked and when): they stay on the phone unless the user opted in, and Chalk reads only shared rows.
+The phone's write of a journey and the device test of the whole loop are pending; nothing here is deployed yet.
 
 ## Privacy
 

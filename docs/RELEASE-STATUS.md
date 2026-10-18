@@ -6,6 +6,34 @@ macOS reports the device unavailable. Physical six-servo integration NOT VERIFIE
 See [evidence](evidence/six-columns-20261017/REPORT.md) and [wiring](SIX-COLUMN-LAYOUT.md).
 Earlier seven-column statements below describe historical revisions.
 
+> **Journey loop, Chalk side, on `claude/journey-chalk` (2026-10-17, night):** every walk from a printed tag toward a
+> remembered target is a journey (`journeys` table with its opt-in `shared` flag, `Journey` feature,
+> `feel_chalk/journeys.py`); the shared journeys of the last 60 days join the merged structure in
+> `RoomMemory.world_map` (recomputed daily by the scheduled query `world_map`); `Path` plans a suggested direction over
+> that map from a pose to a remembered label (A* on half-metre cells, `feel_chalk/path.py`) and serves the polyline and
+> progress points every 6 m through the named queries `path` and `progress_points` (`context.py path`);
+> `feel_chalk/journey_eval.py` scores frozen holdout journeys (arrived, min clearance, path efficiency, cue latency p95),
+> ranks collisions first, then efficiency, then latency, and promotes a candidate only when better in that order.
+> `protocol/journey-v1.json` is the vector both sides reproduce; `sql/upgrade-journeys.sql` is the delta for existing
+> databases. Software checks on this Mac: chalk 133 tests (10 skip without chalkpy, pass with it), `feel_context`
+> import-checked with chalkpy 2.163.1, `schema.sql`, `seed.sql`, `access.sql` and `upgrade-journeys.sql` run on a local
+> Postgres 17 with a stub `auth.uid()`. Pending: the phone's write of journeys and read of progress points, the device
+> test of the loop, the Chalk deployment (the scheduled query has never run), and the SQL against the live Postgres.
+> Nothing here is deployed yet. A path is a suggested direction, never a claim that the way is clear.
+> **Journey loop, phone side (2026-10-17, night):** every walk toward a chosen target is a `Journey` (FeelCore
+> `Journey.swift`: pose steps every 0.5 m or 2 s with a heading, the blocked floor cells seen on the trip, cue
+> latencies, arrival time and distance) recorded in the printed tag's levelled frame and kept as JSON under
+> `Application Support/Journeys` (`JourneyLog`, beside room memory); `JourneyLog.export` writes them all to
+> `Documents/journeys.json` for the Files app, and `JourneyLog.share` is the empty Supabase write. A route to a held
+> or remembered target is split once into progress points every 6 m (`ProgressPoints`, last point the target) and the
+> pins point to the next one (`WaypointFollower`, advance within 1 m, "Next point." once per point, "You're there"
+> at the end); a target without a route keeps the straight bearing, and the pins show live depth throughout. New
+> assistant tool `lead_me(label)` for a remembered place; `get_status.room_memory.journey` reports steps, obstacles
+> and the next point. `protocol/journey-v1.json` is the vector shared with Chalk. Software checks on this Mac:
+> FeelCore 276 tests, Lantern 186 unit tests on the iPhone Air simulator. NOT RUN on a device: the recorded walk of
+> a real room, the planner's route split and the pins following its points, the spoken "Next point." through the
+> assistant, and the export from the Files app. No upload yet.
+
 > **Room structure memory on `feel/room-structure` (2026-10-17, night):** with the printed tag in view, the floor grid a
 > session learned is exported into the tag's levelled frame when sensing stops or tracking resets (FeelCore `RoomMap`:
 > 10 cm cells, run-length encoded) and kept per tag as one visit (the newest ten, `RoomMemoryStore`); the first sighting

@@ -93,6 +93,23 @@ Say photo to check again." Saying photo runs the normal Where-is photo path. The
 throughout; memory only replaces the photo round trip. `ios/scripts/make_room_tag.py` redraws the tag. The tag
 recognition, the placement accuracy after relocalization and the cue have not been tested on a device yet.
 
+### Journeys and leading the way
+
+With the tag seen, every walk toward a Where-is or remembered target is recorded as a journey in the tag's frame
+(FeelCore `Journey`: a pose step every 0.5 m or 2 s, the blocked floor cells seen on the trip, cue latencies, arrival
+time and distance) and kept as one JSON file per walk under `Application Support/Journeys` (`Services/JourneyLog.swift`).
+Once the route planner has a route to the target, it is split into progress points every 6 m and the pins point to
+the next point instead of the target; within 1 m the next one takes over ("Next point."), and the last point is the
+target ("You're there"). The arrows keep following the live route, and the pins keep showing live depth: a route is a
+suggested direction, never a clear path. "Lead me to the exit" calls the `lead_me` tool for a place remembered in
+this room. `get_status.room_memory.journey` reports the walk being recorded and the point in use.
+
+To get the journeys off the phone, call `JourneyLog.export()` (from the debugger, or wire it to a button later): it
+writes every stored journey as one JSON array to `Documents/journeys.json`, which the **Files** app shows under
+**On My iPhone → FEEL** (the app lists its Documents folder there, like the depth recordings). Share it from Files
+and seed it into Chalk with `protocol/journey-v1.json` as the shape. There is no network upload yet:
+`JourneyLog.share` is the empty Supabase write. Nothing of this has run on a device.
+
 ## BLE and physical-output status
 
 Choose the intended device under **Puck connection**; the app does not automatically connect to an arbitrary puck. Packets use the UUIDs in `FeelBLE`, matching the firmware. Connection/status notifications do not prove actuation.

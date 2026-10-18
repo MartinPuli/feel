@@ -1,17 +1,18 @@
 """Resolvers: rows from Postgres, the latest confirmed find per object, the spoken sentence, the venue
-pack, and the room memory behind a printed tag (remembered targets and the room's merged structure). The
-sentences, the pack, the remembered positions and the merged map come from feel_chalk (history.py,
-venue_pack.py, anchors.py, room_map.py), so they are unit-tested without Chalk and identical to what the
-local tools and the phone compute."""
+pack, the room memory behind a printed tag (remembered targets, the room's merged structure, the world map
+with the last 60 days of shared journeys) and a suggested path over that map. The sentences, the pack, the
+remembered positions, the maps and the path come from feel_chalk (history.py, venue_pack.py, anchors.py,
+room_map.py, journeys.py, path.py), so they are unit-tested without Chalk and identical to what the local
+tools and the phone compute."""
 from __future__ import annotations
 from datetime import datetime, timezone
 import json
 
-from chalk import Now, online
+from chalk import Now, offline, online
 from chalk.features import DataFrame, Features
 
-from feel_chalk import anchors, history, room_map, venue_pack
-from .features import Anchor, Find, ObjectHistory, RoomMap, RoomMemory, Venue, VenueEntry
+from feel_chalk import anchors, history, journeys, path, room_map, venue_pack
+from .features import Anchor, Find, Journey, ObjectHistory, Path, RoomMap, RoomMemory, Venue, VenueEntry
 from .sources import feel_finds
 
 PACK_DAYS = 7
@@ -44,6 +45,20 @@ MAP_FIELDS = {"id": RoomMap.id, "user_id": RoomMap.user_id, "venue_id": RoomMap.
 MAP_SQL = ("select id::text as id, user_id::text as user_id, venue_id, tag_id, cell_size, origin_x, origin_y, width, height, cells, shared, "
            "seen_at, venue_id || ':' || tag_id as room_id from room_maps where shared and venue_id || ':' || tag_id = :room_id "
            f"order by seen_at desc limit {room_map.KEEP}")
+
+JOURNEY_FIELDS = {"id": Journey.id, "user_id": Journey.user_id, "venue_id": Journey.venue_id, "tag_id": Journey.tag_id,
+                  "session_id": Journey.session_id, "target_label": Journey.target_label, "started_at": Journey.started_at,
+                  "arrived_at": Journey.arrived_at, "arrival_distance_m": Journey.arrival_distance_m, "steps": Journey.steps,
+                  "obstacles": Journey.obstacles, "cue_latency_ms": Journey.cue_latency_ms, "shared": Journey.shared, "room_id": Journey.room_id}
+# Only journeys their owner chose to share leave that user's phone for the room's world map; the JSON columns are read as
+# text and parsed by feel_chalk.journeys. The 60-day window is applied in Python against the query's own clock.
+JOURNEY_SQL = ("select id::text as id, user_id::text as user_id, venue_id, tag_id, session_id, target_label, started_at, arrived_at, "
+               "arrival_distance_m, steps::text as steps, obstacles::text as obstacles, cue_latency_ms::text as cue_latency_ms, shared, "
+               "venue_id || ':' || tag_id as room_id from journeys where shared and venue_id || ':' || tag_id = :room_id "
+               "order by started_at desc limit 200")
+# Every room anyone shared a visit or a journey at: the rows the scheduled query world_map recomputes daily.
+ROOMS_SQL = ("select distinct venue_id || ':' || tag_id as id, venue_id, tag_id from room_maps where shared "
+             "union select distinct venue_id || ':' || tag_id as id, venue_id, tag_id from journeys where shared")
 
 
 def rows(frame: DataFrame) -> list[dict]:
@@ -184,3 +199,86 @@ def merged_structure(visits: RoomMemory.maps[RoomMap.cell_size, RoomMap.origin_x
                                              RoomMap.seen_at]) -> Features[RoomMemory.structure, RoomMemory.structure_visits]:
     structure, count = room_structure(rows(visits))
     return RoomMemory(structure=structure, structure_visits=count)
+
+
+@online
+def journeys_of_room(id: RoomMemory.id) -> DataFrame[Journey.id, Journey.user_id, Journey.venue_id, Journey.tag_id, Journey.session_id,
+                                                     Journey.target_label, Journey.started_at, Journey.arrived_at, Journey.arrival_distance_m,
+                                                     Journey.steps, Journey.obstacles, Journey.cue_latency_ms, Journey.shared, Journey.room_id]:
+    """The walks behind RoomMemory.journeys, matched to the has_many join on room_id (shared rows only)."""
+    return feel_finds.query_string(JOURNEY_SQL, fields=JOURNEY_FIELDS, args={"room_id": id}).all()
+
+
+def room_world_map(structure: str | None, journey_rows: list[dict], now: datetime) -> tuple[str | None, int]:
+    """The world map as the JSON the planner and the phone read, and how many journeys of the last 60 days are in it.
+    Rows journeys.from_row cannot use are ignored, never guessed; (None, 0) without anything remembered."""
+    merged = room_map.from_json(structure) if isinstance(structure, str) else None
+    recent = journeys.within_days(journeys.usable(journey_rows), _aware(now))
+    world = journeys.world_map(merged, recent, _aware(now))
+    return (world.to_json() if world else None, len(recent))
+
+
+@online
+def world_map_of_room(structure: RoomMemory.structure,
+                      walks: RoomMemory.journeys[Journey.user_id, Journey.venue_id, Journey.tag_id, Journey.session_id, Journey.target_label,
+                                                 Journey.started_at, Journey.arrived_at, Journey.arrival_distance_m, Journey.steps,
+                                                 Journey.obstacles, Journey.cue_latency_ms],
+                      now: Now) -> Features[RoomMemory.world_map, RoomMemory.world_map_journeys]:
+    world, count = room_world_map(structure, rows(walks), now)
+    return RoomMemory(world_map=world, world_map_journeys=count)
+
+
+@offline(cron="0 3 * * *")
+def rooms_with_memory() -> DataFrame[RoomMemory.id, RoomMemory.venue_id, RoomMemory.tag_id]:
+    """Every room with a shared visit or journey, ingested daily so the scheduled query world_map (queries.py) has
+    the RoomMemory ids to recompute."""
+    return feel_finds.query_string(ROOMS_SQL, fields={"id": RoomMemory.id, "venue_id": RoomMemory.venue_id, "tag_id": RoomMemory.tag_id}).all()
+
+
+def split_path_id(path_id: str) -> tuple[str, str, float, float, str]:
+    """Path.id "<venue_id>:<tag_id>:<from_x>,<from_y>:<label>" into its parts; raises ValueError for anything else."""
+    parts = path_id.split(":")
+    if len(parts) != 4:
+        raise ValueError(f"path id must be '<venue_id>:<tag_id>:<from_x>,<from_y>:<label>', not {path_id!r}")
+    venue_id, tag_id, pose, label = parts
+    x_text, _, y_text = pose.partition(",")
+    try:
+        from_x, from_y = float(x_text), float(y_text)
+    except ValueError:
+        raise ValueError(f"path id pose must be '<from_x>,<from_y>' in metres, not {pose!r}") from None
+    if not (abs(from_x) <= room_map.REACH and abs(from_y) <= room_map.REACH):
+        raise ValueError(f"path id pose {pose!r} is farther than {room_map.REACH:g} m from the tag")
+    label = anchors.normalize_label(label)
+    if not venue_id or not tag_id or not label:
+        raise ValueError(f"path id needs a venue, a tag and a label: {path_id!r}")
+    return venue_id, tag_id, from_x, from_y, label
+
+
+@online
+def path_key(id: Path.id) -> Features[Path.venue_id, Path.tag_id, Path.from_x, Path.from_y, Path.label, Path.room_id]:
+    venue_id, tag_id, from_x, from_y, label = split_path_id(id)
+    return Path(venue_id=venue_id, tag_id=tag_id, from_x=from_x, from_y=from_y, label=label, room_id=f"{venue_id}:{tag_id}")
+
+
+def suggested_path(from_x: float, from_y: float, label: str, world: str | None, targets: str | None) -> dict:
+    """The polyline and progress points (JSON) from a pose to the target remembered under `label`, with the length and
+    a status: "ok", "no target", "no map" or "no path". Pure, so the resolver and the tests share it."""
+    remembered = {t.label: t for t in anchors.from_json(targets)} if isinstance(targets, str) else {}
+    none = {"polyline": "[]", "progress_points": "[]", "length_m": 0.0}
+    if label not in remembered:
+        return dict(none, status="no target")
+    world_map = room_map.from_json(world) if isinstance(world, str) else None
+    if world_map is None:
+        return dict(none, status="no map")
+    target = remembered[label]
+    polyline = path.plan(world_map, (from_x, from_y), (target.x, target.y))
+    if polyline is None:
+        return dict(none, status="no path")
+    return {"polyline": json.dumps([list(p) for p in polyline]), "progress_points": json.dumps([list(p) for p in path.progress_points(polyline)]),
+            "length_m": round(path.length(polyline), 3), "status": "ok"}
+
+
+@online
+def plan_path(from_x: Path.from_x, from_y: Path.from_y, label: Path.label, world: Path.room.world_map, targets: Path.room.targets) -> Features[
+        Path.polyline, Path.progress_points, Path.length_m, Path.status]:
+    return Path(**suggested_path(from_x, from_y, label, world, targets))
