@@ -967,16 +967,42 @@ final class LanternModel:ObservableObject {
         directionReadout="Arrows: "+(observation.counts ? "V sign \(range)" : observation.vSign ? "V sign too far (\(range))" : observation.distance == nil ? "no hand" : "hand, no V (\(range))")+(listener.isListening ? " · listening" : "")+(guiding ? " · guiding" : "")
     }
 
+    /// "[V] plant": not one of the five target words, so it is a Where-is question. The request is dropped
+    /// (otherwise it would re-route to the previously selected target) and the lookup runs as if spoken
+    /// to the assistant: a remembered place answers at once, else one photo through the gateway.
+    private func heardPhrase(_ thing:String) {
+        request.reset(); pendingSign=false
+        guard Self.whereIsRefusal(mode:mode,guidance:guidanceState) == nil else { chime.play(.failure); return }
+        chime.play(.success)
+        speakLocal("Looking for the \(thing).")
+        if let line=beginWhereIs(thing,photo:false,frame:frame) { speakLocal(line) }
+    }
+
+    /// The thing to look for in a spoken phrase: leading filler dropped, at most three words, letters only.
+    static func whereIsThing(from phrase:String) -> String? {
+        let filler: Set<String>=["find","where","is","where's","wheres","the","a","an","go","to","take","me","lead","my","please","um","uh","there","it","locate","show","look","for","i","want","need"]
+        var words=phrase.lowercased().split { !$0.isLetter }.map(String.init)
+        while let first=words.first, filler.contains(first) { words.removeFirst() }
+        words=Array(words.prefix(3))
+        guard !words.isEmpty, words.contains(where: { $0.count>=3 }), TargetWord.match(phrase) == nil else { return nil }
+        return words.joined(separator:" ")
+    }
+
     private func heard(_ word:TargetWord) {
         guard mode == .live else { return }
         perform(request.heardWord(word,now:ProcessInfo.processInfo.systemUptime,selected:Self.word(finder)))
     }
 
     private func perform(_ actions:[RequestAction]) {
+        var diverted=false   // the spoken word was not a target word: it became a Where-is lookup instead
         for action in actions {
+            if diverted { continue }
             switch action {
             case .startListening: listener.start()
-            case .stopListening: listener.stop()
+            case .stopListening:
+                let phrase=listener.takeUnmatchedTranscript()
+                listener.stop()
+                if let phrase, let thing=Self.whereIsThing(from:phrase) { diverted=true; heardPhrase(thing) }
             case .sound(let sound):
                 if sound == .listening && !listener.isListening { continue }
                 chime.play(sound)

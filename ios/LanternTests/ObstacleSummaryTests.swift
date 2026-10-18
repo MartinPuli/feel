@@ -2,6 +2,16 @@ import XCTest
 @testable import Lantern
 
 final class ObstacleSummaryTests: XCTestCase {
+    func testSpokenPhraseBecomesAWhereIsThing() {
+        XCTAssertEqual(LanternModel.whereIsThing(from: "plant"), "plant")
+        XCTAssertEqual(LanternModel.whereIsThing(from: "Find the water fountain please"), "water fountain please")
+        XCTAssertEqual(LanternModel.whereIsThing(from: "where is my coffee cup"), "coffee cup")
+        XCTAssertNil(LanternModel.whereIsThing(from: "exit"), "target words stay with the finder")
+        XCTAssertNil(LanternModel.whereIsThing(from: "the door"), "target words stay with the finder")
+        XCTAssertNil(LanternModel.whereIsThing(from: "um the"), "filler alone is nothing to look for")
+        XCTAssertNil(LanternModel.whereIsThing(from: ""))
+    }
+
     func testChalkSettingsSeedOnlyWhenComplete() {
         let info: [String: Any] = ["FEEL_CHALK_KEY": "router-key-0123456789abcdef", "FEEL_CHALK_ENV": "env1", "FEEL_CHALK_HOST": "https://api.chalk.ai", "FEEL_CHALK_MODEL": "openai/gpt-6.1-sol"]
         XCTAssertEqual(ChalkConfigurationStore.configuration(fromInfo: info)?.environmentId, "env1")
