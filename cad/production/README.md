@@ -1,6 +1,6 @@
 # Pin Puck production CAD
 
-Parametric OpenSCAD rebuilt from [CAD.md](../../CAD.md). It is kept separate from the greenfield `cad/` model, whose numbers are different and unmeasured. Neither tree replaces the other.
+Parametric OpenSCAD rebuilt from [CAD.md](../../docs/CAD.md). It is kept separate from the greenfield `cad/` model, whose numbers are different and unmeasured. Neither tree replaces the other.
 
 | File | Contents |
 |---|---|
