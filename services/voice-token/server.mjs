@@ -1,22 +1,25 @@
 import { createServer } from 'node:http';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { AdmissionError, isBearer, readAdmissionConfig, readAuthMode, reserveAdmission, verifyUser } from './admission.mjs';
 
 const UPSTREAM = 'https://api.openai.com/v1/realtime/client_secrets';
 const hash = value => createHash('sha256').update(value).digest();
 
 export function readConfig(env = process.env) {
+  const authMode = readAuthMode(env);
   const config = {
+    authMode,
     apiKey: env.OPENAI_API_KEY ?? '',
     accessToken: env.FEEL_VOICE_ACCESS_TOKEN ?? '',
     port: Number(env.PORT ?? 8081),
-    requireHTTPS: env.REQUIRE_HTTPS === 'true',
+    requireHTTPS: authMode === 'supabase' || env.REQUIRE_HTTPS === 'true',
   };
   if (!/^[\x21-\x7e]{1,4096}$/.test(config.apiKey)) {
     throw new Error('Set OPENAI_API_KEY on the server.');
   }
-  if (!/^[\x21-\x7e]{32,4096}$/.test(config.accessToken)
-      || config.accessToken === config.apiKey) {
+  if (authMode === 'demo' && (!/^[\x21-\x7e]{32,4096}$/.test(config.accessToken)
+      || config.accessToken === config.apiKey)) {
     throw new Error('Set a distinct FEEL_VOICE_ACCESS_TOKEN with at least 32 characters.');
   }
   if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535) {
@@ -25,6 +28,7 @@ export function readConfig(env = process.env) {
   if (env.REQUIRE_HTTPS !== undefined && !['true', 'false'].includes(env.REQUIRE_HTTPS)) {
     throw new Error('REQUIRE_HTTPS must be true or false.');
   }
+  if (authMode === 'supabase') config.admission = readAdmissionConfig(env);
   return config;
 }
 
@@ -65,9 +69,10 @@ export function createTokenHandler(config, {
   fetchImpl = fetch,
   now = Date.now,
   upstreamTimeoutMs = 8000,
-  requestsPerMinute = 6,
+  requestsPerMinute = config.authMode === 'supabase' ? 120 : 6,
   sessionPaths = ['/session'],
 } = {}) {
+  const production = config.authMode === 'supabase';
   const allowedPaths = new Set(sessionPaths);
   const expectedAuth = hash(`Bearer ${config.accessToken}`);
   let windowStart = now();
@@ -75,7 +80,7 @@ export function createTokenHandler(config, {
   let inFlight = 0;
 
   return async (req, res) => {
-    if (config.requireHTTPS && req.headers['x-forwarded-proto'] !== 'https') {
+    if ((production || config.requireHTTPS) && req.headers['x-forwarded-proto'] !== 'https') {
       return reply(res, 426, { error: 'https_required' });
     }
     if (req.url === '/health' && req.method === 'GET') {
@@ -86,7 +91,7 @@ export function createTokenHandler(config, {
       return reply(res, 405, { error: 'method_not_allowed' }, { Allow: 'POST' });
     }
     const authorization = req.headers.authorization ?? '';
-    if (!timingSafeEqual(hash(authorization), expectedAuth)) {
+    if (production ? !isBearer(authorization) : typeof authorization !== 'string' || !timingSafeEqual(hash(authorization), expectedAuth)) {
       return reply(res, 401, { error: 'unauthorized' }, { 'WWW-Authenticate': 'Bearer' });
     }
     // No client-controlled upstream URL, session settings, or expiration.
@@ -103,6 +108,7 @@ export function createTokenHandler(config, {
     } catch {
       return reply(res, 400, { error: 'body_must_be_empty' });
     }
+    if (production && !config.admission) return reply(res, 503, { error: 'admission_unavailable' });
     const time = now();
     if (time - windowStart >= 60000) {
       windowStart = time;
@@ -123,6 +129,12 @@ export function createTokenHandler(config, {
     const cancel = () => { if (!res.writableEnded) controller.abort(); };
     res.on('close', cancel);
     try {
+      if (production) {
+        const transport = { fetchImpl, signal: controller.signal };
+        const userID = await verifyUser(authorization, config.admission, transport);
+        await reserveAdmission(userID, 'voice_session', config.admission, transport);
+        controller.signal.throwIfAborted();
+      }
       const upstream = await fetchImpl(UPSTREAM, {
         method: 'POST',
         headers: {
@@ -153,7 +165,10 @@ export function createTokenHandler(config, {
         return reply(res, 502, { error: 'invalid_voice_session' });
       }
       return reply(res, 200, { value: data.value, expires_at: data.expires_at });
-    } catch {
+    } catch (error) {
+      if (!timedOut && error instanceof AdmissionError) {
+        return reply(res, error.status, { error: error.code }, error.retryAfter ? { 'Retry-After': String(error.retryAfter) } : {});
+      }
       // Do not return or log provider bodies, errors, tokens, or request headers.
       return reply(res, timedOut ? 504 : 502, {
         error: timedOut ? 'voice_provider_timeout' : 'voice_provider_unavailable',

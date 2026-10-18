@@ -1,4 +1,5 @@
 import { reply } from './server.mjs';
+import { AdmissionError, readAdmissionConfig, readAuthMode, reserveAdmission, verifyUser } from './admission.mjs';
 
 const MAX_BODY = 2048;
 const MAX_REPLY = 131072;
@@ -27,7 +28,9 @@ export function readContextConfig(env = process.env) {
   if (rooms.length > 100 || rooms.some(x => x.split(':').length !== 2 || !x.split(':').every(p => SLUG.test(p)))) {
     throw new Error('Invalid shared room configuration');
   }
+  const production = readAuthMode(env) === 'supabase';
   return {
+    admission: production ? readAdmissionConfig(env) : null,
     supabaseOrigin: origin(env.SUPABASE_URL), publishableKey: env.SUPABASE_PUBLISHABLE_KEY,
     clientID: env.CHALK_CLIENT_ID, clientSecret: env.CHALK_CLIENT_SECRET, environmentID: env.CHALK_ENV_ID,
     engineOrigin: origin(env.CHALK_CONTEXT_ENGINE_ORIGIN), rooms: new Set(rooms),
@@ -163,15 +166,21 @@ export function createContextHandler({ loadConfig = readContextConfig, fetchImpl
     };
     const execute = async () => {
       const request = parseRequest(await requestBody(req, controller.signal), config.rooms);
-      const user = await fetchJSON(`${config.supabaseOrigin}/auth/v1/user`, {
-        method: 'GET', headers: { Authorization: authorization, apikey: config.publishableKey, Accept: 'application/json' },
-      }, 32768);
-      if (!user || typeof user.id !== 'string' || !UUID.test(user.id)) throw new ContextError(401, 'unauthorized');
-      const userID = user.id.toLowerCase();
+      let userID;
+      if (config.admission) {
+        userID = await verifyUser(authorization, config.admission, { fetchImpl, signal: controller.signal });
+      } else {
+        const user = await fetchJSON(`${config.supabaseOrigin}/auth/v1/user`, {
+          method: 'GET', headers: { Authorization: authorization, apikey: config.publishableKey, Accept: 'application/json' },
+        }, 32768);
+        if (!user || typeof user.id !== 'string' || !UUID.test(user.id)) throw new ContextError(401, 'unauthorized');
+        userID = user.id.toLowerCase();
+      }
       for (const [id, entry] of users) if (time - entry.start >= 60000) users.delete(id);
       const quota = users.get(userID) || { start: time, count: 0 };
       if (users.size >= 1024 && !users.has(userID) || ++quota.count > requestsPerMinute) throw new ContextError(429, 'rate_limited');
       users.set(userID, quota);
+      if (config.admission) await reserveAdmission(userID, `context_${request.operation}`, config.admission, { fetchImpl, signal: controller.signal });
       const grant = await fetchJSON('https://api.chalk.ai/v1/oauth/token', {
         method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ client_id: config.clientID, client_secret: config.clientSecret, grant_type: 'client_credentials' }),
@@ -189,8 +198,9 @@ export function createContextHandler({ loadConfig = readContextConfig, fetchImpl
       return { values: selectValues(data, outputs) };
     };
     try { return reply(res, 200, await Promise.race([execute(), deadline])); }
-    catch (error) { return reply(res, error instanceof ContextError ? error.status : 502,
-      { error: error instanceof ContextError ? error.code : 'context_unavailable' }); }
+    catch (error) { return reply(res, error instanceof ContextError || error instanceof AdmissionError ? error.status : 502,
+      { error: error instanceof ContextError || error instanceof AdmissionError ? error.code : 'context_unavailable' },
+      error instanceof AdmissionError && error.retryAfter ? { 'Retry-After': String(error.retryAfter) } : {}); }
     finally { clearTimeout(timer); controller.abort(); active--; }
   };
 }

@@ -35,8 +35,12 @@ No request can supply a user ID, arbitrary feature, query, token, engine URL,
 coordinates or output list. The proxy calls the configured Supabase project's
 `/auth/v1/user` endpoint for every request and uses only its verified `id` to form
 `<user UUID>:<normalized object>`. User metadata and unverified JWT claims are not
-used for identity or authorization. Supabase anonymous sign-in sessions are
-accepted if Supabase validates them; a publishable API key alone is not a session.
+used for identity or authorization. In the default demo mode, Supabase anonymous sign-in sessions are accepted if
+Supabase validates them; a publishable API key alone is not a session. With
+`FEEL_VOICE_AUTH_MODE=supabase`, a verified non-anonymous account and durable
+admission reservation are required before any Chalk credential exchange. The
+shared server admission adapter uses the verified user UUID and a fixed operation.
+See [authentication modes](README.md#authentication-modes) and [SQL setup](sql/README.md).
 
 Room data is shared only for exact `venue:tag` keys explicitly enabled by the
 server operator. Authentication alone never grants arbitrary room access. Keep
@@ -64,7 +68,9 @@ upstream error text, response bodies, user tokens or credentials are logged.
 Stable errors use `{"error":"code"}`: 400 `invalid_request`, 401 `unauthorized`,
 403 `room_not_enabled`, 413 `request_too_large`, 415 `json_required`,
 426 `https_required`, 429 `rate_limited`, 502 `context_unavailable`,
-503 `context_not_configured`, 504 `context_timeout`. All responses are non-cacheable.
+503 `context_not_configured`, 504 `context_timeout`. Production admission adds
+403 `account_required` and 503 `admission_unavailable`; durable quota denial
+returns 429 `rate_limited` with `Retry-After`. All responses are non-cacheable.
 
 ## Bounds and production gates
 
@@ -76,7 +82,9 @@ one warm function instance; its rate limits are 120 attempts per minute and
 12 authenticated queries per user per minute.
 
 These memory-local limits reset on cold starts and do not coordinate multiple
-instances. They are **not** an account-wide cost limit. Before public production
+instances. Production mode additionally requires a shared atomic database
+reservation. Neither request counts nor mint quotas are an account-wide currency
+budget. Before public production
 use, configure and verify distributed rate limits/budgets, scope the Chalk service
 credential to the necessary read features, and enable only reviewed shared rooms.
 The original demo voice session also retains its existing authentication and

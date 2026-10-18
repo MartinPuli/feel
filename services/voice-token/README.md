@@ -1,10 +1,51 @@
 # FEEL voice token service
 
-Small Node 22 service for the V1 demo phone. No packages or database. The iPhone
+Small Node 22 service with a demo mode and an opt-in authenticated mode. No npm dependencies. The iPhone
 requests an ephemeral OpenAI Realtime credential here, then streams audio directly
 to OpenAI. This service never receives camera frames or conversation audio.
 
-## Run
+## Authentication modes
+
+The current demo voice and provisioned Chalk Model Gateway flow work without a
+Supabase connection. Leave the mode unset or `demo` to keep that behavior. The
+account/RPC integration below is optional, disabled by default, and has not been
+activated. It does not make ordinary app startup depend on Supabase. Private
+shared-context reads remain an optional separately configured feature.
+
+`FEEL_VOICE_AUTH_MODE=demo` is the default and preserves the existing provisioned
+phone's access-code flow. It is not public user authentication.
+
+`FEEL_VOICE_AUTH_MODE=supabase` makes the existing bodyless `POST /session` require
+the current Supabase user access token. The server verifies it with `/auth/v1/user`
+on every request, requires a non-anonymous account, and derives the UUID from that
+response. It then reserves a durable admission through a fixed server-only RPC
+before requesting an OpenAI ephemeral credential. Caller identity, quotas and
+operation names are never accepted in the request. The response shape is unchanged.
+
+In this mode configure `OPENAI_API_KEY`, `SUPABASE_URL`,
+`SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` (or the legacy
+`SUPABASE_SERVICE_ROLE_KEY`) on the server. `FEEL_VOICE_ACCESS_TOKEN` is not used.
+HTTPS is mandatory even if the local `REQUIRE_HTTPS` setting says otherwise.
+Missing server credentials fail configuration; missing/disabled policies,
+malformed quota responses or database outages return 503 `admission_unavailable`
+without a provider request. Invalid sessions return 401, anonymous/unknown account
+status returns 403 `account_required`, and exhausted quota returns 429 with
+`Retry-After`. Auth and admission failures consume no provider call. A committed
+reservation followed by a provider failure remains consumed; no retries/refunds
+are attempted.
+
+The same explicit production mode adds durable admission and anonymous-account
+rejection to `/context`; demo mode preserves that endpoint's existing behavior.
+The operation names are fixed: `voice_session`, `context_last_seen`,
+`context_room_structure`, `context_room_anchors`.
+
+See [SQL setup and verification](sql/README.md). The reference has not been applied
+or runtime-verified here. No enabled quota policies are supplied. Until the selected
+FEEL project, RPC grants, reviewed limits and real account flow are verified, this
+is source implementation, not activated production authentication. Match the app's
+`FEEL_VOICE_AUTH_MODE=supabase` build setting before changing the server mode.
+
+## Run the default demo mode
 
 ```sh
 cd services/voice-token
@@ -37,7 +78,7 @@ the local HTTP server. Set the Vercel project's Root Directory to
 limit, and the `/session` rewrite. No framework or external runtime dependency
 is required. `public/` is intentionally empty; server source is not a static site.
 
-Configure `OPENAI_API_KEY` and `FEEL_VOICE_ACCESS_TOKEN` as sensitive Vercel environment
+For demo mode, configure `OPENAI_API_KEY` and `FEEL_VOICE_ACCESS_TOKEN` as sensitive Vercel environment
 variables for the intended deployment environment. Do not upload `.env`, pass
 secret values as command arguments, or add them to `vercel.json`. The deployment
 allowlist in `.vercelignore` excludes environment files and local project metadata.
@@ -55,9 +96,9 @@ provider calls. `/health` is a local-server route, not a deployed function route
 
 **The in-memory limits are per warm function instance.** Vercel can start multiple
 instances and replace them at any time. Cold starts reset counters, so six mints
-per minute is not a deployment-wide or account-wide limit. Use this adapter only
-for the provisioned demo phone. Add a shared atomic quota and authenticated user
-identity before a public release; a provider budget must bound account spending.
+per minute is not a deployment-wide or account-wide limit. In demo mode, use it only
+for the provisioned phone. Supabase mode additionally requires the durable atomic
+RPC before minting. A provider budget must still bound account spending.
 No deployment or live provider validation is implied by the presence of this
 configuration. Local adapter tests do not test Vercel's routing or infrastructure.
 
@@ -90,14 +131,17 @@ Responses use `Cache-Control: no-store`. Errors contain only a fixed `error` cod
 request timed out. The provider's response and error text never leave the server.
 `GET /health` returns `{ "status": "ok" }`; it does not test OpenAI connectivity.
 
-Each handler instance permits six authenticated mint attempts per minute and two
+In demo mode each handler instance permits six authenticated mint attempts per minute and two
 concurrent provider requests. Failed attempts count. Limits use constant memory
 and reset when the process restarts. This is a single-phone demo boundary,
 not user authentication. Do not use the same provisioning token across a public
 app. Rotate it in the server and phone to revoke mint access. Previously issued
 credentials and active sessions may remain usable. A public release needs user
 authentication, per-user quotas and shared rate limits before adding replicas.
-Set a provider account budget separately; the mint limit cannot bound audio spend.
+In Supabase mode an instance admits at most 120 syntactically valid requests per
+minute and two in flight, in addition to the database quotas. These local bounds
+protect resources but cannot replace shared enforcement. Set a provider account
+budget separately; mint limits cannot bound audio spend.
 
 ## Provider contract and verification
 

@@ -83,6 +83,11 @@ final class RealtimeVoiceSession: ObservableObject {
     private var userSpeaking = false
     var onCommand: ((VoiceCommand) -> [String: Any])?
     var onEnded: (() -> Void)?
+    private let userSession: () -> AuthSessionTokens?
+    private let productionBuild: Bool
+    private var voiceIdentity: VoiceUserAuthentication.Identity?
+    private var authenticationWatch: Timer?
+    var usesSignedInVoice: Bool { productionBuild || configuration?.authMode == .supabase }
     private let tokenClient: VoiceTokenFetching
     private let audio: VoiceAudioIO
     private let transportFactory: () -> VoiceTransport
@@ -141,13 +146,18 @@ final class RealtimeVoiceSession: ObservableObject {
     init(tokenClient: VoiceTokenFetching = VoiceTokenClient(), audio: VoiceAudioIO = DeviceVoiceAudio(),
          transportFactory: @escaping () -> VoiceTransport = { OpenAIVoiceWebSocket() },
          configuration: VoiceConfiguration? = nil, speaksLocally: Bool = true, silentPlaybackFallback: Bool? = nil,
+         bundleInfo: [String: Any] = Bundle.main.infoDictionary ?? [:],
+         userSession: @escaping () -> AuthSessionTokens? = { AuthModel.sessionStore.load() },
          requestPermission: @escaping (@escaping (Bool) -> Void) -> Void = { completion in
              AVAudioSession.sharedInstance().requestRecordPermission { allowed in
                  DispatchQueue.main.async { completion(allowed) }
              }
          }) {
         self.tokenClient = tokenClient; self.audio = audio; self.transportFactory = transportFactory
-        self.configuration = configuration ?? store.loadForLaunch(); self.requestPermission = requestPermission
+        self.productionBuild = VoiceConfigurationStore.hasAuthoritativeAuthMode(bundleInfo)
+        self.userSession = userSession
+        self.configuration = productionBuild ? VoiceConfigurationStore.configuration(fromInfo: bundleInfo) : (configuration ?? store.loadForLaunch())
+        self.requestPermission = requestPermission
         self.speaksLocally = speaksLocally
         self.silentPlaybackFallback = silentPlaybackFallback ?? Self.runsInSimulator
         for name in [AVAudioSession.interruptionNotification, AVAudioSession.routeChangeNotification,
@@ -192,9 +202,10 @@ final class RealtimeVoiceSession: ObservableObject {
             })
         }
     }
-    deinit { observers.forEach(NotificationCenter.default.removeObserver) }
+    deinit { authenticationWatch?.invalidate(); observers.forEach(NotificationCenter.default.removeObserver) }
 
     func saveConfiguration(endpoint: String, accessToken: String) throws {
+        guard !usesSignedInVoice else { throw VoiceConfigurationStore.StoreError.invalid }
         let config = VoiceConfiguration(endpoint: endpoint.trimmingCharacters(in: .whitespacesAndNewlines),
                                         accessToken: accessToken.trimmingCharacters(in: .whitespacesAndNewlines))
         try store.save(config)
@@ -261,11 +272,21 @@ final class RealtimeVoiceSession: ObservableObject {
         guard let configuration, configuration.isValid else {
             errorMessage = "Set up voice in Settings first."; phase = .failed; return
         }
+        if configuration.authMode == .supabase {
+            guard let identity = VoiceUserAuthentication.identity(userSession()) else {
+                errorMessage = "Sign in to your FEEL account to use voice."; phase = .failed; return
+            }
+            voiceIdentity = identity
+        }
         lastAnnouncement = .distantPast
         phase = .connecting; caption = "Opening voice"; errorMessage = ""; needsMicrophoneSettings = false
         let id = generation
+        if configuration.authMode == .supabase {
+            let watch = Timer(timeInterval: 1, repeats: true) { [weak self] _ in _ = self?.validateUserAuthentication() }
+            authenticationWatch = watch; RunLoop.main.add(watch, forMode: .common)
+        }
         requestPermission { [weak self] allowed in
-            guard let self, self.generation == id, self.isActive else { return }
+            guard let self, self.generation == id, self.isActive, self.validateUserAuthentication() else { return }
             guard allowed else {
                 self.fail("Allow Microphone in iPhone Settings so the assistant can listen.", speak: false)
                 self.needsMicrophoneSettings = true
@@ -275,15 +296,19 @@ final class RealtimeVoiceSession: ObservableObject {
             self.caption = "Connecting to OpenAI"
             self.armTimeout(id)
             self.tokenClient.fetch(configuration) { [weak self] result in
-                guard let self, self.generation == id, self.isActive else { return }
+                guard let self, self.generation == id, self.isActive, self.validateUserAuthentication() else { return }
                 switch result {
-                case .failure: self.fail("Voice couldn't connect. Check your connection and voice setup, then retry.")
+                case .failure(let error):
+                    if error as? VoiceTokenClient.TokenError == .authentication {
+                        self.disconnect(); self.errorMessage = "Sign in again to use voice."; self.phase = .failed
+                    } else { self.fail("Voice couldn't connect. Check your connection and voice setup, then retry.") }
                 case .success(let token): self.openTransport(token: token, generation: id)
                 }
             }
         }
     }
     private func openTransport(token: String, generation id: UUID) {
+        guard validateUserAuthentication() else { return }
         let connection = transportFactory()
         transport = connection
         connection.onEvent = { [weak self] event in
@@ -316,7 +341,18 @@ final class RealtimeVoiceSession: ObservableObject {
         return true
     }
 
+    /// Called before uplink/tool events and periodically while active. Logout/account changes revoke the whole session.
+    @discardableResult func validateUserAuthentication() -> Bool {
+        guard usesSignedInVoice else { return true }
+        guard let expected = voiceIdentity, let current = VoiceUserAuthentication.identity(userSession()), expected == current else {
+            disconnect(); errorMessage = "Your sign-in changed. Sign in and resume voice."; phase = .failed
+            return false
+        }
+        return true
+    }
+
     func disconnect() {
+        authenticationWatch?.invalidate(); authenticationWatch = nil; voiceIdentity = nil
         announcementDelivery = nil
         generation = UUID()
         retryWork?.cancel(); retryWork = nil
@@ -490,7 +526,7 @@ final class RealtimeVoiceSession: ObservableObject {
     }
 
     private func enqueue(_ event: [String: Any]) {
-        guard isActive else { return }
+        guard isActive, validateUserAuthentication() else { return }
         if event["type"] as? String == "input_audio_buffer.append",
            let encoded = event["audio"] as? String, let input = Data(base64Encoded: encoded) {
             // Native taps arrive every ~20 ms. A brief send delay must not exhaust
@@ -514,7 +550,7 @@ final class RealtimeVoiceSession: ObservableObject {
         outgoing.append(event); sendNext()
     }
     private func sendNext() {
-        guard !sending, !outgoing.isEmpty, let transport, isActive else { return }
+        guard !sending, !outgoing.isEmpty, let transport, isActive, validateUserAuthentication() else { return }
         sending = true
         let event = outgoing.removeFirst(), id = generation
         transport.send(event) { [weak self] success in
@@ -525,6 +561,7 @@ final class RealtimeVoiceSession: ObservableObject {
     }
 
     private func receive(_ event: [String: Any]) {
+        guard validateUserAuthentication() else { return }
         guard let type = event["type"] as? String else { return }
         switch type {
         case "session.created":

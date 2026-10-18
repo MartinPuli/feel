@@ -77,7 +77,18 @@ struct VoiceSetup: View {
                     if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                 }.buttonStyle(FeelSecondaryButtonStyle())
             }
-            if voice.isConfigured && !showSetup {
+            if voice.usesSignedInVoice {
+                Text("Voice uses your signed-in FEEL account.")
+                    .font(FeelTypography.footnote).accessibilityIdentifier("voiceAccountMode")
+                if voice.isConfigured {
+                    Button(voice.isActive ? "Pause assistant" : "Resume assistant") {
+                        if voice.isActive { voice.pauseAssistant() } else { voice.resumeAssistant() }
+                        close()
+                    }.buttonStyle(FeelPrimaryButtonStyle()).accessibilityIdentifier("startVoice")
+                } else {
+                    Text("Voice is not configured in this build.").font(FeelTypography.footnote)
+                }
+            } else if voice.isConfigured && !showSetup {
                 Button(voice.isActive ? "Pause assistant" : "Resume assistant") {
                     if voice.isActive { voice.pauseAssistant() } else { voice.resumeAssistant() }
                     close()
