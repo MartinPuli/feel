@@ -1,3 +1,39 @@
+## October 17 — V2–V4 integration and current-main validation
+
+This entry supersedes older integration and upload-default statements below.
+Useful session memory, saved-room restore, local commands, barcode finding,
+adaptive highlights and guarded Chalk intents are integrated with main `88c3900`.
+See [feature matrix and remaining gaps](VERSION-INTEGRATION.md).
+
+| Gate | Observed result |
+|---|---|
+| V1/V2 integrated native software | PASS: 268 native unit/integration tests and 12 UI tests; simulator build succeeds. |
+| Portable core | PASS: 360 tests. |
+| Deterministic six-column simulation | PASS with documented limitations: 13 scenarios ×3; 9 PASS, 4 KNOWN, 0 FAIL. Zero reserved-slot violations. |
+| Replay web diagnostics | PASS: nine tests and a local build with 13 synthetic sessions. Browser inspection unavailable. |
+| Firmware host contracts | PASS; no firmware, electrical or calibration changes in this integration. |
+| V3 software | PASS in software: local grammar, persistence/relocalization gates, barcode and tactile tests. |
+| V2/V3 physical hardware | NOT VERIFIED by this work. iPhone reports unavailable; no new install or physical test claimed. |
+| Chalk context | PASS: five direct-engine synthetic cases, twelve assertions. MCP parity FAIL; cause unproven. |
+| Chalk Python and intent backend | PASS: 135 and 36 tests respectively. |
+| Live intent quality/latency | PARTIAL MEASUREMENT; 16/19 measured cloud strict matches, 4/4 local Stop. Cloud p50 1.70 s, p95 2.55 s; 1 s latency target FAIL. |
+| Production cloud activation | NOT COMPLETE: optional intent HTTPS deployment, authenticated phone context reads and hosted FEEL eval verification remain. |
+
+Upload consent and public sharing now default off. The app requires a selected
+venue and sign-in, never invents a demo venue, and discards stale refresh/retries
+after logout, account switch or consent withdrawal. Source tests do not prove a
+phone-to-database-to-Chalk-to-phone round trip.
+
+[Chalk validation](evidence/chalk-context/INTEGRATION-VALIDATION.md),
+[live text eval](evidence/chalk-context/INTENT-EVALUATION.md), and
+[simulation evidence](../simulation/SIX-COLUMN-VALIDATION.md) retain limitations.
+The public intent service and the local timestamp fix were not deployed. A team
+notebook records FEEL context and feedback; no new support message was sent.
+
+Next human checks: reconnect/unlock the iPhone for installation; verify spoken
+commands/mute/headphones; then test real relocalization and tactile responses in
+a clear supervised area. These are device gates, not claims of certification.
+
 ## October 17 — six-column update
 
 Software checks PASS across current main and isolated V2/V3/V4; ESP32 six-live
@@ -19,6 +55,22 @@ Earlier seven-column statements below describe historical revisions.
 > `chalk/feel_context/README.md`). Software checks on this Mac: Lantern unit tests on the simulator against a stub server
 > (217 tests, 12 new, 0 failures), chalk tests (139, 6 new, 10 skipped without chalkpy). NOT RUN on a device, and no phone or simulator has queried the
 > live engine: no sentence from Chalk has been heard on a phone yet.
+> **Presence taps on `main` (2026-10-17, night):** a raised pin is felt when it moves and fades within seconds when it
+> stays (steady pressure rides on slowly adapting afferents whose firing and felt intensity decay exponentially: Chung
+> et al. 2015, Bensmaia et al. 2005), so the puck now keeps obstacle pins felt by motion. FeelCore `TapRhythm`, applied
+> to the final packet of every 100 ms tick before the adaptive highlight gate: an obstacle pin whose band has not
+> changed for 1 s drops to its gap for one packet every 1.0 s, all steady pins together. Target columns keep their own,
+> faster taps (the firmware's 13° highlight dip every 600 ms for one column, gated by the tactile profile; the
+> encoder's one-in-six drop for a span) and arrows keep their 100 ms frames, so what points at something beats faster
+> than what is merely there. Servo budget: a drop is 29° of cam, about 50 ms each way on an FS0307 unloaded (0.10 s per
+> 60°) and up to twice that under load; no period may be shorter than three packets. The replayer applies the same
+> rhythm; the simulation harness counts a one-tick drop between two identical raised bands as a tap (held longer only
+> by lost packets), reports taps per column-second and checks a tap rate per window; `find-door` now also checks the
+> wall's presence beat, and `packet-loss-failsafe` records the one cost as a known issue: a BLE blackout that begins
+> right after a drop packet leaves the firmware holding that pin down until packets resume or the watchdog fires.
+> Software checks on this Mac: FeelCore 370 tests (both targets), Lantern 268 unit tests on the simulator,
+> simulation harness: 13 scenarios, 8 pass and 5 known (doorway-open, doorway-with-lintel, find-door-slow-detector, lidar-outliers, packet-loss-failsafe), 0 fail, zero reserved-slot violations, the find-door wall column at 1.0 taps per second, baselines regenerated with the taps; three journey tests that stamp their start at instance creation fail only when the Mac is loaded and passed 12 of 12 when run alone. NOT RUN on hardware: how crisp a 29° drop feels under the cam load and whether 1 s settle and 1 s period suit
+> the wearer; both are constants in `TapRhythm` to tune on the device.
 
 > **Phone → Supabase writes on `main` (2026-10-17, night):** the phone now writes the rows Chalk reads. "Found it"
 > sends a confirmed find (`confirmed_finds`, the table behind `last_seen`, placed by venue and distance from the room's
@@ -116,6 +168,23 @@ Earlier seven-column statements below describe historical revisions.
 > has no route yet. After the merge: FeelCore + FeelSim 184 tests, Lantern 112 unit tests (1 skipped
 > in the simulator) and the UI suite pass locally. Ethan's own caveats below still hold: nothing of
 > his has run on a hand, a LiDAR map, a route or a physical column.
+
+> Steady pins, path wave and a floor that follows the wearer (October 17, field report
+> after a stair descent): (1) a sector now reports its third-nearest confident LiDAR
+> point and `SectorFilter` steadies bands between frames (nearer after two agreeing
+> frames, under 0.9 m at once; farther or unknown after four frames and 10 cm past the
+> boundary), so walking bob and stray pixels no longer flutter the pins; (2) `PathWave`
+> runs a dot from the centre column toward the route while the wearer turns, with no
+> sign, never covering a raised pin, so a one-column doorway is found by turning, and a
+> detected target that turns out of view keeps its route for 8 s; (3) calibration now
+> latches the camera's height above the floor and recomputes the floor level from the
+> worn camera every frame, so a wall at the bottom of a staircase is back inside the
+> 0.6–2.1 m window; the floor map restarts when the level moves over 0.4 m. Local
+> results: 247 FeelCore tests (19 new) and 8 FeelSim tests pass; Lantern builds for the
+> iPhone 17 Pro simulator; all 12 replay scenes pass or stay KNOWN (the LiDAR-outlier
+> scene is now a plain PASS with zero flicker; the lintel and slow-detector issues
+> remain). Replay baselines were re-accepted for the steadying delay. Not yet tried on
+> the phone: how the wave feels, the stair walk, and the turn-rate threshold.
 
 > Replay harness (October 17): `python3 simulation/run.py` replays labelled depth
 > recordings (12 synthetic scenes now; iPhone recordings via the new Lantern

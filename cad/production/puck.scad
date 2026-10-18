@@ -1,6 +1,7 @@
 // Pin Puck production CAD. Export one part:
 //   openscad --backend Manifold -D 'part="chassis"' -o chassis.stl puck.scad
 // Deliverables: chassis, guide, face, shaft, shaft3, shaft4, pins, foam_template, pack_tray.
+// pins_tall: -D 'part="pins"' -D pin_extra=1.5 (pins stand 1.5 mm higher at rest and raised).
 // Also: assembly (puck frame, -D angle=...), derived (echo only), and the x_* intersection
 // checks used by verify.py (-D angle=..., variant=3|4, offset=...).
 include <lib.scad>
@@ -11,6 +12,7 @@ variant = is_undef(variant) ? 4 : variant;
 offset = is_undef(offset) ? 0 : offset;
 
 module chassis_print() translate([0, 0, -z_bottom]) chassis();
+module chassis_loose_print() translate([0, 0, -z_bottom]) chassis_loose();
 module guide_plate_print() translate([0, 0, -z_guide_bot]) guide_plate();
 module face_plate_print() translate([0, 0, face_t]) face_plate();
 module shaft_print(v = 4) translate([0, 0, -coupling_y0]) shaft(v);
@@ -57,6 +59,7 @@ module derived() {
 }
 
 if (part == "chassis") chassis_print();
+else if (part == "chassis_loose") chassis_loose_print();
 else if (part == "guide") guide_plate_print();
 else if (part == "face") face_plate_print();
 else if (part == "shaft") shaft_print(4);
@@ -69,6 +72,8 @@ else if (part == "assembly") assembly();
 else if (part == "derived") { derived(); cube(1); }
 // Collision checks, puck frame. Every intersection must be empty.
 else if (part == "x_shaft_chassis") intersection() { shafts(angle, variant); chassis(); }
+else if (part == "x_shaft_chassis_loose") intersection() { shafts(angle, variant); chassis_loose(); }
+else if (part == "x_servo_chassis_loose") intersection() { servos(); chassis_loose(); }
 else if (part == "x_shaft_servo") intersection() { shafts(angle, variant); servos(); }
 else if (part == "x_shaft_guide") intersection() { shafts(angle, variant); guide_plate(); }
 else if (part == "x_shaft_shaft") intersection() { shafts(angle, variant, evens); shafts(angle, variant, odds); }

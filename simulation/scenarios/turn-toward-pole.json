@@ -1,16 +1,81 @@
 {
   "title": "Turn right toward a pole",
-  "description": "A 0.1 m pole stands 1 m right and 2 m ahead (bearing +26.6°, column 5). Turning right in place over 4 s brings it to the centre column. Checks the direction sign: right is column 5, turning right moves it toward column 3.",
+  "description": "A 0.1 m pole stands 1 m right and 2 m ahead (bearing +26.6\u00b0, column 5). Turning right in place over 4 s brings it to the centre pair. Checks the direction sign: right is column 5, turning right moves it toward columns 3 and 4.",
   "scene": {
     "duration": 6,
-    "path": [{"t": 0, "x": 0, "z": 0, "yaw": 0}, {"t": 4, "x": 0, "z": 0, "yaw": 26.565}],
-    "objects": [{"kind": "cylinder", "center": [1.0, -2.0], "radius": 0.1, "height": 2.0, "label": "pole"}],
-    "sensor": {"noise": 0.005, "seed": 5}
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0,
+        "yaw": 0
+      },
+      {
+        "t": 4,
+        "x": 0,
+        "z": 0,
+        "yaw": 26.565
+      }
+    ],
+    "objects": [
+      {
+        "kind": "cylinder",
+        "center": [
+          1.0,
+          -2.0
+        ],
+        "radius": 0.1,
+        "height": 2.0,
+        "label": "pole"
+      }
+    ],
+    "sensor": {
+      "noise": 0.005,
+      "seed": 5
+    }
   },
   "expect": [
-    {"from": 0.2, "to": 0.5, "columns": [5], "band": 3, "label": "pole on the right"},
-    {"from": 0.2, "to": 0.5, "columns": [0, 1, 2, 3, 4, 6], "band": 0},
-    {"from": 4.3, "to": 6.0, "columns": [3], "band": 3, "label": "pole straight ahead"},
-    {"from": 4.3, "to": 6.0, "columns": [0, 1, 2, 4, 5, 6], "band": 0}
+    {
+      "from": 0.2,
+      "to": 0.5,
+      "columns": [
+        5
+      ],
+      "band": 3,
+      "label": "pole on the right"
+    },
+    {
+      "from": 0.2,
+      "to": 0.5,
+      "columns": [
+        1,
+        2,
+        3,
+        4,
+        6
+      ],
+      "band": 0
+    },
+    {
+      "from": 4.3,
+      "to": 6.0,
+      "columns": [
+        3,
+        4
+      ],
+      "band": 3,
+      "label": "pole straight ahead"
+    },
+    {
+      "from": 4.3,
+      "to": 6.0,
+      "columns": [
+        1,
+        2,
+        5,
+        6
+      ],
+      "band": 0
+    }
   ]
 }

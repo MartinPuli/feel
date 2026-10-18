@@ -9,6 +9,12 @@ enum VoiceCommand: Equatable {
     /// `photo` asks for the camera even when room memory remembers the thing.
     case whereIs(String, photo: Bool = false)
     /// Lead the user to a remembered place along the route, one progress point at a time.
+    case rememberPlace(String), recallPlace(String), renamePlace(String, String), deletePlace(String)
+    case listPlaces, setReturnPoint, returnToPoint, stopPlaceGuidance
+    case saveWorldMap, restoreWorldMap, deleteWorldMap, startMemorySimulation
+    case moveMemorySimulation(Double), turnMemorySimulation(Double), setMemorySimulationTracking(Bool), exportJourneys
+    case setTactileProfile(AdaptiveProfile)
+    case setMemoryUploads(Bool), setSharedRoomMemory(Bool)
     case leadMe(String)
     /// Where the user last confirmed an object, from their find history on Chalk; always a past sighting.
     case lastSeen(String)
@@ -51,8 +57,16 @@ enum VoiceCommand: Equatable {
                   (0.6...2.1).contains(height.doubleValue) else { throw InvalidCommand() }
             return height.doubleValue
         }
+        func finiteNumber(_ key: String, limit: Double) throws -> Double {
+            guard args.count == 1, let value = args[key] as? NSNumber,
+                  CFGetTypeID(value) != CFBooleanGetTypeID(), value.doubleValue.isFinite,
+                  abs(value.doubleValue) <= limit else { throw InvalidCommand() }
+            return value.doubleValue
+        }
         switch name {
         case "set_direction_arrows": return .setDirectionArrows(try boolean("enabled"))
+        case "set_memory_uploads": return .setMemoryUploads(try boolean("enabled"))
+        case "set_shared_room_memory": return .setSharedRoomMemory(try boolean("enabled"))
         case "start_directions": return try noArguments(.startDirections)
         case "stop_directions": return try noArguments(.stopDirections)
         case "simulate_direction_sign": return try noArguments(.simulateDirectionSign)
@@ -90,7 +104,7 @@ enum VoiceCommand: Equatable {
                   id.utf8.allSatisfy({ (33...126).contains($0) }) else { throw InvalidCommand() }
             return .findTeammate(id)
         case "find_target":
-            let modes: [String: FinderMode] = ["obstacles": .none, "door": .door, "exit": .exit, "chair": .chair, "person": .person, "teammate": .teammate]
+            let modes: [String: FinderMode] = ["obstacles": .none, "door": .door, "exit": .exit, "chair": .chair, "person": .person, "teammate": .teammate, "barcode": .barcode]
             guard args.count == 1, let value = args["target"] as? String, let mode = modes[value] else { throw InvalidCommand() }
             return .find(mode)
         case "calibrate_floor":
@@ -109,6 +123,26 @@ enum VoiceCommand: Equatable {
                 return flag.boolValue
             } ?? false
             return .whereIs(try text("thing", limit: 60, others: args["photo"] == nil ? 0 : 1), photo: photo)
+        case "save_world_map": return try noArguments(.saveWorldMap)
+        case "restore_world_map": return try noArguments(.restoreWorldMap)
+        case "delete_world_map": return try noArguments(.deleteWorldMap)
+        case "start_memory_simulation": return try noArguments(.startMemorySimulation)
+        case "move_memory_simulation": return .moveMemorySimulation(try finiteNumber("meters", limit: 5))
+        case "turn_memory_simulation": return .turnMemorySimulation(try finiteNumber("degrees", limit: 360))
+        case "set_memory_simulation_tracking": return .setMemorySimulationTracking(try boolean("enabled"))
+        case "export_journeys": return try noArguments(.exportJourneys)
+        case "set_tactile_profile":
+            guard let profile = AdaptiveProfile(rawValue: try text("profile", limit: 16)) else { throw InvalidCommand() }
+            return .setTactileProfile(profile)
+        case "remember_place": return .rememberPlace(try text("name", limit: 40))
+        case "recall_place": return .recallPlace(try text("id", limit: 64))
+        case "rename_place":
+            return .renamePlace(try text("id", limit: 64, others: 1), try text("name", limit: 40, others: 1))
+        case "delete_place": return .deletePlace(try text("id", limit: 64))
+        case "list_places": return try noArguments(.listPlaces)
+        case "set_return_point": return try noArguments(.setReturnPoint)
+        case "return_to_point": return try noArguments(.returnToPoint)
+        case "stop_place_guidance": return try noArguments(.stopPlaceGuidance)
         case "found_it": return try noArguments(.foundIt)
         case "describe_ahead": return try noArguments(.describeAhead)
         case "lead_me": return .leadMe(try text("label", limit: 60))
@@ -127,6 +161,8 @@ enum VoiceCommand: Equatable {
                             "required": properties.keys.sorted(), "additionalProperties": false]]
         }
         return [
+            tool("set_memory_uploads", "Change uploads of future finds, room anchors, room structure and journeys. Before enabling, explain that these leave the phone and obtain the user's explicit consent. Requires sign-in and selected venue. Disabling stops future uploads; it does not delete existing cloud data.", properties: ["enabled": ["type": "boolean"]]),
+            tool("set_shared_room_memory", "Change sharing of future uploaded room records with other FEEL users. Explain who can use them and obtain explicit consent before enabling. Separate from upload consent. Disabling does not retract previously shared data.", properties: ["enabled": ["type": "boolean"]]),
             tool("set_direction_arrows", "Enable or disable tactile direction arrows when requested. Enabling does not start guidance or prove a safe route.", properties: ["enabled": ["type": "boolean"]]),
             tool("start_directions", "Start tactile arrows toward the currently selected target when requested, without requiring a hand sign. Select the requested target first if needed. Requires live sensing and arrows enabled. Report the returned pending or unavailable state; never promise safe passage."),
             tool("stop_directions", "Stop tactile direction arrows while leaving camera obstacle sensing running. For an unqualified stop, use stop instead."),
@@ -138,9 +174,26 @@ enum VoiceCommand: Equatable {
             tool("stop", "Immediately stop camera and tactile output when the user says stop. Keep listening for their next request. No confirmation needed."),
             tool("pause_assistant", "Stop microphone capture only when the user explicitly asks to pause the assistant or stop listening. Resuming then requires touching the app. For silence or mute, use set_spoken_output instead. The camera is unchanged."),
             tool("set_spoken_output", "Enable or mute FEEL's voice. Silence yourself, mute, be quiet, or silenciate means enabled=false. Speak again or unmute means enabled=true. Muting preserves listening and app control, and needs no spoken confirmation.", properties: ["enabled": ["type": "boolean"]]),
+            tool("save_world_map", "Save this mapped room and its session places on the phone, only when the user asks."),
+            tool("restore_world_map", "Load the saved room and wait for visual relocalization. The user must be in that room. No guidance starts automatically."),
+            tool("delete_world_map", "Delete the saved room when the user explicitly asks to forget it."),
+            tool("start_memory_simulation", "Start a clearly labeled memory simulation with no hardware movement."),
+            tool("move_memory_simulation", "Move only the synthetic phone in an active memory simulation. Positive meters move forward, negative backward. Never instruct a physical walk.", properties: ["meters": ["type": "number", "minimum": -5, "maximum": 5]]),
+            tool("turn_memory_simulation", "Rotate only the synthetic phone in an active memory simulation. Positive degrees turn left, negative right.", properties: ["degrees": ["type": "number", "minimum": -360, "maximum": 360]]),
+            tool("set_memory_simulation_tracking", "Simulate tracking loss or recovery in an active memory simulation.", properties: ["enabled": ["type": "boolean"]]),
+            tool("export_journeys", "When requested, export recorded journeys locally to Files on this iPhone. Does not upload or share them."),
+            tool("set_tactile_profile", "Choose the requested tactile highlight frequency; obstacle bands remain unchanged.", properties: ["profile": ["type": "string", "enum": ["standard", "reduced", "automatic"]]]),
+            tool("remember_place", "Remember the user's current position in this camera session with the supplied name.", properties: ["name": ["type": "string"]]),
+            tool("list_places", "List this session's saved places and IDs before choosing a place. Never invent an ID."),
+            tool("recall_place", "Point toward a place from list_places using its exact ID. A direction does not establish a clear route.", properties: ["id": ["type": "string"]]),
+            tool("rename_place", "Rename a saved place using its exact ID and the user's requested name.", properties: ["id": ["type": "string"], "name": ["type": "string"]]),
+            tool("delete_place", "Delete only the place the user asks to forget, using its exact ID.", properties: ["id": ["type": "string"]]),
+            tool("set_return_point", "Save the current position as the return point for this camera session."),
+            tool("return_to_point", "Point toward the saved return point; this does not prove a clear path."),
+            tool("stop_place_guidance", "Stop guidance to a saved place while continuing obstacle sensing."),
             tool("set_proactive_updates", "Enable or disable unsolicited app status announcements. Disabling them still permits spoken replies to the user's requests.", properties: ["enabled": ["type": "boolean"]]),
             tool("get_status", "Read fresh sensing, calibration, target and connection state. ALWAYS call before describing surroundings. Never reuse old readings."),
-            tool("find_target", "Select the target the user asks for. This does not confirm a detection or start the camera.", properties: ["target": ["type": "string", "enum": ["obstacles", "door", "exit", "chair", "person", "teammate"]]]),
+            tool("find_target", "Select the target the user asks for. This does not confirm a detection or start the camera.", properties: ["target": ["type": "string", "enum": ["obstacles", "door", "exit", "chair", "person", "teammate", "barcode"]]]),
             tool("where_is", "Find one thing the user names that is not in find_target's list, such as the registration desk, a water fountain or the stairs. When this room's printed FEEL tag has been seen and the thing was found here on an earlier visit, the pins point to that remembered place at once and the result says so (remembered=true): read its status as given. Otherwise it takes one camera photo and points the pins at it when found; confirm once, the result arrives a few seconds later as an observation. photo=true only when the user asks to check again with the camera, for example by saying photo.", properties: ["thing": ["type": "string", "minLength": 1, "maxLength": 60], "photo": ["type": "boolean"]]),
             tool("found_it", "The user says they found the Where-is target (found it, got it, here it is). Ends the pointing, saves the find to the user's history (for where did I last see it) and, when this room's printed FEEL tag has been seen, remembers the place for next time. Report the returned status; never claim it was remembered unless the result says so."),
             tool("describe_ahead", "The user asks what is in front of them, what you see, or what is there: one camera photo is described in one short sentence, nearest things first. Call it every time the question is asked; each call takes a new photo and the app speaks the result."),

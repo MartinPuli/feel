@@ -2,8 +2,9 @@ import Foundation
 import FeelCore
 
 /// Replays recorded frames through the app's per-frame depth step and its 10 Hz transmit tick,
-/// producing the exact packets the phone would send. Not modelled: point-to-describe freezing,
-/// direction arrows, teammate (UWB) targets and BLE transport.
+/// producing the exact packets the phone would send, including the per-frame sector steadying
+/// (`SectorFilter`). Not modelled: point-to-describe freezing, direction arrows, the path wave,
+/// teammate (UWB) targets and BLE transport.
 public struct ReplayOptions: Sendable {
     public var tickPeriod = 0.1
     /// First tick after the first frame; later ticks keep this phase.
@@ -31,7 +32,7 @@ public struct ReplayTick: Encodable, Equatable, Sendable {
 }
 
 public enum SessionReplayer {
-    struct Processed { let frame: RecordedFrame; let tracking: Bool; let distances: [Double?]; let target: TargetObservation? }
+    struct Processed { let frame: RecordedFrame; let tracking: Bool; var distances: [Double?]; let target: TargetObservation? }
 
     /// ARPerception.session(_:didUpdate:) without the Vision and floor-map side effects.
     static func process(_ frame: RecordedFrame) -> Processed {
@@ -49,21 +50,29 @@ public enum SessionReplayer {
         var sequence: UInt8=0
         var next=0
         var current: Processed?
+        var filter=SectorFilter()
+        var rhythm=TapRhythm()   // the phone's presence taps (LanternModel applies the same), so a replay shows what the puck would do
         var k=0
         while true {
             let now=first.timestamp+options.tickOffset+Double(k)*options.tickPeriod; k += 1
             if now>last.timestamp+options.tail+1e-9 { break }
-            while next<frames.count, frames[next].timestamp+options.deliveryLatency<=now+1e-9 { current=process(frames[next]); next += 1 }
+            while next<frames.count, frames[next].timestamp+options.deliveryLatency<=now+1e-9 {
+                var processed=process(frames[next]); next += 1
+                // LanternModel steadies the sector ranges once per depth frame before encoding.
+                if processed.tracking { processed.distances=filter.update(processed.distances,frameTimestamp:processed.frame.timestamp) } else { filter.reset() }
+                current=processed
+            }
             sequence &+= 1
-            // LanternModel.tick(), live mode, no pointing or arrows.
+            // LanternModel.tick(), live mode, no pointing or arrows; TapRhythm applied as the model applies it.
             guard let frame=current else {
+                rhythm.reset()
                 let packet=FeelPacket.neutral(sequence:sequence)
                 ticks.append(ReplayTick(t:now,seq:Int(sequence),hex:packet.hex,bands:packet.bands,highlight:packet.highlight,state:GuidanceState.staleDepth.rawValue,
                                         frame:nil,distances:Array(repeating:nil,count:7),targetColumns:nil,target:nil))
                 continue
             }
-            let output=TactileEncoder.encode(sequence:sequence,now:now,frameTimestamp:frame.frame.timestamp,tracking:frame.tracking,distances:frame.distances,
-                                             target:frame.target,floorCalibrated:frame.frame.floorY != nil)
+            let output=rhythm.apply(to:TactileEncoder.encode(sequence:sequence,now:now,frameTimestamp:frame.frame.timestamp,tracking:frame.tracking,distances:frame.distances,
+                                                             target:frame.target,floorCalibrated:frame.frame.floorY != nil))
             let target=frame.target.flatMap { $0.valid(at:now) && output.state == .live ? ReplayTick.Target(label:$0.label,bearing:$0.bearingDegrees,distance:$0.distance) : nil }
             ticks.append(ReplayTick(t:now,seq:Int(sequence),hex:output.packet.hex,bands:output.packet.bands,highlight:output.packet.highlight,state:output.state.rawValue,
                                     frame:frame.frame.timestamp,distances:frame.distances,targetColumns:output.targetColumns.map { Array($0) },target:target))

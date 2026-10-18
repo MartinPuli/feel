@@ -16,6 +16,7 @@ import base64
 import hashlib
 import json
 import random
+import re
 import shutil
 import struct
 import subprocess
@@ -31,6 +32,7 @@ REPLAY = PACKAGE / '.build/release/feel-replay'
 FIRMWARE = ROOT / 'firmware'
 FEEL_SIM = FIRMWARE / 'build/feel-sim'
 WATCHED = [PACKAGE / 'Sources', FIRMWARE / 'src', FIRMWARE / 'include', FIRMWARE / 'host', SIM / 'scenarios', SIM / 'recordings']
+ACTIVE_COLUMNS = tuple(range(1, 7))  # Six physical columns; wire slot b0 stays reserved.
 MS_OFFSET = 1000  # firmware clock = 1 s + scenario time, so CONNECT precedes every packet
 
 
@@ -128,18 +130,49 @@ def dropped(t, faults, rng):
 # ---------------------------------------------------------------- scoring
 
 def columns_of(spec):
-    return list(range(7)) if spec in (None, 'all') else list(spec)
+    columns = list(ACTIVE_COLUMNS) if spec in (None, 'all') else list(spec)
+    if not columns or len(set(columns)) != len(columns) or any(type(c) is not int or c not in ACTIVE_COLUMNS for c in columns):
+        raise ValueError('Label physical wire slots 1 through 6; b0 is checked by the reserved-slot invariant')
+    return columns
+
+
+def annotate_taps(ticks, max_held=3):
+    """Mark the taps. The phone drops a pin for exactly one tick between two ticks of the same raised band: steady
+    obstacle pins once a second (TapRhythm) and a target span once per six packets (the encoder's group tap). On the
+    firmware side the same tap may last longer only because the packets that would have raised the pin again were
+    lost (the firmware holds its last packet); up to `max_held` such held ticks count as the one tap.
+    tick['taps'][source] lists the columns tapping at that tick."""
+    n = len(ticks)
+    for tick in ticks:
+        tick['taps'] = {'phone': [], 'firmware': []}
+    for name in ('phone', 'firmware'):
+        for c in range(7):
+            band = lambda j: ticks[j][name]['bands'][c]
+            i = 1
+            while i < n - 1:
+                if band(i) != 0 or band(i - 1) == 0:
+                    i += 1
+                    continue
+                j = i
+                while name == 'firmware' and j + 1 < n and band(j + 1) == 0 and ticks[j + 1]['dropped'] and j + 1 - i < max_held:
+                    j += 1
+                if j + 1 < n and band(j + 1) == band(i - 1):
+                    for k in range(i, j + 1):
+                        ticks[k]['taps'][name].append(c)
+                i = j + 1
 
 
 def check_tick(expect, tick):
-    """Return (checks, failures) for one expectation at one tick. A failure is (column|None, wanted, got)."""
+    """Return (checks, failures) for one expectation at one tick. A failure is (column|None, wanted, got).
+    A tap (see annotate_taps) satisfies a band check: the pin is still that band, it is being kept felt."""
     checks, failures = 0, []
-    source = tick['firmware'] if expect.get('source', 'firmware') == 'firmware' else tick['phone']
+    name = expect.get('source', 'firmware')
+    source = tick['firmware'] if name == 'firmware' else tick['phone']
     if 'band' in expect or 'bands' in expect:
         allowed = expect['bands'] if 'bands' in expect else [expect['band']]
         for c in columns_of(expect.get('columns')):
             checks += 1
-            if source['bands'][c] not in allowed:
+            if source['bands'][c] not in allowed and not (source['bands'][c] == 0 and c in tick.get('taps', {}).get(name, [])):
                 failures.append((c, allowed, source['bands'][c]))
     if 'highlight' in expect:
         want = 255 if expect['highlight'] is None else expect['highlight']
@@ -159,8 +192,21 @@ def score(scenario, ticks, base=0.0):
     rules = {'minAccuracy': 0.95, **scenario.get('pass', {})}
     total = passed = phantom = missed = 0
     per_expect = []
+    annotate_taps(ticks)
     for index, expect in enumerate(expects):
         lo, hi = base + expect['from'] + expect.get('grace', 0), base + expect['to']
+        if 'taps' in expect:
+            # A window-level check: how often one column taps, per second, within [min, max].
+            spec, name = expect['taps'], expect.get('source', 'firmware')
+            window = [t for t in ticks if lo <= t['t'] <= hi]
+            count = sum(1 for t in window if spec['column'] in t['taps'][name])
+            rate = count / (hi - lo) if hi > lo else 0.0
+            ok = spec.get('min', 0.0) <= rate <= spec.get('max', float('inf'))
+            total += 1; passed += int(ok)
+            per_expect.append({'index': index, 'label': expect.get('label', ''), 'from': expect['from'], 'to': expect['to'],
+                               'checks': 1, 'passed': int(ok), 'accuracy': 1.0 if ok else 0.0, 'firstMatch': None,
+                               'tapsPerSecond': round(rate, 2), 'taps': count})
+            continue
         e_total = e_pass = 0
         first_ok = None
         for tick in ticks:
@@ -183,12 +229,24 @@ def score(scenario, ticks, base=0.0):
                            'firstMatch': None if first_ok is None else round(first_ok - expect['from'], 3)})
     # Flicker counts only changes between two live ticks, so going neutral on a fault is not flicker.
     live = [(a, b) for a, b in zip(ticks, ticks[1:]) if a['phone']['state'] == b['phone']['state'] == 'live' and not a['dropped'] and not b['dropped']]
-    changes = sum(1 for a, b in live for c in range(7) if a['firmware']['bands'][c] != b['firmware']['bands'][c])
+    # A tap's two moves are deliberate, so they do not count as flicker; they are reported on their own.
+    changes = sum(1 for a, b in live for c in ACTIVE_COLUMNS
+                  if a['firmware']['bands'][c] != b['firmware']['bands'][c] and c not in a['taps']['firmware'] and c not in b['taps']['firmware'])
     live_seconds = sum(b['t'] - a['t'] for a, b in live) or 1e-9
+    taps = sum(len(t['taps']['firmware']) for t in ticks if t['phone']['state'] == 'live')
     ages = [t['t'] - t['phone']['frame'] for t in ticks if t['phone']['frame'] is not None and t['phone']['state'] == 'live']
     accuracy = passed / total if total else None
-    flicker = changes / 7 / live_seconds if live else 0.0
+    flicker = changes / len(ACTIVE_COLUMNS) / live_seconds if live else 0.0
     reasons = []
+    reserved_violations = 0
+    for tick in ticks:
+        for source in ('phone', 'firmware'):
+            if tick[source]['bands'][0] != 0 or tick[source]['highlight'] == 0:
+                reserved_violations += 1
+                tick.setdefault('mismatch', []).append({'expect': 'reserved-slot', 'column': 0,
+                    'want': 'b0=0 and no highlight', 'got': source})
+    if reserved_violations:
+        reasons.append(f'reserved wire slot b0 activated in {reserved_violations} phone/firmware states')
     if total == 0 and expects:
         reasons.append('no labelled checks fell inside the timeline')
     # Every labelled window must agree on its own; a short tap dropout must not hide behind many wall checks.
@@ -201,6 +259,8 @@ def score(scenario, ticks, base=0.0):
         'accuracy': None if accuracy is None else round(accuracy, 4), 'checks': total, 'failedChecks': total - passed,
         'phantomChecks': phantom, 'missedChecks': missed,
         'bandChangesPerColumnSecond': round(flicker, 3),
+        'reservedSlotViolations': reserved_violations,
+        'tapsPerColumnSecond': round(taps / len(ACTIVE_COLUMNS) / live_seconds, 3) if live else 0.0,
         # Modelled: simulated tick phase plus delivery latency, not a phone measurement.
         'frameAgeMs': {'mean': round(1000 * sum(ages) / len(ages), 1), 'max': round(1000 * max(ages), 1)} if ages else None,
         'expectations': per_expect, 'passed': not reasons, 'reasons': reasons,
@@ -289,6 +349,12 @@ def export_web(entry, out_dir: Path):
     session_dir = out_dir / 'web' / 'sessions' / entry['name']
     if session_dir.exists():
         shutil.rmtree(session_dir)
+    # The run before this one becomes the "previous" snapshot, so /replay can compare without planning ahead.
+    latest = out_dir / 'web' / 'snapshots' / '_latest' / f"{entry['name']}.json"
+    if latest.exists():
+        previous = out_dir / 'web' / 'snapshots' / 'previous' / latest.name
+        previous.parent.mkdir(parents=True, exist_ok=True)
+        latest.replace(previous)
     session_dir.mkdir(parents=True)
     media = None
     recording = assets['recording']
@@ -343,6 +409,54 @@ def write_web_index(out_dir: Path):
     (out_dir / 'web' / 'index.json').write_text(json.dumps({'generated': time.strftime('%Y-%m-%d %H:%M:%S'), 'sessions': sessions}, indent=1) + '\n')
 
 
+# ---------------------------------------------------------------- snapshots (before/after compare on /replay)
+
+SNAPSHOT_TICK_KEYS = ('t', 'fw', 'hl', 'tap', 'state', 'dropped')
+
+
+def git_revision():
+    """Short commit, with a trailing + when tracked files are modified. None outside git."""
+    try:
+        rev = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
+        dirty = subprocess.run(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+        return rev + ('+' if dirty else '')
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def write_snapshots(entries, out_dir: Path, label: str | None):
+    """Save the commanded pins of this run under snapshots/<label>/ (and always under _latest/, which
+    becomes previous/ on the next run). /replay lists every snapshot that has the open session."""
+    generated, commit = time.strftime('%Y-%m-%d %H:%M:%S'), git_revision()
+    labels = ['_latest'] + ([label] if label else [])
+    for entry in entries:
+        if 'skipped' in entry:
+            continue
+        ticks = [{k: t[k] for k in SNAPSHOT_TICK_KEYS if k in t} | {'dist': [None if d is None else round(d, 2) for d in t['dist']]}
+                 for t in entry['ticks']]
+        for name in labels:
+            body = {'name': entry['name'], 'title': entry['title'], 'label': name, 'generated': generated, 'commit': commit,
+                    'status': status(entry), 'accuracy': entry['result']['accuracy'],
+                    'bandChangesPerColumnSecond': entry['result']['bandChangesPerColumnSecond'], 'ticks': ticks}
+            path = out_dir / 'web' / 'snapshots' / name / f"{entry['name']}.json"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(body, separators=(',', ':')))
+    index = []
+    for folder in sorted((out_dir / 'web' / 'snapshots').glob('*/')):
+        if folder.name.startswith('_'):
+            continue
+        files = sorted(folder.glob('*.json'))
+        if not files:
+            continue
+        newest = max(files, key=lambda f: f.stat().st_mtime)
+        head = json.loads(newest.read_text())
+        index.append({'label': folder.name, 'generated': head.get('generated'), 'commit': head.get('commit'), 'sessions': [f.stem for f in files]})
+    index.sort(key=lambda s: (s['label'] != 'previous', s['generated'] or ''), reverse=False)
+    (out_dir / 'web' / 'snapshots' / 'index.json').write_text(json.dumps({'snapshots': index}, indent=1) + '\n')
+    if label:
+        print(f'Snapshot "{label}" saved: compare against it from the /replay page after your next run')
+
+
 # ---------------------------------------------------------------- baselines, report, main
 
 def compare_baseline(entry, baselines: Path, update: bool):
@@ -365,6 +479,8 @@ def compare_baseline(entry, baselines: Path, update: bool):
 def status(entry):
     if 'skipped' in entry:
         return 'SKIP'
+    if entry['result'].get('reservedSlotViolations', 0):
+        return 'FAIL'  # A perception exception never waives the hardware-layout invariant.
     if not entry.get('expect'):
         return 'UNLABELLED'
     if entry['result']['passed']:
@@ -445,6 +561,7 @@ def run_all(args):
     write_report(entries, out_dir)
     print(f'Report: {out_dir / "report.html"}')
     if not args.no_web:
+        write_snapshots(entries, out_dir, args.snapshot)
         write_web_index(out_dir)
         print('Replay page: cd web && npm run dev, then open http://127.0.0.1:3000/replay')
     return not failed
@@ -462,10 +579,17 @@ def main():
     parser.add_argument('--repeat', type=int, default=1, help='run each scenario N times and require identical output')
     parser.add_argument('--update-baselines', action='store_true', help='store this run as the regression baseline')
     parser.add_argument('--no-web', action='store_true', help='skip the /replay web bundles (camera video and depth frames)')
+    parser.add_argument('--snapshot', metavar='LABEL', help='also save this run\'s pin timelines as a named snapshot, '
+                        'so /replay can show it beside a later run of the same recording (the last run is always kept as "previous")')
     parser.add_argument('--watch', action='store_true', help='rebuild and rerun whenever sources, scenarios or recordings change')
     args = parser.parse_args()
     if args.repeat < 1:
         parser.error('--repeat must be at least 1')
+    if args.snapshot is not None:
+        if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,40}', args.snapshot) or args.snapshot == 'previous':
+            parser.error('--snapshot LABEL: letters, digits, . _ -, up to 41 characters, and not "previous" (that name is kept for the last run)')
+        if args.no_web:
+            parser.error('--snapshot needs the web output; drop --no-web')
     if not args.watch:
         if not args.no_build:
             build()

@@ -1,3 +1,9 @@
+> Current integration directive: the user explicitly requested the useful V2/V3/V4
+> functions in main. Preserve the historical branches and current main behavior;
+> adapt and validate feature integrations instead of replacing main with an older
+> branch. Track the full scope in docs/VERSION-INTEGRATION.md. Physical validation
+> and the six-column hardware contract remain separate gates.
+
 > October 17 latest directive: six physical columns; GPIO32 is unused. Preserve
 > the current angle settings. Active wire slots1–6 map to GPIO33,25,26,27,14,13.
 > All application versions must use the six-column layout; retain the nine-byte

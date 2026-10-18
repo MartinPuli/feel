@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FEEL Replay</title>
-<meta name="description" content="Replay FEEL sessions: the camera recording beside the commanded 7 × 4 pin grid and the LiDAR depth it came from.">
+<meta name="description" content="Replay FEEL sessions: the camera recording beside the six-column pin grid and the LiDAR depth it came from.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -12,18 +12,18 @@
 :root {
   --bg: #fafafa; --panel: #ffffff; --ink: #0a0a0a; --muted: #666666; --faint: #8f8f8f; --line: #eaeaea; --well: #f2f2f2;
   --b1: #d93a00; --b2: #f2690d; --b3: #f5a35c; --b4: #f8d3ad; --pin-off: #e9e9e9;
-  --pass: #0f7b3f; --fail: #d1242f; --known: #a35200; --mark: #c4107a; --accent: #0068d6;
+  --pass: #0f7b3f; --fail: #d1242f; --known: #a35200; --mark: #c4107a; --accent: #0068d6; --diff: #6d28d9;
   --sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #0a0a0a; --panel: #111111; --ink: #ededed; --muted: #a1a1a1; --faint: #707070; --line: #262626; --well: #1a1a1a;
   --b1: #ff6a2b; --b2: #f2690d; --b3: #b9561c; --b4: #6b3416; --pin-off: #222222;
-  --pass: #3fcf7f; --fail: #ff5c63; --known: #f5a524; --mark: #ff4fae; --accent: #52a8ff;
+  --pass: #3fcf7f; --fail: #ff5c63; --known: #f5a524; --mark: #ff4fae; --accent: #52a8ff; --diff: #b794ff;
 } }
 :root[data-theme="dark"] {
   --bg: #0a0a0a; --panel: #111111; --ink: #ededed; --muted: #a1a1a1; --faint: #707070; --line: #262626; --well: #1a1a1a;
   --b1: #ff6a2b; --b2: #f2690d; --b3: #b9561c; --b4: #6b3416; --pin-off: #222222;
-  --pass: #3fcf7f; --fail: #ff5c63; --known: #f5a524; --mark: #ff4fae; --accent: #52a8ff;
+  --pass: #3fcf7f; --fail: #ff5c63; --known: #f5a524; --mark: #ff4fae; --accent: #52a8ff; --diff: #b794ff;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -56,7 +56,13 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .right, .left { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .topview { position: relative; aspect-ratio: 16 / 9; background: var(--well); }
 .topview canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.pins { display: grid; grid-template-columns: 34px repeat(7, 1fr); gap: 8px 10px; padding: 14px; align-items: center; }
+.pair { display: flex; flex-wrap: wrap; }
+.pins { display: grid; grid-template-columns: 34px repeat(6, 1fr); gap: 8px 10px; padding: 14px; align-items: center; flex: 1 1 200px; min-width: 0; }
+.pair.two .pins { grid-template-columns: 26px repeat(6, 1fr); gap: 6px 7px; padding: 10px 12px; }
+.pair.two .pins + .pins { border-left: 1px solid var(--line); }
+.pins .cap { grid-column: 1 / -1; font: 500 11px var(--mono); color: var(--muted); letter-spacing: 0.03em; text-transform: uppercase; }
+.pins .cap b { color: var(--diff); font-weight: 500; }
+.pin.diff { outline: 2px solid var(--diff); outline-offset: 3px; }
 .pins .lab { font: 11px var(--mono); color: var(--faint); text-align: center; }
 .pins .row { font: 11px var(--mono); color: var(--faint); text-align: right; }
 .pin { aspect-ratio: 1; border-radius: 50%; background: var(--pin-off); position: relative; transition: background-color .08s; }
@@ -66,12 +72,16 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .pin.tap { animation: tap .6s ease-in-out infinite; }
 @keyframes tap { 0%, 100% { transform: scale(1); } 15% { transform: scale(.72); } }
 @media (prefers-reduced-motion: reduce) { .pin.tap { animation: none; outline: 2px solid var(--accent); outline-offset: 3px; } }
-.ranges { display: grid; grid-template-columns: 34px repeat(7, 1fr); gap: 10px; padding: 0 14px 12px; font: 11px var(--mono); color: var(--muted); text-align: center; }
+.ranges { display: grid; grid-template-columns: 34px repeat(6, 1fr); gap: 10px; padding: 0 14px 12px; font: 11px var(--mono); color: var(--muted); text-align: center; }
 .depth { position: relative; aspect-ratio: 4 / 3; background: var(--well); }
 .depth canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .transport { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; flex-wrap: wrap; }
 .transport button { font: 500 13px var(--sans); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 14px; cursor: pointer; }
 .transport button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); min-width: 76px; }
+#compare { flex: 0 1 auto; min-width: 170px; max-width: 300px; font-size: 13px; padding: 6px 28px 6px 8px; }
+.transport .diffnav { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.transport .diffnav button { border: 0; border-radius: 0; padding: 7px 10px; }
+.transport .diffnav button + button { border-left: 1px solid var(--line); }
 .transport input[type=range] { flex: 1; min-width: 140px; accent-color: var(--ink); }
 .clock { font: 13px var(--mono); min-width: 120px; text-align: right; }
 .speed { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
@@ -94,6 +104,31 @@ th { font-weight: 500; color: var(--muted); }
 td.num { font-family: var(--mono); }
 .bad { color: var(--fail); }
 .section { margin-top: 16px; }
+.unit-tests { margin: 16px 0; }
+.unit-tests .info { padding-bottom: 10px; }
+.unit-tests .summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+.unit-tests .summary strong { font: 500 16px var(--mono); }
+.unit-tests .summary time { color: var(--muted); font-size: 12px; }
+.unit-tests details { border-top: 1px solid var(--line); }
+.unit-tests summary { padding: 9px 14px; cursor: pointer; font-weight: 500; }
+.unit-tests summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.unit-tests .test-list { padding: 0 14px 12px 30px; margin: 0; color: var(--muted); font: 12px/1.8 var(--mono); }
+.unit-tests .test-list .FAILED { color: var(--fail); }
+.unit-tests .test-list .PASSED { color: var(--pass); }
+.pin-diagnostics { margin: 16px 0; }
+.pin-diagnostics .hardware-note { color: var(--muted); font-size: 12px; margin: 0 14px 12px; }
+.pin-diagnostics details { border-top: 1px solid var(--line); }
+.pin-diagnostics summary { padding: 9px 14px; cursor: pointer; font-weight: 500; }
+.pin-diagnostics summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.pin-diagnostics table { margin: 0 14px 12px; width: calc(100% - 28px); }
+.pin-diagnostics .packet { font: 11px var(--mono); color: var(--muted); }
+.pin-diagnostics .UNVERIFIED { color: var(--muted); }
+.pin-checks { padding: 0 14px 14px; }
+.pin-checks h3 { margin: 0 0 6px; font-size: 12px; font-weight: 500; color: var(--muted); }
+.pin-checks td, .pin-checks th { padding: 5px 8px; }
+.pin-checks .PASS { color: var(--pass); }
+.pin-checks .FAIL { color: var(--fail); font-weight: 600; }
+.pin-checks .UNCHECKED { color: var(--faint); }
 .jump { font: 12px var(--sans); color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
 .note { color: var(--faint); font-size: 12px; margin-top: 16px; }
 .toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
@@ -112,6 +147,16 @@ td.num { font-family: var(--mono); }
     </div>
   </header>
 
+  <section class="panel unit-tests" aria-labelledby="unitTestHead">
+    <div class="head"><h2 id="unitTestHead">Swift unit tests</h2><span id="unitTestSummary">No results yet</span></div>
+    <div class="info" id="unitTestContent">Run <code>python3 simulation/unit_tests.py</code> from the project root, then reload this page.</div>
+  </section>
+
+  <section class="panel pin-diagnostics" aria-labelledby="pinDiagnosticHead">
+    <div class="head"><h2 id="pinDiagnosticHead">Pin command checks</h2><span id="pinDiagnosticSummary">No results yet</span></div>
+    <div class="info" id="pinDiagnosticContent">Run <code>python3 simulation/pin_diagnostics.py</code> from the project root, then reload this page.</div>
+  </section>
+
   <div id="app" hidden>
     <div class="stage">
       <div class="left">
@@ -125,8 +170,8 @@ td.num { font-family: var(--mono); }
         </div>
       </section>
       <section class="panel" aria-labelledby="topHead">
-        <div class="head"><h2 id="topHead">Top view</h2><span id="topNote">LiDAR points from above · forward is up</span></div>
-        <div class="topview"><canvas id="top" aria-label="Depth points seen from above, with the seven column sectors and their commanded bands"></canvas></div>
+        <div class="head"><h2 id="topHead">Top view</h2><span id="topNote">LiDAR points from above · six columns</span></div>
+        <div class="topview"><canvas id="top" aria-label="Depth points seen from above, with six physical column sectors and their commanded bands"></canvas></div>
         <div class="legend" style="padding-top:0">
           <span><span class="sw" style="background:var(--ink)"></span>obstacle height 0.6–2.1 m</span>
           <span><span class="sw" style="background:var(--faint)"></span>other heights (floor, low, overhead)</span>
@@ -136,9 +181,10 @@ td.num { font-family: var(--mono); }
       </div>
       <div class="right">
         <section class="panel" aria-labelledby="pinHead">
-          <div class="head"><h2 id="pinHead">Pin grid</h2><span id="pinNote">as commanded by the firmware</span></div>
-          <div class="pins" id="pins" role="img"></div>
+          <div class="head"><h2 id="pinHead">Pin grid</h2><span id="pinNote">six physical columns · wire slot 0 reserved</span></div>
+          <div class="pair" id="pins" role="img"><div class="pins" id="pinsNow"></div><div class="pins" id="pinsThen" hidden></div></div>
           <div class="ranges" id="ranges" aria-hidden="true"></div>
+          <div class="pin-checks" id="pinChecks" aria-live="polite"></div>
         </section>
         <section class="panel" aria-labelledby="depthHead">
           <div class="head"><h2 id="depthHead">LiDAR depth</h2><span id="depthNote"></span></div>
@@ -155,6 +201,10 @@ td.num { font-family: var(--mono); }
       <input id="scrub" type="range" min="0" max="1000" value="0" step="1" aria-label="Time">
       <span class="clock" id="clock">0.00 s</span>
       <label class="toggle"><input type="checkbox" id="showCols" checked> column guides</label>
+      <label class="toggle" id="compareWrap" hidden>compare <select id="compare" aria-label="Snapshot to compare with"></select></label>
+      <span class="diffnav" id="diffNav" role="group" aria-label="Step between differences" hidden>
+        <button id="prevDiff" type="button" title="Previous difference ([)">◀ diff</button><button id="nextDiff" type="button" title="Next difference (])">diff ▶</button>
+      </span>
       <button id="export" type="button" title="Record a 1920 × 1080 video of this replay">Export video</button>
       <a id="download" hidden></a>
     </div>
@@ -168,6 +218,7 @@ td.num { font-family: var(--mono); }
         <span><span class="sw" style="background:var(--b4)"></span>4 · up to 4 m</span>
         <span><span class="sw" style="background:var(--accent)"></span>tapping</span>
         <span><span class="sw" style="background:var(--mark)"></span>disagrees with label</span>
+        <span id="diffLegend" hidden><span class="sw" style="background:var(--diff)"></span>differs from snapshot · each row: now on top, snapshot below</span>
         <span>bars below: labelled windows</span>
       </div>
       <div class="metrics" id="metrics"></div>
@@ -181,22 +232,35 @@ td.num { font-family: var(--mono); }
     <p class="note">Pins and packets come from the production Swift encoder and C++ firmware controller replaying the recorded depth. Servo motion and how the pins feel are not simulated. Simulated sessions show a rendered view of an idealised scene.</p>
   </div>
   <p id="empty" hidden>No replay sessions yet. Run <code>python3 simulation/run.py</code>, then reload.</p>
+  <p class="note" id="compareHelp" hidden>To compare two versions of the grid code on this recording: run <code>python3 simulation/run.py --snapshot before</code>, change the code, run again, then pick <code>before</code> in the compare menu. The previous run is always available as <code>previous</code>.</p>
 </div>
 
 <script>
 const $ = id => document.getElementById(id);
 const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-const COLUMN_EDGES = Array.from({ length: 8 }, (_, k) => -45 + k * 90 / 7);
+const ACTIVE_SLOTS = [1, 2, 3, 4, 5, 6];
+const COLUMN_LABELS = ['L3', 'L2', 'L1', 'R1', 'R2', 'R3'];
+const COLUMN_EDGES = Array.from({ length: 7 }, (_, k) => -45 + k * 90 / 6);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function validReport(report) {
+  return report && ['PASS', 'FAIL'].includes(report.status) &&
+    ['total', 'passed', 'failed'].every(k => Number.isInteger(report[k]) && report[k] >= 0) &&
+    report.passed + report.failed <= report.total &&
+    (report.status !== 'PASS' || (report.total > 0 && report.failed === 0));
+}
 const STATE_TEXT = { live: null, trackingLost: 'TRACKING LOST · pins neutral', staleDepth: 'NO FRESH DEPTH · pins neutral', uncalibrated: 'FLOOR NOT CALIBRATED · pins neutral', invalidFrame: 'INVALID FRAME · pins neutral' };
 
 let index = [], session = null, depthFrames = new Map(), t = 0, playing = false, speed = 1, lastFrameTime = 0, tickIndex = 0;
+let snapshots = [], compare = null;   // compare: { label, snap, aligned[], diffs[], diffSet }
 const video = $('video');
 
 async function load() {
+  loadUnitTests();
+  loadPinDiagnostics();
   let data;
   try { data = await (await fetch('data/index.json', { cache: 'no-cache' })).json(); } catch { data = { sessions: [] }; }
   index = data.sessions || [];
+  try { snapshots = (await (await fetch('data/snapshots/index.json', { cache: 'no-cache' })).json()).snapshots || []; } catch { snapshots = []; }
   if (!index.length) { $('empty').hidden = false; return; }
   const select = $('session');
   const groups = [['iphone', 'Phone recordings'], ['synthetic', 'Simulated scenes']];
@@ -219,6 +283,60 @@ async function load() {
   await open(select.value);
 }
 
+async function loadPinDiagnostics() {
+  try {
+    const response = await fetch('data/pin-diagnostics.json', { cache: 'no-cache' });
+    if (!response.ok) return;
+    const report = await response.json();
+    if (!validReport(report)) throw new Error("Invalid report");
+    const summary = $('pinDiagnosticSummary');
+    summary.textContent = `${report.status} · ${report.passed}/${report.total} command paths`;
+    summary.className = report.status === 'PASS' ? 'PASS' : 'FAIL';
+    const groups = new Map();
+    for (const check of report.cases || []) {
+      const key = `${check.label} · slot ${check.slot} · GPIO ${check.gpio}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(check);
+    }
+    const rows = [...groups.entries()].map(([title, checks]) => {
+      const failed = checks.find(check => check.status !== 'PASS');
+      const detail = checks.map(check => `<tr>
+        <td>Band ${esc(check.expectedBand)}</td><td>${check.actualBands?.[check.slot] ? `Band ${esc(check.actualBands[check.slot])}` : 'Down'}</td>
+        <td>${esc(check.actualAngleDeg)}°</td><td>${esc(check.actualPulseUs)} µs</td>
+        <td class="${check.status === 'PASS' ? 'PASS' : 'FAIL'}">${check.status === 'PASS' ? 'PASS' : esc(check.firstFailure)}</td>
+        <td class="packet">${esc(check.packetHex)}</td></tr>`).join('');
+      return `<details${failed ? ' open' : ''}><summary>${esc(title)} · ${failed ? `FAIL: ${esc(failed.firstFailure)}` : 'PASS'}</summary>
+        <table><thead><tr><th>Expected</th><th>Firmware band</th><th>Angle</th><th>Pulse</th><th>Result</th><th>App packet</th></tr></thead><tbody>${detail}</tbody></table></details>`;
+    }).join('');
+    const note = '<p class="hardware-note">Software command checks only. Physical movement remains unverified.</p>';
+    $('pinDiagnosticContent').innerHTML = `<div class="summary"><strong>${report.status === 'PASS' ? 'Software command paths passed' : 'A software command path failed'}</strong><time>Run ${esc(new Date(report.generatedAt).toLocaleString())}</time></div>${note}${rows}`;
+  } catch {
+    // Keep the local run instructions visible until the report exists.
+  }
+}
+
+async function loadUnitTests() {
+  try {
+    const response = await fetch('data/unit-tests.json', { cache: 'no-cache' });
+    if (!response.ok) return;
+    const report = await response.json();
+    if (!validReport(report)) throw new Error("Invalid report");
+    const summary = $('unitTestSummary');
+    summary.textContent = `${report.status} · ${report.passed}/${report.total} passed · ${report.failed} failed`;
+    summary.className = report.status === 'PASS' ? 'PASS' : 'FAIL';
+    const generated = new Date(report.generatedAt);
+    const suites = (report.suites || []).map(suite => {
+      const tests = suite.tests.map(test => `<li class="${esc(test.status)}">${esc(test.status)} · ${esc(test.name)}</li>`).join('');
+      return `<details><summary>${esc(suite.name)} · ${esc(suite.passed)}/${esc(suite.total)} passed${suite.failed ? ` · ${esc(suite.failed)} failed` : ''}</summary><ul class="test-list">${tests}</ul></details>`;
+    }).join('');
+    const errors = (report.errors || []).length
+      ? `<p class="bad">${report.errors.map(esc).join('<br>')}</p>` : '';
+    $('unitTestContent').innerHTML = `<div class="summary"><strong>${report.status === 'PASS' ? 'Reported software checks passed' : 'Some software checks failed'}</strong><time>Run ${esc(generated.toLocaleString())}</time></div>${errors}${suites}`;
+  } catch {
+    // Keep the local run instructions visible until the report exists.
+  }
+}
+
 async function open(name) {
   stopExport(false); pause();
   const url = new URL(location.href); url.searchParams.set('session', name); history.replaceState(null, '', url);
@@ -238,9 +356,47 @@ async function open(name) {
     video.removeAttribute('src'); video.load(); video.hidden = true; $('noVideo').hidden = false; $('camNote').textContent = '';
   }
   $('depthNote').textContent = session.depth ? `${session.depth.w} × ${session.depth.h} · near = warm` : 'no depth';
-  renderInfo(); renderMetrics(); renderEvents();
+  renderInfo(); renderEvents();
+  const available = snapshots.filter(s => s.sessions.includes(name));
+  $('compareWrap').hidden = !available.length; $('compareHelp').hidden = available.length > 0 || session.source !== 'iphone';
+  $('compare').innerHTML = '<option value="">off</option>' + available.map(s =>
+    `<option value="${esc(s.label)}">${esc(s.label)}${s.commit ? ' · ' + esc(s.commit) : ''}${s.generated ? ' · ' + esc(s.generated.slice(5, 16)) : ''}</option>`).join('');
+  const wantedCompare = new URLSearchParams(location.search).get('compare') || $('compare').dataset.last || '';
+  await setCompare(available.some(s => s.label === wantedCompare) ? wantedCompare : '');
   seek(session.ticks[0]?.t ?? 0);
   resize();
+}
+
+// Compare mode: a snapshot of an earlier run of the same recording (simulation/run.py --snapshot LABEL, or
+// "previous" for the run before this one), aligned to the current ticks by time.
+async function setCompare(label) {
+  compare = null;
+  if (label) {
+    try {
+      const snap = await (await fetch(`data/snapshots/${encodeURIComponent(label)}/${encodeURIComponent(session.name)}.json`, { cache: 'no-cache' })).json();
+      const byTime = new Map(snap.ticks.map(k => [k.t.toFixed(3), k]));
+      const nearest = time => {   // snapshot tick within 60 ms, when tick phases differ
+        let lo = 0, hi = snap.ticks.length - 1;
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (snap.ticks[mid].t < time) lo = mid + 1; else hi = mid; }
+        const best = [snap.ticks[lo], snap.ticks[lo - 1]].filter(Boolean).sort((a, b) => Math.abs(a.t - time) - Math.abs(b.t - time))[0];
+        return best && Math.abs(best.t - time) <= 0.06 ? best : null;
+      };
+      const aligned = session.ticks.map(k => byTime.get(k.t.toFixed(3)) ?? nearest(k.t));
+      const differs = (a, b) => !b || a.fw.some((v, c) => v !== b.fw[c]) || a.hl !== b.hl || !!a.tap !== !!b.tap;
+      const diffs = []; aligned.forEach((b, i) => { if (differs(session.ticks[i], b)) diffs.push(i); });
+      compare = { label, snap, aligned, diffs, diffSet: new Set(diffs) };
+    } catch { compare = null; }
+  }
+  $('compare').value = compare ? compare.label : ''; $('compare').dataset.last = compare ? compare.label : '';
+  const url = new URL(location.href); if (compare) url.searchParams.set('compare', compare.label); else url.searchParams.delete('compare'); history.replaceState(null, '', url);
+  $('diffNav').hidden = $('diffLegend').hidden = $('pinsThen').hidden = !compare; $('pins').classList.toggle('two', !!compare);
+  $('pinHead').textContent = compare ? 'Pin grid: now vs snapshot' : 'Pin grid';
+  renderMetrics(); draw();
+}
+function jumpDiff(dir) {
+  if (!compare || !compare.diffs.length) return;
+  const d = compare.diffs, i = dir > 0 ? (d.find(i => i > tickIndex) ?? d[0]) : (d.slice().reverse().find(i => i < tickIndex) ?? d[d.length - 1]);
+  pause(); seek(session.ticks[i].t);
 }
 
 const start = () => session.ticks[0].t, end = () => session.ticks[session.ticks.length - 1].t;
@@ -296,7 +452,7 @@ function expectedAt(time) {
   for (const e of session.expect) {
     if (rel < e.from + (e.grace || 0) || rel > e.to) continue;
     if ('band' in e || 'bands' in e) {
-      const cols = e.columns === undefined || e.columns === 'all' ? [0, 1, 2, 3, 4, 5, 6] : e.columns;
+      const cols = e.columns === undefined || e.columns === 'all' ? ACTIVE_SLOTS : e.columns;
       cols.forEach(c => want[c] = 'band' in e ? [e.band] : e.bands);
     }
     if ('highlight' in e) highlight = e.highlight;
@@ -304,21 +460,48 @@ function expectedAt(time) {
   return { want, highlight };
 }
 
-function drawPins(tick) {
+function pinsHtml(tick, other, caption) {
   const { want } = expectedAt(tick.t);
-  let html = '<div></div>' + ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].map(c => `<div class="lab">${c}</div>`).join('');
+  let html = (caption ? `<div class="cap">${caption}</div>` : '') + '<div></div>' + COLUMN_LABELS.map(c => `<div class="lab">${c}</div>`).join('');
   for (let band = 4; band >= 1; band--) {
     html += `<div class="row">${band === 4 ? 'far' : band === 1 ? 'near' : ''}</div>`;
-    for (let c = 0; c < 7; c++) {
+    for (const c of ACTIVE_SLOTS) {
       const up = tick.fw[c] === band, labelled = want[c]?.includes(band), wrong = want[c] && !want[c].includes(tick.fw[c]);
+      const diff = other !== undefined && (!other || (other.fw[c] === band) !== up || (up && (other.hl === c) !== (tick.hl === c)));
       const color = up ? `background:var(--b${band})` : '';
-      html += `<div class="pin ${up ? 'up' : ''} ${labelled ? 'want' : ''} ${(up || labelled) && wrong ? 'wrong' : ''} ${up && tick.hl === c && tick.tap ? 'tap' : ''}" style="${color}"></div>`;
+      const expected = want[c] ? `expected band ${want[c].join(' or ')}` : 'not checked at this time';
+      const actual = tick.fw[c] ? `actual band ${tick.fw[c]}` : 'actual down';
+      html += `<div class="pin ${up ? 'up' : ''} ${labelled ? 'want' : ''} ${(up || labelled) && wrong ? 'wrong' : ''} ${up && tick.hl === c && tick.tap ? 'tap' : ''} ${diff ? 'diff' : ''}" style="${color}" title="${COLUMN_LABELS[c - 1]} · slot ${c} · ${expected} · ${actual}"></div>`;
     }
   }
-  $('pins').innerHTML = html;
-  $('pins').setAttribute('aria-label', tick.fw.map((b, c) => `column ${c + 1}: ${b ? 'band ' + b : 'down'}${tick.hl === c ? ', tapping' : ''}`).join('; '));
-  $('ranges').innerHTML = '<div></div>' + tick.dist.map(d => `<div>${d == null ? '–' : d.toFixed(2)}</div>`).join('');
+  return html;
+}
+function drawPins(tick) {
+  const other = compare ? compare.aligned[tickIndex] : undefined;
+  $('pinsNow').innerHTML = pinsHtml(tick, other, compare ? 'now' : '');
+  if (compare) {
+    const same = other && !compare.diffSet.has(tickIndex);
+    $('pinsThen').innerHTML = other ? pinsHtml(other, tick, `${esc(compare.label)}${same ? '' : ' · <b>differs</b>'}`) : `<div class="cap">${esc(compare.label)} · no tick at this time</div>`;
+  }
+  $('pins').setAttribute('aria-label', ACTIVE_SLOTS.map(c => `column ${c}, ${COLUMN_LABELS[c - 1]}: ${tick.fw[c] ? 'band ' + tick.fw[c] : 'down'}${tick.hl === c ? ', tapping' : ''}`).join('; ')
+    + (compare ? `; snapshot ${compare.label}: ${other ? ACTIVE_SLOTS.map(c => `${other.fw[c] ? 'band ' + other.fw[c] : 'down'}`).join(', ') : 'no tick'}` : ''));
+  $('ranges').innerHTML = '<div></div>' + ACTIVE_SLOTS.map(c => tick.dist[c] == null ? '<div>–</div>' : `<div>${tick.dist[c].toFixed(2)}</div>`).join('');
+  drawPinChecks(tick, expectedAt(tick.t).want);
   $('pinNote').textContent = tick.dropped ? 'packet dropped this tick' : tick.state === 'live' ? 'as commanded by the firmware' : 'neutral: ' + tick.state;
+}
+
+function drawPinChecks(tick, want) {
+  const checked = ACTIVE_SLOTS.filter(c => want[c] !== null);
+  if (!checked.length) {
+    $('pinChecks').innerHTML = '<h3>Pin checks at this time</h3><p class="note">No labelled pin expectation covers this moment. Scrub to a labelled window to compare expected and actual pins.</p>';
+    return;
+  }
+  const rows = checked.map(c => {
+    const actual = tick.fw[c], expected = want[c];
+    const pass = expected.includes(actual);
+    return `<tr><td>${COLUMN_LABELS[c - 1]} · slot ${c}</td><td>${expected.map(b => b ? `Band ${b}` : 'Down').join(' or ')}</td><td>${actual ? `Band ${actual}` : 'Down'}</td><td class="${pass ? 'PASS' : 'FAIL'}">${pass ? 'PASS' : 'WRONG PIN'}</td></tr>`;
+  }).join('');
+  $('pinChecks').innerHTML = `<h3>Pin checks at ${Math.max(0, tick.t - session.start).toFixed(2)} s · pink rings mark wrong pins</h3><table><thead><tr><th>Physical pin · wire slot</th><th>Expected</th><th>Actual</th><th>Check</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 // Perceptual-ish warm→cool ramp for depth (near = warm).
@@ -364,8 +547,9 @@ function drawColumns(g, W, H, fxn, cxn, tick, onDepth) {
   for (const b of COLUMN_EDGES) { const x = columnX(b, fxn, cxn, W); if (x > 0 && x < W) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); } }
   g.setLineDash([]);
   g.font = `500 11px ${css('--mono')}`; g.textAlign = 'center';
-  for (let c = 0; c < 7; c++) {
-    const lo = Math.max(columnX(COLUMN_EDGES[c], fxn, cxn, W), 0), hi = Math.min(columnX(COLUMN_EDGES[c + 1], fxn, cxn, W), W);
+  for (let i = 0; i < ACTIVE_SLOTS.length; i++) {
+    const c = ACTIVE_SLOTS[i];
+    const lo = Math.max(columnX(COLUMN_EDGES[i], fxn, cxn, W), 0), hi = Math.min(columnX(COLUMN_EDGES[i + 1], fxn, cxn, W), W);
     if (hi - lo < 14) continue;
     const band = tick.fw[c];
     const label = band ? `B${band}` : '·';
@@ -408,11 +592,12 @@ function drawTop(tick) {
   const rad = d => d * Math.PI / 180;
   // Range rings and column sectors.
   g.strokeStyle = css('--line'); g.fillStyle = css('--faint'); g.font = `10px ${css('--mono')}`; g.lineWidth = 1;
-  for (const r of [1, 2, 3, 4]) { g.beginPath(); g.arc(ox, oy, r * scale, rad(-90 - 60), rad(-90 + 60)); g.stroke(); g.fillText(r + ' m', ox + 4, oy - r * scale - 3); }
+  for (const r of [1, 2, 3, 4]) { g.beginPath(); g.arc(ox, oy, r * scale, rad(-90 - 45), rad(-90 + 45)); g.stroke(); g.fillText(r + ' m', ox + 4, oy - r * scale - 3); }
   // Commanded band per column, as the ring segment that band means.
-  for (let c = 0; c < 7; c++) {
+  for (let i = 0; i < ACTIVE_SLOTS.length; i++) {
+    const c = ACTIVE_SLOTS[i];
     const band = tick.fw[c]; if (!band) continue;
-    const [r0, r1] = BAND_RANGES[band], a0 = rad(-90 + COLUMN_EDGES[c]), a1 = rad(-90 + COLUMN_EDGES[c + 1]);
+    const [r0, r1] = BAND_RANGES[band], a0 = rad(-90 + COLUMN_EDGES[i]), a1 = rad(-90 + COLUMN_EDGES[i + 1]);
     g.fillStyle = css(`--b${band}`); g.globalAlpha = 0.45;
     g.beginPath(); g.arc(ox, oy, r1 * scale, a0, a1); g.arc(ox, oy, r0 * scale, a1, a0, true); g.closePath(); g.fill(); g.globalAlpha = 1;
   }
@@ -473,22 +658,28 @@ function drawCamera(g, ox, oy, scale) {
 function drawTimeline() {
   const canvas = $('timeline'), [g, W, H] = fitCanvas(canvas);
   g.clearRect(0, 0, W, H);
-  const left = 36, right = 12, top = 12, rowH = 18, labelsTop = top + 7 * rowH + 10;
+  const left = 36, right = 12, top = 12, rowH = 18, labelsTop = top + ACTIVE_SLOTS.length * rowH + 10;
   const t0 = start(), t1 = end(), x = time => left + (time - t0) / Math.max(t1 - t0, 1e-9) * (W - left - right);
   const ticks = session.ticks, step = Math.max(1, (W - left - right) / ticks.length + 0.6);
   g.font = `11px ${css('--mono')}`; g.fillStyle = css('--faint'); g.textBaseline = 'middle';
-  ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].forEach((l, c) => g.fillText(l, 6, top + c * rowH + rowH / 2));
-  g.fillStyle = css('--well'); g.fillRect(left, top, W - left - right, 7 * rowH - 2);
-  const colors = [null, css('--b1'), css('--b2'), css('--b3'), css('--b4')], mark = css('--mark'), accent = css('--accent');
-  for (const tick of ticks) {
-    const xx = x(tick.t);
-    for (let c = 0; c < 7; c++) {
-      if (tick.fw[c]) { g.fillStyle = colors[tick.fw[c]]; g.fillRect(xx, top + c * rowH, step, rowH - 2); }
-      if (tick.mismatch.some(m => m.column === c)) { g.fillStyle = mark; g.fillRect(xx, top + c * rowH + rowH - 5, step, 3); }
+  COLUMN_LABELS.forEach((l, i) => g.fillText(l, 6, top + i * rowH + rowH / 2));
+  g.fillStyle = css('--well'); g.fillRect(left, top, W - left - right, ACTIVE_SLOTS.length * rowH - 2);
+  const colors = [null, css('--b1'), css('--b2'), css('--b3'), css('--b4')], mark = css('--mark'), accent = css('--accent'), diffColor = css('--diff');
+  const half = compare ? (rowH - 2) / 2 : rowH - 2;   // compare mode: now on top of each row, snapshot below
+  ticks.forEach((tick, i) => {
+    const xx = x(tick.t), then = compare ? compare.aligned[i] : null;
+    for (let r = 0; r < ACTIVE_SLOTS.length; r++) {
+      const c = ACTIVE_SLOTS[r];
+      if (tick.fw[c]) { g.fillStyle = colors[tick.fw[c]]; g.fillRect(xx, top + r * rowH, step, half); }
+      if (then && then.fw[c]) { g.fillStyle = colors[then.fw[c]]; g.globalAlpha = 0.75; g.fillRect(xx, top + r * rowH + half, step, half); g.globalAlpha = 1; }
+      if (tick.mismatch.some(m => m.column === c)) { g.fillStyle = mark; g.fillRect(xx, top + r * rowH + rowH - 5, step, 3); }
+      if (compare && (!then || then.fw[c] !== tick.fw[c])) { g.fillStyle = diffColor; g.fillRect(xx, top + r * rowH + half - 1, step, 2); }
     }
-    if (tick.hl < 7) { g.fillStyle = accent; g.fillRect(xx, top + tick.hl * rowH, step, 3); }
+    if (ACTIVE_SLOTS.includes(tick.hl)) { g.fillStyle = accent; g.fillRect(xx, top + (tick.hl - 1) * rowH, step, 3); }
+    if (then && ACTIVE_SLOTS.includes(then.hl)) { g.fillStyle = accent; g.fillRect(xx, top + (then.hl - 1) * rowH + half, step, 3); }
     if (tick.mismatch.some(m => m.column === null)) { g.fillStyle = mark; g.fillRect(xx, labelsTop - 6, step, 3); }
-  }
+    if (compare && compare.diffSet.has(i)) { g.fillStyle = diffColor; g.fillRect(xx, top - 6, step, 3); }
+  });
   g.fillStyle = css('--line');
   session.expect.forEach((e, i) => g.fillRect(x(session.start + e.from), labelsTop + (i % 4) * 7, Math.max(2, x(session.start + e.to) - x(session.start + e.from)), 4));
   g.fillStyle = css('--faint'); g.textBaseline = 'alphabetic';
@@ -496,7 +687,7 @@ function drawTimeline() {
   for (let s = 0; s <= span; s += every) if (session.start + s >= t0) g.fillText(s + 's', x(session.start + s) - 6, H - 6);
   for (const e of session.events || []) {
     if (e.t < t0 || e.t > t1) continue;
-    g.strokeStyle = EVENT_COLOR(e.kind); g.lineWidth = 2; g.beginPath(); g.moveTo(x(e.t), top - 6); g.lineTo(x(e.t), top + 7 * rowH); g.stroke();
+    g.strokeStyle = EVENT_COLOR(e.kind); g.lineWidth = 2; g.beginPath(); g.moveTo(x(e.t), top - 6); g.lineTo(x(e.t), top + ACTIVE_SLOTS.length * rowH); g.stroke();
     g.fillStyle = EVENT_COLOR(e.kind); g.font = `500 10px ${css('--mono')}`; g.fillText(e.kind, x(e.t) + 3, top - 1);
   }
   const cx = x(t); g.strokeStyle = css('--ink'); g.lineWidth = 1.5; g.beginPath(); g.moveTo(cx, 4); g.lineTo(cx, labelsTop + 28); g.stroke();
@@ -527,8 +718,12 @@ function renderMetrics() {
   const m = (v, l) => `<div class="metric"><b>${esc(v)}</b><span>${esc(l)}</span></div>`;
   $('metrics').innerHTML = m(r.accuracy == null ? '–' : (100 * r.accuracy).toFixed(1) + '%', `label agreement (${r.checks - r.failedChecks}/${r.checks})`)
     + m(r.phantomChecks, 'phantom pin checks') + m(r.missedChecks, 'missed obstacle checks')
-    + m(r.bandChangesPerColumnSecond, 'live band changes / column / s') + m(age ? age.mean + ' ms' : '–', 'modelled depth age at send');
+    + m(r.bandChangesPerColumnSecond, 'live band changes / column / s') + m(age ? age.mean + ' ms' : '–', 'modelled depth age at send')
+    + (compare ? m(`${compare.diffs.length} / ${session.ticks.length}`, `ticks that differ from ${compare.label}`)
+      + m(`${pct(compare.snap.accuracy)} → ${pct(r.accuracy)}`, 'label agreement, snapshot → now')
+      + m(`${compare.snap.bandChangesPerColumnSecond ?? '–'} → ${r.bandChangesPerColumnSecond}`, 'band changes / col / s, snapshot → now') : '');
 }
+const pct = v => v == null ? '–' : (100 * v).toFixed(1) + '%';
 
 
 // ---- Video export: a 1920 × 1080 composite (recording left; pin grid over LiDAR right; timeline below),
@@ -565,10 +760,11 @@ function drawComposite() {
   card(px, vy, pw, 380, 'Pin grid');
   const colors = [null, '#ff6a2b', '#f2690d', '#b9561c', '#7a3b19'], r = 30, gap = 92, gx = px + 80, gy = vy + 92;
   g.font = '400 18px "Geist Mono", monospace'; g.fillStyle = muted; g.textAlign = 'center';
-  ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].forEach((l, c) => g.fillText(l, gx + c * gap, gy + 4 * 68 + 4));
+  COLUMN_LABELS.forEach((l, i) => g.fillText(l, gx + i * gap, gy + 4 * 68 + 4));
   g.textAlign = 'right'; g.fillText('far', gx - 44, gy); g.fillText('near', gx - 44, gy + 3 * 68); g.textAlign = 'left';
-  for (let band = 4; band >= 1; band--) for (let c = 0; c < 7; c++) {
-    const up = tick.fw[c] === band, cx = gx + c * gap, cy = gy + (4 - band) * 68;
+  for (let band = 4; band >= 1; band--) for (let i = 0; i < ACTIVE_SLOTS.length; i++) {
+    const c = ACTIVE_SLOTS[i];
+    const up = tick.fw[c] === band, cx = gx + i * gap, cy = gy + (4 - band) * 68;
     const tapping = up && tick.hl === c && tick.tap;
     g.fillStyle = up ? colors[band] : '#242424'; g.beginPath(); g.arc(cx, cy, tapping ? r * 0.72 : r, 0, Math.PI * 2); g.fill();
     if (up && tick.hl === c) { g.strokeStyle = '#52a8ff'; g.lineWidth = 5; g.beginPath(); g.arc(cx, cy, r + 9, 0, Math.PI * 2); g.stroke(); }
@@ -580,12 +776,12 @@ function drawComposite() {
   // Timeline.
   const t0 = start(), t1 = end(), lx = 100, lw = W - 140, ly = 952, rowH = 13, X = time => lx + (time - t0) / Math.max(t1 - t0, 1e-9) * lw;
   g.font = '400 11px "Geist Mono", monospace'; g.fillStyle = muted;
-  ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].forEach((l, c) => g.fillText(l, 64, ly + c * rowH + rowH / 2));
-  g.fillStyle = '#1a1a1a'; g.fillRect(lx, ly, lw, 7 * rowH);
+  COLUMN_LABELS.forEach((l, i) => g.fillText(l, 64, ly + i * rowH + rowH / 2));
+  g.fillStyle = '#1a1a1a'; g.fillRect(lx, ly, lw, ACTIVE_SLOTS.length * rowH);
   const step = Math.max(1, lw / session.ticks.length + 0.6);
-  for (const k of session.ticks) for (let c = 0; c < 7; c++) if (k.fw[c]) { g.fillStyle = colors[k.fw[c]]; g.fillRect(X(k.t), ly + c * rowH, step, rowH - 2); }
-  for (const e of session.events || []) if (e.kind !== 'start') { g.fillStyle = EVENT_COLOR(e.kind); g.fillRect(X(e.t) - 1.5, ly - 6, 3, 7 * rowH + 12); }
-  g.fillStyle = ink; g.fillRect(X(t) - 1.5, ly - 10, 3, 7 * rowH + 20);
+  for (const k of session.ticks) for (let i = 0; i < ACTIVE_SLOTS.length; i++) { const c = ACTIVE_SLOTS[i]; if (k.fw[c]) { g.fillStyle = colors[k.fw[c]]; g.fillRect(X(k.t), ly + i * rowH, step, rowH - 2); } }
+  for (const e of session.events || []) if (e.kind !== 'start') { g.fillStyle = EVENT_COLOR(e.kind); g.fillRect(X(e.t) - 1.5, ly - 6, 3, ACTIVE_SLOTS.length * rowH + 12); }
+  g.fillStyle = ink; g.fillRect(X(t) - 1.5, ly - 10, 3, ACTIVE_SLOTS.length * rowH + 20);
 }
 async function startExport() {
   if (exporter) { stopExport(false); return; }
@@ -617,6 +813,9 @@ $('play').onclick = () => playing ? pause() : play();
 $('export').onclick = startExport;
 $('scrub').oninput = e => { pause(); seek(start() + e.target.value / 1000 * (end() - start())); };
 $('showCols').onchange = draw;
+$('compare').onchange = () => { pause(); setCompare($('compare').value); };
+$('prevDiff').onclick = () => jumpDiff(-1);
+$('nextDiff').onclick = () => jumpDiff(1);
 document.querySelectorAll('.speed button').forEach(b => b.onclick = () => {
   speed = Number(b.dataset.speed); video.playbackRate = speed;
   document.querySelectorAll('.speed button').forEach(o => o.setAttribute('aria-pressed', o === b));
@@ -630,6 +829,8 @@ addEventListener('keydown', e => {
   if (e.key === ' ') { e.preventDefault(); playing ? pause() : play(); }
   if (e.key === 'ArrowRight' && e.target.type !== 'range') { pause(); seek(session.ticks[Math.min(session.ticks.length - 1, tickIndex + 1)].t); }
   if (e.key === 'ArrowLeft' && e.target.type !== 'range') { pause(); seek(session.ticks[Math.max(0, tickIndex - 1)].t); }
+  if (e.key === ']') jumpDiff(1);
+  if (e.key === '[') jumpDiff(-1);
 });
 video.addEventListener('loadedmetadata', draw);
 video.addEventListener('seeked', () => { if (!playing) draw(); });

@@ -1,0 +1,86 @@
+{
+  "title": "Wide open doorway, 2 m ahead",
+  "description": "A 1.2 m opening at 2 m spans \u00b116.7\u00b0, containing both central 15\u00b0 sectors completely. Slots 3 and 4 are clear; slots 1, 2, 5 and 6 see the wall. Positive control for the six-column geometry; no lintel.",
+  "scene": {
+    "duration": 5,
+    "path": [
+      {
+        "t": 0,
+        "x": 0,
+        "z": 0
+      }
+    ],
+    "objects": [
+      {
+        "kind": "box",
+        "min": [
+          -10,
+          0,
+          -2.2
+        ],
+        "max": [
+          -0.6,
+          3,
+          -2.0
+        ],
+        "label": "wall left"
+      },
+      {
+        "kind": "box",
+        "min": [
+          0.6,
+          0,
+          -2.2
+        ],
+        "max": [
+          10,
+          3,
+          -2.0
+        ],
+        "label": "wall right"
+      },
+      {
+        "kind": "box",
+        "min": [
+          -10,
+          0,
+          -7.2
+        ],
+        "max": [
+          10,
+          3,
+          -7.0
+        ],
+        "label": "far wall"
+      }
+    ],
+    "sensor": {
+      "noise": 0.005,
+      "seed": 11
+    }
+  },
+  "expect": [
+    {
+      "from": 0.3,
+      "to": 5.0,
+      "columns": [
+        3,
+        4
+      ],
+      "band": 0,
+      "label": "opening is clear"
+    },
+    {
+      "from": 0.3,
+      "to": 5.0,
+      "columns": [
+        1,
+        2,
+        5,
+        6
+      ],
+      "band": 3,
+      "label": "wall either side"
+    }
+  ]
+}

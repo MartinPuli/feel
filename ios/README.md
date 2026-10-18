@@ -72,10 +72,10 @@ For the restricted build host used in this session only, Swift's new driver and 
 
 1. Keep the rear camera facing forward in **UIDevice landscape-left** orientation: the phone's top edge/camera end points to your left as you look at its screen. This is native ARKit camera orientation. The app requests `UIInterfaceOrientationLandscapeRight`; UIKit's interface naming is opposite the physical-device rotation.
 2. Keep the phone's camera-up axis roughly vertical. The app neutralizes when excessive roll/orientation makes the fixed mount invalid. Face the same direction as the wearer; turning the phone separately changes the tactile reference frame.
-3. Start Live and move slowly with some floor visible. On supported devices, floor calibration automatically accepts a stable ARKit-classified horizontal floor. Until accepted, pins remain logically neutral. If no classified floor is available, measure lens height above the floor (0.60–2.10 m), enter it in Floor setup and tap **Use measured height**. This manual override uses `camera world y − measured lens height`; ARKit world origin is never assumed to be the floor. Session resets/interruption restart automatic calibration. See `docs/AUTOMATIC-FLOOR-CALIBRATION.md` for acceptance criteria and limits.
+3. Start Live and move slowly with some floor visible. On supported devices, floor calibration automatically accepts a stable ARKit-classified horizontal floor. Until accepted, pins remain logically neutral. If no classified floor is available, measure lens height above the floor (0.60–2.10 m), enter it in Floor setup and tap **Use measured height**. This manual override uses `camera world y − measured lens height`; ARKit world origin is never assumed to be the floor. Either way the latched value is the camera height, and the floor level is recomputed from the worn camera every frame, so stairs and ramps keep working (a wall at the bottom of a staircase used to sit below the obstacle window). Session resets/interruption restart automatic calibration. See `docs/AUTOMATIC-FLOOR-CALIBRATION.md` for acceptance criteria and limits.
 4. Start with a stationary cardboard obstacle at center, left and right. Confirm the intended column in the virtual puck before enabling any mechanical output. Log actual direction sign and range on the phone.
 
-World points 0.60–2.10 m above the calibrated floor are considered. The upper bound is a documented engineering assumption absent from the reference. Distance bands use horizontal radial range (not optical z distance): positive distances below 0.9 m → band1, [0.9,1.6) →2, [1.6,2.5) →3, [2.5,4.0] →4. Positive distances below the handoff's nominal 0.3 m minimum conservatively remain near band1. Nonfinite/nonpositive/>4 m/unknown samples are neutral, not proof of clearance.
+World points 0.60–2.10 m above the calibrated floor are considered. The upper bound is a documented engineering assumption absent from the reference. A sector reports its third-nearest confident point (`DepthProjector.support`), so one or two stray LiDAR pixels cannot raise a pin. `SectorFilter` then steadies the bands between frames: a nearer band shows after two agreeing frames (under 0.9 m after one), a farther band or unknown after four frames and 10 cm past the boundary, so walking bob across a band edge no longer flutters. Offline replay runs the same two steps. Distance bands use horizontal radial range (not optical z distance): positive distances below 0.9 m → band1, [0.9,1.6) →2, [1.6,2.5) →3, [2.5,4.0] →4. Positive distances below the handoff's nominal 0.3 m minimum conservatively remain near band1. Nonfinite/nonpositive/>4 m/unknown samples are neutral, not proof of clearance.
 
 Seven equal horizontal sectors span −45°...+45°, including the endpoints; exact internal boundaries select the right sector. Camera +x points right, +y up and −z forward. Native depth and Vision buffers remain in the same capture orientation; Vision bottom-left box coordinates are converted to top-left depth coordinates.
 
@@ -104,15 +104,36 @@ target ("You're there"). The arrows keep following the live route, and the pins 
 suggested direction, never a clear path. "Lead me to the exit" calls the `lead_me` tool for a place remembered in
 this room. `get_status.room_memory.journey` reports the walk being recorded and the point in use.
 
-Each kept journey is also uploaded: `SupabaseWriter` posts it to the `journeys` table through Supabase's REST API with
+After explicit upload consent, each future kept journey can also be uploaded: `SupabaseWriter` posts it to the `journeys` table through Supabase's REST API with
 the publishable key and the signed-in user's token. The same writer sends a confirmed find on "found it" (the
 `confirmed_finds` table behind Chalk's `last_seen`, placed by venue and distance from the room's tag), an anchor for
 every confirmed target and a visit's room map when sensing stops, so Chalk's `room_anchors`, `room_structure`, `path`
-and `progress_points` answer from what this phone saw. Rows are filed under the loaded venue pack's venue, else
-`rubenstein-treehouse`, and marked shared unless the user default `feel.shareRoomMemory` is false; an expired token is
-refreshed with the saved refresh token; `get_status.room_memory.uploads` counts what was sent, failed and skipped, with
+and `progress_points` can use shared records. Rows require a selected venue; there is no demo fallback. Uploads
+and sharing default off, with separate choices under Assistant → Cloud memory or explicit-consent voice tools.
+An expired token is refreshed only while its originating login and consent remain valid; `get_status.room_memory.uploads` counts what was sent, failed and skipped, with
 the last reason. `JourneyLog.export()` still writes every stored journey to `Documents/journeys.json` for the **Files**
-app (**On My iPhone → FEEL**), the way off a phone without a sign-in. Nothing of this has run on a device.
+app (**On My iPhone → FEEL**), accessible through Cloud memory or the export_journeys voice tool. A real device
+upload round trip remains unverified. See [integrated version features](../docs/VERSION-INTEGRATION.md).
+
+## Tap rhythms (why raised pins pulse)
+
+A pin is felt when it moves and fades within seconds when it stays: steady skin pressure rides on slowly adapting
+nerve fibres whose firing, and the felt intensity with it, decay exponentially (Chung et al. 2015, *BMC Neuroscience*;
+Bensmaia et al. 2005, *J. Neurophysiol.*, where SA1 afferents adapt fastest). So the puck keeps pins felt by motion,
+sparse enough to remind rather than buzz:
+
+| What | Rhythm | Where |
+|---|---|---|
+| Obstacle pin unchanged for 1 s | one drop to the gap every 1.0 s, all steady pins together | `TapRhythm` (FeelCore), applied to the final packet of every tick after cues and highlights |
+| One target column | the firmware's 13° dip for 100 ms of every 600 ms | the highlight byte, gated by the tactile profile |
+| A target span | every span column dropped for one packet in six | `TactileEncoder.groupTapPeriod` |
+| Direction arrows | a new frame every 100 ms | `DirectionCue` |
+
+What points at something beats faster than what is merely there, and the arrows are the fastest motion. A drop
+commands the nearest gap, 29° of cam travel; the FS0307 turns 60° in about 0.10 s unloaded, so a drop is about 50 ms
+each way and up to twice that under the cam, a dropped packet is back up within about 200 ms, and no period may be
+shorter than three packets (`TapRhythm.minimumPeriod`). Not run on hardware yet: pin return speed under load decides
+how crisp a drop feels, and the settle time and period are constants in `TapRhythm` to tune on the device.
 
 ### Reading the shared memory back
 
@@ -175,6 +196,7 @@ Apple recommends portrait orientation for strongest NI performance; FEEL's fixed
   - About 2.5 times a second, but only while the target is in view right now, A* runs from the wearer to any open cell within 0.7 m of the target.
   - Cells within 0.3 m of an obstacle, and unknown cells, cost extra.
   - The arrow aims at the route point 1.2 m ahead, relative to the camera's facing direction.
+- **Path wave** (`PathWave`, passive, no sign): while the wearer turns faster than 20°/s and the route lies more than 15° off centre, a dot runs along the far row from the centre column to the route's column about once a second, on top of the obstacle pins, and keeps going for 1.5 s after the turn ends. Beyond ±45° it runs to the edge column: keep turning. It never covers a raised pin (so it ends in the gap of a wall, a line through the door), never plays with anything within 0.9 m, and yields to an arrow. A detected target that turns out of the camera's view keeps its route for up to 8 s, so turning back toward a door works; a target still in view but no longer detected is dropped at once.
 - **Arrows** (fingers = forward):
 
   | Cue | Bearing | Pattern |

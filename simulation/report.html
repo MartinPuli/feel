@@ -50,7 +50,7 @@ canvas { display: block; width: 100%; }
 .now { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; margin-top: 12px; }
 @media (max-width: 640px) { .now { grid-template-columns: 1fr; } }
 .grid-wrap { display: flex; flex-direction: column; gap: 6px; }
-.pins { display: grid; grid-template-columns: auto repeat(7, 1fr); gap: 6px; align-items: center; }
+.pins { display: grid; grid-template-columns: auto repeat(6, 1fr); gap: 6px; align-items: center; }
 .pin { aspect-ratio: 1; border-radius: 50%; background: var(--empty); border: 2px solid transparent; position: relative; }
 .pin.up { background: var(--b2); }
 .pin.want { border-color: var(--ink); border-style: dashed; }
@@ -69,7 +69,7 @@ th { color: var(--muted); font-weight: 500; }
 <header>
   <h1>FEEL replay report</h1>
   <span class="muted" id="generated"></span>
-  <span class="muted">Production Swift encoder + production C++ controller. No servo physics, feel, BLE radio or live detector.</span>
+  <span class="muted">SIMULATION · Six physical columns; wire slot b0 reserved. Production Swift encoder + production C++ controller. No servo physics, feel, BLE radio or live detector.</span>
 </header>
 <div class="layout">
   <nav id="list" aria-label="Scenarios"></nav>
@@ -83,6 +83,8 @@ let current = 0, tickIndex = 0, timer = null;
 
 function statusOf(s) {
   if (s.skipped) return 'SKIP';
+  if (s.result.reservedSlotViolations) return 'FAIL';
+  if (!s.expect.length) return 'UNLABELLED';
   if (s.result.passed) return 'PASS';
   return s.knownIssue ? 'KNOWN' : 'FAIL';
 }
@@ -166,17 +168,17 @@ function drawTimeline() {
   const s = DATA.scenarios[current], c = document.getElementById('timeline');
   const dpr = devicePixelRatio || 1, W = c.clientWidth, H = 230;
   c.width = W * dpr; c.height = H * dpr; const g = c.getContext('2d'); g.scale(dpr, dpr);
-  const left = 34, right = 8, top = 6, rowH = 22, rows = 7, labelsTop = top + rows * rowH + 8;
+  const left = 34, right = 8, top = 6, rowH = 22, rows = 6, labelsTop = top + rows * rowH + 8;
   const t0 = s.ticks[0].t, t1 = s.ticks[s.ticks.length - 1].t, x = t => left + (t - t0) / Math.max(t1 - t0, 1e-9) * (W - left - right);
   const step = (W - left - right) / s.ticks.length + 0.5;
   g.font = '11px ui-monospace, Menlo, monospace'; g.fillStyle = css('--muted'); g.textBaseline = 'middle';
-  for (let col = 0; col < 7; col++) g.fillText('C' + col, 4, top + col * rowH + rowH / 2);
+  for (let col = 1; col <= 6; col++) g.fillText('C' + col, 4, top + (col - 1) * rowH + rowH / 2);
   s.ticks.forEach(t => {
-    for (let col = 0; col < 7; col++) {
-      g.fillStyle = bandColor(t.fw[col]); g.fillRect(x(t.t), top + col * rowH, step, rowH - 3);
-      if (t.mismatch.some(m => m.column === col)) { g.fillStyle = css('--miss'); g.fillRect(x(t.t), top + col * rowH + rowH - 6, step, 3); }
+    for (let col = 1; col <= 6; col++) {
+      g.fillStyle = bandColor(t.fw[col]); g.fillRect(x(t.t), top + (col - 1) * rowH, step, rowH - 3);
+      if (t.mismatch.some(m => m.column === col)) { g.fillStyle = css('--miss'); g.fillRect(x(t.t), top + (col - 1) * rowH + rowH - 6, step, 3); }
     }
-    if (t.hl < 7) { g.strokeStyle = css('--accent'); g.lineWidth = 2; g.strokeRect(x(t.t) + 1, top + t.hl * rowH + 1, step - 2, rowH - 5); }
+    if (t.hl >= 1 && t.hl <= 6) { g.strokeStyle = css('--accent'); g.lineWidth = 2; g.strokeRect(x(t.t) + 1, top + (t.hl - 1) * rowH + 1, step - 2, rowH - 5); }
     if (t.dropped) { g.fillStyle = css('--muted'); g.fillRect(x(t.t), labelsTop - 6, step, 2); }
     if (t.mismatch.some(m => m.column === null)) { g.fillStyle = css('--miss'); g.fillRect(x(t.t), labelsTop - 3, step, 2); }
   });
@@ -195,7 +197,7 @@ function expectedAt(s, t) {
   s.expect.forEach(e => {
     if (t < e.from + (e.grace || 0) || t > e.to) return;
     if ('band' in e || 'bands' in e) {
-      const cols = e.columns === undefined || e.columns === 'all' ? [0,1,2,3,4,5,6] : e.columns;
+      const cols = e.columns === undefined || e.columns === 'all' ? [1,2,3,4,5,6] : e.columns;
       cols.forEach(c => want[c] = 'band' in e ? [e.band] : e.bands);
     }
     if ('highlight' in e) hl = e.highlight;
@@ -210,21 +212,21 @@ function renderTick() {
   drawTimeline();
   // Pins: rows top = band 4 (fingers, far) … bottom = band 1 (wrist, near).
   const { want, hl } = expectedAt(s, t.t), pins = document.getElementById('pins');
-  let html = '<div></div>' + [0,1,2,3,4,5,6].map(c => `<div class="rowlabel" style="text-align:center">C${c}</div>`).join('');
+  let html = '<div></div>' + [1,2,3,4,5,6].map(c => `<div class="rowlabel" style="text-align:center">C${c}</div>`).join('');
   for (let band = 4; band >= 1; band--) {
     html += `<div class="rowlabel">${band === 4 ? 'far ' : band === 1 ? 'near ' : ''}${band}</div>`;
-    for (let c = 0; c < 7; c++) {
+    for (let c = 1; c <= 6; c++) {
       const up = t.fw[c] === band, wanted = want[c] && want[c].includes(band), wrong = want[c] && !want[c].includes(t.fw[c]);
       html += `<div class="pin ${up ? 'up' : ''} ${wanted ? 'want' : ''} ${up && wrong ? 'wrong' : ''} ${up && t.hl === c ? 'tap' : ''}" title="C${c} band ${band}"></div>`;
     }
   }
   pins.innerHTML = html;
-  pins.setAttribute('aria-label', 'Pins: ' + t.fw.map((b, c) => `column ${c} band ${b}`).join(', '));
-  const dist = t.dist.map(d => d == null ? '  –  ' : d.toFixed(2)).join(' ');
+  pins.setAttribute('aria-label', 'Pins: ' + t.fw.slice(1).map((b, c) => `column ${c + 1} band ${b}`).join(', '));
+  const dist = t.dist.slice(1).map(d => d == null ? '  –  ' : d.toFixed(2)).join(' ');
   document.getElementById('tickinfo').innerHTML =
     `state ${esc(t.state)}${t.dropped ? ' · <span class="bad">packet dropped</span>' : ''}<br>` +
     `range m  ${esc(dist)}<br>` +
-    `tap ${t.hl < 7 ? 'column ' + t.hl + (t.tap ? ' (tapping)' : '') : 'none'}${hl !== undefined ? ` · label: ${hl ?? 'none'}` : ''}` +
+    `tap ${t.hl >= 1 && t.hl <= 6 ? 'column ' + t.hl + (t.tap ? ' (tapping)' : '') : 'none'}${hl !== undefined ? ` · label: ${hl ?? 'none'}` : ''}` +
     (t.target ? `<br>target ${esc(t.target.label)} ${t.target.bearing.toFixed(1)}° ${t.target.distance.toFixed(2)} m` : '') +
     (t.mismatch.length ? `<br><span class="bad">${t.mismatch.length} label disagreement(s)</span>` : '') +
     '<br><span class="muted">dashed ring = labelled band · blue ring = tap</span>';
@@ -248,12 +250,12 @@ function drawDepth(s, t) {
   const off = new OffscreenCanvas(w, h); off.getContext('2d').putImageData(img, 0, 0);
   g.imageSmoothingEnabled = false; g.drawImage(off, 0, 0, W, H);
   g.strokeStyle = css('--accent'); g.lineWidth = 1; g.fillStyle = css('--accent'); g.font = '11px ui-monospace, Menlo, monospace';
-  for (let k = 0; k <= 7; k++) {
-    const b = (-45 + k * 90 / 7) * Math.PI / 180, xs = (th.cx + th.fx * Math.tan(b)) / w * W;
+  for (let k = 0; k <= 6; k++) {
+    const b = (-45 + k * 90 / 6) * Math.PI / 180, xs = (th.cx + th.fx * Math.tan(b)) / w * W;
     if (xs > 0 && xs < W) { g.beginPath(); g.moveTo(xs, 0); g.lineTo(xs, H); g.stroke(); }
   }
-  for (let col = 0; col < 7; col++) {
-    const b = (-45 + (col + 0.5) * 90 / 7) * Math.PI / 180, xs = (th.cx + th.fx * Math.tan(b)) / w * W;
+  for (let col = 1; col <= 6; col++) {
+    const b = (-45 + (col - 0.5) * 90 / 6) * Math.PI / 180, xs = (th.cx + th.fx * Math.tan(b)) / w * W;
     if (xs > 4 && xs < W - 12) g.fillText('C' + col, xs - 7, 13);
   }
 }

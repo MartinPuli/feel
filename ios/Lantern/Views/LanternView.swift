@@ -212,6 +212,12 @@ struct LanternView: View {
                         VoiceSetup(voice: voice) { closePanel() }
                         WhereIsSetup(model: model)
                         VenuePackSetup(venue: model.venueInfo)
+                        LocalCommandsPanel(model: model, control: model.localVoice)
+                        SessionPlacesPanel(places: model.places, command: model.performVoiceCommand)
+                        SavedWorldMapsPanel(maps: model.savedMaps, command: model.performVoiceCommand)
+                        MemorySimulationControls(model: model)
+                        ChalkCommandsPanel(coordinator: model.chalkCommands)
+                        CloudMemoryPanel(model: model)
                     } else {
                         settings
                     }
@@ -398,7 +404,7 @@ private struct CameraGuidance: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(FeelTypography.label).accessibilityIdentifier("guidanceTitle")
+            Text(title).font(FeelTypography.title2).accessibilityIdentifier("guidanceTitle")
             if model.mode == .simulation {
                 Text("No simulated movement sent to hardware.")
                     .font(FeelTypography.footnote)
@@ -409,16 +415,10 @@ private struct CameraGuidance: View {
                         .accessibilityIdentifier("simulateSign")
                         .accessibilityHint("Plays the arrow a real V sign would request.")
                 }
-            } else {
+            } else if model.mode == .stopped {
+                // While live the title alone carries the sensing state; the status line only
+                // explains why the camera could not start.
                 Text(model.status).font(FeelTypography.footnote).accessibilityIdentifier("sessionStatus")
-                if model.mode == .live {
-                    Text(model.pointingReadout).font(FeelTypography.footnote)
-                        .foregroundStyle(FeelTheme.secondary).accessibilityIdentifier("pointingReadout")
-                    if model.arrowsEnabled {
-                        Text(model.directionReadout).font(FeelTypography.footnote)
-                            .foregroundStyle(FeelTheme.secondary).accessibilityIdentifier("directionReadout")
-                    }
-                }
             }
             Text(puck.status).font(FeelTypography.footnote)
                 .foregroundStyle(FeelTheme.secondary).accessibilityIdentifier("puckConnectionStatus")
@@ -482,8 +482,13 @@ private struct DirectionArrowSettings: View {
             Toggle("Arrows on V sign", isOn: $model.arrowsEnabled)
                 .font(FeelTypography.label)
                 .accessibilityIdentifier("directionArrowsToggle")
+            Text("Choose a target, then hold a V sign about 30 cm in front of the camera for half a second. The pins draw one arrow along a route around mapped obstacles to the target. Later arrows play only when the route changes noticeably or you sign again. Anything within 0.9 m always shows instead.")
                 .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            Text("Path wave: while you turn, a dot runs along the far row from the centre toward the route, again and again, so a one-column opening such as a doorway is easy to find. When the route is outside the pins' field the dot runs to the edge: keep turning. It never covers an obstacle pin, and a target that turns out of view is remembered for a few seconds.")
+                .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("The map covers only what the camera has seen in this room. Objects under 10 cm, glass and moving people can be missed. A suggested direction, not a safe route.")
                 .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -508,7 +513,7 @@ private struct LiveSetup: View {
                     }.monospacedDigit()
                 }.accessibilityLabel("Camera height")
                     .accessibilityValue(String(format: "%.2f meters", model.cameraHeight))
-                Text("If automatic calibration cannot find the floor, measure the lens height above it and use the manual option below.")
+                Text("If automatic calibration cannot find the floor, measure the lens height above it and use the manual option below. Once calibrated, the floor follows the phone at that height, so stairs and ramps keep working; recalibrate if you change how the phone is worn.")
                     .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
                 Button("Use measured height") { model.calibrate() }
                     .buttonStyle(FeelPrimaryButtonStyle())
@@ -538,7 +543,7 @@ private struct LiveSetup: View {
                     }
                 }.pickerStyle(.menu)
                 Text(model.detectorStatus).font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
-                if model.finder == .teammate { PeerPanel(peer: model.peer) }
+                if model.finder == .teammate { PeerPanel(model: model, peer: model.peer) }
             }
         }
     }
@@ -578,15 +583,19 @@ struct PuckConnectionPanel: View {
 }
 
 struct PeerPanel: View {
+    @ObservedObject var model: LanternModel
     @ObservedObject var peer: NearbyPeerService
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(peer.status).font(FeelTypography.subheadline)
-            Button("Find Beacon phones") { peer.start() }
-                .buttonStyle(FeelSecondaryButtonStyle()).disabled(peer.running)
+            Button("Find Beacon phones") { _ = model.performVoiceCommand(.scanTeammates) }
+                .buttonStyle(FeelSecondaryButtonStyle()).disabled(peer.running || !model.canFindTeammates)
             Button("Stop finding") { peer.stop() }.buttonStyle(FeelSecondaryButtonStyle())
             ForEach(peer.peers, id: \.self) { person in
-                Button("Find \(person.displayName)") { peer.invite(person) }.buttonStyle(FeelSecondaryButtonStyle())
+                Button("Find \(person.displayName)") {
+                    guard model.canFindTeammates else { return }
+                    peer.invite(person)
+                }.buttonStyle(FeelSecondaryButtonStyle()).disabled(!model.canFindTeammates)
             }
         }
     }

@@ -80,7 +80,8 @@ First live deployment and the verified queries are recorded in
 The phone's writes are in: a find after "found it", an anchor after every confirmed Where-is target, a visit's map
 when sensing stops and each kept journey go through Supabase REST with the user's JWT (`SupabaseWriter`, behind
 `RoomMemory.uploader` and `JourneyLog.uploader`), filed under the loaded venue pack's venue or `rubenstein-treehouse`
-and marked shared unless the user turned sharing off.
+and marked shared unless the user turned sharing off. Uploads require explicit consent, sign-in and a selected
+venue; public room sharing requires a separate opt-in; both choices default off. No demo venue is invented.
 
 The phone's reads are in too (`ios/Lantern/Services/ChalkContext.swift`): the `last_seen` assistant tool runs the
 `last_seen` named query for the signed-in user and speaks `ObjectHistory.spoken` as written; the first sighting of a

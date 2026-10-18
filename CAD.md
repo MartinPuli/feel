@@ -143,6 +143,9 @@ With `hw = half_w`, `iw = hw − wall = 42.25`, `L = far_out_y − wrist_out_y =
 
 Result for n = 7: 100.5 (with ears) × 92.5 × 26.7 mm.
 
+### 3.1b Lenient chassis (`chassis_loose`, added Oct 17)
+Same as 3.1 except: the bulkhead tunnel is **open on top** (z up through ztop) so the servo drops in with its tower already through the wall instead of sliding forward; tunnel and pocket use `loose_fit = 0.5` per side (tunnel 10.0 wide, pocket 11.4) so a 0.6 mm nozzle print still fits a 9.0 servo; the wire slot in the wrist wall spans all seven pockets (`2·(col_x(6) + 5.2 + 0.5) − 2·3.0` = 79.8 wide). The ear no longer locates against the bulkhead: servos are aligned to their shafts and glued at the ears. Collision sweep and servo clearance pass identically to 3.1. Built after a hand fit showed the as-specified tunnel (0.2 per side, closed top) could not be assembled.
+
 ### 3.2 Guide plate (`guide_plate_print`: translate by `−z_guide_bot`)
 Box x ∈ ±(half_w − wall − 0.2) = ±42.05, y ∈ [0.3, far_in_y − 0.2 = 56.8], z ∈ [z_guide_bot, z_guide_top]; minus 28 through-holes d `hole_d` at (col_x(c), row_y(r)). Size 84.1 × 56.5 × 6.0.
 
@@ -174,6 +177,9 @@ In the shaft frame (Z along the shaft):
 7. Subtract the **band-1 groove**: a 1.3 × 1.3 square bar rotated 45° about Z, centred at (0, coupling_d/2, 4.6), length 9.2 along Z: a V along the rim on the +Y side.
 Size 11.0 × 10.9 × 58.2. `shaft3` is identical except for the lobes.
 
+### 3.4b Reinforced coupling (Oct 17, default on; `reinforce = false` restores 3.4 exactly)
+Printed shafts snapped at the disc-to-stem junction within two cam rotations. As specified, the screw-head recess (d 4.8 × 1.5 from Z 5.5) leaves a 0.2 mm floor under a 4.8 mm bore, and the stem (d 5.2) joins the disc through that film at a sharp step, on a layer line. Three changes, none altering length, horn pocket depth, journal, lobes or any chassis fit: screw-head recess d 4.6 × 1.5 (head is 4.2 × 1.3: 0.2 clearance, a 0.3 ring of wall at the stem root instead of none); keying notch ends at X 6.0 instead of 6.5 (rim wall 1.25 instead of 0.75); a cone fillet d 8.0 → 5.2 over Z 7.19 … 9.19 behind the disc (first lobe starts at 12.0). Horn insertion clear at 0, 0.5, 1, 2, 3, 3.4 mm; collision sweep unchanged. Volume 1574 mm³ vs 1546. Print standing, 100% infill, 4 walls, and hotter/slower than the PLA default; PETG preferred.
+
 ### 3.5 Pins (`pins_plate_puck`, prints as one plate)
 Single pin, foot tip at the origin, length `L = pin_len + crown_z(x, y)` of its position:
 1. Foot: hull of a sphere r `foot_tip_r` at z = 0.5 and a disc d `pin_d` at `zct = foot_tip_r − foot_tip_r/sin(foot_cone) + (pin_d/2)/tan(foot_cone)` = 3.606.
@@ -201,6 +207,7 @@ Size 71.7 × 105.4 × 16.0.
 | File | Qty | Size (mm) | Layer | Infill | Brim |
 |---|---|---|---|---|---|
 | chassis.stl | 1 | 100.5 × 92.5 × 26.7 | 0.20 | 15% | no |
+| chassis_loose.stl | 1 (alternative, hand assembly / 0.6 nozzle) | same | 0.20–0.30 | 15% | no |
 | guide.stl | 1 | 84.1 × 56.5 × 6.0 | 0.20 | 15% | no |
 | face.stl | 1 | 88.5 × 92.5 × 7.9 | 0.20, ironing on | 15% | no |
 | shaft.stl | 7 | 11.0 × 10.9 × 58.2 | 0.10–0.15 | 100%, 4 walls | 3 mm |

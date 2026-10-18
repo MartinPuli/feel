@@ -85,6 +85,67 @@ module chassis() {
     }
 }
 
+// Lenient chassis for hand assembly and a 0.6 mm nozzle. Same outer body, ledges, ears,
+// journals, screws and floor as chassis(); only the servo cuts and the wire slot differ:
+//  - the bulkhead tunnel is open on top (a U), so the servo drops in with the tower through the
+//    wall; the ear no longer locates on the bulkhead, so servos are glued once aligned;
+//  - tunnel and pocket get loose_fit per side instead of servo_fit;
+//  - the wire slot in the wrist wall spans all seven pockets.
+module chassis_loose() {
+    hw = half_w();
+    iw = hw - wall;
+    L = far_out_y - wrist_out_y;
+    ztop = -face_t;
+    ym = (row_y(0) + row_y(3)) / 2;
+    ey = strap_w + 4;
+    lead_w = 2 * (col_x(cols - 1) + 5.2 + loose_fit) - 2 * loose_lead_margin;
+    difference() {
+        union() {
+            difference() {
+                hull() {
+                    translate([0, wrist_out_y + bottom_chamfer, z_bottom])
+                        linear_extrude(0.01)
+                            rrect(2 * hw - 2 * bottom_chamfer, L - 2 * bottom_chamfer, corner_r - bottom_chamfer);
+                    translate([0, wrist_out_y, z_bottom + bottom_chamfer])
+                        linear_extrude(ztop - z_bottom - bottom_chamfer) rrect(2 * hw, L, corner_r);
+                }
+                bx([-iw, iw], [wrist_in_y, far_in_y], [z_floor_top, ztop + 1]);
+            }
+            bx([-iw - 0.01, iw + 0.01], bulk_y, [z_floor_top - 0.01, ztop]);
+            bx([-iw - 0.01, iw + 0.01], [bulk_y[1] - 0.01, bulk_y[1] + 1.6], [z_guide_bot - ledge, z_guide_bot]);
+            for (m = [0, 1]) mirror([m, 0, 0])
+                translate([0, far_in_y + 0.01, 0]) rotate([90, 0, 0])
+                    linear_extrude(far_in_y + 0.01 - bulk_y[1])
+                        polygon([[iw - ledge, z_guide_bot], [iw + 0.01, z_guide_bot],
+                                 [iw + 0.01, z_guide_bot - ledge], [iw, z_guide_bot - ledge]]);
+            for (m = [0, 1]) mirror([m, 0, 0]) difference() {
+                hull() {
+                    bx([hw - 0.5, hw + 6], [ym - ey / 2, ym + ey / 2], [-20, -12]);
+                    bx([hw - 0.5, hw], [ym - ey / 2, ym + ey / 2], [-26.5, -25.5]);
+                }
+                bx([hw + 0.8, hw + 4.3], [ym - strap_w / 2, ym + strap_w / 2], [-40, 0]);
+            }
+        }
+        for (c = [0 : cols - 1]) let(x = col_x(c)) {
+            // Tunnel through the bulkhead, open to the top: drop-in instead of slide-in.
+            bx([x - servo_w / 2 - loose_fit, x + servo_w / 2 + loose_fit],
+               [bulk_y[0] - 0.1, bulk_y[1] + 1.8],
+               [servo_body_bot - loose_fit, ztop + 1]);
+            // Pocket behind the bulkhead, open to the top.
+            bx([x - 5.2 - loose_fit, x + 5.2 + loose_fit], [wrist_in_y - 0.1, bulk_y[0] + 0.1],
+               [servo_body_bot - loose_fit, servo_body_bot - loose_fit + 60]);
+            translate([x, far_in_y - 0.1, z_rod]) uslot(farj_d / 2 + bearing_fit, far_pocket + 0.1);
+        }
+        for (p = screw_pts) translate([p[0], p[1], ztop - 12]) cylinder(d = screw_pilot, h = 12.1);
+        // Wire slot across every pocket, so each cable drops straight out behind its servo.
+        bx([-lead_w / 2, lead_w / 2], [wrist_out_y - 0.1, wrist_in_y + 0.1],
+           [z_floor_top, z_floor_top + lead_slot_h]);
+        if (lead_tie) for (sx = [-1, 1])
+            bx([sx * 10 - 1.5, sx * 10 + 1.5], [wrist_in_y + 1.5, wrist_in_y + 3.3],
+               [z_bottom - 1, z_floor_top + 1]);
+    }
+}
+
 // ---------------------------------------------------------------- 3.2 guide plate
 module guide_plate() {
     gx = half_w() - wall - 0.2;
@@ -167,8 +228,8 @@ module coupling_pocket() {
         square([2 * (horn_trim_r + arm_fit), horn_arm_w + 2 * arm_fit], center = true);
         circle(d = horn_hub_d + 2 * arm_fit);
     }
-    translate([0, 0, horn_y1 - 0.01]) cylinder(d = horn_head_d, h = horn_head_h);          // screw-head recess
-    bx([4.5, 6.5], [-(0.7 + arm_fit), 0.7 + arm_fit], [z0, horn_y1]);                       // keying notch, hand crank
+    translate([0, 0, horn_y1 - 0.01]) cylinder(d = reinforce ? rf_head_d : horn_head_d, h = reinforce ? rf_head_h : horn_head_h); // screw-head recess
+    bx([4.5, reinforce ? rf_notch_x1 : 6.5], [-(0.7 + arm_fit), 0.7 + arm_fit], [z0, horn_y1]);   // keying notch, hand crank
     translate([0, 0, z0]) cylinder(d1 = 6.4, d2 = horn_hub_d + 2 * hub_fit, h = 0.4);       // entry chamfer
 }
 // variant 4: band_angle on rows 0..3, one ID dot. variant 3: shaft3, three dots.
@@ -188,6 +249,8 @@ module shaft(variant = 4) {
         union() {
             translate([0, 0, coupling_y0]) cylinder(d = coupling_d, h = coupling_len);         // 1. coupling disc
             translate([0, 0, zc]) cylinder(r = core_r, h = far_in_y - 0.2 - zc);              // 2. core
+            if (reinforce)                                                                    // 2b. stem fillet
+                translate([0, 0, zc]) cylinder(d1 = rf_fillet_d, d2 = 2 * core_r, h = rf_fillet_len);
             for (l = lobes) lobe(l[0], l[1], flat, ramp);                                     // 3. lobes
             translate([0, 0, zj]) cylinder(d = farj_d, h = far_in_y + far_pocket - 0.3 - zj); // 4. far journal
             for (i = [0 : nd - 1])                                                            // 5. ID dots
@@ -200,7 +263,7 @@ module shaft(variant = 4) {
 }
 
 // ---------------------------------------------------------------- 3.5 pins
-function pin_L(c, r) = pin_len + crown_z(col_x(c), row_y(r));
+function pin_L(c, r) = pin_len + pin_extra + crown_z(col_x(c), row_y(r));
 // Single pin, foot tip at the origin, length L.
 module pin(L) {
     tip_h = max(tip_r, 2.2);
