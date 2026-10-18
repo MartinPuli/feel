@@ -60,7 +60,7 @@ final class BluetoothPuck: NSObject, ObservableObject, CBCentralManagerDelegate,
     }
     func send(_ packet: FeelPacket) {
         guard isConnected else { return }
-        pending=packet; pendingAt=ProcessInfo.processInfo.systemUptime; flush()
+        pending=packet.forActiveLayout; pendingAt=ProcessInfo.processInfo.systemUptime; flush()
     }
     private func flush() {
         guard let device=peripheral, let characteristic=command, let packet=pending, !responseOutstanding else { return }

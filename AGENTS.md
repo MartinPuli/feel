@@ -1,3 +1,5 @@
+> October 17: six physical columns; GPIO32 unused. See docs/SIX-COLUMN-LAYOUT.md. Keep this version isolated and preserve its features.
+
 > October 16 update: the user explicitly selected the FS0307 nominal **120°** design.
 > Current CAD/firmware/protocol supersede historical 175° / 650–2500 µs instructions.
 > Assume 120° for design; do not describe it as a physical measurement. Default seven-servo PWM stays off; the opt-in GPIO32 midpoint demo has user-reported motion.

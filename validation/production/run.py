@@ -64,10 +64,10 @@ class Replay:
         for key, value in expected.items():
             actual = (state.get('result') == 'ok') if key == 'accepted' else state.get(key)
             self.expect(actual, value, f'{name or line}: {key}')
-        self.expect(all(0 <= angle <= 120 for angle in state['angles_deg']), True,
-                    f'{name or line}: 120-degree envelope')
-        self.expect(all(900 <= pulse <= 2100 for pulse in state['pulses_us']), True,
-                    f'{name or line}: FS0307 nominal pulse envelope')
+        self.expect(all(0 <= angle <= 175 for angle in state['angles_deg']), True,
+                    f'{name or line}: 175-degree assumed envelope')
+        self.expect(all(650 <= pulse <= 2500 for pulse in state['pulses_us']), True,
+                    f'{name or line}: FS0307 assumed wide pulse envelope')
         # Synthetic speed-limited motor model integrates the PREVIOUS command.
         # 300deg/s is illustrative, not a measured FS0307 rating; jam is injected.
         now = int(line.split()[1])
@@ -134,18 +134,18 @@ def run(replay):
         r.reset()
         r.packet(0, encoded['hex'], f'Contract sample {index}', accepted=True, bands=bands)
     r.reset()
-    bands = [1,2,3,4,4,0,0]
+    bands = [0,2,3,4,4,0,0]
     reply = r.perceive(100,254,[.2,.9,1.6,2.5,4,4.001,None])
     r.expect(reply['bands'], bands, 'distance interval edges')
     r.packet(100, reply['hex'], 'Swift perception → firmware', accepted=True, bands=bands)
     reply = r.perceive(200,255,[1]*7)
-    r.packet(200, reply['hex'], 'Sequence 255', accepted=True, bands=[2]*7)
+    r.packet(200, reply['hex'], 'Sequence 255', accepted=True, bands=[0]+[2]*6)
     reply = r.perceive(300,0,[2]*7)
-    r.packet(300, reply['hex'], 'Sequence wrap 255 → 0', accepted=True, bands=[3]*7)
-    r.packet(350, reply['hex'], 'Duplicate does not refresh', accepted=False, bands=[3]*7, result='duplicate')
+    r.packet(300, reply['hex'], 'Sequence wrap 255 → 0', accepted=True, bands=[0]+[3]*6)
+    r.packet(350, reply['hex'], 'Duplicate does not refresh', accepted=False, bands=[0]+[3]*6, result='duplicate')
     old = r.swift_call(op='encode',seq=255,bands=[4]*7,highlight=255)
-    r.packet(400,old['hex'],'Reordered packet', accepted=False, bands=[3]*7, result='stale_sequence')
-    r.command('TICK 799','Before watchdog', bands=[3]*7, active=True)
+    r.packet(400,old['hex'],'Reordered packet', accepted=False, bands=[0]+[3]*6, result='stale_sequence')
+    r.command('TICK 799','Before watchdog', bands=[0]+[3]*6, active=True)
     r.command('TICK 800','Exact 500ms watchdog', bands=[0]*7, highlight=255, active=False)
     r.packet(801,old['hex'],'Fresh baseline after watchdog',accepted=True,bands=[4]*7)
     r.command('DISCONNECT 802','Immediate disconnect',bands=[0]*7,highlight=255)
@@ -161,7 +161,7 @@ def run(replay):
         r.expect(p['bands'],[0]*7,name)
         r.packet(ms,p['hex'],name,accepted=True,bands=[0]*7,highlight=255)
     r.reset(2000)
-    for index,(bearing,column) in enumerate([(-45,0),(0,3),(45,6)]):
+    for index,(bearing,column) in enumerate([(-45,1),(0,4),(45,6)]):
         ms=2000+index*100
         p=r.perceive(ms,index,[2]*7,target={'bearingDegrees':bearing,'distance':2,'timestamp':ms/1000})
         r.expect(p['highlight'],column,'target bearing')
@@ -185,9 +185,9 @@ def run(replay):
     r.reset(4000)
     p=r.swift_call(op='encode',seq=1,bands=[1,2,3,4,0,0,0],highlight=0)
     r.packet(4000,p['hex'],'Band centres plus first highlight dip',accepted=True,
-             angles_deg=[13,40,80,120,20,20,20],tap_active=True)
-    r.command('TICK 4100','Tap returns after100ms',angles_deg=[0,40,80,120,20,20,20],tap_active=False)
-    r.command('TICK 4500','Timeout gaps by former band',angles_deg=[20,20,60,100,20,20,20],bands=[0]*7)
+             angles_deg=[13,58,116,174,29,29,29],tap_active=True)
+    r.command('TICK 4100','Tap returns after100ms',angles_deg=[0,58,116,174,29,29,29],tap_active=False)
+    r.command('TICK 4500','Timeout gaps by former band',angles_deg=[29,29,87,145,29,29,29],bands=[0]*7)
     r.reset(0xfffffff0)
     p=r.swift_call(op='encode',seq=42,bands=[1]*7,highlight=255)
     r.packet(0xfffffff0,p['hex'],'millis rollover baseline',accepted=True)

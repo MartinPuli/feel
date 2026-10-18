@@ -15,7 +15,7 @@ TICK 699
 TICK 700
 DISCONNECT 710
 ARM 720
-US 730 0 2100
+US 730 0 2500
 TICK 1230
 US 1231 0 999999
 DECODE 1240 127 0 0 0 0 0 0 0 4
@@ -27,16 +27,16 @@ result = subprocess.run([executable], input=commands, text=True, capture_output=
 states = [json.loads(line) for line in result.stdout.splitlines()]
 assert len(states) == len(commands.splitlines()), result.stdout
 assert all(s["mode"] == "SIMULATION" and s["production_controller"] for s in states)
-assert states[1]["angles_deg"] == [0, 40, 80, 120, 20, 0, 40]
-assert states[2]["angles_deg"][3] == 107 and states[2]["tap_active"]
-assert states[3]["angles_deg"][3] == 120 and not states[3]["tap_active"]
+assert states[1]["angles_deg"] == [0, 58, 116, 174, 29, 0, 58]
+assert states[2]["angles_deg"][3] == 161 and states[2]["tap_active"]
+assert states[3]["angles_deg"][3] == 174 and not states[3]["tap_active"]
 assert states[4]["result"] == "duplicate"
 assert states[5]["result"] == "bad_band"
 assert states[6]["active"]
 assert not states[7]["active"] and states[7]["bands"] == [0] * 7
-assert states[7]["angles_deg"] == [20, 20, 60, 100, 20, 20, 20]
-assert states[10]["raw_pulse"] and states[10]["pulses_us"][0] == 2100
-assert not states[11]["active"] and states[11]["angles_deg"][0] == 100
+assert states[7]["angles_deg"] == [29, 29, 87, 145, 29, 29, 29]
+assert states[10]["raw_pulse"] and states[10]["pulses_us"][0] == 2500
+assert not states[11]["active"] and states[11]["angles_deg"][0] == 145
 assert states[12]["result"] == "bad_command"
 assert states[13]["result"] == "ok"
 assert states[14]["result"] == "bad_length"

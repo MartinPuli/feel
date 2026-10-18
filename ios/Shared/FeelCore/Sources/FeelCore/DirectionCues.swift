@@ -1,12 +1,12 @@
 import Foundation
 
-/// One-shot tactile arrows, drawn on the 7×4 pins at 100 ms per frame using ordinary
+/// One-shot tactile arrows, drawn on the 6×4 pins at 100 ms per frame using ordinary
 /// nine-byte packets (no firmware or protocol change). Rows: 1 wrist … 4 fingers, so
 /// "forward" runs toward the fingers. Each frame raises at most one pin per column.
 /// Untested on hardware: pin return speed decides whether a cue feels like motion.
 public enum DirectionCue: Equatable, Sendable {
     case straight
-    /// Slight turn toward a column (0…6, never the centre).
+    /// Slight turn toward a column (wire slots 1…6).
     case bear(column: Int)
     case turnLeft, turnRight, turnAround, arrived
 
@@ -31,7 +31,7 @@ public enum DirectionCue: Equatable, Sendable {
         if m<=straightMax { return .straight }
         if m<=bearMax {
             let column=TactileGeometry.column(bearingDegrees:max(-45,min(45,b))) ?? center
-            return .bear(column: column != center ? column : (b>0 ? center+1 : center-1))
+            return .bear(column: column)
         }
         if m<=turnMax { return b>0 ? .turnRight : .turnLeft }
         return .turnAround
@@ -40,7 +40,7 @@ public enum DirectionCue: Equatable, Sendable {
     /// True when replaying would tell the wearer something new. Small drifts of a slight turn are not.
     public func noticeablyDifferent(from other: DirectionCue?) -> Bool {
         guard let other else { return true }
-        if case .bear(let a)=self, case .bear(let b)=other { return abs(a-b)>=2 || (a<Self.center) != (b<Self.center) }
+        if case .bear(let a)=self, case .bear(let b)=other { return abs(a-b)>=2 || (a<=Self.center) != (b<=Self.center) }
         return self != other
     }
 
@@ -56,10 +56,12 @@ public enum DirectionCue: Equatable, Sendable {
     }
 
     public var frames: [[UInt8]] {
-        func frame(_ raised: [Int: UInt8]) -> [UInt8] { (0..<7).map { raised[$0] ?? 0 } }
+        func frame(_ raised: [Int: UInt8]) -> [UInt8] { (0..<7).map { PuckLayout.activeColumns.contains($0) ? (raised[$0] ?? 0) : 0 } }
         /// A dot runs along the finger row, each pin up for two frames.
         func sweep(to column: Int) -> [[UInt8]] {
-            let path=Array(stride(from:Self.center,through:column,by:column>Self.center ? 1 : -1))
+            let destination = min(6, max(1, column))
+            let start = destination > Self.center ? 4 : 3
+            let path=Array(stride(from:start,through:destination,by:destination>start ? 1 : -1))
             return (0...path.count).map { k in
                 var raised: [Int: UInt8]=[:]
                 if k<path.count { raised[path[k]]=4 }
@@ -67,24 +69,23 @@ public enum DirectionCue: Equatable, Sendable {
                 return frame(raised)
             }
         }
-        let c=Self.center
         switch self {
         case .straight:
-            // A V that grows outward, tip toward the fingers: 1 2 3 4 3 2 1.
-            let grow=(0...3).map { k in frame(Dictionary(uniqueKeysWithValues:(0..<7).filter { abs($0-c)<=k }.map { ($0,UInt8(4-abs($0-c))) })) }
-            return grow+[grow[3]]
+            // A symmetric V around the middle pair: 2 3 4 4 3 2.
+            let grow=(0...2).map { k in frame(Dictionary(uniqueKeysWithValues:PuckLayout.activeColumns.filter { min(abs($0-3),abs($0-4))<=k }.map { ($0,UInt8(4-min(abs($0-3),abs($0-4)))) })) }
+            return grow+[grow[2]]
         case .bear(let column):
             return sweep(to:column)
         case .turnLeft, .turnRight:
-            // ↰ / ↱: the centre pin climbs wrist to fingers, then runs sideways.
-            let stem=(UInt8(1)...4).map { frame([c:$0]) }
-            return stem+sweep(to:self == .turnRight ? 6 : 0).dropFirst()
+            // The corresponding middle pin climbs wrist to fingers, then runs sideways.
+            let stem=(UInt8(1)...4).map { frame([(self == .turnRight ? 4 : 3):$0]) }
+            return stem+sweep(to:self == .turnRight ? 6 : 1).dropFirst()
         case .turnAround:
             // The middle columns step back from fingers to wrist.
-            return (UInt8(1)...4).reversed().map { b in frame([c-1:b,c:b,c+1:b]) }
+            return (UInt8(1)...4).reversed().map { b in frame([3:b,4:b]) }
         case .arrived:
             // Two short pulses of the middle columns.
-            let up=frame([c-1:4,c:4,c+1:4]), down=frame([:])
+            let up=frame([3:4,4:4]), down=frame([:])
             return [up,down,up,down]
         }
     }

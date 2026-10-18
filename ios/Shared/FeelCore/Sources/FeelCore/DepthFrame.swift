@@ -26,7 +26,7 @@ public struct DepthFrame: Equatable, Sendable {
     }
 }
 
-/// The per-frame depth step shared by the app and offline replay: depth map → seven sector ranges
+/// The per-frame depth step shared by the app and offline replay: depth map → six sector ranges plus one reserved wire slot
 /// plus the sparse world points that feed the floor map.
 public enum DepthFrameProcessor {
     public struct Result: Equatable, Sendable { public let distances: [Double?]; public let mapPoints: [Vector3] }

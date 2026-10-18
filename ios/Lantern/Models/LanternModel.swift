@@ -722,7 +722,7 @@ final class LanternModel:ObservableObject {
         guard let h=pointingHighlight else { return output }
         guard now<h.until else { pointingHighlight=nil; return output }
         var bands=output.packet.bands
-        guard output.state == .live, !cuePlayer.isAnimating, (0..<7).contains(h.column),
+        guard output.state == .live, !cuePlayer.isAnimating, PuckLayout.activeColumns.contains(h.column),
               !bands.indices.contains(where: { $0 != h.column && bands[$0] == 1 }) else { return output }
         if bands[h.column] == 0 { bands[h.column]=h.band }
         guard bands[h.column]>0,let packet=try? FeelPacket(sequence:output.packet.sequence,bands:bands,highlight:UInt8(h.column)) else { return output }
@@ -933,7 +933,7 @@ final class LanternModel:ObservableObject {
             let tracking=phase<8 || phase>=10
             let target=TargetObservation(bearingDegrees:sin(phase/2)*40,distance:1.3,timestamp:now,label:"SIMULATED target")
             let near=phase>=4 && phase<6
-            let encoded=TactileEncoder.encode(sequence:sequence,now:now,frameTimestamp:now,tracking:tracking,distances:[near ? 0.7 : nil,1.1,nil,2,3.5,nil,nil],target:target)
+            let encoded=TactileEncoder.encode(sequence:sequence,now:now,frameTimestamp:now,tracking:tracking,distances:[nil,near ? 0.7 : nil,1.1,2,3.5,nil,nil],target:target)
             // Simulated route: straight to the synthetic target, no floor map.
             let hint=tracking ? RouteHint(timestamp:now,status:.route,bearingDegrees:target.bearingDegrees,targetDistance:target.distance,routeLength:target.distance,label:"simulated target") : nil
             let output=withDirections(EncoderOutput(packet:encoded.packet,state:encoded.state == .live ? .simulation : encoded.state),hint:hint,now:now)
