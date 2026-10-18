@@ -43,6 +43,9 @@ final class ARPerception: NSObject, ARSessionDelegate {
     /// Printed FEEL room tags recognized by ARKit image detection, tagged with the session epoch. The frame is the
     /// tag's image anchor in the current world; room memory places remembered targets through it.
     var onTag: ((Int,TagSighting)->Void)?
+    /// The structure the camera saw this session, in the frame of the tag last recognized: published when sensing stops
+    /// or the world resets, just before the floor grid is cleared. Room memory keeps it as one visit (RoomMemory.keepStructure).
+    var onRoomMap: ((String,RoomMap)->Void)?
     /// The printed width ARKit is told. ios/Lantern/Resources/feel-tag-01.png must be printed exactly this wide,
     /// or every remembered target lands at the wrong distance.
     static let roomTagWidthMetres=0.20
@@ -57,6 +60,8 @@ final class ARPerception: NSObject, ARSessionDelegate {
         return tags
     }()
     private var lastTagPublished: [String: TimeInterval]=[:]
+    /// The tag last recognized in this world, on the AR queue: the frame the session's floor grid is exported in.
+    private var roomTag: (id: String, frame: RoomFrame)?
     private let queue=DispatchQueue(label:"feel.arkit",qos:.userInitiated)
     private let visionQueue=DispatchQueue(label:"feel.vision",qos:.userInitiated)
     private let pointingQueue=DispatchQueue(label:"feel.pointing",qos:.userInitiated)
@@ -111,7 +116,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private func runSession(epoch: Int) {
         isInterrupted=false; sessionEpoch=epoch; worldEpoch += 1; earliestFrame=ProcessInfo.processInfo.systemUptime
         floorY=nil; automaticFloor.reset(); lastTarget=nil; generation += 1; lastProcessed = -.infinity
-        grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil
+        publishRoomMap(); grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil
         let config=ARWorldTrackingConfiguration(); config.frameSemantics=[.sceneDepth]
         config.worldAlignment = .gravity; config.planeDetection=[.horizontal]
         // Room tags: the printed FEEL tag gives room memory its frame (RoomMemory.swift).
@@ -120,12 +125,21 @@ final class ARPerception: NSObject, ARSessionDelegate {
         publishStatus(ARPlaneAnchor.isClassificationSupported ? "Looking for floor — move slowly with the floor in view" : "Automatic floor detection unavailable — calibrate measured camera height")
     }
     func stop() {
-        queue.async { self.isRunning=false; self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.automaticFloor.reset(); self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.publishStatus("Stopped") }
+        queue.async { self.isRunning=false; self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.automaticFloor.reset(); self.publishRoomMap(); self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.publishStatus("Stopped") }
     }
     func setFinder(_ mode: FinderMode,epoch:Int) { queue.async { self.finder=mode; self.finderEpoch=epoch; self.lastTarget=nil; self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.generation += 1 } }
     /// Route to a fixed world point (two fingers on a puck column) until cleared with nil.
     func setRouteGoal(_ point: Vector3?, label: String = "") {
         queue.async { self.routeGoal=point.map { ($0,label) }; self.lastHint=nil; self.lastPlan = -.infinity }
+    }
+    /// Seeds the floor grid with a remembered map (RoomMap) as a prior, placed through the tag's frame in the world the
+    /// tag was seen in; a later world ignores it. The route is planned again at once, so the arrows can point along a
+    /// remembered room before the camera has seen it. Live classifications override the prior cell by cell.
+    func seedFloorGrid(_ map: RoomMap, frame: RoomFrame, worldEpoch: Int) {
+        queue.async {
+            guard self.isRunning, worldEpoch==self.worldEpoch else { return }
+            if self.grid.setPrior(map,frame:frame) { self.lastHint=nil; self.lastPlan = -.infinity }
+        }
     }
     /// Follow the target nearest `position` (one of several in view) until the finder changes.
     func lockTarget(at position: Vector3) {
@@ -144,8 +158,8 @@ final class ARPerception: NSObject, ARSessionDelegate {
             guard self.isRunning,!self.isInterrupted,cameraHeight.isFinite,cameraHeight>=0.6,cameraHeight<=2.1,let frame=self.session.currentFrame,frame.timestamp>=self.earliestFrame,case .normal=frame.camera.trackingState,ProcessInfo.processInfo.systemUptime>=frame.timestamp,ProcessInfo.processInfo.systemUptime-frame.timestamp<=0.25 else { self.publishStatus("Calibration needs fresh normal tracking and camera height 0.6–2.1 m"); return }
             let pose=Self.pose(frame.camera.transform)
             guard Self.mountValid(pose) else { self.publishStatus("Hold camera landscape-left, upright and facing forward"); return }
-            // Heights in the floor map depend on the floor level, so start the map again.
-            self.floorY=pose.position.y-cameraHeight; self.automaticFloor.reset(); self.grid.reset(); self.lastHint=nil; self.publishStatus("Floor calibrated from measured camera height")
+            // Heights in the floor map depend on the floor level, so the live map starts again; a remembered prior stays.
+            self.floorY=pose.position.y-cameraHeight; self.automaticFloor.reset(); self.grid.clearObservations(); self.lastHint=nil; self.publishStatus("Floor calibrated from measured camera height")
         }
     }
     /// One frame for Where-is: photo, depth and pose captured together, or nil when the
@@ -232,7 +246,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
             if let accepted=automaticFloor.observe(planes:planes,timestamp:frame.timestamp,
                 now:ProcessInfo.processInfo.systemUptime,cameraY:pose.position.y,
                 trackingNormal:normal && depthMap != nil,mountValid:Self.mountValid(pose)) {
-                floorY=accepted; grid.reset(); lastHint=nil
+                floorY=accepted; grid.clearObservations(); lastHint=nil
                 publishStatus("Floor calibrated automatically")
             }
         }
@@ -311,7 +325,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
         for case let anchor as ARImageAnchor in anchors where anchor.isTracked {
             guard let name=anchor.referenceImage.name,RoomMemoryStore.isTagId(name),now-(lastTagPublished[name] ?? -.infinity)>=0.5,
                   let frame=RoomFrame(columnMajor:Self.columnMajor(anchor.transform)) else { continue }
-            lastTagPublished[name]=now
+            lastTagPublished[name]=now; roomTag=(name,frame)
             let sighting=TagSighting(tagId:name,frame:frame,worldEpoch:worldEpoch,timestamp:now), epoch=sessionEpoch
             DispatchQueue.main.async { self.onTag?(epoch,sighting) }
         }
@@ -319,8 +333,17 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private static func columnMajor(_ m: simd_float4x4) -> [Double] {
         [m.columns.0,m.columns.1,m.columns.2,m.columns.3].flatMap { [Double($0.x),Double($0.y),Double($0.z),Double($0.w)] }
     }
+    /// On the AR queue, just before the floor grid is cleared: what the camera saw this session, in the frame of the tag
+    /// last recognized in this world, goes to room memory as one visit. Nothing without a tag or without observations.
+    private func publishRoomMap() {
+        guard let tag=roomTag else { return }
+        roomTag=nil
+        guard let map=RoomMap(grid:grid,frame:tag.frame) else { return }
+        DispatchQueue.main.async { self.onRoomMap?(tag.id,map) }
+    }
     func sessionShouldAttemptRelocalization(_ session: ARSession) -> Bool { false }
     private func invalidate() {
+        publishRoomMap()
         lastTarget=nil; floorY=nil; automaticFloor.reset(); grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil; generation += 1
         let epoch=sessionEpoch
         DispatchQueue.main.async { self.onInvalidated?(epoch) }

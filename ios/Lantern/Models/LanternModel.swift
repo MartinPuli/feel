@@ -75,6 +75,8 @@ final class LanternModel:ObservableObject {
     private lazy var localFinder: LocalWhereIsFinding = LocalWhereIs(detect: perception.detectLocal)
     /// Where a Where-is photo comes from; tests hand snapshots in by hand.
     lazy var snapshotProvider: (@escaping (FrameSnapshot?) -> Void) -> Void = { [perception] completion in perception.snapshot(completion: completion) }
+    /// How a remembered room map reaches the route planner (map, tag frame, world epoch); tests record the calls instead.
+    lazy var floorGridSeeder: (RoomMap, RoomFrame, Int) -> Void = { [perception] map, frame, worldEpoch in perception.seedFloorGrid(map, frame: frame, worldEpoch: worldEpoch) }
     var whereIsAvailable: Bool { mode == .live && guidanceState == .live }
     private var proactiveVoice = ProactiveVoicePolicy()
     private var voiceNotice: ProactiveVoicePolicy.Notice?
@@ -150,7 +152,9 @@ final class LanternModel:ObservableObject {
         }
         perception.onFrame={ [weak self] frame in guard let self,self.mode == .live,frame.epoch==self.startGeneration,frame.finderEpoch==self.finderEpoch else { return }; self.frame=frame; self.calibrated=frame.floorY != nil }
         perception.onInvalidated={ [weak self] epoch in guard let self,epoch==self.startGeneration else { return }; self.frame=nil; self.calibrated=false; self.roomMemory.forgetTag(); self.clearHeldTarget(spokenLine: "Lost tracking. Say it again."); self.resetDirections(); self.pointing.reset(); self.pointingHighlight=nil; self.tick() }
-        perception.onTag={ [weak self] epoch,sighting in guard let self,self.mode == .live,epoch==self.startGeneration else { return }; self.roomMemory.sawTag(sighting) }
+        perception.onTag={ [weak self] epoch,sighting in guard let self,self.mode == .live,epoch==self.startGeneration else { return }; self.sawTag(sighting) }
+        // A map is a visit in the tag's own frame: it stays valid however the session that produced it ended.
+        perception.onRoomMap={ [weak self] tagId,map in self?.roomMemory.keepStructure(map,tagId:tagId) }
         perception.onStatus={ [weak self] text in guard let self,self.mode == .live else { return }; self.status=text }
         perception.onModelStatus={ [weak self] text,available in self?.detectorStatus=text; self?.detectorAvailable=available }
         perception.onPointing={ [weak self] epoch,observation in self?.handlePointing(observation,epoch:epoch) }
@@ -183,6 +187,12 @@ final class LanternModel:ObservableObject {
         status="SIMULATION: synthetic scene, no simulated BLE movement"; calibrated=false; beginTimer()
     }
     func calibrate() { guard mode == .live else { return }; perception.calibrate(cameraHeight:cameraHeight) }
+    /// A printed tag is in view: load what is remembered there and, the first time in this world, seed the route planner
+    /// with the room's remembered structure, so the arrows can route to a remembered place before the camera has seen the room.
+    func sawTag(_ sighting: TagSighting) {
+        roomMemory.sawTag(sighting)
+        if let map = roomMemory.structureToSeed(for: sighting) { floorGridSeeder(map, sighting.frame, sighting.worldEpoch) }
+    }
     func stop(stopVoice: Bool = false) {
         voice.invalidateSceneSpeech()
         if stopVoice { voice.disconnect() }
@@ -511,7 +521,7 @@ final class LanternModel:ObservableObject {
                 "spoken_replies": voice.spokenOutputEnabled, "useful_updates": voice.proactiveEnabled,
                 "notice": "Neutral pins do not mean a clear path. No safe-route claim is available.",
                 "open_side": openSide?.spoken ?? "Nothing within 1.6 meters ahead, or unknown.",
-                "room_memory": roomMemory.status]
+                "room_memory": roomMemory.status, "room_structure": roomMemory.structureStatus]
     }
 
     private func updateVoiceAwareness(targetAvailable: Bool, target: TargetObservation? = nil,
