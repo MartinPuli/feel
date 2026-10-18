@@ -123,11 +123,15 @@ final class RoomStructureTests: XCTestCase {
         XCTAssertTrue((status["note"] as? String)?.contains("live depth") == true)
         XCTAssertNotNil(model.voiceSnapshot()["room_memory"], "the anchors' entry stays")
     }
-    func testTheUploadAndDownloadAreNotWiredYet() {
+    func testAKeptVisitLeavesThroughTheUploaderAndTheDownloadIsNotWiredYet() {
+        let uploader = RecordingUploader()
         let memory = RoomMemory(store: store)
-        memory.shareStructure(visit1, venueId: "harvard-yard", tagId: "feel-tag-01")
+        memory.uploader = uploader
+        XCTAssertTrue(memory.keepStructure(seen, tagId: "feel-tag-01"))
+        XCTAssertEqual(uploader.structures.map { $0.tagId }, ["feel-tag-01"])
+        XCTAssertEqual(uploader.structures.first?.map, seen, "the visit kept on the phone is the one uploaded")
         memory.fetchSharedStructure(venueId: "harvard-yard", tagId: "feel-tag-01")
-        XCTAssertEqual(store.structures(for: "feel-tag-01"), [visit1, visit2], "the local store is the memory until Supabase and Chalk are wired")
+        XCTAssertEqual(store.structures(for: "feel-tag-01"), [visit1, visit2, seen], "the local store is the memory on the phone; the download from Chalk is not wired")
     }
     func testPerceptionOffersARoomMapCallbackAndASeedingEntryPoint() {
         let perception = ARPerception()

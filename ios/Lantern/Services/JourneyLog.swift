@@ -5,8 +5,8 @@ import FeelCore
 /// poses, the blocked cells seen on the way, the cue latencies and the arrival. A journey starts when a target is
 /// chosen while a tag has been seen in this world and ends on arrival, stop, tracking loss or a target change. Each
 /// one is kept as JSON under Application Support (beside RoomMemory) and `export` writes them all to Documents as one
-/// array, so they can be pulled off the phone with the Files app and seeded into Chalk. No network upload yet
-/// (`share`). Nothing here reaches the pins. Main thread.
+/// array for the Files app. Each kept journey also leaves for the shared memory through `uploader` (the journeys table
+/// Chalk reads). Nothing here reaches the pins. Main thread.
 final class JourneyLog {
     static var directory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Journeys", isDirectory: true)
@@ -20,6 +20,8 @@ final class JourneyLog {
 
     let directory: URL
     let exportFile: URL
+    /// Where kept journeys go beyond this phone (SupabaseWriter in the app); nil keeps them on the phone only.
+    var uploader: MemoryUploading?
     private let now: () -> Date
     /// One id per app run; every journey of the run carries it.
     let sessionId = UUID().uuidString.lowercased()
@@ -67,7 +69,7 @@ final class JourneyLog {
         guard journey.steps.count >= Self.minimumSteps else { dropped += 1; return nil }
         journeys.append(journey)
         try? persist(journey)
-        share(journey)
+        uploader?.upload(journey: journey)
         return journey
     }
     private static let fileStamp: DateFormatter = {
@@ -89,10 +91,6 @@ final class JourneyLog {
         try Journey.encoder.encode(journeys).write(to: exportFile, options: .atomic)
         return exportFile
     }
-
-    /// The write to Chalk: a Supabase REST insert of the journey into the journeys table with the signed-in user's
-    /// JWT, `shared` set only when the user opted in. Not wired yet; the export file is the way off the phone until then.
-    func share(_ journey: Journey) {}
 
     /// For get_status: whether a journey is being recorded, its target and what it holds so far, and how many are stored.
     var status: [String: Any] {

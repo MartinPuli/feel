@@ -87,6 +87,8 @@ final class LanternModel:ObservableObject {
     private var followFrame: RoomFrame?
     /// Every walk toward a chosen target, recorded in the tag frame for Chalk.
     let journeyLog: JourneyLog
+    /// Where finds, anchors, room maps and journeys leave the phone (SupabaseWriter); nil keeps everything on the phone.
+    private let uploader: MemoryUploading?
     @Published private(set) var whereIsNotice: String?
     @Published private(set) var whereIsSelfTest = "Not run yet."
     @Published private(set) var whereIsSelfTestRunning = false
@@ -154,8 +156,12 @@ final class LanternModel:ObservableObject {
     private let chime=Chime()
     init(voice: RealtimeVoiceSession = RealtimeVoiceSession(), chalkStore: ChalkConfigurationStoring = ChalkConfigurationStore(),
          gatewayFactory: @escaping (ChalkConfiguration) -> ChatGateway = { ChalkGateway(configuration: $0) },
-         localFinder: LocalWhereIsFinding? = nil, roomMemory: RoomMemory = RoomMemory(), journeyLog: JourneyLog = JourneyLog()) {
-        self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory; self.roomMemory = roomMemory; self.journeyLog = journeyLog
+         localFinder: LocalWhereIsFinding? = nil, roomMemory: RoomMemory = RoomMemory(), journeyLog: JourneyLog = JourneyLog(),
+         uploader: MemoryUploading? = SupabaseWriter.forLaunch()) {
+        self.voice = voice; self.chalkStore = chalkStore; self.gatewayFactory = gatewayFactory; self.roomMemory = roomMemory; self.journeyLog = journeyLog; self.uploader = uploader
+        if roomMemory.uploader == nil { roomMemory.uploader = uploader }
+        if journeyLog.uploader == nil { journeyLog.uploader = uploader }
+        (uploader as? SupabaseWriter)?.venue = { [venueInfo] in venueInfo.pack.map { VenueRef(id: $0.venueId, name: $0.venueName) } ?? .demo }
         if let localFinder { self.localFinder = localFinder }
         chalkConfiguration = chalkStore.loadForLaunch()
         chalkCommands.captureContext = { [weak self] in
@@ -458,9 +464,11 @@ final class LanternModel:ObservableObject {
         case .foundIt:
             guard let target = heldTarget else { return ["error": "No Where-is target is held right now."] }
             let kept = roomMemory.confirm(target, confidence: 0.9) != nil
+            let saved = recordFind(target, confidence: 0.9)
             clearHeldTarget(spokenLine: nil)
             return ["status": kept ? "Noted. The \(target.label) is remembered for this room." : "Noted. This room has no tag in view, so the place is not remembered.",
-                    "remembered": kept]
+                    "remembered": kept,
+                    "history": saved ? "The find is being saved to the user's history, for where did I last see it." : "Not signed in, so the find is not saved to the user's history."]
         case .describeAhead:
             if let refusal = Self.whereIsRefusal(mode: mode, guidance: guidanceState) { return ["error": refusal] }
             guard let configuration = chalkConfiguration else {
@@ -820,13 +828,35 @@ final class LanternModel:ObservableObject {
         if let cells = frame.blockedCells { journeyLog.noteBlocked(worldCentres: cells, cellSize: frame.cellSize) }
         if output.state == .live, output.targetColumns != nil || cuePlayer.isAnimating { journeyLog.cueShown(now: now) }
     }
-    /// get_status.room_memory, with the journey being recorded and the progress point in use.
+    /// "Found it" also goes to the user's find history (the confirmed_finds table, Chalk's last_seen): placed by venue
+    /// and, when the room's tag frame is known for this world, by the distance from the tag. False when nothing can
+    /// leave the phone (no Supabase settings, or not signed in).
+    @discardableResult
+    private func recordFind(_ target: HeldTarget, confidence: Double) -> Bool {
+        guard let uploader, uploader.isReady else { return false }
+        let tag = roomMemory.sighting.flatMap { sighting -> (id: String, distance: Double)? in
+            guard sighting.worldEpoch == target.worldEpoch else { return nil }
+            let p = sighting.frame.tagPoint(world: target.position)
+            return (sighting.tagId, (p.x * p.x + p.y * p.y + p.z * p.z).squareRoot())
+        }
+        uploader.upload(find: target.label, place: Self.findPlace(venue: venueInfo.pack?.venueName ?? VenueRef.demo.name, tag: tag),
+                        confidence: confidence, foundAt: Date())
+        return true
+    }
+    /// Where a find is filed, as Chalk reads it back ("last confirmed at the …"): the venue, and how far from which tag.
+    static func findPlace(venue: String, tag: (id: String, distance: Double)?) -> String {
+        guard let tag, tag.distance.isFinite else { return venue }
+        return "\(venue), about \(Int(tag.distance.rounded())) m from tag \(tag.id)"
+    }
+
+    /// get_status.room_memory, with the journey being recorded, the progress point in use, and the uploads.
     private var roomMemoryStatus: [String: Any] {
         var status = roomMemory.status
         var journey = journeyLog.status
         journey["next_point"] = follower.map { $0.arrived ? "arrived" : String($0.index) } ?? "none"
         journey["points"] = follower?.points.count ?? 0
         status["journey"] = journey
+        status["uploads"] = uploader?.statusReport ?? ["configured": false]
         return status
     }
     private func say(_ line: String, sceneBound: Bool = false) {

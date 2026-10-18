@@ -96,9 +96,9 @@ def system() -> Figure:
     f.arrow(940, 225, 920, 225, color=CHALK_EDGE, dashed=True, label='picks the model', label_dx=0, label_dy=-10)
     f.arrow(940, 350, 920, 350, color=CHALK_EDGE, label='data source', label_dy=-8)
     f.arrow(680, 372, 610, 437, color=CHALK_EDGE, via=[(645, 372), (645, 437)], label='sentence · pack', label_dy=-8)
-    f.arrow(610, 460, 1020, 460, color=MUTED, dashed=True, via=[(1020, 460)], label='"found it" → REST insert, user JWT', label_dy=-8)
-    f.arrow(1020, 460, 1020, 388, color=MUTED, dashed=True)
-    f.note(20, 590, 'Solid arrows exist in the repository. Dashed ones are wired on the Chalk side and wait for the database connection. Pins never come from the cloud.', size=10.5)
+    f.arrow(610, 460, 1020, 460, color=MUTED, via=[(1020, 460)], label='"found it" → REST insert, user JWT', label_dy=-8)
+    f.arrow(1020, 460, 1020, 388, color=MUTED)
+    f.note(20, 590, 'Solid arrows exist in the repository and run against the live database. The dashed one is inside the gateway. Pins never come from the cloud.', size=10.5)
     return f
 
 
@@ -252,7 +252,7 @@ def room_memory() -> Figure:
     f.arrow(910, 160, 910, 190, color=CHALK_EDGE)
     f.arrow(910, 290, 910, 320, color=CHALK_EDGE)
     f.arrow(910, 374, 910, 404, color=CHALK_EDGE)
-    f.arrow(680, 112, 760, 112, color=MUTED, dashed=True, label='REST insert, user JWT,\nopt-in sharing (planned)', label_dx=0, label_dy=-22)
+    f.arrow(680, 112, 760, 112, color=MUTED, label='REST insert, user JWT,\nshared unless turned off', label_dx=0, label_dy=-22)
     f.arrow(760, 347, 720, 347, color=MUTED, dashed=True)
     f.arrow(720, 347, 680, 160, color=MUTED, dashed=True, via=[(720, 160)], label='download (planned)', label_dx=-50, label_dy=-6)
     f.note(20, 548, 'The pins always come from live depth: memory replaces the photo round trip, never the rows. A tracking reset drops the tag frame and the held target together.', color=ACCENT, size=10.5)
@@ -287,10 +287,10 @@ def room_structure() -> Figure:
     f.arrow(910, 160, 910, 190, color=CHALK_EDGE)
     f.arrow(910, 290, 910, 320, color=CHALK_EDGE)
     f.arrow(910, 374, 910, 404, color=CHALK_EDGE)
-    f.arrow(680, 112, 760, 112, color=MUTED, dashed=True)
+    f.arrow(680, 112, 760, 112, color=MUTED, label='REST insert, user JWT', label_dx=0, label_dy=-10)
     f.arrow(760, 347, 720, 347, color=MUTED, dashed=True)
     f.arrow(720, 347, 680, 273, color=MUTED, dashed=True, via=[(720, 273)])
-    f.note(20, 564, 'Dashed arrows are not wired yet: the upload of a visit (RoomMemory.shareStructure) and the download of the merged map (RoomMemory.fetchSharedStructure). No device test yet.', size=10.5)
+    f.note(20, 564, 'The upload of a visit is wired (RoomMemory.uploader, SupabaseWriter). Dashed: the download of the merged map (RoomMemory.fetchSharedStructure), not wired yet. No device test yet.', size=10.5)
     f.note(20, 582, 'The pins always come from live depth. A remembered wall is only a reason for the planner to prefer another way; what the camera sees this session wins cell by cell.', color=ACCENT, size=10.5)
     return f
 

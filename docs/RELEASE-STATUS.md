@@ -6,6 +6,20 @@ macOS reports the device unavailable. Physical six-servo integration NOT VERIFIE
 See [evidence](evidence/six-columns-20261017/REPORT.md) and [wiring](SIX-COLUMN-LAYOUT.md).
 Earlier seven-column statements below describe historical revisions.
 
+> **Phone → Supabase writes on `main` (2026-10-17, night):** the phone now writes the rows Chalk reads. "Found it"
+> sends a confirmed find (`confirmed_finds`, the table behind `last_seen`, placed by venue and distance from the room's
+> tag); every confirmed target sends an anchor, a visit's map goes when sensing stops, and each kept journey goes when
+> the walk ends (`anchors`, `room_maps`, `journeys`, marked shared unless the user default `feel.shareRoomMemory` is
+> false). One PostgREST insert each, with the publishable key and the signed-in user's token (`SupabaseWriter`, behind
+> `RoomMemory.uploader` and `JourneyLog.uploader`; `user_id` is the token's subject, as Row Level Security requires).
+> A token about to expire, or refused with 401, is exchanged once for a new one with the saved refresh token, which
+> replaces the sign-in's; rows outside a table's limits are dropped on the phone; `get_status.room_memory.uploads`
+> reports sent, failed and skipped with the last reason, the user id and the venue. Rows are filed under the loaded
+> venue pack's venue, else `rubenstein-treehouse`. Software checks on this Mac: Lantern 205 unit tests on the
+> simulator, the wire shape against a stub server. NOT RUN on a device: no phone was reachable, so no row written by
+> a phone has been seen in Supabase or through Chalk yet. Still pending: the download of shared memory
+> (`RoomMemory.fetchSharedStructure`) and a `last_seen` tool on the phone.
+
 > **Journey loop, Chalk side, on `claude/journey-chalk` (2026-10-17, night):** every walk from a printed tag toward a
 > remembered target is a journey (`journeys` table with its opt-in `shared` flag, `Journey` feature,
 > `feel_chalk/journeys.py`); the shared journeys of the last 60 days join the merged structure in

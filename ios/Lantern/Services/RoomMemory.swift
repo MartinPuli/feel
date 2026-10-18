@@ -6,9 +6,11 @@ import FeelCore
 /// once instead of taking a photo, and the room's structure (the floor grid earlier sessions learned, FeelCore
 /// RoomMap), so the route arrows can plan before the camera has seen the room. Memory only shortcuts the question
 /// and seeds the planner; the pins always show live depth, and a remembered place is always spoken as a past
-/// sighting. Main thread.
+/// sighting. A confirmed anchor and a kept visit also leave for the shared memory through `uploader`. Main thread.
 final class RoomMemory {
     private let store: RoomMemoryStore
+    /// Where anchors and room maps go beyond this phone (SupabaseWriter in the app); nil keeps them on the phone only.
+    var uploader: MemoryUploading?
     private let now: () -> Date
     /// The tag's frame in the current ARKit world, from the last recognition this session; a tracking reset clears it.
     private(set) var sighting: TagSighting?
@@ -64,13 +66,9 @@ final class RoomMemory {
         let anchor = RoomAnchor(label: RoomAnchor.normalized(target.label), position: sighting.frame.tagPoint(world: target.position), confidence: confidence, seenAt: now())
         guard anchor.isUsable, let kept = try? store.append(anchor, tagId: sighting.tagId) else { return nil }
         anchors = kept
-        shareAnchor(anchor, venueId: nil, tagId: sighting.tagId)
+        uploader?.upload(anchor: anchor, tagId: sighting.tagId)
         return anchor
     }
-
-    /// The write to the shared memory on Chalk: a Supabase REST insert into the anchors table with the signed-in
-    /// user's JWT, `shared` set only when the user opted in. Not wired yet; the local store is the memory until then.
-    func shareAnchor(_ anchor: RoomAnchor, venueId: String?, tagId: String) {}
 
     // MARK: Room structure
 
@@ -91,16 +89,13 @@ final class RoomMemory {
     func keepStructure(_ map: RoomMap, tagId: String) -> Bool {
         guard map.observedCount >= Self.minimumVisitCells, let kept = try? store.appendStructure(map, tagId: tagId) else { return false }
         if anchorsTagId == tagId { structures = kept }
-        shareStructure(map, venueId: nil, tagId: tagId)
+        uploader?.upload(structure: map, tagId: tagId, seenAt: now())
         return true
     }
 
-    /// The upload of one visit to the shared memory on Chalk: a Supabase REST insert into the room_maps table with the
-    /// signed-in user's JWT, `shared` set only when the user opted in. Not wired yet; the local store is the memory until then.
-    func shareStructure(_ map: RoomMap, venueId: String?, tagId: String) {}
-
     /// The download of the room's structure as Chalk merged it from shared visits (named query `room_structure`,
-    /// `RoomMemory.structure`) into the local store as one more visit, so even a first visit can route. Not wired yet.
+    /// `RoomMemory.structure`) into the local store as one more visit, so even a first visit can route. Not wired yet;
+    /// the upload of this phone's visits (`uploader`) is.
     func fetchSharedStructure(venueId: String?, tagId: String) {}
 
     /// For get_status: how much of the room's structure is remembered at the tag in use, from how many visits, and

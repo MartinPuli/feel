@@ -156,10 +156,18 @@ final class JourneyTests: XCTestCase {
         XCTAssertEqual(JourneyLog.directory.lastPathComponent, "Journeys")
         XCTAssertEqual(JourneyLog.directory.deletingLastPathComponent(), RoomMemory.directory.deletingLastPathComponent(), "beside RoomMemory")
     }
-    func testTheUploadIsNotWiredYet() {
+    func testEveryKeptJourneyLeavesThroughTheUploader() throws {
+        let uploader = RecordingUploader()
         let log = JourneyLog(directory: journeys, exportFile: exportFile)
-        log.share(Journey(tagId: "feel-tag-01", sessionId: "s", startedAt: seenAt, targetLabel: "exit"))
-        XCTAssertEqual(log.journeys.count, 0, "the export file is the way off the phone until Supabase is wired")
+        log.uploader = uploader
+        log.begin(targetLabel: "exit", target: Vector3(-1, 0, -2), sighting: sighting(), startUptime: 1)
+        log.record(pose: CameraPose(position: Vector3(0, 0, 0)), now: 1)
+        log.record(pose: CameraPose(position: Vector3(0, 0, -1)), now: 2)
+        let kept = try XCTUnwrap(log.end(arrived: false, pose: nil, now: 3))
+        XCTAssertEqual(uploader.journeys, [kept], "the journey kept on the phone is the one uploaded")
+        log.begin(targetLabel: "exit", target: Vector3(-1, 0, -2), sighting: sighting(), startUptime: 4)
+        XCTAssertNil(log.end(arrived: false, pose: nil, now: 4.1))
+        XCTAssertEqual(uploader.journeys.count, 1, "a walk too short to keep is not uploaded either")
     }
 
     // MARK: Following
