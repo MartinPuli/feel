@@ -128,13 +128,13 @@
    "pass_": true
   },
   "gap1": {
-   "stated": 87.5,
-   "computed": 87.5,
+   "stated": 87.0,
+   "computed": 87.0,
    "pass_": true
   },
   "gap2": {
-   "stated": 146.0,
-   "computed": 146.0,
+   "stated": 145.0,
+   "computed": 145.0,
    "pass_": true
   },
   "pack_in_l": {
@@ -182,6 +182,45 @@
    "unpaired_edges": 0,
    "volume_mm3": 43062.835,
    "slivers_lt_1e8_mm2": 7,
+   "min": [
+    -50.25,
+    -30.4945,
+    0.0
+   ],
+   "max": [
+    50.25,
+    61.9945,
+    26.7
+   ],
+   "size": [
+    100.5,
+    92.489,
+    26.7
+   ],
+   "stated_size": [
+    100.5,
+    92.5,
+    26.7
+   ],
+   "max_bbox_dev": 0.011,
+   "checks": {
+    "export_clean": true,
+    "one_body": true,
+    "watertight": true,
+    "volume_positive": true,
+    "on_bed": "True",
+    "bbox": "True"
+   },
+   "warnings": []
+  },
+  "chassis_loose": {
+   "triangles": 2544,
+   "components": 1,
+   "collapsed": 0,
+   "duplicate_edges": 0,
+   "unpaired_edges": 0,
+   "volume_mm3": 39183.577,
+   "slivers_lt_1e8_mm2": 10,
    "min": [
     -50.25,
     -30.4945,
@@ -292,13 +331,13 @@
    "warnings": []
   },
   "shaft": {
-   "triangles": 21636,
+   "triangles": 22452,
    "components": 1,
    "collapsed": 0,
    "duplicate_edges": 0,
    "unpaired_edges": 0,
-   "volume_mm3": 1580.612,
-   "slivers_lt_1e8_mm2": 75,
+   "volume_mm3": 1609.378,
+   "slivers_lt_1e8_mm2": 72,
    "min": [
     -5.5,
     -5.4966,
@@ -331,12 +370,12 @@
    "warnings": []
   },
   "shaft3": {
-   "triangles": 17426,
+   "triangles": 17936,
    "components": 1,
    "collapsed": 0,
    "duplicate_edges": 0,
    "unpaired_edges": 0,
-   "volume_mm3": 1535.084,
+   "volume_mm3": 1563.596,
    "slivers_lt_1e8_mm2": 42,
    "min": [
     -5.5,
@@ -370,12 +409,12 @@
    "warnings": []
   },
   "shaft4": {
-   "triangles": 20888,
+   "triangles": 21422,
    "components": 1,
    "collapsed": 0,
    "duplicate_edges": 0,
    "unpaired_edges": 0,
-   "volume_mm3": 1545.71,
+   "volume_mm3": 1574.35,
    "slivers_lt_1e8_mm2": 50,
    "min": [
     -5.5,
@@ -535,6 +574,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": -5,
+   "variant": 4,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": -5,
    "variant": 4,
@@ -563,6 +609,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 0,
+   "variant": 4,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 0,
    "variant": 4,
@@ -591,6 +644,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 29,
+   "variant": 4,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 29,
    "variant": 4,
@@ -619,6 +679,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 58,
+   "variant": 4,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 58,
    "variant": 4,
@@ -641,118 +708,153 @@
   },
   {
    "check": "x_shaft_chassis",
-   "angle": 87.5,
+   "angle": 87,
+   "variant": 4,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis_loose",
+   "angle": 87,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_servo",
-   "angle": 87.5,
+   "angle": 87,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_guide",
-   "angle": 87.5,
+   "angle": 87,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_shaft",
-   "angle": 87.5,
+   "angle": 87,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_chassis",
-   "angle": 117,
+   "angle": 116,
+   "variant": 4,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis_loose",
+   "angle": 116,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_servo",
-   "angle": 117,
+   "angle": 116,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_guide",
-   "angle": 117,
+   "angle": 116,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_shaft",
-   "angle": 117,
+   "angle": 116,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_chassis",
-   "angle": 146,
+   "angle": 145,
+   "variant": 4,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis_loose",
+   "angle": 145,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_servo",
-   "angle": 146,
+   "angle": 145,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_guide",
-   "angle": 146,
+   "angle": 145,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_shaft",
-   "angle": 146,
+   "angle": 145,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_chassis",
-   "angle": 175,
+   "angle": 174,
+   "variant": 4,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis_loose",
+   "angle": 174,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_servo",
-   "angle": 175,
+   "angle": 174,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_guide",
-   "angle": 175,
+   "angle": 174,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_shaft",
-   "angle": 175,
+   "angle": 174,
    "variant": 4,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_chassis",
+   "angle": 180,
+   "variant": 4,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis_loose",
    "angle": 180,
    "variant": 4,
    "volume_mm3": 0.0,
@@ -787,6 +889,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": -5,
+   "variant": 3,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": -5,
    "variant": 3,
@@ -815,6 +924,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 0,
+   "variant": 3,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 0,
    "variant": 3,
@@ -843,6 +959,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 29,
+   "variant": 3,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 29,
    "variant": 3,
@@ -871,6 +994,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 58,
+   "variant": 3,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 58,
    "variant": 3,
@@ -893,118 +1023,153 @@
   },
   {
    "check": "x_shaft_chassis",
-   "angle": 87.5,
+   "angle": 87,
+   "variant": 3,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis_loose",
+   "angle": 87,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_servo",
-   "angle": 87.5,
+   "angle": 87,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_guide",
-   "angle": 87.5,
+   "angle": 87,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_shaft",
-   "angle": 87.5,
+   "angle": 87,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_chassis",
-   "angle": 117,
+   "angle": 116,
+   "variant": 3,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis_loose",
+   "angle": 116,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_servo",
-   "angle": 117,
+   "angle": 116,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_guide",
-   "angle": 117,
+   "angle": 116,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_shaft",
-   "angle": 117,
+   "angle": 116,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_chassis",
-   "angle": 146,
+   "angle": 145,
+   "variant": 3,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis_loose",
+   "angle": 145,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_servo",
-   "angle": 146,
+   "angle": 145,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_guide",
-   "angle": 146,
+   "angle": 145,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_shaft",
-   "angle": 146,
+   "angle": 145,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_chassis",
-   "angle": 175,
+   "angle": 174,
+   "variant": 3,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis_loose",
+   "angle": 174,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_servo",
-   "angle": 175,
+   "angle": 174,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_guide",
-   "angle": 175,
+   "angle": 174,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_shaft",
-   "angle": 175,
+   "angle": 174,
    "variant": 3,
    "volume_mm3": 0.0,
    "result": "empty"
   },
   {
    "check": "x_shaft_chassis",
+   "angle": 180,
+   "variant": 3,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis_loose",
    "angle": 180,
    "variant": 3,
    "volume_mm3": 0.0,
@@ -1039,6 +1204,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": -13,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": -13,
    "variant": 44,
@@ -1067,6 +1239,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": -5,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": -5,
    "variant": 44,
@@ -1095,6 +1274,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 0,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 0,
    "variant": 44,
@@ -1123,6 +1309,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 20,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 20,
    "variant": 44,
@@ -1151,6 +1344,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 40,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 40,
    "variant": 44,
@@ -1179,6 +1379,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 60,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 60,
    "variant": 44,
@@ -1207,6 +1414,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 80,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 80,
    "variant": 44,
@@ -1235,6 +1449,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 100,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 100,
    "variant": 44,
@@ -1263,6 +1484,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 120,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 120,
    "variant": 44,
@@ -1291,6 +1519,13 @@
    "result": "empty"
   },
   {
+   "check": "x_shaft_chassis_loose",
+   "angle": 125,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_shaft_servo",
    "angle": 125,
    "variant": 44,
@@ -1313,6 +1548,13 @@
   },
   {
    "check": "x_shaft_chassis",
+   "angle": 133,
+   "variant": 44,
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
+   "check": "x_shaft_chassis_loose",
    "angle": 133,
    "variant": 44,
    "volume_mm3": 0.0,
@@ -1345,6 +1587,11 @@
    "result": "empty"
   },
   {
+   "check": "x_servo_chassis_loose",
+   "volume_mm3": 0.0,
+   "result": "empty"
+  },
+  {
    "check": "x_servo_guide",
    "volume_mm3": 0.0,
    "result": "empty"
@@ -1360,8 +1607,8 @@
    "check": "x_horn",
    "offset": 0,
    "variant": 4,
-   "volume_mm3": 6.069219201284189e-15,
-   "result": "250 triangles, coincident faces only"
+   "volume_mm3": 5.329070518200751e-15,
+   "result": "328 triangles, coincident faces only"
   },
   {
    "check": "x_horn",
@@ -1395,8 +1642,8 @@
    "check": "x_horn",
    "offset": 0,
    "variant": 3,
-   "volume_mm3": 6.069219201284189e-15,
-   "result": "250 triangles, coincident faces only"
+   "volume_mm3": 5.329070518200751e-15,
+   "result": "328 triangles, coincident faces only"
   },
   {
    "check": "x_horn",
@@ -1430,8 +1677,8 @@
    "check": "x_horn",
    "offset": 0,
    "variant": 44,
-   "volume_mm3": 6.069219201284189e-15,
-   "result": "250 triangles, coincident faces only"
+   "volume_mm3": 5.329070518200751e-15,
+   "result": "328 triangles, coincident faces only"
   },
   {
    "check": "x_horn",
@@ -1472,8 +1719,8 @@
    },
    "gap_rise": {
     "29.0": 0.0,
-    "87.5": 0.0,
-    "146.0": 0.0
+    "87.0": 0.0,
+    "145.0": 0.0
    },
    "tap": {
     "0": {

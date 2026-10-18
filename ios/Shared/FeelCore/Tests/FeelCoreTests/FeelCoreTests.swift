@@ -76,17 +76,26 @@ final class GeometryTests: XCTestCase {
 final class PerceptionTests: XCTestCase {
     let pose=CameraPose(position:Vector3(0,1,0))
     func sample(_ x: Double=0,_ y: Double=0,_ z: Double = -1,_ confidence: UInt8=2) -> DepthSample { .init(cameraPoint:Vector3(x,y,z),confidence:confidence) }
-    func testNearestPerSector() {
-        let result=DepthProjector.sectors(samples:[sample(0,0,-2),sample(0,0,-0.8),sample(-1,0,-2),sample(1,0,-2)],pose:pose,floorY:0)
+    /// A real surface leaves several samples; the projector needs `DepthProjector.support` of them.
+    func surface(_ x: Double=0,_ y: Double=0,_ z: Double = -1,_ confidence: UInt8=2) -> [DepthSample] { Array(repeating:sample(x,y,z,confidence),count:DepthProjector.support) }
+    /// Six sectors in wire slots 1...6: straight ahead is slot 4.
+    func testNearestSurfacePerSector() {
+        let result=DepthProjector.sectors(samples:surface(0,0,-2)+surface(0,0,-0.8)+surface(-1,0,-2)+surface(1,0,-2),pose:pose,floorY:0)
         XCTAssertEqual(result[4],0.8); XCTAssertEqual(result[2],sqrt(5)); XCTAssertEqual(result[5],sqrt(5)); XCTAssertNil(result[0])
     }
+    func testStrayPixelsNeverRaiseAPin() {
+        XCTAssertEqual(DepthProjector.support,3)
+        XCTAssertNil(DepthProjector.sectors(samples:[sample(0,0,-1),sample(0,0,-1)],pose:pose,floorY:0)[4],"two stray points are not an obstacle")
+        XCTAssertEqual(DepthProjector.sectors(samples:surface(0,0,-2)+[sample(0,0,-0.5),sample(0.02,0,-0.7)],pose:pose,floorY:0)[4],2,"flyers ahead of a wall do not pull it closer")
+        XCTAssertEqual(DepthProjector.sectors(samples:[sample(0,0,-1)],pose:pose,floorY:0,support:1)[4],1)
+    }
     func testRejectFloorCeilingBehindAndConfidence() {
-        let result=DepthProjector.sectors(samples:[sample(0,-0.5,-1),sample(0,1.2,-1),sample(0,0,1),sample(0,0,-1,0),sample(0,0,-1,3)],pose:pose,floorY:0)
+        let result=DepthProjector.sectors(samples:surface(0,-0.5,-1)+surface(0,1.2,-1)+surface(0,0,1)+surface(0,0,-1,0)+surface(0,0,-1,3),pose:pose,floorY:0)
         XCTAssertTrue(result.allSatisfy { $0 == nil })
     }
-    func testFloorCalibrationIsRequired() { XCTAssertTrue(DepthProjector.sectors(samples:[sample()],pose:pose,floorY:nil).allSatisfy { $0 == nil }) }
+    func testFloorCalibrationIsRequired() { XCTAssertTrue(DepthProjector.sectors(samples:surface(),pose:pose,floorY:nil).allSatisfy { $0 == nil }) }
     func testCalibratedFloorNotWorldOrigin() {
-        XCTAssertEqual(DepthProjector.sectors(samples:[sample()],pose:CameraPose(position:Vector3(0,7,0)),floorY:6)[4],1)
+        XCTAssertEqual(DepthProjector.sectors(samples:surface(),pose:CameraPose(position:Vector3(0,7,0)),floorY:6)[4],1)
     }
     func output(now:Double=10,time:Double=10,tracking:Bool=true,distances:[Double?]=[0.5,1,2,3,nil,nil,nil],target:TargetObservation?=nil,floor:Bool=true)->EncoderOutput {
         TactileEncoder.encode(sequence:12,now:now,frameTimestamp:time,tracking:tracking,distances:distances,target:target,floorCalibrated:floor)

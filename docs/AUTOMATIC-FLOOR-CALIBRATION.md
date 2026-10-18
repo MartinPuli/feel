@@ -19,8 +19,14 @@ The observations are repeated fresh frames containing a persistent classified
 anchor, not ten independent classifications or proof that the floor remains in
 view. ARKit's classification can be wrong; real-world acceptance is still needed.
 
-Once accepted, floor height stays fixed for the session. A manual measured-height
-override remains available and is never overwritten automatically. Start/reset
+Once accepted, what is latched is the camera's height above that floor, and every
+frame's floor level is the camera's world height minus it. The phone is worn at a
+fixed height, so this keeps the 0.6–2.1 m obstacle window on real obstacles on
+stairs and ramps and under ARKit height drift. With a fixed floor level, a wall at
+the bottom of a staircase sat below the window and was never shown (October 17
+field report). The floor map restarts whenever the level moves more than 0.4 m. A
+manual measured-height override remains available, works the same way, and is never
+overwritten automatically; recalibrate if the phone is worn at a different height. Start/reset
 and interruptions clear calibration. Stop cannot be undone by a delayed
 interruption callback; inactive sessions reject queued frame calibration.
 No floor means neutral guidance, never an assumed clear path or guessed height.

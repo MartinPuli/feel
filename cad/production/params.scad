@@ -26,7 +26,11 @@ servo_shaft_off = 4.8;      // output axis above the body's lower end (z)
 servo_tab_span = 27.0;      // ear tip to ear tip (z)
 servo_tab_t = 1.0;          // ear thickness (y)
 servo_tab_y = -(servo_h - 14.0) - servo_tab_t / 2;            // -7.5, ear front face at -7.0
-servo_fit = 0.2;            // per side, bulkhead tunnel
+servo_fit = 0.2;            // per side, bulkhead tunnel (chassis as specified)
+// Lenient chassis (chassis_loose): the servo drops in from the top with its tower already
+// through the bulkhead, with room for a 0.6 mm nozzle; servos are glued once aligned.
+loose_fit = 0.5;            // per side, tunnel and pocket
+loose_lead_margin = 3.0;    // wire slot stops this far short of the pocket row's ends
 servo_slide = 3.5;          // room behind the servo so it can slide back while the shaft drops in
 
 // ---------------------------------------------------------------- horn (single-arm nylon, measured) and coupling
@@ -38,6 +42,16 @@ horn_arm_t = 1.3;
 horn_trim_r = 4.5;          // arm cut square 4.5 from centre
 horn_head_d = 4.8;          // recess for the centre screw head
 horn_head_h = 1.5;
+// Reinforced coupling (Oct 17, after shafts snapped at the disc within two rotations):
+// a smaller, shallower head recess leaves a ring of material at the stem root, the keying
+// notch stops short of the rim, and a cone fillet joins the stem to the disc's back face.
+// Same length, same horn pocket, same chassis. Set reinforce = false for the as-specified disc.
+reinforce = true;
+rf_head_d = 4.6;            // screw head is 4.2; 0.2 per side
+rf_head_h = 1.5;            // screw head 1.3 + 0.2; floor under it 0.2, but the stem fillet carries the load
+rf_notch_x1 = 6.0;          // keying notch outer end (was 6.5): rim wall 1.25 instead of 0.75
+rf_fillet_d = 8.0;          // stem-to-disc cone base diameter
+rf_fillet_len = 2.0;        // cone length behind the disc (Z 7.2 .. 9.2; first lobe starts at 12.0)
 hub_fit = 0.3;              // per side
 arm_fit = 0.25;             // per side
 coupling_d = 11;
@@ -141,6 +155,9 @@ function crown_z(x, y) = cols < 3 ? 0
 screw_pts = [for (sx = [-1, 1], y = [(wrist_out_y + wrist_in_y) / 2, (far_in_y + far_out_y) / 2])
              [sx * (half_w() - screw_in), y]];                 // x +-41.25, y -28 and 59.5
 pin_sprue_t = 1.0;
+// Extra pin length above the collar (Oct 17): pins stand higher at rest AND when raised, same
+// 2.55 stroke, same foam, same cam. 0 = as specified. Set with -D pin_extra=1.5 for pins_tall.
+pin_extra = 0;
 face_notch_r = 2.2;
 
 // ---------------------------------------------------------------- forearm pack

@@ -1,6 +1,6 @@
 {
   "title": "Person crossing left to right",
-  "description": "Standing still; a person (0.25 m radius, 1.75 m tall) walks across 1.5 m ahead at 0.5 m/s. The obstacle sweeps columns 2/3 \u2192 3/4 \u2192 4/5 in band 2. The camera sees only \u00b133.5\u00b0, so the person is invisible beyond about 1.4 m to either side.",
+  "description": "Standing still; a person (0.25 m radius, 1.75 m tall) walks across 1.5 m ahead at 0.5 m/s. The obstacle sweeps columns 2/3 → 3/4 → 4/5 in band 2. The camera sees only ±33.5°, so the person is invisible beyond about 1.4 m to either side.",
   "scene": {
     "duration": 8,
     "path": [
@@ -107,5 +107,6 @@
       "band": 0,
       "label": "person gone"
     }
-  ]
+  ],
+  "knownIssue": "SectorFilter (Oct 17) lets a pin drop or move farther only after four agreeing frames, so the column the person just left stays raised about 0.3 s; the two short windows at 3.95 and 4.6 s fall inside that lag."
 }

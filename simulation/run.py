@@ -16,6 +16,7 @@ import base64
 import hashlib
 import json
 import random
+import re
 import shutil
 import struct
 import subprocess
@@ -303,6 +304,12 @@ def export_web(entry, out_dir: Path):
     session_dir = out_dir / 'web' / 'sessions' / entry['name']
     if session_dir.exists():
         shutil.rmtree(session_dir)
+    # The run before this one becomes the "previous" snapshot, so /replay can compare without planning ahead.
+    latest = out_dir / 'web' / 'snapshots' / '_latest' / f"{entry['name']}.json"
+    if latest.exists():
+        previous = out_dir / 'web' / 'snapshots' / 'previous' / latest.name
+        previous.parent.mkdir(parents=True, exist_ok=True)
+        latest.replace(previous)
     session_dir.mkdir(parents=True)
     media = None
     recording = assets['recording']
@@ -355,6 +362,54 @@ def write_web_index(out_dir: Path):
         sessions.append(json.loads(meta.read_text()))
     sessions.sort(key=lambda m: (m['source'] != 'iphone', m['title'].lower()))
     (out_dir / 'web' / 'index.json').write_text(json.dumps({'generated': time.strftime('%Y-%m-%d %H:%M:%S'), 'sessions': sessions}, indent=1) + '\n')
+
+
+# ---------------------------------------------------------------- snapshots (before/after compare on /replay)
+
+SNAPSHOT_TICK_KEYS = ('t', 'fw', 'hl', 'tap', 'state', 'dropped')
+
+
+def git_revision():
+    """Short commit, with a trailing + when tracked files are modified. None outside git."""
+    try:
+        rev = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
+        dirty = subprocess.run(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+        return rev + ('+' if dirty else '')
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def write_snapshots(entries, out_dir: Path, label: str | None):
+    """Save the commanded pins of this run under snapshots/<label>/ (and always under _latest/, which
+    becomes previous/ on the next run). /replay lists every snapshot that has the open session."""
+    generated, commit = time.strftime('%Y-%m-%d %H:%M:%S'), git_revision()
+    labels = ['_latest'] + ([label] if label else [])
+    for entry in entries:
+        if 'skipped' in entry:
+            continue
+        ticks = [{k: t[k] for k in SNAPSHOT_TICK_KEYS if k in t} | {'dist': [None if d is None else round(d, 2) for d in t['dist']]}
+                 for t in entry['ticks']]
+        for name in labels:
+            body = {'name': entry['name'], 'title': entry['title'], 'label': name, 'generated': generated, 'commit': commit,
+                    'status': status(entry), 'accuracy': entry['result']['accuracy'],
+                    'bandChangesPerColumnSecond': entry['result']['bandChangesPerColumnSecond'], 'ticks': ticks}
+            path = out_dir / 'web' / 'snapshots' / name / f"{entry['name']}.json"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(body, separators=(',', ':')))
+    index = []
+    for folder in sorted((out_dir / 'web' / 'snapshots').glob('*/')):
+        if folder.name.startswith('_'):
+            continue
+        files = sorted(folder.glob('*.json'))
+        if not files:
+            continue
+        newest = max(files, key=lambda f: f.stat().st_mtime)
+        head = json.loads(newest.read_text())
+        index.append({'label': folder.name, 'generated': head.get('generated'), 'commit': head.get('commit'), 'sessions': [f.stem for f in files]})
+    index.sort(key=lambda s: (s['label'] != 'previous', s['generated'] or ''), reverse=False)
+    (out_dir / 'web' / 'snapshots' / 'index.json').write_text(json.dumps({'snapshots': index}, indent=1) + '\n')
+    if label:
+        print(f'Snapshot "{label}" saved: compare against it from the /replay page after your next run')
 
 
 # ---------------------------------------------------------------- baselines, report, main
@@ -461,6 +516,7 @@ def run_all(args):
     write_report(entries, out_dir)
     print(f'Report: {out_dir / "report.html"}')
     if not args.no_web:
+        write_snapshots(entries, out_dir, args.snapshot)
         write_web_index(out_dir)
         print('Replay page: cd web && npm run dev, then open http://127.0.0.1:3000/replay')
     return not failed
@@ -478,10 +534,17 @@ def main():
     parser.add_argument('--repeat', type=int, default=1, help='run each scenario N times and require identical output')
     parser.add_argument('--update-baselines', action='store_true', help='store this run as the regression baseline')
     parser.add_argument('--no-web', action='store_true', help='skip the /replay web bundles (camera video and depth frames)')
+    parser.add_argument('--snapshot', metavar='LABEL', help='also save this run\'s pin timelines as a named snapshot, '
+                        'so /replay can show it beside a later run of the same recording (the last run is always kept as "previous")')
     parser.add_argument('--watch', action='store_true', help='rebuild and rerun whenever sources, scenarios or recordings change')
     args = parser.parse_args()
     if args.repeat < 1:
         parser.error('--repeat must be at least 1')
+    if args.snapshot is not None:
+        if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,40}', args.snapshot) or args.snapshot == 'previous':
+            parser.error('--snapshot LABEL: letters, digits, . _ -, up to 41 characters, and not "previous" (that name is kept for the last run)')
+        if args.no_web:
+            parser.error('--snapshot needs the web output; drop --no-web')
     if not args.watch:
         if not args.no_build:
             build()
