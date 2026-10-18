@@ -263,7 +263,7 @@ final class LanternModel:ObservableObject {
             guard let configuration = chalkConfiguration else {
                 return ["status": "No camera description without Chalk setup. Ranges: \(ranges).", "obstacles": ranges]
             }
-            startDescribeAhead(configuration)
+            describeNotice = nil; startDescribeAhead(configuration)
             return ["status": "Looking at what's ahead; the description arrives in a few seconds as an observation.", "pending": true, "obstacles": ranges]
         case .venueInfo(let question): return venueInfo.answer(question)
         case .find(let target):
@@ -474,6 +474,17 @@ final class LanternModel:ObservableObject {
         journeyLog.targetChanged(now: now)
     }
     private var describeTask: URLSessionTask?
+    /// The last camera description, for get_status, and the retry that speaks it once the assistant is free.
+    @Published private(set) var describeNotice: String?
+    private var describeRetry: DispatchWorkItem?
+    private func deliverDescription(_ text: String, attempts: Int = 10) {
+        describeRetry?.cancel()
+        describeNotice = text
+        guard !voice.announce(text, automatic: false), attempts > 0 else { return }
+        let retry = DispatchWorkItem { [weak self] in self?.deliverDescription(text, attempts: attempts - 1) }
+        describeRetry = retry
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2, execute: retry)
+    }
     /// One photo through the gateway, spoken as one sentence. A stopped camera or a newer ask drops the answer.
     private func startDescribeAhead(_ configuration: ChalkConfiguration) {
         describeTask?.cancel(); describeTask = nil
@@ -482,7 +493,7 @@ final class LanternModel:ObservableObject {
         snapshotProvider { [weak self] snapshot in
             guard let self, self.startGeneration == generation else { return }
             guard let snapshot, let body = try? VoicePhrasing.describeBody(model: configuration.model, jpegBase64: snapshot.jpegBase64) else {
-                _ = self.voice.announce("I couldn't take a photo just now.", automatic: false); return
+                self.deliverDescription("I couldn't take a photo just now."); return
             }
             self.describeTask = gateway.complete(body: body, timeout: WhereIs.deadline) { [weak self] result in
                 DispatchQueue.main.async {
@@ -490,9 +501,9 @@ final class LanternModel:ObservableObject {
                     self.describeTask = nil
                     switch result {
                     case .success(let text):
-                        _ = self.voice.announce(VoicePhrasing.oneSentence(text) ?? "I couldn't make out what's ahead.", automatic: false)
+                        self.deliverDescription(VoicePhrasing.oneSentence(text) ?? "I couldn't make out what's ahead.")
                     case .failure:
-                        _ = self.voice.announce("I couldn't reach the camera service. " + VoicePhrasing.obstacles(self.frame?.distances ?? []) + ".", automatic: false)
+                        self.deliverDescription("I couldn't reach the camera service. " + VoicePhrasing.obstacles(self.frame?.distances ?? []) + ".")
                     }
                 }
             }
@@ -643,6 +654,7 @@ final class LanternModel:ObservableObject {
                 "notice": "Neutral pins do not mean a clear path. No safe-route claim is available.",
                 "open_side": openSide?.spoken ?? "Nothing within 1.6 meters ahead, or unknown.",
                 "obstacles": valid ? VoicePhrasing.obstacles(frame?.distances ?? []) : "no live sensing",
+                "description": describeNotice ?? "none yet",
                 "room_memory": roomMemoryStatus, "room_structure": roomMemory.structureStatus]
     }
 

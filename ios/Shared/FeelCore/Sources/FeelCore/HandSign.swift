@@ -29,14 +29,27 @@ public enum HandSign {
     /// Only hands this close count, so bystanders' hands cannot request guidance.
     public static let maxDistanceMeters = 0.9
 
+    /// Knuckle spacing (index to middle MCP) is about this fraction of the palm length; it stands in for
+    /// the palm when the wrist is out of frame, which is the normal case for a hand close to the lens.
+    public static let knuckleSpanOfPalm = 0.22
+
     public static func isVSign(_ hand: HandJoints) -> Bool {
-        guard let wrist=hand.wrist, let middleMCP=hand.middle.mcp else { return false }
-        let palm=wrist.distance(to:middleMCP)
+        guard let middleMCP=hand.middle.mcp, let indexMCP=hand.index.mcp else { return false }
+        let palm: Double
+        if let wrist=hand.wrist { palm=wrist.distance(to:middleMCP) } else { palm=indexMCP.distance(to:middleMCP)/knuckleSpanOfPalm }
         guard palm.isFinite, palm>1 else { return false }
+        // With the wrist in frame, the original wrist-relative ratios. Without it, each finger is judged
+        // from its own joints: straight when the tip is well beyond the PIP, folded when the tip stays near the PIP.
         func ratio(_ f: HandJoints.Finger) -> Double? {
             guard let mcp=f.mcp, let tip=f.tip else { return nil }
-            let base=wrist.distance(to:mcp)
-            return base>0 ? wrist.distance(to:tip)/base : nil
+            if let wrist=hand.wrist {
+                let base=wrist.distance(to:mcp)
+                return base>0 ? wrist.distance(to:tip)/base : nil
+            }
+            guard let pip=f.pip else { return nil }
+            let base=mcp.distance(to:pip)
+            // Map onto the same scale as the wrist ratios: a straight finger reads about 1.9, a folded one about 1.1.
+            return base>0 ? 1+mcp.distance(to:tip)/base*0.45 : nil
         }
         // A hand close to the lens often has its folded fingers out of frame: a missing ring or little
         // finger counts as folded. The two extended fingers must still be fully visible.
@@ -55,9 +68,15 @@ public enum HandSign {
 
     /// Range from apparent palm size: focal length in pixels times real size over pixel size.
     public static func estimatedDistance(_ hand: HandJoints, focalPixels: Double) -> Double? {
-        guard let w=hand.wrist, let m=hand.middle.mcp, focalPixels.isFinite, focalPixels>0 else { return nil }
-        let pixels=w.distance(to:m)
-        return pixels>1 ? focalPixels*palmLengthMeters/pixels : nil
+        guard focalPixels.isFinite, focalPixels>0 else { return nil }
+        if let w=hand.wrist, let m=hand.middle.mcp {
+            let pixels=w.distance(to:m)
+            return pixels>1 ? focalPixels*palmLengthMeters/pixels : nil
+        }
+        // Wrist out of frame: range from the knuckle spacing instead.
+        guard let i=hand.index.mcp, let m=hand.middle.mcp else { return nil }
+        let pixels=i.distance(to:m)
+        return pixels>1 ? focalPixels*palmLengthMeters*knuckleSpanOfPalm/pixels : nil
     }
 }
 

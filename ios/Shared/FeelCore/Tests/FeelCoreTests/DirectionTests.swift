@@ -43,7 +43,7 @@ final class HandSignTests: XCTestCase {
     func testMissingJointsRejected() {
         var h=Self.hand(index:true,middle:true,ring:false,little:false)
         h.index.tip=nil; XCTAssertFalse(HandSign.isVSign(h), "an extended finger must be seen")
-        h=Self.hand(index:true,middle:true,ring:false,little:false); h.wrist=nil; XCTAssertFalse(HandSign.isVSign(h))
+        h=Self.hand(index:true,middle:true,ring:false,little:false); h.wrist=nil; h.index.mcp=nil; XCTAssertFalse(HandSign.isVSign(h), "no scale without wrist or knuckles")
     }
     func testDistanceEstimate() {
         let h=Self.hand(index:true,middle:true,ring:false,little:false)
@@ -70,6 +70,20 @@ final class HandSignTests: XCTestCase {
         var open=Self.hand(index:true,middle:true,ring:true,little:true)
         open.ring.tip=nil
         XCTAssertFalse(HandSign.isVSign(open), "a visible straight ring finger still rejects, a missing tip alone does not make it a V") 
+    }
+
+    func testWristOutOfFrameStillDetectsAVFromTheFingerJoints() {
+        // Straight fingers: tip about twice as far from the knuckle as the PIP; folded: tip back near the PIP.
+        func finger(_ x: Double, dx: Double, straight: Bool) -> HandJoints.Finger {
+            .init(mcp:PlanePoint(x,100), pip:PlanePoint(x+dx*0.5,70), tip:straight ? PlanePoint(x+dx,35) : PlanePoint(x+dx*0.4,78))
+        }
+        let v=HandJoints(wrist:nil,index:finger(100,dx:-18,straight:true),middle:finger(125,dx:12,straight:true),
+                         ring:finger(150,dx:4,straight:false),little:finger(172,dx:4,straight:false))
+        XCTAssertTrue(HandSign.isVSign(v))
+        XCTAssertNotNil(HandSign.estimatedDistance(v,focalPixels:1500))
+        let flat=HandJoints(wrist:nil,index:finger(100,dx:-18,straight:true),middle:finger(125,dx:12,straight:true),
+                            ring:finger(150,dx:10,straight:true),little:finger(172,dx:10,straight:true))
+        XCTAssertFalse(HandSign.isVSign(flat), "an open hand is not a V")
     }
 
     func testTriggerNeedsHoldAndFiresOnce() {
