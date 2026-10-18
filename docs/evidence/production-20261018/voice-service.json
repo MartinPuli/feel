@@ -1,0 +1,16 @@
+[
+  {
+    "case": "unauthorized",
+    "http_status": 401,
+    "error_code": "unauthorized"
+  },
+  {
+    "case": "provisioned_access",
+    "http_status": 200,
+    "ephemeral_credential_received": true,
+    "response_keys": [
+      "expires_at",
+      "value"
+    ]
+  }
+]

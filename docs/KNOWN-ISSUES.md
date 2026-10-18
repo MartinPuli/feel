@@ -1,3 +1,9 @@
+## October 18 UTC — current production readiness
+
+**Not ready for unrestricted production.** Latest source, cloud checks and remaining device/configuration gates are recorded in [PRODUCTION-READINESS.md](PRODUCTION-READINESS.md). That report supersedes the historical counts and branch/deployment statements below.
+
+The unsafe 150 ms restoration of old pin bands after a neutral packet has been removed. Only a fresh valid command can raise them again. Angles and wiring are unchanged; this firmware has not been flashed. Shared context reads now have a verified-user server boundary, but remain disabled until FEEL's database identity is configured.
+
 ## October 17 integration limits
 
 - Chalk MCP context results disagree with the direct engine for the same synthetic IDs. Direct queries pass; MCP parity is unresolved. See the [reproduction](evidence/chalk-context/INTEGRATION-VALIDATION.md).

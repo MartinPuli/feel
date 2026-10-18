@@ -100,13 +100,12 @@ Servo budget: an FS0307 turns 60° in about 0.10 s unloaded, so the 29° drop to
 50 ms each way and up to twice that under the cam; a dropped packet is back up within about 200 ms,
 and no period may be shorter than three packets. None of this is measured on hardware yet.
 
-Held drop (firmware, `kHeldDropMs = 150`): when an accepted packet lowers a column from a raised band
-to 0, the puck remembers that band and, if no further packet is accepted within 150 ms, commands it
-again: a tap that was never ended is a tap, not a disappearance. A later packet always wins, so a
-packet that keeps the column at 0 is a real disappearance and the pin stays down; the 500 ms watchdog
-still counts from the last packet. So a BLE blackout that begins right after a drop packet, or a lost
-raise packet, costs one restore of about 150 ms rather than the held scene
-(`simulation/scenarios/packet-loss-failsafe.json`). Host-tested; this firmware is not flashed yet.
+Neutral commands remain neutral until a fresh accepted packet raises a band. The nine-byte ABI
+does not distinguish a presence-tap drop from tracking loss or Stop, so firmware must never infer
+a tap and restore an old band after packet loss. The 500 ms watchdog remains unchanged. A lost
+raise packet can extend a tap's neutral interval; this is preferable to resurrecting stale guidance.
+See `simulation/scenarios/packet-loss-failsafe.json` and
+`simulation/scenarios/tracking-loss-packet-blackout.json`. This revision is not flashed.
 
 A requested angle is not a measured angle. A continuous servo transition between
 distant bands necessarily crosses intermediate cam lobes; do not claim no

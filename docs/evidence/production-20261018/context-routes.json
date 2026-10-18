@@ -1,0 +1,26 @@
+[
+  {
+    "route": "context",
+    "case": "anonymous",
+    "http_status": 401,
+    "error": "unauthorized"
+  },
+  {
+    "route": "context",
+    "case": "unconfigured",
+    "http_status": 503,
+    "error": "context_not_configured"
+  },
+  {
+    "route": "api/context",
+    "case": "anonymous",
+    "http_status": 401,
+    "error": "unauthorized"
+  },
+  {
+    "route": "api/context",
+    "case": "unconfigured",
+    "http_status": 503,
+    "error": "context_not_configured"
+  }
+]

@@ -37,9 +37,9 @@ Existing camera-first UI, OpenAI realtime voice, room-tag memory, local journeys
 
 ## Remaining product gaps
 
-These are explicit limits, not implemented features:
+These are explicit deployment and validation limits:
 
-- `RoomMemory.fetchSharedStructure` is still a placeholder. None of the older V2/V3/V4 branches contains an implementation to port. Reading private context on the phone requires an authenticated server endpoint that derives user scope; service credentials must stay off the phone.
+- Shared-room reads and private last-seen lookups are now implemented through a separate authenticated server endpoint. They require explicit opt-in, a valid Supabase session, configured server credentials and approved room keys. They are not active in production: the FEEL Supabase connection is missing. Chalk service credentials never ship in the phone build.
 - The intent service is a loopback development server. Production HTTPS ingress, per-user credential provisioning and distributed deployment checks remain necessary before enabling it broadly.
 - Hosted FEEL evaluation completion is not verified. Local tests and direct context queries do not prove hosted evaluation or live vision accuracy.
 - The timestamp fix is local source; the existing Chalk engine deployment was not replaced in this work.
@@ -69,8 +69,8 @@ Use an installed simulator rather than assuming that identifier exists on anothe
 
 `replay-pin-diagnostics` (`6d41c62`) adds useful six-column diagnostics and a replay viewer; its additive diagnostics are integrated with strict reserved-slot checks and preserved historical baselines. See [six-column validation](../simulation/SIX-COLUMN-VALIDATION.md).
 
-`ethan/cad` unique commit `48774f0` remains separate. It mixes perception changes, seven-sector geometry labels, new scenes and snapshot comparison. Its snapshot viewer also needs request-generation and recording-identity checks. Importing it wholesale would replace tested six-column behavior. These features are not described as active in main.
+Ethan/CAD and replay changes are now included in upstream main `8b0789c`. Current geometry labels use six active sectors. This production review fixes stale snapshot requests, static snapshot export and the unsafe firmware neutral restoration introduced by that newer main. See [current regression evidence](../simulation/PRODUCTION-REGRESSION-20261018.md).
 
 The older V2/V3/V4 branch refs remain preserved. V4-Ben's earlier features were already present in main. The live intent evaluation is [recorded separately](evidence/chalk-context/INTENT-EVALUATION.md); strict contract and latency targets are not reported as passing.
 
-`claude/strange-swartz-7b6d9b` (`1a8945b`) appeared during the final fetch. It adds phone context reads, but currently embeds a Chalk client-credentials bearer in the app build and accepts feature/user identifiers on the client. Short expiry does not make that bearer user-scoped. It is not merged into this release: the authenticated server-boundary prerequisite above still applies. Its existence is recorded rather than reporting those reads as active.
+The useful context-read behavior from `claude/strange-swartz-7b6d9b` (`e3b2274`) has been adapted behind a verified-user proxy. Its embedded service-bearer provisioning was deliberately excluded. All 20 additional movement geometries were evaluated with current six-sector labels: 17 passing fixtures join the default suite; three receding-person latency cases remain explicitly failing candidates. Historical branches remain preserved.

@@ -67,7 +67,7 @@ All remote branches were compared by ancestry against `8b0789c`. `claude/strange
 
 ## CAD and board-build prerequisite audit
 
-Read `cad/README.md`, `cad/production/README.md`, `firmware/README.md`, the build scripts and pinned configuration before these checks. No tools/dependencies were installed, no design/parameter files were changed, and no board was flashed.
+Read `cad/README.md`, `cad/production/README.md`, `firmware/README.md`, the build scripts and pinned configuration before these checks. No global tools were installed, no design/parameter files were changed, and no board was flashed. After initial prerequisite discovery, the declared NimBLE dependency was authorized for normal project compilation using the existing PlatformIO runtime and a temporary cloned toolchain cache.
 
 | Check | Current result | Evidence |
 |---|---|---|
@@ -76,6 +76,18 @@ Read `cad/README.md`, `cad/production/README.md`, `firmware/README.md`, the buil
 | Fresh representative STL export | BLOCKED, OpenSCAD absent | `sh cad/build.sh --fast --output /private/tmp/feel-production-cad-fast`; `/private/tmp/feel-production-cad-build.log` |
 | Actual-polygon cam contact simulation | BLOCKED, OpenSCAD absent | `python3 cad/tools/cam_sim.py --step 0.1 --json /private/tmp/feel-production-cam.json`; `/private/tmp/feel-production-cam.log` |
 | Production CAD verifier | BLOCKED, NumPy and OpenSCAD unavailable to the available Python 3.12 runtime | `/Users/martinezequielpulitano/.local/bin/python3.12 cad/production/verify.py --help`; `/private/tmp/feel-production-cad-production-prereq.log`. System Python 3.9 also cannot parse the verifier's nested f-string syntax. |
-| ESP32/ESP32-S3 board binaries and enabled-output compiler fixtures | BLOCKED, local dependency setup incomplete | `sh firmware/build.sh` fails because system Python lacks PlatformIO (`/private/tmp/feel-production-board-build.log`). An existing `/private/tmp/feel-travel-pio` environment has PlatformIO 6.1.18 and Espressif32 6.9.0/toolchain caches, but this checkout has no `.pio` dependency tree and the required NimBLE-Arduino 2.3.6 source was not found in existing inspected workspaces. The alternate environment was inventoried, not allowed to auto-install dependencies. |
+| ESP32/ESP32-S3 board binaries and enabled-output compiler fixtures | PASS, all five environments | Existing PlatformIO 6.1.18; pinned Espressif32 6.9.0, Arduino-ESP32 2.0.17 and NimBLE-Arduino 2.3.6. Environments: `esp32` (34.58 s), `esp32s3` (38.30 s), `esp32-compilecheck` (22.04 s), `esp32s3-compilecheck` (23.26 s), `esp32-six-live` (21.33 s). Log: `/private/tmp/feel-production-board-build-final.log`. No upload target invoked. |
 
-OpenSCAD was absent from both PATH and `/Applications`; this checkout also has no exported `stl/` tree to validate independently. Older committed CAD evidence remains historical evidence, including its documented `shaft3` hold-window failure. It was not presented as a current rebuild or physical fit verification. Board compilation, actual waveform measurement, printed-fit checks and physical six-column operation remain separate outstanding gates.
+OpenSCAD was absent from both PATH and `/Applications`; this checkout also has no exported `stl/` tree to validate independently. Older committed CAD evidence remains historical evidence, including its documented `shaft3` hold-window failure. It was not presented as a current rebuild or physical fit verification. The five software-only board builds passed. The measurement-gated `esp32-production` profile was not enabled or built with fabricated records. Actual waveform measurement, printed-fit checks and physical six-column operation remain outstanding gates.
+
+Board compilation command (the temporary core contains APFS clones of existing packages/platforms, isolating package metadata and cache writes from the global installation):
+
+```sh
+PLATFORMIO_CORE_DIR=/private/tmp/feel-production-pio-core-wvpkvko0 \
+PLATFORMIO_SETTING_ENABLE_TELEMETRY=no \
+/private/tmp/feel-travel-pio/bin/python -m platformio run -d firmware \
+  -e esp32 -e esp32s3 -e esp32-compilecheck -e esp32s3-compilecheck \
+  -e esp32-six-live -j 2
+```
+
+The first default-script attempt used system Python without PlatformIO and failed before compilation; the authorized existing-environment run above supersedes that blocker. Output-enabled compile fixtures remain compile-only and must not be flashed. The experimental six-live binary is a successful compilation, not calibrated production hardware evidence.
