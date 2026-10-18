@@ -79,5 +79,30 @@ create table if not exists public.room_maps (
 );
 create index if not exists room_maps_by_room on public.room_maps (venue_id, tag_id, seen_at desc) where shared;
 
+-- One journey: a walk from a printed tag toward a remembered target, in the tag's levelled frame. steps is the JSON
+-- array of {t, x, y, heading_deg} the phone recorded (t seconds after started_at, metres, degrees clockwise from +y),
+-- obstacles the array of {x, y} blocked cell centres seen on that trip, cue_latency_ms the array of how long each cue
+-- took; arrived_at is null when the user stopped short, arrival_distance_m how far the last step was from the target
+-- (chalk/feel_chalk/journeys.py; protocol/journey-v1.json is the shared vector). Like anchors, a row leaves its owner's
+-- phone for the room's shared memory only when they set shared = true; Chalk keeps a journey in the world map 60 days.
+create table if not exists public.journeys (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null,                          -- Supabase: auth.users.id
+    venue_id text not null references public.venues (id),
+    tag_id text not null check (tag_id ~ '^[a-z0-9][a-z0-9-]{0,63}$'),
+    session_id text not null check (length(session_id) between 1 and 64),
+    target_label text not null check (target_label = lower(btrim(target_label)) and length(target_label) between 1 and 64),
+    started_at timestamptz not null default now(),
+    arrived_at timestamptz,
+    arrival_distance_m double precision not null check (arrival_distance_m >= 0 and arrival_distance_m <= 200),
+    steps jsonb not null default '[]',
+    obstacles jsonb not null default '[]',
+    cue_latency_ms jsonb not null default '[]',
+    shared boolean not null default false,
+    check (jsonb_typeof(steps) = 'array' and jsonb_typeof(obstacles) = 'array' and jsonb_typeof(cue_latency_ms) = 'array'),
+    check (arrived_at is null or arrived_at >= started_at)
+);
+create index if not exists journeys_by_room on public.journeys (venue_id, tag_id, started_at desc) where shared;
+
 -- Access control (row-level security and the read-only role for Chalk) is in access.sql: run it once
 -- after this file, with the password replaced.
