@@ -5,6 +5,9 @@ namespace feel {
 constexpr std::size_t kSingleLiveSector = 3;
 // Connected-unit trim: approximately +15 degrees on the assumed175-degree span.
 constexpr int kSingleLiveTrimUs = 159;
+// GPIO25 / slot2: user requested all positions shifted so band1 is nominal29 degrees.
+// 307us total trim replaces159us for this column; retain the existing upper cap.
+constexpr int kSecondColumnTrimUs = 307;
 // User-authorized189-degree command experiment; not measured safe travel.
 constexpr uint16_t kSingleLiveMaximumUs = 2648;
 // Explicitly selected single-servo adapter: use the production center column's
@@ -22,7 +25,7 @@ inline uint16_t livePulseForColumn(const Snapshot& state, std::size_t column) {
     // Disconnect, timeout and explicit serial STOP still detach above.
     const uint16_t pulse = state.pulses[column];
     if (pulse < kMinPulseUs || pulse > kMaxPulseUs) return 0;
-    const int adjusted = static_cast<int>(pulse) + kSingleLiveTrimUs;
+    const int adjusted = static_cast<int>(pulse) + (column == 2 ? kSecondColumnTrimUs : kSingleLiveTrimUs);
     return static_cast<uint16_t>(adjusted < kMinPulseUs ? kMinPulseUs :
                                  adjusted > kSingleLiveMaximumUs ? kSingleLiveMaximumUs : adjusted);
 }

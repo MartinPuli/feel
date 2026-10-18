@@ -18,6 +18,7 @@ int main() {
     feel::Controller c;
     assertOff(c.snapshot()); c.connect(0); assertOff(c.snapshot());
     const uint16_t expected[] = {1116, 809, 1422, 2035, 2648};
+    const uint16_t second[] = {1264, 957, 1570, 2183, 2648};
     // Every column independently consumes its own sector; no center replication.
     for (std::size_t column = feel::kFirstActiveColumn; column < feel::kColumns; ++column) {
         for (uint8_t band = 0; band <= 4; ++band) {
@@ -27,7 +28,7 @@ int main() {
             SevenLivePlan plan;
             assert(feel::sevenLivePlan(trial.snapshot(), plan) == SevenLiveResult::Ready);
             for (std::size_t i = feel::kFirstActiveColumn; i < feel::kColumns; ++i) {
-                assert(plan.pulses[i] == (i == column ? expected[band] : expected[0]));
+                assert(plan.pulses[i] == (i == 2 ? second[i == column ? band : 0] : expected[i == column ? band : 0]));
                 assert(plan.pulses[i] == feel::livePulseForColumn(trial.snapshot(), i));
                 const uint32_t scaled = plan.duties[i] * feel::kServoPeriodUs;
                 assert(scaled >= feel::kMinPulseUs * feel::kServoPwmCounts);
@@ -43,7 +44,7 @@ int main() {
     auto missing = c.snapshot(); missing.pulses[0] = 65535;
     assert(feel::sevenLivePlan(missing, plan) == SevenLiveResult::Ready);
     assert(plan.pulses[0] == 0 && plan.duties[0] == 0);
-    for (std::size_t i = feel::kFirstActiveColumn; i < feel::kColumns; ++i) assert(plan.pulses[i] == expected[packet.bands[i]]);
+    for (std::size_t i = feel::kFirstActiveColumn; i < feel::kColumns; ++i) assert(plan.pulses[i] == (i == 2 ? second[packet.bands[i]] : expected[packet.bands[i]]));
     // A single bad late channel must invalidate the entire batch, never partially write.
     for (std::size_t column = feel::kFirstActiveColumn; column < feel::kColumns; ++column) {
         for (uint16_t invalid : {uint16_t(0), uint16_t(649), uint16_t(2501), uint16_t(65535)}) {
@@ -62,7 +63,7 @@ int main() {
     // Fresh clear packets lower to each column's own previous nearest gap.
     packet.sequence = 1; packet.bands.fill(0); receive(c, packet, 100);
     assert(feel::sevenLivePlan(c.snapshot(), plan) == SevenLiveResult::Ready);
-    const uint16_t cleared[] = {1116, 1116, 1729, 2342, 1116, 1116, 1729};
+    const uint16_t cleared[] = {1116, 1116, 1877, 2342, 1116, 1116, 1729};
     for (std::size_t i = feel::kFirstActiveColumn; i < feel::kColumns; ++i) assert(plan.pulses[i] == cleared[i]);
     c.tick(599); assert(feel::sevenLivePlan(c.snapshot(), plan) == SevenLiveResult::Ready);
     c.tick(600); assertOff(c.snapshot());
