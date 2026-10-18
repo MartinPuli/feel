@@ -129,7 +129,8 @@ def dropped(t, faults, rng):
 # ---------------------------------------------------------------- scoring
 
 def columns_of(spec):
-    return list(range(7)) if spec in (None, 'all') else list(spec)
+    # Wire slot 0 is reserved; the physical six-column layout is slots 1...6.
+    return list(range(1, 7)) if spec in (None, 'all') else list(spec)
 
 
 def check_tick(expect, tick):
@@ -184,11 +185,11 @@ def score(scenario, ticks, base=0.0):
                            'firstMatch': None if first_ok is None else round(first_ok - expect['from'], 3)})
     # Flicker counts only changes between two live ticks, so going neutral on a fault is not flicker.
     live = [(a, b) for a, b in zip(ticks, ticks[1:]) if a['phone']['state'] == b['phone']['state'] == 'live' and not a['dropped'] and not b['dropped']]
-    changes = sum(1 for a, b in live for c in range(7) if a['firmware']['bands'][c] != b['firmware']['bands'][c])
+    changes = sum(1 for a, b in live for c in range(1, 7) if a['firmware']['bands'][c] != b['firmware']['bands'][c])
     live_seconds = sum(b['t'] - a['t'] for a, b in live) or 1e-9
     ages = [t['t'] - t['phone']['frame'] for t in ticks if t['phone']['frame'] is not None and t['phone']['state'] == 'live']
     accuracy = passed / total if total else None
-    flicker = changes / 7 / live_seconds if live else 0.0
+    flicker = changes / 6 / live_seconds if live else 0.0
     reasons = []
     if total == 0 and expects:
         reasons.append('no labelled checks fell inside the timeline')

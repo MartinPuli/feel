@@ -11,6 +11,6 @@
   },
   "expect": [
     {"from": 0.3, "to": 6.0, "columns": "all", "band": 3, "label": "wall"},
-    {"from": 1.1, "to": 4.4, "highlight": 4, "label": "door taps column 4 steadily"}
+    {"from": 1.1, "to": 4.4, "highlight": 5, "label": "door taps wire slot 5 (R2) steadily"}
   ]
 }

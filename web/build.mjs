@@ -18,6 +18,8 @@ const index = existsSync(join(data, 'index.json')) ? JSON.parse(readFileSync(joi
 const published = index.sessions.filter(s => s.publish === true);
 for (const session of published) cpSync(join(data, 'sessions', session.name), join(target, 'sessions', session.name), { recursive: true });
 writeFileSync(join(target, 'index.json'), JSON.stringify({ ...index, sessions: published }, null, 1) + '\n');
+if (existsSync(join(data, 'unit-tests.json'))) cpSync(join(data, 'unit-tests.json'), join(target, 'unit-tests.json'));
+if (existsSync(join(data, 'pin-diagnostics.json'))) cpSync(join(data, 'pin-diagnostics.json'), join(target, 'pin-diagnostics.json'));
 
 const withheld = index.sessions.length - published.length;
 console.log(`dist/ ready: ${published.length} replay session(s)` + (withheld ? `, ${withheld} phone recording(s) withheld (set "publish": true to include)` : ''));

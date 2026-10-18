@@ -2,13 +2,15 @@
 
 Static site with no dependencies. `/replay` plays back a session:
 - **Left:** the camera recording. This is the iPhone's video for phone recordings, or a rendered view for simulated scenes.
-- **Right, stacked:** the 7 × 4 pin grid the firmware commanded, above the LiDAR depth frame that drove it.
+- **Right, stacked:** the 6 × 4 physical pin grid the firmware commanded, above the LiDAR depth frame that drove it. Wire slot 0 is reserved.
 - **Below:** a timeline of every column against the labels.
 
-Choose any session, simulated or recorded, from the menu. `?session=<name>` links straight to one. Under the recording, a **top view** plots the LiDAR points from above with the seven column sectors (simulated sessions also outline the true objects). Grid-walk trial marks (bump, unsure, arrived) appear on the timeline. **Export video** records a 1920 × 1080 MP4 of the replay for demo videos. See [docs/GRID-WALK.md](../docs/GRID-WALK.md) for live field tests.
+Choose any session, simulated or recorded, from the menu. `?session=<name>` links straight to one. Under the recording, a **top view** plots the LiDAR points from above with the six physical column sectors (simulated sessions also outline the true objects). At each labelled moment, the pin grid shows expected pins and pink-rings any mismatch; the table names the exact physical column, wire slot, expected band, and actual band. Grid-walk trial marks (bump, unsure, arrived) appear on the timeline. **Export video** records a 1920 × 1080 MP4 of the replay for demo videos. See [docs/GRID-WALK.md](../docs/GRID-WALK.md) for live field tests.
 
 ```sh
 python3 simulation/run.py     # scores every scenario and writes the replay data to simulation/out/web
+python3 simulation/unit_tests.py # runs Swift tests and writes their summary for /replay
+python3 simulation/pin_diagnostics.py # checks each active pin's app packet and firmware command path
 cd web && npm run dev         # http://127.0.0.1:3000/replay
 npm test                      # server path containment and byte-range tests
 ```

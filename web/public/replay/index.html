@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FEEL Replay</title>
-<meta name="description" content="Replay FEEL sessions: the camera recording beside the commanded 7 × 4 pin grid and the LiDAR depth it came from.">
+<meta name="description" content="Replay FEEL sessions: the camera recording beside the six-column pin grid and the LiDAR depth it came from.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -57,8 +57,8 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .topview { position: relative; aspect-ratio: 16 / 9; background: var(--well); }
 .topview canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .pair { display: flex; flex-wrap: wrap; }
-.pins { display: grid; grid-template-columns: 34px repeat(7, 1fr); gap: 8px 10px; padding: 14px; align-items: center; flex: 1 1 200px; min-width: 0; }
-.pair.two .pins { grid-template-columns: 26px repeat(7, 1fr); gap: 6px 7px; padding: 10px 12px; }
+.pins { display: grid; grid-template-columns: 34px repeat(6, 1fr); gap: 8px 10px; padding: 14px; align-items: center; flex: 1 1 200px; min-width: 0; }
+.pair.two .pins { grid-template-columns: 26px repeat(6, 1fr); gap: 6px 7px; padding: 10px 12px; }
 .pair.two .pins + .pins { border-left: 1px solid var(--line); }
 .pins .cap { grid-column: 1 / -1; font: 500 11px var(--mono); color: var(--muted); letter-spacing: 0.03em; text-transform: uppercase; }
 .pins .cap b { color: var(--diff); font-weight: 500; }
@@ -72,7 +72,7 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
 .pin.tap { animation: tap .6s ease-in-out infinite; }
 @keyframes tap { 0%, 100% { transform: scale(1); } 15% { transform: scale(.72); } }
 @media (prefers-reduced-motion: reduce) { .pin.tap { animation: none; outline: 2px solid var(--accent); outline-offset: 3px; } }
-.ranges { display: grid; grid-template-columns: 34px repeat(7, 1fr); gap: 10px; padding: 0 14px 12px; font: 11px var(--mono); color: var(--muted); text-align: center; }
+.ranges { display: grid; grid-template-columns: 34px repeat(6, 1fr); gap: 10px; padding: 0 14px 12px; font: 11px var(--mono); color: var(--muted); text-align: center; }
 .depth { position: relative; aspect-ratio: 4 / 3; background: var(--well); }
 .depth canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .transport { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; flex-wrap: wrap; }
@@ -104,6 +104,31 @@ th { font-weight: 500; color: var(--muted); }
 td.num { font-family: var(--mono); }
 .bad { color: var(--fail); }
 .section { margin-top: 16px; }
+.unit-tests { margin: 16px 0; }
+.unit-tests .info { padding-bottom: 10px; }
+.unit-tests .summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+.unit-tests .summary strong { font: 500 16px var(--mono); }
+.unit-tests .summary time { color: var(--muted); font-size: 12px; }
+.unit-tests details { border-top: 1px solid var(--line); }
+.unit-tests summary { padding: 9px 14px; cursor: pointer; font-weight: 500; }
+.unit-tests summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.unit-tests .test-list { padding: 0 14px 12px 30px; margin: 0; color: var(--muted); font: 12px/1.8 var(--mono); }
+.unit-tests .test-list .FAILED { color: var(--fail); }
+.unit-tests .test-list .PASSED { color: var(--pass); }
+.pin-diagnostics { margin: 16px 0; }
+.pin-diagnostics .hardware-note { color: var(--muted); font-size: 12px; margin: 0 14px 12px; }
+.pin-diagnostics details { border-top: 1px solid var(--line); }
+.pin-diagnostics summary { padding: 9px 14px; cursor: pointer; font-weight: 500; }
+.pin-diagnostics summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.pin-diagnostics table { margin: 0 14px 12px; width: calc(100% - 28px); }
+.pin-diagnostics .packet { font: 11px var(--mono); color: var(--muted); }
+.pin-diagnostics .UNVERIFIED { color: var(--muted); }
+.pin-checks { padding: 0 14px 14px; }
+.pin-checks h3 { margin: 0 0 6px; font-size: 12px; font-weight: 500; color: var(--muted); }
+.pin-checks td, .pin-checks th { padding: 5px 8px; }
+.pin-checks .PASS { color: var(--pass); }
+.pin-checks .FAIL { color: var(--fail); font-weight: 600; }
+.pin-checks .UNCHECKED { color: var(--faint); }
 .jump { font: 12px var(--sans); color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
 .note { color: var(--faint); font-size: 12px; margin-top: 16px; }
 .toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
@@ -122,6 +147,16 @@ td.num { font-family: var(--mono); }
     </div>
   </header>
 
+  <section class="panel unit-tests" aria-labelledby="unitTestHead">
+    <div class="head"><h2 id="unitTestHead">Swift unit tests</h2><span id="unitTestSummary">No results yet</span></div>
+    <div class="info" id="unitTestContent">Run <code>python3 simulation/unit_tests.py</code> from the project root, then reload this page.</div>
+  </section>
+
+  <section class="panel pin-diagnostics" aria-labelledby="pinDiagnosticHead">
+    <div class="head"><h2 id="pinDiagnosticHead">Pin command checks</h2><span id="pinDiagnosticSummary">No results yet</span></div>
+    <div class="info" id="pinDiagnosticContent">Run <code>python3 simulation/pin_diagnostics.py</code> from the project root, then reload this page.</div>
+  </section>
+
   <div id="app" hidden>
     <div class="stage">
       <div class="left">
@@ -135,8 +170,8 @@ td.num { font-family: var(--mono); }
         </div>
       </section>
       <section class="panel" aria-labelledby="topHead">
-        <div class="head"><h2 id="topHead">Top view</h2><span id="topNote">LiDAR points from above · forward is up</span></div>
-        <div class="topview"><canvas id="top" aria-label="Depth points seen from above, with the seven column sectors and their commanded bands"></canvas></div>
+        <div class="head"><h2 id="topHead">Top view</h2><span id="topNote">LiDAR points from above · six columns</span></div>
+        <div class="topview"><canvas id="top" aria-label="Depth points seen from above, with six physical column sectors and their commanded bands"></canvas></div>
         <div class="legend" style="padding-top:0">
           <span><span class="sw" style="background:var(--ink)"></span>obstacle height 0.6–2.1 m</span>
           <span><span class="sw" style="background:var(--faint)"></span>other heights (floor, low, overhead)</span>
@@ -146,9 +181,10 @@ td.num { font-family: var(--mono); }
       </div>
       <div class="right">
         <section class="panel" aria-labelledby="pinHead">
-          <div class="head"><h2 id="pinHead">Pin grid</h2><span id="pinNote">as commanded by the firmware</span></div>
+          <div class="head"><h2 id="pinHead">Pin grid</h2><span id="pinNote">six physical columns · wire slot 0 reserved</span></div>
           <div class="pair" id="pins" role="img"><div class="pins" id="pinsNow"></div><div class="pins" id="pinsThen" hidden></div></div>
           <div class="ranges" id="ranges" aria-hidden="true"></div>
+          <div class="pin-checks" id="pinChecks" aria-live="polite"></div>
         </section>
         <section class="panel" aria-labelledby="depthHead">
           <div class="head"><h2 id="depthHead">LiDAR depth</h2><span id="depthNote"></span></div>
@@ -202,7 +238,9 @@ td.num { font-family: var(--mono); }
 <script>
 const $ = id => document.getElementById(id);
 const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-const COLUMN_EDGES = Array.from({ length: 8 }, (_, k) => -45 + k * 90 / 7);
+const ACTIVE_SLOTS = [1, 2, 3, 4, 5, 6];
+const COLUMN_LABELS = ['L3', 'L2', 'L1', 'R1', 'R2', 'R3'];
+const COLUMN_EDGES = Array.from({ length: 7 }, (_, k) => -45 + k * 90 / 6);
 const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const STATE_TEXT = { live: null, trackingLost: 'TRACKING LOST · pins neutral', staleDepth: 'NO FRESH DEPTH · pins neutral', uncalibrated: 'FLOOR NOT CALIBRATED · pins neutral', invalidFrame: 'INVALID FRAME · pins neutral' };
 
@@ -211,6 +249,8 @@ let snapshots = [], compare = null;   // compare: { label, snap, aligned[], diff
 const video = $('video');
 
 async function load() {
+  loadUnitTests();
+  loadPinDiagnostics();
   let data;
   try { data = await (await fetch('data/index.json', { cache: 'no-cache' })).json(); } catch { data = { sessions: [] }; }
   index = data.sessions || [];
@@ -235,6 +275,59 @@ async function load() {
   select.onchange = () => open(select.value);
   $('app').hidden = false;
   await open(select.value);
+}
+
+async function loadPinDiagnostics() {
+  try {
+    const response = await fetch('data/pin-diagnostics.json', { cache: 'no-cache' });
+    if (!response.ok) return;
+    const report = await response.json();
+    const summary = $('pinDiagnosticSummary');
+    summary.textContent = `${report.status} · ${report.passed}/${report.total} command paths`;
+    summary.className = report.status === 'PASS' ? 'PASS' : 'FAIL';
+    const groups = new Map();
+    for (const check of report.cases || []) {
+      const key = `${check.label} · slot ${check.slot} · GPIO ${check.gpio}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(check);
+    }
+    const rows = [...groups.entries()].map(([title, checks]) => {
+      const failed = checks.find(check => check.status !== 'PASS');
+      const detail = checks.map(check => `<tr>
+        <td>Band ${check.expectedBand}</td><td>${check.actualBands?.[check.slot] ? `Band ${check.actualBands[check.slot]}` : 'Down'}</td>
+        <td>${check.actualAngleDeg}°</td><td>${check.actualPulseUs} µs</td>
+        <td class="${check.status}">${check.status === 'PASS' ? 'PASS' : esc(check.firstFailure)}</td>
+        <td class="packet">${esc(check.packetHex)}</td></tr>`).join('');
+      return `<details${failed ? ' open' : ''}><summary>${esc(title)} · ${failed ? `FAIL: ${esc(failed.firstFailure)}` : 'PASS'}</summary>
+        <table><thead><tr><th>Expected</th><th>Firmware band</th><th>Angle</th><th>Pulse</th><th>Result</th><th>App packet</th></tr></thead><tbody>${detail}</tbody></table></details>`;
+    }).join('');
+    const note = report.hardware === 'UNVERIFIED'
+      ? `<p class="hardware-note">Physical movement: unverified. ${esc(report.hardwareNote)}</p>` : '';
+    $('pinDiagnosticContent').innerHTML = `<div class="summary"><strong>${report.status === 'PASS' ? 'All command paths passed' : 'A command path failed'}</strong><time>Run ${esc(new Date(report.generatedAt).toLocaleString())}</time></div>${note}${rows}`;
+  } catch {
+    // Keep the local run instructions visible until the report exists.
+  }
+}
+
+async function loadUnitTests() {
+  try {
+    const response = await fetch('data/unit-tests.json', { cache: 'no-cache' });
+    if (!response.ok) return;
+    const report = await response.json();
+    const summary = $('unitTestSummary');
+    summary.textContent = `${report.status} · ${report.passed}/${report.total} passed · ${report.failed} failed`;
+    summary.className = report.status === 'PASS' ? 'PASS' : 'FAIL';
+    const generated = new Date(report.generatedAt);
+    const suites = (report.suites || []).map(suite => {
+      const tests = suite.tests.map(test => `<li class="${esc(test.status)}">${esc(test.status)} · ${esc(test.name)}</li>`).join('');
+      return `<details><summary>${esc(suite.name)} · ${suite.passed}/${suite.total} passed${suite.failed ? ` · ${suite.failed} failed` : ''}</summary><ul class="test-list">${tests}</ul></details>`;
+    }).join('');
+    const errors = (report.errors || []).length
+      ? `<p class="bad">${report.errors.map(esc).join('<br>')}</p>` : '';
+    $('unitTestContent').innerHTML = `<div class="summary"><strong>${report.status === 'PASS' ? 'All checks passed' : 'Some checks failed'}</strong><time>Run ${esc(generated.toLocaleString())}</time></div>${errors}${suites}`;
+  } catch {
+    // Keep the local run instructions visible until the report exists.
+  }
 }
 
 async function open(name) {
@@ -352,7 +445,7 @@ function expectedAt(time) {
   for (const e of session.expect) {
     if (rel < e.from + (e.grace || 0) || rel > e.to) continue;
     if ('band' in e || 'bands' in e) {
-      const cols = e.columns === undefined || e.columns === 'all' ? [0, 1, 2, 3, 4, 5, 6] : e.columns;
+      const cols = e.columns === undefined || e.columns === 'all' ? ACTIVE_SLOTS : e.columns;
       cols.forEach(c => want[c] = 'band' in e ? [e.band] : e.bands);
     }
     if ('highlight' in e) highlight = e.highlight;
@@ -362,14 +455,16 @@ function expectedAt(time) {
 
 function pinsHtml(tick, other, caption) {
   const { want } = expectedAt(tick.t);
-  let html = (caption ? `<div class="cap">${caption}</div>` : '') + '<div></div>' + ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].map(c => `<div class="lab">${c}</div>`).join('');
+  let html = (caption ? `<div class="cap">${caption}</div>` : '') + '<div></div>' + COLUMN_LABELS.map(c => `<div class="lab">${c}</div>`).join('');
   for (let band = 4; band >= 1; band--) {
     html += `<div class="row">${band === 4 ? 'far' : band === 1 ? 'near' : ''}</div>`;
-    for (let c = 0; c < 7; c++) {
+    for (const c of ACTIVE_SLOTS) {
       const up = tick.fw[c] === band, labelled = want[c]?.includes(band), wrong = want[c] && !want[c].includes(tick.fw[c]);
       const diff = other !== undefined && (!other || (other.fw[c] === band) !== up || (up && (other.hl === c) !== (tick.hl === c)));
       const color = up ? `background:var(--b${band})` : '';
-      html += `<div class="pin ${up ? 'up' : ''} ${labelled ? 'want' : ''} ${(up || labelled) && wrong ? 'wrong' : ''} ${up && tick.hl === c && tick.tap ? 'tap' : ''} ${diff ? 'diff' : ''}" style="${color}"></div>`;
+      const expected = want[c] ? `expected band ${want[c].join(' or ')}` : 'not checked at this time';
+      const actual = tick.fw[c] ? `actual band ${tick.fw[c]}` : 'actual down';
+      html += `<div class="pin ${up ? 'up' : ''} ${labelled ? 'want' : ''} ${(up || labelled) && wrong ? 'wrong' : ''} ${up && tick.hl === c && tick.tap ? 'tap' : ''} ${diff ? 'diff' : ''}" style="${color}" title="${COLUMN_LABELS[c - 1]} · slot ${c} · ${expected} · ${actual}"></div>`;
     }
   }
   return html;
@@ -381,10 +476,25 @@ function drawPins(tick) {
     const same = other && !compare.diffSet.has(tickIndex);
     $('pinsThen').innerHTML = other ? pinsHtml(other, tick, `${esc(compare.label)}${same ? '' : ' · <b>differs</b>'}`) : `<div class="cap">${esc(compare.label)} · no tick at this time</div>`;
   }
-  $('pins').setAttribute('aria-label', tick.fw.map((b, c) => `column ${c + 1}: ${b ? 'band ' + b : 'down'}${tick.hl === c ? ', tapping' : ''}`).join('; ')
-    + (compare ? `; snapshot ${compare.label}: ${other ? other.fw.map((b, c) => `${b ? 'band ' + b : 'down'}`).join(', ') : 'no tick'}` : ''));
-  $('ranges').innerHTML = '<div></div>' + tick.dist.map(d => `<div>${d == null ? '–' : d.toFixed(2)}</div>`).join('');
+  $('pins').setAttribute('aria-label', ACTIVE_SLOTS.map(c => `column ${c}, ${COLUMN_LABELS[c - 1]}: ${tick.fw[c] ? 'band ' + tick.fw[c] : 'down'}${tick.hl === c ? ', tapping' : ''}`).join('; ')
+    + (compare ? `; snapshot ${compare.label}: ${other ? ACTIVE_SLOTS.map(c => `${other.fw[c] ? 'band ' + other.fw[c] : 'down'}`).join(', ') : 'no tick'}` : ''));
+  $('ranges').innerHTML = '<div></div>' + ACTIVE_SLOTS.map(c => tick.dist[c] == null ? '<div>–</div>' : `<div>${tick.dist[c].toFixed(2)}</div>`).join('');
+  drawPinChecks(tick, expectedAt(tick.t).want);
   $('pinNote').textContent = tick.dropped ? 'packet dropped this tick' : tick.state === 'live' ? 'as commanded by the firmware' : 'neutral: ' + tick.state;
+}
+
+function drawPinChecks(tick, want) {
+  const checked = ACTIVE_SLOTS.filter(c => want[c] !== null);
+  if (!checked.length) {
+    $('pinChecks').innerHTML = '<h3>Pin checks at this time</h3><p class="note">No labelled pin expectation covers this moment. Scrub to a labelled window to compare expected and actual pins.</p>';
+    return;
+  }
+  const rows = checked.map(c => {
+    const actual = tick.fw[c], expected = want[c];
+    const pass = expected.includes(actual);
+    return `<tr><td>${COLUMN_LABELS[c - 1]} · slot ${c}</td><td>${expected.map(b => b ? `Band ${b}` : 'Down').join(' or ')}</td><td>${actual ? `Band ${actual}` : 'Down'}</td><td class="${pass ? 'PASS' : 'FAIL'}">${pass ? 'PASS' : 'WRONG PIN'}</td></tr>`;
+  }).join('');
+  $('pinChecks').innerHTML = `<h3>Pin checks at ${Math.max(0, tick.t - session.start).toFixed(2)} s · pink rings mark wrong pins</h3><table><thead><tr><th>Physical pin · wire slot</th><th>Expected</th><th>Actual</th><th>Check</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 // Perceptual-ish warm→cool ramp for depth (near = warm).
@@ -430,8 +540,9 @@ function drawColumns(g, W, H, fxn, cxn, tick, onDepth) {
   for (const b of COLUMN_EDGES) { const x = columnX(b, fxn, cxn, W); if (x > 0 && x < W) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); } }
   g.setLineDash([]);
   g.font = `500 11px ${css('--mono')}`; g.textAlign = 'center';
-  for (let c = 0; c < 7; c++) {
-    const lo = Math.max(columnX(COLUMN_EDGES[c], fxn, cxn, W), 0), hi = Math.min(columnX(COLUMN_EDGES[c + 1], fxn, cxn, W), W);
+  for (let i = 0; i < ACTIVE_SLOTS.length; i++) {
+    const c = ACTIVE_SLOTS[i];
+    const lo = Math.max(columnX(COLUMN_EDGES[i], fxn, cxn, W), 0), hi = Math.min(columnX(COLUMN_EDGES[i + 1], fxn, cxn, W), W);
     if (hi - lo < 14) continue;
     const band = tick.fw[c];
     const label = band ? `B${band}` : '·';
@@ -474,11 +585,12 @@ function drawTop(tick) {
   const rad = d => d * Math.PI / 180;
   // Range rings and column sectors.
   g.strokeStyle = css('--line'); g.fillStyle = css('--faint'); g.font = `10px ${css('--mono')}`; g.lineWidth = 1;
-  for (const r of [1, 2, 3, 4]) { g.beginPath(); g.arc(ox, oy, r * scale, rad(-90 - 60), rad(-90 + 60)); g.stroke(); g.fillText(r + ' m', ox + 4, oy - r * scale - 3); }
+  for (const r of [1, 2, 3, 4]) { g.beginPath(); g.arc(ox, oy, r * scale, rad(-90 - 45), rad(-90 + 45)); g.stroke(); g.fillText(r + ' m', ox + 4, oy - r * scale - 3); }
   // Commanded band per column, as the ring segment that band means.
-  for (let c = 0; c < 7; c++) {
+  for (let i = 0; i < ACTIVE_SLOTS.length; i++) {
+    const c = ACTIVE_SLOTS[i];
     const band = tick.fw[c]; if (!band) continue;
-    const [r0, r1] = BAND_RANGES[band], a0 = rad(-90 + COLUMN_EDGES[c]), a1 = rad(-90 + COLUMN_EDGES[c + 1]);
+    const [r0, r1] = BAND_RANGES[band], a0 = rad(-90 + COLUMN_EDGES[i]), a1 = rad(-90 + COLUMN_EDGES[i + 1]);
     g.fillStyle = css(`--b${band}`); g.globalAlpha = 0.45;
     g.beginPath(); g.arc(ox, oy, r1 * scale, a0, a1); g.arc(ox, oy, r0 * scale, a1, a0, true); g.closePath(); g.fill(); g.globalAlpha = 1;
   }
@@ -539,24 +651,25 @@ function drawCamera(g, ox, oy, scale) {
 function drawTimeline() {
   const canvas = $('timeline'), [g, W, H] = fitCanvas(canvas);
   g.clearRect(0, 0, W, H);
-  const left = 36, right = 12, top = 12, rowH = 18, labelsTop = top + 7 * rowH + 10;
+  const left = 36, right = 12, top = 12, rowH = 18, labelsTop = top + ACTIVE_SLOTS.length * rowH + 10;
   const t0 = start(), t1 = end(), x = time => left + (time - t0) / Math.max(t1 - t0, 1e-9) * (W - left - right);
   const ticks = session.ticks, step = Math.max(1, (W - left - right) / ticks.length + 0.6);
   g.font = `11px ${css('--mono')}`; g.fillStyle = css('--faint'); g.textBaseline = 'middle';
-  ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].forEach((l, c) => g.fillText(l, 6, top + c * rowH + rowH / 2));
-  g.fillStyle = css('--well'); g.fillRect(left, top, W - left - right, 7 * rowH - 2);
+  COLUMN_LABELS.forEach((l, i) => g.fillText(l, 6, top + i * rowH + rowH / 2));
+  g.fillStyle = css('--well'); g.fillRect(left, top, W - left - right, ACTIVE_SLOTS.length * rowH - 2);
   const colors = [null, css('--b1'), css('--b2'), css('--b3'), css('--b4')], mark = css('--mark'), accent = css('--accent'), diffColor = css('--diff');
   const half = compare ? (rowH - 2) / 2 : rowH - 2;   // compare mode: now on top of each row, snapshot below
   ticks.forEach((tick, i) => {
     const xx = x(tick.t), then = compare ? compare.aligned[i] : null;
-    for (let c = 0; c < 7; c++) {
-      if (tick.fw[c]) { g.fillStyle = colors[tick.fw[c]]; g.fillRect(xx, top + c * rowH, step, half); }
-      if (then && then.fw[c]) { g.fillStyle = colors[then.fw[c]]; g.globalAlpha = 0.75; g.fillRect(xx, top + c * rowH + half, step, half); g.globalAlpha = 1; }
-      if (tick.mismatch.some(m => m.column === c)) { g.fillStyle = mark; g.fillRect(xx, top + c * rowH + rowH - 5, step, 3); }
-      if (compare && (!then || then.fw[c] !== tick.fw[c])) { g.fillStyle = diffColor; g.fillRect(xx, top + c * rowH + half - 1, step, 2); }
+    for (let r = 0; r < ACTIVE_SLOTS.length; r++) {
+      const c = ACTIVE_SLOTS[r];
+      if (tick.fw[c]) { g.fillStyle = colors[tick.fw[c]]; g.fillRect(xx, top + r * rowH, step, half); }
+      if (then && then.fw[c]) { g.fillStyle = colors[then.fw[c]]; g.globalAlpha = 0.75; g.fillRect(xx, top + r * rowH + half, step, half); g.globalAlpha = 1; }
+      if (tick.mismatch.some(m => m.column === c)) { g.fillStyle = mark; g.fillRect(xx, top + r * rowH + rowH - 5, step, 3); }
+      if (compare && (!then || then.fw[c] !== tick.fw[c])) { g.fillStyle = diffColor; g.fillRect(xx, top + r * rowH + half - 1, step, 2); }
     }
-    if (tick.hl < 7) { g.fillStyle = accent; g.fillRect(xx, top + tick.hl * rowH, step, 3); }
-    if (then && then.hl < 7) { g.fillStyle = accent; g.fillRect(xx, top + then.hl * rowH + half, step, 3); }
+    if (ACTIVE_SLOTS.includes(tick.hl)) { g.fillStyle = accent; g.fillRect(xx, top + (tick.hl - 1) * rowH, step, 3); }
+    if (then && ACTIVE_SLOTS.includes(then.hl)) { g.fillStyle = accent; g.fillRect(xx, top + (then.hl - 1) * rowH + half, step, 3); }
     if (tick.mismatch.some(m => m.column === null)) { g.fillStyle = mark; g.fillRect(xx, labelsTop - 6, step, 3); }
     if (compare && compare.diffSet.has(i)) { g.fillStyle = diffColor; g.fillRect(xx, top - 6, step, 3); }
   });
@@ -567,7 +680,7 @@ function drawTimeline() {
   for (let s = 0; s <= span; s += every) if (session.start + s >= t0) g.fillText(s + 's', x(session.start + s) - 6, H - 6);
   for (const e of session.events || []) {
     if (e.t < t0 || e.t > t1) continue;
-    g.strokeStyle = EVENT_COLOR(e.kind); g.lineWidth = 2; g.beginPath(); g.moveTo(x(e.t), top - 6); g.lineTo(x(e.t), top + 7 * rowH); g.stroke();
+    g.strokeStyle = EVENT_COLOR(e.kind); g.lineWidth = 2; g.beginPath(); g.moveTo(x(e.t), top - 6); g.lineTo(x(e.t), top + ACTIVE_SLOTS.length * rowH); g.stroke();
     g.fillStyle = EVENT_COLOR(e.kind); g.font = `500 10px ${css('--mono')}`; g.fillText(e.kind, x(e.t) + 3, top - 1);
   }
   const cx = x(t); g.strokeStyle = css('--ink'); g.lineWidth = 1.5; g.beginPath(); g.moveTo(cx, 4); g.lineTo(cx, labelsTop + 28); g.stroke();
@@ -640,10 +753,11 @@ function drawComposite() {
   card(px, vy, pw, 380, 'Pin grid');
   const colors = [null, '#ff6a2b', '#f2690d', '#b9561c', '#7a3b19'], r = 30, gap = 92, gx = px + 80, gy = vy + 92;
   g.font = '400 18px "Geist Mono", monospace'; g.fillStyle = muted; g.textAlign = 'center';
-  ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].forEach((l, c) => g.fillText(l, gx + c * gap, gy + 4 * 68 + 4));
+  COLUMN_LABELS.forEach((l, i) => g.fillText(l, gx + i * gap, gy + 4 * 68 + 4));
   g.textAlign = 'right'; g.fillText('far', gx - 44, gy); g.fillText('near', gx - 44, gy + 3 * 68); g.textAlign = 'left';
-  for (let band = 4; band >= 1; band--) for (let c = 0; c < 7; c++) {
-    const up = tick.fw[c] === band, cx = gx + c * gap, cy = gy + (4 - band) * 68;
+  for (let band = 4; band >= 1; band--) for (let i = 0; i < ACTIVE_SLOTS.length; i++) {
+    const c = ACTIVE_SLOTS[i];
+    const up = tick.fw[c] === band, cx = gx + i * gap, cy = gy + (4 - band) * 68;
     const tapping = up && tick.hl === c && tick.tap;
     g.fillStyle = up ? colors[band] : '#242424'; g.beginPath(); g.arc(cx, cy, tapping ? r * 0.72 : r, 0, Math.PI * 2); g.fill();
     if (up && tick.hl === c) { g.strokeStyle = '#52a8ff'; g.lineWidth = 5; g.beginPath(); g.arc(cx, cy, r + 9, 0, Math.PI * 2); g.stroke(); }
@@ -655,12 +769,12 @@ function drawComposite() {
   // Timeline.
   const t0 = start(), t1 = end(), lx = 100, lw = W - 140, ly = 952, rowH = 13, X = time => lx + (time - t0) / Math.max(t1 - t0, 1e-9) * lw;
   g.font = '400 11px "Geist Mono", monospace'; g.fillStyle = muted;
-  ['L3', 'L2', 'L1', 'C', 'R1', 'R2', 'R3'].forEach((l, c) => g.fillText(l, 64, ly + c * rowH + rowH / 2));
-  g.fillStyle = '#1a1a1a'; g.fillRect(lx, ly, lw, 7 * rowH);
+  COLUMN_LABELS.forEach((l, i) => g.fillText(l, 64, ly + i * rowH + rowH / 2));
+  g.fillStyle = '#1a1a1a'; g.fillRect(lx, ly, lw, ACTIVE_SLOTS.length * rowH);
   const step = Math.max(1, lw / session.ticks.length + 0.6);
-  for (const k of session.ticks) for (let c = 0; c < 7; c++) if (k.fw[c]) { g.fillStyle = colors[k.fw[c]]; g.fillRect(X(k.t), ly + c * rowH, step, rowH - 2); }
-  for (const e of session.events || []) if (e.kind !== 'start') { g.fillStyle = EVENT_COLOR(e.kind); g.fillRect(X(e.t) - 1.5, ly - 6, 3, 7 * rowH + 12); }
-  g.fillStyle = ink; g.fillRect(X(t) - 1.5, ly - 10, 3, 7 * rowH + 20);
+  for (const k of session.ticks) for (let i = 0; i < ACTIVE_SLOTS.length; i++) { const c = ACTIVE_SLOTS[i]; if (k.fw[c]) { g.fillStyle = colors[k.fw[c]]; g.fillRect(X(k.t), ly + i * rowH, step, rowH - 2); } }
+  for (const e of session.events || []) if (e.kind !== 'start') { g.fillStyle = EVENT_COLOR(e.kind); g.fillRect(X(e.t) - 1.5, ly - 6, 3, ACTIVE_SLOTS.length * rowH + 12); }
+  g.fillStyle = ink; g.fillRect(X(t) - 1.5, ly - 10, 3, ACTIVE_SLOTS.length * rowH + 20);
 }
 async function startExport() {
   if (exporter) { stopExport(false); return; }
