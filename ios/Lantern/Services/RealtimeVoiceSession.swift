@@ -224,6 +224,13 @@ final class RealtimeVoiceSession: ObservableObject {
         retryCount = 0
         start()
     }
+    /// Release microphone ownership without speaking over an explicit on-device command.
+    func pauseForLocalCommand() {
+        isPausedByUser = true
+        disconnect()
+        speaker?.stopSpeaking(at: .immediate)
+        caption = "Local commands selected. Resume assistant to return to cloud voice."
+    }
     func pauseAssistant() {
         isPausedByUser = true
         disconnect(); caption = "Assistant paused"

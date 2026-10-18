@@ -24,7 +24,7 @@ final class LanternTests:XCTestCase {
         XCTAssertEqual(try FeelPacket(bytes:Array(output.packet.data)),output.packet)
     }
     func testAllFindModesAreAccessibleNames() {
-        XCTAssertEqual(FinderMode.allCases.count,6)
+        XCTAssertEqual(FinderMode.allCases, [.none, .door, .exit, .chair, .person, .teammate, .barcode])
         XCTAssertTrue(FinderMode.allCases.allSatisfy { !$0.rawValue.isEmpty })
         XCTAssertEqual(FinderMode.door.rawValue,"Door candidate")
     }

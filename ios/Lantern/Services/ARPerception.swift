@@ -40,6 +40,10 @@ struct PerceptionFrame {
 final class ARPerception: NSObject, ARSessionDelegate {
     let session=ARSession()
     var onFrame: ((PerceptionFrame)->Void)?
+    /// Saved maps use separate observations so the live perception packet contract stays unchanged.
+    var onSavedMapObservation: ((SavedMapObservation)->Void)?
+    var onSavedMapWorldStarted: ((Int,Int,String?)->Void)?
+    var onSavedMapWorldEnded: ((Int,Int)->Void)?
     var onInvalidated: ((Int)->Void)?
     var onStatus: ((String)->Void)?
     var onModelStatus: ((String,Bool)->Void)?
@@ -70,6 +74,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
     /// The tag last recognized in this world, on the AR queue: the frame the session's floor grid is exported in.
     private var roomTag: (id: String, frame: RoomFrame)?
     private let queue=DispatchQueue(label:"feel.arkit",qos:.userInitiated)
+    private let mapArchiveQueue=DispatchQueue(label:"feel.world-map.archive",qos:.utility)
     private let visionQueue=DispatchQueue(label:"feel.vision",qos:.userInitiated)
     private let pointingQueue=DispatchQueue(label:"feel.pointing",qos:.userInitiated)
     private lazy var pointingDetector=PointingDetector()
@@ -95,6 +100,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private var isInterrupted=false
     private var sessionEpoch=0
     private var worldEpoch=0
+    private var loadedMapID:String?
     private var earliestFrame:TimeInterval = 0
     private var finder: FinderMode = .none
     private var finderEpoch=0
@@ -116,25 +122,69 @@ final class ARPerception: NSObject, ARSessionDelegate {
             DispatchQueue.main.async { self.onModelStatus?(status,available) }
         }
     }
-    @discardableResult func start(epoch:Int) -> Bool {
+    @discardableResult func start(epoch:Int,restoredMap:ARWorldMap?=nil,mapID:String?=nil) -> Bool {
+        guard (restoredMap == nil) == (mapID == nil) else { publishStatus("Saved map identity is missing"); return false }
         guard ARWorldTrackingConfiguration.isSupported,ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) else { publishStatus("Live sensing requires a LiDAR iPhone or iPad. Use Simulation for software replay."); return false }
-        queue.async { self.isRunning=true; self.runSession(epoch:epoch) }
+        queue.async { self.isRunning=true; self.runSession(epoch:epoch,restoredMap:restoredMap,mapID:mapID) }
         return true
     }
     /// Called only on the AR delegate queue, including interruption recovery.
-    private func runSession(epoch: Int) {
+    private func runSession(epoch: Int,restoredMap:ARWorldMap?=nil,mapID:String?=nil) {
+        loadedMapID=mapID
         isInterrupted=false; sessionEpoch=epoch; worldEpoch += 1; earliestFrame=ProcessInfo.processInfo.systemUptime
         floorY=nil; automaticFloor.reset(); lastTarget=nil; generation += 1; lastProcessed = -.infinity
         publishRoomMap(); grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil
         let config=ARWorldTrackingConfiguration(); config.frameSemantics=[.sceneDepth]
+        config.initialWorldMap=restoredMap
         config.worldAlignment = .gravity; config.planeDetection=[.horizontal]
         // Room tags: the printed FEEL tag gives room memory its frame (RoomMemory.swift).
         config.detectionImages=Self.roomTags; config.maximumNumberOfTrackedImages=Self.roomTags.isEmpty ? 0 : 1; lastTagPublished=[:]
+        let currentWorld=worldEpoch
+        DispatchQueue.main.async { self.onSavedMapWorldStarted?(epoch,currentWorld,mapID) }
         session.run(config,options:[.resetTracking,.removeExistingAnchors])
         publishStatus(ARPlaneAnchor.isClassificationSupported ? "Looking for floor — move slowly with the floor in view" : "Automatic floor detection unavailable — calibrate measured camera height")
     }
     func stop() {
-        queue.async { self.isRunning=false; self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.automaticFloor.reset(); self.publishRoomMap(); self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.publishStatus("Stopped") }
+        queue.async { self.publishSavedWorldEnded(); self.loadedMapID=nil; self.isRunning=false; self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.automaticFloor.reset(); self.publishRoomMap(); self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.publishStatus("Stopped") }
+    }
+    /// Captures map bytes and a unique origin marker for this exact active world. No camera photo is stored.
+    func captureWorldMap(worldEpoch expectedWorld:Int,completion:@escaping (Result<CapturedWorldMap,Error>)->Void) {
+        queue.async {
+            guard self.canCaptureMap(worldEpoch:expectedWorld) else {
+                DispatchQueue.main.async { completion(.failure(PersistentMemoryError.invalidArchive("saving needs fresh normal tracking and a mapped room"))) }; return
+            }
+            self.session.getCurrentWorldMap { map,error in
+                self.queue.async {
+                    guard self.canCaptureMap(worldEpoch:expectedWorld),let map else {
+                        DispatchQueue.main.async { completion(.failure(error ?? PersistentMemoryError.invalidArchive("world changed or map unavailable"))) }; return
+                    }
+                    let mapID=UUID().uuidString
+                    let marker=ARAnchor(name:WorldMapStore.anchorName(mapID:mapID),transform:matrix_identity_float4x4)
+                    map.anchors.removeAll { $0.name?.hasPrefix("FEEL.map.") == true }
+                    map.anchors.append(marker)
+                    self.mapArchiveQueue.async {
+                        let result=Result { CapturedWorldMap(data:try NSKeyedArchiver.archivedData(withRootObject:map,requiringSecureCoding:true),mapID:mapID,anchorID:marker.identifier.uuidString) }
+                        self.queue.async {
+                            guard self.isRunning,!self.isInterrupted,self.worldEpoch==expectedWorld else {
+                                DispatchQueue.main.async { completion(.failure(PersistentMemoryError.invalidArchive("world changed while saving"))) }; return
+                            }
+                            DispatchQueue.main.async { completion(result) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    private func canCaptureMap(worldEpoch expectedWorld:Int)->Bool {
+        guard isRunning,!isInterrupted,worldEpoch==expectedWorld,let frame=session.currentFrame,
+              frame.timestamp>=earliestFrame,case .normal=frame.camera.trackingState,
+              Self.mountValid(Self.pose(frame.camera.transform)) else { return false }
+        let age=ProcessInfo.processInfo.systemUptime-frame.timestamp
+        return age>=0 && age<=0.25 && (frame.worldMappingStatus == .mapped || frame.worldMappingStatus == .extending)
+    }
+    private func publishSavedWorldEnded() {
+        let epoch=sessionEpoch,world=worldEpoch
+        DispatchQueue.main.async { self.onSavedMapWorldEnded?(epoch,world) }
     }
     func setFinder(_ mode: FinderMode,epoch:Int) { queue.async { self.finder=mode; self.finderEpoch=epoch; self.lastTarget=nil; self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.generation += 1 } }
     /// Route to a fixed world point (two fingers on a puck column) until cleared with nil.
@@ -240,6 +290,15 @@ final class ARPerception: NSObject, ARSessionDelegate {
             }
         }
         let normal: Bool; if case .normal=frame.camera.trackingState { normal=true } else { normal=false }
+        if let mapID=loadedMapID {
+            let markers=frame.anchors.filter { $0.name==WorldMapStore.anchorName(mapID:mapID) }
+            let relocalizing:Bool
+            if case .limited(.relocalizing)=frame.camera.trackingState { relocalizing=true } else { relocalizing=false }
+            let observation=SavedMapObservation(epoch:sessionEpoch,worldEpoch:worldEpoch,mapID:mapID,
+                anchorID:markers.count==1 ? markers[0].identifier.uuidString : nil,pose:pose,
+                timestamp:frame.timestamp,tracking:normal,relocalizing:relocalizing)
+            DispatchQueue.main.async { self.onSavedMapObservation?(observation) }
+        }
         let depthMap=frame.sceneDepth.flatMap { DepthFrame($0,camera:frame.camera) }
         // Stability is sampled across fresh frames containing the same classified anchor,
         // not independent classification events. A manual calibration or accepted automatic floor
@@ -355,6 +414,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
     }
     func sessionShouldAttemptRelocalization(_ session: ARSession) -> Bool { false }
     private func invalidate() {
+        publishSavedWorldEnded(); loadedMapID=nil
         publishRoomMap()
         lastTarget=nil; floorY=nil; automaticFloor.reset(); grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil; generation += 1
         let epoch=sessionEpoch

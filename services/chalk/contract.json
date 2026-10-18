@@ -1,0 +1,26 @@
+{
+  "interpret_request": {
+    "request_id": "random-request-uuid",
+    "session_id": "random-session-uuid",
+    "utterance": "Take me back to the entrance",
+    "language": "en",
+    "context": {
+      "places": [{"id": "place-uuid", "name": "Entrance"}],
+      "tracking_valid": true,
+      "restoring": false,
+      "has_return_point": false,
+      "mode": "LIVE"
+    },
+    "consent": false
+  },
+  "interpret_response": {
+    "request_id": "random-request-uuid",
+    "session_id": "random-session-uuid",
+    "decision": {"action": "recall", "place_id": "place-uuid", "name": null, "message": "Entrance selected."},
+    "trace_id": "random-trace-uuid",
+    "latency_ms": 0
+  },
+  "feedback_request": {"trace_id": "random-trace-uuid", "session_id": "random-session-uuid", "outcome": "correct"},
+  "feedback_response": {"recorded": true, "alias_saved": false, "action_executed": false},
+  "note": "Illustrative schema only. latency_ms=0 is not a measured result. Correction with corrected_place_id requires a consented stored context."
+}

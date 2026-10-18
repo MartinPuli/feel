@@ -212,6 +212,11 @@ struct LanternView: View {
                         VoiceSetup(voice: voice) { closePanel() }
                         WhereIsSetup(model: model)
                         VenuePackSetup(venue: model.venueInfo)
+                        LocalCommandsPanel(model: model, control: model.localVoice)
+                        SessionPlacesPanel(places: model.places, command: model.performVoiceCommand)
+                        SavedWorldMapsPanel(maps: model.savedMaps, command: model.performVoiceCommand)
+                        MemorySimulationControls(model: model)
+                        ChalkCommandsPanel(coordinator: model.chalkCommands)
                     } else {
                         settings
                     }
@@ -538,7 +543,7 @@ private struct LiveSetup: View {
                     }
                 }.pickerStyle(.menu)
                 Text(model.detectorStatus).font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
-                if model.finder == .teammate { PeerPanel(peer: model.peer) }
+                if model.finder == .teammate { PeerPanel(model: model, peer: model.peer) }
             }
         }
     }
@@ -578,15 +583,19 @@ struct PuckConnectionPanel: View {
 }
 
 struct PeerPanel: View {
+    @ObservedObject var model: LanternModel
     @ObservedObject var peer: NearbyPeerService
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(peer.status).font(FeelTypography.subheadline)
-            Button("Find Beacon phones") { peer.start() }
-                .buttonStyle(FeelSecondaryButtonStyle()).disabled(peer.running)
+            Button("Find Beacon phones") { _ = model.performVoiceCommand(.scanTeammates) }
+                .buttonStyle(FeelSecondaryButtonStyle()).disabled(peer.running || !model.canFindTeammates)
             Button("Stop finding") { peer.stop() }.buttonStyle(FeelSecondaryButtonStyle())
             ForEach(peer.peers, id: \.self) { person in
-                Button("Find \(person.displayName)") { peer.invite(person) }.buttonStyle(FeelSecondaryButtonStyle())
+                Button("Find \(person.displayName)") {
+                    guard model.canFindTeammates else { return }
+                    peer.invite(person)
+                }.buttonStyle(FeelSecondaryButtonStyle()).disabled(!model.canFindTeammates)
             }
         }
     }
