@@ -1,3 +1,9 @@
+> Six-column assembly update: leave the existing leftmost column unpopulated.
+> The six remaining columns retain their existing mechanical positions; do not
+> recenter or reprint the housing based on the new sensing-sector widths.
+> Existing CAD below describes the seven-position shell, not seven active servos.
+> Only 24 tactile pins are active. No new mechanical fit validation is claimed.
+
 # FEEL V1 — greenfield mechanical prototype
 
 This is a **new implementation of the v7 specification**, not recovered or reproduced original CAD. All generated STL results are geometry checks. No part has been printed, fitted to a real servo, or tested on a hand by this build. Start with the manual single-column rig. Do not print the full powered mechanism as an established design.

@@ -3,6 +3,15 @@
 This is the **new greenfield contract**, not a recovered original. Handoff facts
 are retained; details absent from v7 are explicit implementation decisions below.
 
+## Six-column layout
+
+The app emits b0=0 and never highlights slot0. The raw codec still accepts old
+nine-byte frames for compatibility; updated firmware never attaches GPIO32.
+The six sectors are [-45,-30), [-30,-15), [-15,0), [0,15), [15,30), [30,45]
+degrees. Straight ahead lies on the middle boundary and selects slot4; explicit
+straight-arrow cues may use the two middle slots3/4. Angle mapping is unchanged.
+See [layout and wiring](SIX-COLUMN-LAYOUT.md).
+
 ## BLE and bytes
 
 | Item | Value |
@@ -15,7 +24,7 @@ are retained; details absent from v7 are explicit implementation decisions below
 | Bands | `0` down/unknown; `1..4` wrist → fingers |
 | Highlight | `0..6` column, `255` none; empty highlighted column is wire-legal, controller suppresses the tap |
 
-Column 0 is the user's left, 6 right, with the wrist end toward the user. Verify
+Wire slot 0 is reserved and has no physical output. Slots 1–6 are the six columns from user's left to right, with the wrist end toward the user. Verify
 this physically before use. BLE identifiers are newly assigned, not known to
 interoperate with any previous app. This prototype has no account or cloud path.
 The command characteristic accepts writes; status is diagnostic and cannot prove
@@ -45,7 +54,7 @@ application timestamp, authentication scheme, or end-to-end checksum.
 ## Perception and target choices
 
 New assumptions: fixed landscape-left mount, rear camera facing forward, camera
-X right and forward −Z. Seven equal sectors cover −45° through +45°. Endpoints
+X right and forward −Z. Six equal sectors in slots 1–6 cover −45° through +45°. Endpoints
 are included; an internal boundary goes to the sector on its right. Do not clamp
 targets outside that field into an edge column.
 

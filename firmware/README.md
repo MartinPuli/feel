@@ -1,18 +1,25 @@
+> Current six-column hardware: use `esp32-six-live`. The leftmost old column is
+> removed: GPIO32 is never configured or driven by the main firmware. The nine-byte
+> protocol retains slot0 as reserved; slots1..6 drive GPIO33,25,26,27,14,13.
+> Legacy `esp32-seven-live` now has the same six-output behavior. Single-servo
+> profiles now use GPIO33. Existing pulse calibration is unchanged. No upload or
+> six-servo physical verification is implied by a successful build.
+
 > Single-servo app control: the opt-in `esp32-single-live` environment uses the
-> production center-sector mapping on GPIO32 within assumed650–2500 µs. This
+> production center-sector mapping on GPIO33 within assumed650–2500 µs. This
 > user-selected175° profile is not measured calibration. See
 > [single-live instructions](../docs/SINGLE-SERVO-LIVE.md). The older midpoint
-> demo and default disabled seven-servo environments remain available.
+> demo and default disabled six-servo environments remain available.
 
 # FEEL V1 firmware — greenfield implementation
 
 This is newly written code derived from `HANDOFF-v7.md`. It is **not** the missing original firmware. Its portable production controller is exercised on the host; board compilation and physical testing are separate gates. Never infer servo motion, pin return, force, or BLE reliability from a passing host test.
 
-**Selected hardware:** the team confirmed two **ESP32-WROOM boards with USB-C** (one main, one spare), so use the `esp32` environment and the classic GPIO map after checking the actual board's exposed labels. The `esp32s3` environment is a secondary portability build; it does not describe a board in the confirmed inventory. A USB data cable, 400-point breadboards, perfboards/headers, 22-AWG solid wire, a multimeter, soldering tools and an Adafruit 5 V / 4 A supply are available. The supply's availability does **not** establish that 5 V is correct for the unconfirmed servo variant. Check the capacitor's actual value/polarity/rating (target inventory check: 1000 µF / 25 V) and identify every servo label before powering it. Breadboards are for logic prototyping, not an assumed adequate seven-servo current path.
+**Selected hardware:** the team confirmed two **ESP32-WROOM boards with USB-C** (one main, one spare), so use the `esp32` environment and the classic GPIO map after checking the actual board's exposed labels. The `esp32s3` environment is a secondary portability build; it does not describe a board in the confirmed inventory. A USB data cable, 400-point breadboards, perfboards/headers, 22-AWG solid wire, a multimeter, soldering tools and an Adafruit 5 V / 4 A supply are available. The supply's availability does **not** establish that 5 V is correct for the unconfirmed servo variant. Check the capacitor's actual value/polarity/rating (target inventory check: 1000 µF / 25 V) and identify every servo label before powering it. Breadboards are for logic prototyping, not an assumed adequate six-servo current path.
 
 **Physical PWM is disabled by default** (`FEEL_ENABLE_SERVO_OUTPUT=0`). The board still runs BLE, decoding, calibration, status and timeout logic, but GPIOs remain LOW. On October17 the user selected **175° as a working design assumption**, with an experimental **650–2500 µs** service envelope. This supersedes the previous120° design; it is **not a measured angle or a measured-safe range**. The [manufacturer PDF](https://www.feetechrc.com/Data/feetechrc/upload/file/20220608/6379029528194935652722624.pdf) specifies nominal120° for900–2100µs; [Pololu's product page](https://www.pololu.com/product/3420) reports approximately180° over650–2500µs on tested units, which may vary. User acceptance of175° does not establish physical travel on each installed servo.
 
-An explicitly enabled build must set all three build macros: `FEEL_ENABLE_SERVO_OUTPUT=1`, `FEEL_VERIFIED_PULSE_MIN_US=<measured-safe-minimum>`, and `FEEL_VERIFIED_PULSE_MAX_US=<measured-safe-maximum>`. Missing measured limits cause compilation to fail. Bounds must be ordered within 650–2500 µs. The guard validates **all seven** commanded pulses before any update; an out-of-range request detaches every PWM output and latches a fault until reboot. A narrower confirmed range permits only commands within that range; it does not silently rescale angles. Do not use the assumed values as a substitute for identifying the received servo and verifying unloaded operation. This revision neither enables outputs nor flashes a board.
+An explicitly enabled build must set all three build macros: `FEEL_ENABLE_SERVO_OUTPUT=1`, `FEEL_VERIFIED_PULSE_MIN_US=<measured-safe-minimum>`, and `FEEL_VERIFIED_PULSE_MAX_US=<measured-safe-maximum>`. Missing measured limits cause compilation to fail. Bounds must be ordered within 650–2500 µs. The guard validates **all seven wire-slot** commanded pulses before any update; an out-of-range request detaches every PWM output and latches a fault until reboot. A narrower confirmed range permits only commands within that range; it does not silently rescale angles. Do not use the assumed values as a substitute for identifying the received servo and verifying unloaded operation. This revision neither enables outputs nor flashes a board.
 
 ## Build and test
 
@@ -40,12 +47,12 @@ python3 -m platformio device monitor -b 115200
 
 Arduino IDE alternative: copy `include/feel` and `src/controller.cpp`, `src/commands.cpp`, `src/main.cpp`, `include/board_config.hpp` into a sketch while retaining the `feel/` include hierarchy, and provide an empty sketch-named `.ino`; install the same Espressif core and NimBLE versions. PlatformIO is the reproducible, supported build route.
 
-| Column | 0 | 1 | 2 | 3 | 4 | 5 | 6 |
+| Column | 0 | 1 | 2 | 3 | unused | 5 | 6 |
 |---|---|---|---|---|---|---|---|
-| Classic ESP32 GPIO (handoff) | 32 | 33 | 25 | 26 | 27 | 14 | 13 |
-| ESP32-S3 DevKitC-1 GPIO (**new assumption**) | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+| Classic ESP32 GPIO (handoff) | unused | 33 | 25 | 26 | 27 | 14 | 13 |
+| ESP32-S3 DevKitC-1 GPIO (**new assumption**) | unused | 5 | 6 | 7 | 8 | 9 | 10 |
 
-Do not transfer the classic pin list to an S3. Confirm the actual board, module memory connections, exposed pads, and pin labels before wiring. Both mappings need physical validation. ESP32-C3/C6 are unsupported because this design needs seven independent PWM channels. Keep servo power separate from ESP32 GPIO/3.3 V, with a suitable supply and common ground; voltage/current/connector polarity must be measured or established from the actual servo documentation.
+Do not transfer the classic pin list to an S3. Confirm the actual board, module memory connections, exposed pads, and pin labels before wiring. Both mappings need physical validation. ESP32-C3/C6 are unsupported because those board targets have not been validated. Keep servo power separate from ESP32 GPIO/3.3 V, with a suitable supply and common ground; voltage/current/connector polarity must be measured or established from the actual servo documentation.
 
 ## Production controller and wire contract
 
@@ -108,7 +115,7 @@ One-column bring-up:
 3. Configure the three measured-range macros above for deliberate bench use, rebuild and flash. Start with one uncoupled servo and a current-limited supply; the initial neutral pulse can move it immediately. Measure a safe pulse range gradually; **do not blindly send both 650/2500 µs endpoints**. Those values are assumed design limits, not verified safe limits for the received part. Stop at any stall, excess current, heat, or mechanical end stop. If the received unit cannot provide the assumed175° within measured safe limits, stop cam integration and revise the design; changing pulse limits does not establish safe travel.
 4. Only after sufficient measured travel and safe endpoints are established, fit the verified coupling at known orientation. Run `ARM`, `B 0 1`, then other bands one at a time, renewing ARM as needed. For a brief supervised hold: `python3 firmware/tools/bench.py --port /dev/ttyUSB0 --band 0 2 --seconds 2`. Default transport opening may reset the ESP32; read the helper's console output. OutputState 0 or 2 means no motion should be expected; disconnect servo power before investigating a fault.
 5. Adjust `CAL 0 offset`, inspect all four bands and gaps, `CAL save`, reboot, and verify `STATUS`. One offset cannot correct a nonlinear/incorrect pulse range; never use offset to hide mechanical misalignment.
-6. Only after one column passes real motion/return/tap tests, repeat per column and expand to seven. Test power under load, disconnect, phone backgrounding, missing packets, and the 500 ms failsafe with measured latency. Log physical findings separately from software evidence.
+6. Only after one column passes real motion/return/tap tests, repeat per column and expand to six. Test power under load, disconnect, phone backgrounding, missing packets, and the 500 ms failsafe with measured latency. Log physical findings separately from software evidence.
 
 ## Deterministic host simulator
 
@@ -139,13 +146,13 @@ Handoff omissions resolved explicitly: UUIDs/status layout, modular sequence pol
 
 `esp32-single-live` is a separate classic-ESP32 environment for the explicitly
 selected **assumed175-degree** design. It advertises **FEEL Puck** and
-attaches only GPIO32. It reads production controller `pulses[3]` directly: the
+attaches only GPIO33. It reads production controller `pulses[3]` directly: the
 center sector's band positions, adjacent gaps, highlight taps and calibration
 offsets all apply within assumed650–2500 microseconds. This is not
 a measured-safe-range build or evidence of full physical175-degree travel.
 
 Boot, connection without a packet, disconnection and the existing500ms command
-timeout leave GPIO32 detached/LOW. A fresh all-zero packet (including app Stop
+timeout leave GPIO33 detached/LOW. A fresh all-zero packet (including app Stop
 or tracking loss) commands the nearest empty cam gap; removing PWM alone would
 not move a previously selected pin down. Serial STOP detaches immediately.
 The wire format cannot distinguish clear-scene zero from app Stop/tracking loss.
@@ -159,21 +166,21 @@ python3 -m platformio run -d firmware -e esp32-single-live -j 2
 ```
 
 The existing `esp32-single-demo` keeps its nominal1450–1550us mapping. Default
-seven-servo environments keep PWM disabled and their measured-limit requirement
+six-servo environments keep PWM disabled and their measured-limit requirement
 is unchanged. The new adapter reuses the same nine-byte BLE protocol and
 quantized50Hz output path; no independent sweep is performed.
 
-## Guarded seven-servo production profile
+## Guarded six-servo production profile
 
-`esp32-production` uses the existing seven-column controller on classic ESP32
-GPIOs32,33,25,26,27,14,13. It is explicitly gated by the ignored local file
+`esp32-production` uses the existing seven-slot controller with six physical outputs on classic ESP32
+GPIOs33,25,26,27,14,13. It is explicitly gated by the ignored local file
 `firmware/production-measurements.local.json`; the file is intentionally absent.
 The tracked `production-measurements.example.json` contains false/null fields
 and cannot enable output. Fill a local copy only from actual physical records.
 
 The prebuild hook requires schema_version2 and design_profile `fs0307-assumed175-even-v4`, board `esp32-classic`, a true global
 verification attestation, verifier name, ISO8601 timestamp with timezone, and a
-nonempty local evidence file. All seven column records must have unique column
+nonempty local evidence file. All six column records must have unique column
 and unit identifiers, the matching GPIO, a true verification attestation, a
 measured integer minimum/maximum pulse range, and a nonempty evidence file.
 Evidence paths are absolute or relative to the measurement JSON directory.
@@ -222,39 +229,42 @@ for the new design; old schema1 production records cannot enable it.
 
 The latest equal58° spacing revision uses0/58/116/174° bands and29/87/145° gaps. Nearest-gap ties choose the lower gap. Old unequal-spacing calibration records are rejected; the physical endpoints remain assumptions.
 
-## Explicit seven-servo live experiment
+## Explicit six-servo live experiment
 
-`esp32-seven-live` is the user-authorized seven-channel Bluetooth test, advertised
+`esp32-six-live` is the user-authorized six-channel Bluetooth test, advertised
 as **FEEL Puck**. It opts into `FEEL_SEVEN_SERVO_LIVE=1` without enabling the
 separate measured production profile. Default builds remain PWM-disabled;
-`esp32-production` still requires all seven physical measurement records.
+`esp32-production` still requires all six physical measurement records.
 This experiment applies the connected single-unit **+159µs trim and2648µs cap**
-to each column independently on GPIO32,33,25,26,27,14,13. Its approximately189°
-command interpretation is an assumption, not measured travel on seven units.
+to each column independently on GPIO33,25,26,27,14,13. Its approximately189°
+command interpretation is an assumption, not measured travel on six units.
 No production measurement records are generated by selecting this environment.
 
 The shared controller retains0/58/116/174° band commands and29/87/145° gaps.
 With zero calibration offsets, experimental output bands are809/1422/2035/2648µs;
 cleared bands1–4 use1116/1116/1729/2342µs. Fresh zero packets move each column to
 its own last nearest gap. Boot, connection without a command, timeout500ms,
-disconnect, and serial STOP detach all seven channels and drive their GPIOs LOW.
+disconnect, and serial STOP detach all six channels and drive their GPIOs LOW.
 Serial STOP is temporary if the phone continues sending valid packets.
 
 Every input pulse and quantized duty is validated before any channel is attached
 or updated. Invalid output batches latch a fault until reboot. The pinned
 Arduino-ESP322 implementation configures all four shared LEDC timers to nominal
-50Hz after initializing seven channels; no waveform has been measured by these
+50Hz after initializing six channels; no waveform has been measured by these
 software checks. This opt-in profile rejects Arduino3 and nonclassic boards.
 Only STATUS, HELP, and STOP serial commands are accepted; calibration/bench
-commands stop the adapter and are rejected. STATUS lists the seven last
+commands stop the adapter and are rejected. STATUS lists the six last
 commanded output pulses, pins, and timer frequencies; it does not measure angle.
 
 ```sh
 # Compile only, no upload or physical actuation:
-python3 -m platformio run -d firmware -e esp32-seven-live -j 2
+python3 -m platformio run -d firmware -e esp32-six-live -j 2
 ```
 
 All-column host tests cover sector independence, trim/cap, quantization bounds,
 atomic invalid-batch rejection, cleared gaps, timeout, disconnect, Stop, raw/bench
-isolation, rollover, and duplicate freshness. Physical seven-servo power, motion,
+isolation, rollover, and duplicate freshness. Physical six-servo power, motion,
 calibration, and mechanism tests remain separate and unverified.
+
+Standalone `bench-single/` and untracked `bench-travel/` are historical GPIO32
+bench programs, not six-column deployment firmware. Do not upload them for this rig.

@@ -20,7 +20,7 @@ final class LanternTests:XCTestCase {
     }
     func testProductionPacketIntegration() throws {
         let output=TactileEncoder.encode(sequence:42,now:5,frameTimestamp:5,tracking:true,distances:[0.3,0.9,1.6,2.5,4,nil,0.1],target:TargetObservation(bearingDegrees:40,distance:1,timestamp:5))
-        XCTAssertEqual(output.packet.bytes,[42,1,2,3,4,4,0,1,6])
+        XCTAssertEqual(output.packet.bytes,[42,0,2,3,4,4,0,1,6])
         XCTAssertEqual(try FeelPacket(bytes:Array(output.packet.data)),output.packet)
     }
     func testAllFindModesAreAccessibleNames() {

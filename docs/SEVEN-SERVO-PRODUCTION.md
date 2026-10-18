@@ -1,3 +1,8 @@
+> Current layout — October 17: six active columns. GPIO32 / wire slot0 is unused.
+> Left to right: GPIO33,25,26,27,14,13 (wire slots1–6). The nine-byte packet
+> remains unchanged; the app reserves b0=0 and divides the whole ±45° field into
+> six sectors. Existing angle settings are unchanged. See [six-column guide](SIX-COLUMN-LAYOUT.md).
+
 > October17 update: use [the175° design](FS0307-175-DESIGN.md). Production measurement records now require schema2 and design_profile `fs0307-assumed175-even-v4`; old120° records cannot enable this build.
 
 # V1 seven-servo production setup

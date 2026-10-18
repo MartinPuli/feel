@@ -1,3 +1,8 @@
+> Current layout — October 17: six active columns. GPIO32 / wire slot0 is unused.
+> Left to right: GPIO33,25,26,27,14,13 (wire slots1–6). The nine-byte packet
+> remains unchanged; the app reserves b0=0 and divides the whole ±45° field into
+> six sectors. Existing angle settings are unchanged. See [six-column guide](SIX-COLUMN-LAYOUT.md).
+
 > Current evidence: one unloaded GPIO32 servo moved during a bounded bench test
 > and the user subsequently reported small live iPhone-driven movement. The
 > complete seven-column device has not passed the physical gates below. See

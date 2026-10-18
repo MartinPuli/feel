@@ -1,3 +1,11 @@
+## October 17 — six-column update
+
+Software checks PASS across current main and isolated V2/V3/V4; ESP32 six-live
+upload and six-pin status readback PASS. Current iPhone install BLOCKED because
+macOS reports the device unavailable. Physical six-servo integration NOT VERIFIED.
+See [evidence](evidence/six-columns-20261017/REPORT.md) and [wiring](SIX-COLUMN-LAYOUT.md).
+Earlier seven-column statements below describe historical revisions.
+
 > **Room structure memory on `feel/room-structure` (2026-10-17, night):** with the printed tag in view, the floor grid a
 > session learned is exported into the tag's levelled frame when sensing stops or tracking resets (FeelCore `RoomMap`:
 > 10 cm cells, run-length encoded) and kept per tag as one visit (the newest ten, `RoomMemoryStore`); the first sighting

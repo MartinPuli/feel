@@ -430,7 +430,7 @@ struct PuckView: View {
     /// Several target columns tap together; nil falls back to the packet's single highlight.
     var targetColumns: ClosedRange<Int>? = nil
     var compact = false
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 7)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: PuckLayout.physicalColumnCount)
 
     var body: some View {
         VStack(spacing: 6) {
@@ -441,7 +441,7 @@ struct PuckView: View {
             }
             ForEach((1...4).reversed(), id: \.self) { band in
                 LazyVGrid(columns: columns, spacing: 10) {
-                    ForEach(0..<7, id: \.self) { column in
+                    ForEach(PuckLayout.activeColumns, id: \.self) { column in
                         let active = packet.bands[column] == UInt8(band)
                         let target = active && ((targetColumns.map { $0.count > 1 && $0.contains(column) } ?? false) || packet.effectiveHighlight == UInt8(column))
                         // Raised pins are solid ink; target columns are orange; down pins are rings.
@@ -464,12 +464,12 @@ struct PuckView: View {
         .padding(compact ? 0 : 16)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Virtual puck")
-        .accessibilityValue(packet.bands.enumerated().map { "Column \($0.offset + 1), band \($0.element)" }.joined(separator: ". ") + targetSummary)
+        .accessibilityValue(PuckLayout.activeColumns.map { "Column \($0), band \(packet.bands[$0])" }.joined(separator: ". ") + targetSummary)
     }
 
     private var targetSummary: String {
-        if let span = targetColumns, span.count > 1 { return ". Target columns \(span.lowerBound + 1) to \(span.upperBound + 1)" }
-        return packet.effectiveHighlight < 7 ? ". Target column \(Int(packet.effectiveHighlight) + 1)" : ". No target highlight"
+        if let span = targetColumns, span.count > 1 { return ". Target columns \(span.lowerBound) to \(span.upperBound)" }
+        return PuckLayout.activeColumns.contains(Int(packet.effectiveHighlight)) ? ". Target column \(Int(packet.effectiveHighlight))" : ". No target highlight"
     }
 }
 

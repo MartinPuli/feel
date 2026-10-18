@@ -205,8 +205,8 @@ final class DirectionCueTests: XCTestCase {
     }
 
     func testClassification() {
-        let cases: [(Double,DirectionCue)]=[(0,.straight),(14,.straight),(-14,.straight),(17,.bear(column:4)),(20,.bear(column:5)),(40,.bear(column:6)),
-                                            (-30,.bear(column:1)),(60,.turnRight),(-100,.turnLeft),(150,.turnAround),(-179,.turnAround)]
+        let cases: [(Double,DirectionCue)]=[(0,.straight),(14,.straight),(-14,.straight),(17,.bear(column:5)),(20,.bear(column:5)),(40,.bear(column:6)),
+                                            (-30,.bear(column:2)),(60,.turnRight),(-100,.turnLeft),(150,.turnAround),(-179,.turnAround)]
         for (b,cue) in cases { XCTAssertEqual(DirectionCue.classify(hint(b),previous:nil),cue,"\(b)") }
         XCTAssertEqual(DirectionCue.classify(hint(30,distance:0.8),previous:nil),.arrived)
         XCTAssertNil(DirectionCue.classify(hint(0,status:.blocked),previous:nil))
@@ -214,18 +214,19 @@ final class DirectionCueTests: XCTestCase {
     func testHysteresis() {
         XCTAssertEqual(DirectionCue.classify(hint(18),previous:.straight),.straight)
         XCTAssertEqual(DirectionCue.classify(hint(12),previous:.bear(column:4)),.bear(column:4))
+        XCTAssertEqual(DirectionCue.classify(hint(-12),previous:.bear(column:3)),.bear(column:3))
         XCTAssertEqual(DirectionCue.classify(hint(52),previous:.turnRight),.turnRight)
     }
     func testFrames() {
-        XCTAssertEqual(DirectionCue.straight.frames.map(dots).last,"1234321")
-        XCTAssertEqual(DirectionCue.bear(column:5).frames.map(dots),["...4...","...44..","....44.",".....4."])
-        XCTAssertEqual(DirectionCue.turnRight.frames.map(dots),["...1...","...2...","...3...","...4...","...44..","....44.",".....44","......4"])
-        XCTAssertEqual(DirectionCue.turnLeft.frames.map(dots).last,"4......")
-        XCTAssertEqual(DirectionCue.turnAround.frames.map(dots),["..444..","..333..","..222..","..111.."])
-        XCTAssertEqual(DirectionCue.arrived.frames.map(dots),["..444..",".......","..444..","......."])
+        XCTAssertEqual(DirectionCue.straight.frames.map(dots).last,".234432")
+        XCTAssertEqual(DirectionCue.bear(column:5).frames.map(dots),["....4..","....44.",".....4."])
+        XCTAssertEqual(DirectionCue.turnRight.frames.map(dots),["....1..","....2..","....3..","....4..","....44.",".....44","......4"])
+        XCTAssertEqual(DirectionCue.turnLeft.frames.map(dots).last,".4.....")
+        XCTAssertEqual(DirectionCue.turnAround.frames.map(dots),["...44..","...33..","...22..","...11.."])
+        XCTAssertEqual(DirectionCue.arrived.frames.map(dots),["...44..",".......","...44..","......."])
     }
     func testAllFramesWireLegalAndDistinct() throws {
-        let all: [DirectionCue]=[.straight,.turnLeft,.turnRight,.turnAround,.arrived]+[0,1,2,4,5,6].map { .bear(column:$0) }
+        let all: [DirectionCue]=[.straight,.turnLeft,.turnRight,.turnAround,.arrived]+[1,2,3,4,5,6].map { .bear(column:$0) }
         for cue in all { for f in cue.frames { _=try FeelPacket(sequence:0,bands:f) } }
         XCTAssertEqual(Set(all.map { $0.frames.map(dots).joined(separator:"|") }).count,all.count)
     }
@@ -246,7 +247,7 @@ final class CuePlayerTests: XCTestCase {
     func testPlaysOnceThenReturnsToBase() {
         var p=CuePlayer(); p.play(.bear(column:5),now:0)
         let shown=(0..<6).map { dots(p.apply(to:base(),now:Double($0)*0.1).packet.bands) }
-        XCTAssertEqual(shown,["...4...","...44..","....44.",".....4.","..2..3.","..2..3."])
+        XCTAssertEqual(shown,["....4..","....44.",".....4.","..2..3.","..2..3.","..2..3."])
         XCTAssertNil(p.playing)
     }
     func testCueFramesKeepSequenceAndDropHighlight() {
@@ -257,13 +258,13 @@ final class CuePlayerTests: XCTestCase {
     func testNearObstacleHoldsThenRestarts() {
         var p=CuePlayer(); p.play(.bear(column:5),now:0)
         _=p.apply(to:base(),now:0)
-        let near=base([1,0,0,0,0,0,0])
+        let near=base([0,1,0,0,0,0,0])
         XCTAssertEqual(p.apply(to:near,now:0.1),near)
-        XCTAssertEqual(dots(p.apply(to:base(),now:0.5).packet.bands),"...4...","restarts from the first frame")
+        XCTAssertEqual(dots(p.apply(to:base(),now:0.5).packet.bands),"....4..","restarts from the first frame")
     }
     func testLongObstacleDropsCue() {
         var p=CuePlayer(); p.play(.turnRight,now:0)
-        let near=base([1,0,0,0,0,0,0])
+        let near=base([0,1,0,0,0,0,0])
         _=p.apply(to:near,now:0); _=p.apply(to:near,now:2.5)
         XCTAssertNil(p.playing)
         XCTAssertEqual(p.apply(to:base(),now:2.6),base())
@@ -275,7 +276,7 @@ final class CuePlayerTests: XCTestCase {
     }
     func testJitter() {
         var p=CuePlayer(); p.play(.bear(column:5),now:0)
-        XCTAssertEqual([0,0.13,0.17,0.32].map { dots(p.apply(to:base(),now:$0).packet.bands) },["...4...","...44..","....44.",".....4."])
+        XCTAssertEqual([0,0.13,0.17,0.32].map { dots(p.apply(to:base(),now:$0).packet.bands) },["....4..","....44.",".....4.","..2..3."])
     }
 }
 
@@ -320,7 +321,7 @@ final class DirectionGuideTests: XCTestCase {
     func testSignAgainRepeats() {
         var g=DirectionGuide(); _=g.update(now:0,sign:true,hint:hint(30,at:0))
         let r=g.update(now:3,sign:true,hint:hint(30,at:3))
-        XCTAssertEqual(r.play,.bear(column:5)); XCTAssertEqual(r.events,[.repeated(.bear(column:5))])
+        XCTAssertEqual(r.play,.bear(column:6)); XCTAssertEqual(r.events,[.repeated(.bear(column:6))])
     }
     func testArrivalEndsGuidance() {
         var g=DirectionGuide(); _=g.update(now:0,sign:true,hint:hint(0,at:0))

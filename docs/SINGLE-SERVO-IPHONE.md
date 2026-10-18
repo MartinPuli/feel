@@ -1,3 +1,7 @@
+> Current six-column revision: GPIO32 is unused. Use [SIX-COLUMN-LAYOUT.md](SIX-COLUMN-LAYOUT.md)
+> for current wiring and the `esp32-six-live` target. Historical single-servo
+> examples below using GPIO32 are superseded; current single profiles use GPIO33.
+
 # Live FEEL iPhone integration: one servo only
 
 This demo connects the existing iPhone app to the single unloaded FS0307 on GPIO32. It is not the seven-servo tactile device and must not be used with the production cam mechanism. The user reported successful movement in the nominal1450–1550 µs midpoint test; no physical angle, torque, supply-current or endpoint measurements have been taken.

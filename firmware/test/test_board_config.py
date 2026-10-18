@@ -51,3 +51,7 @@ check(["-DFEEL_SEVEN_SERVO_LIVE=1", "-DFEEL_BOARD_S3"], False)
 check(["-DFEEL_SEVEN_SERVO_LIVE=1", "-DCONFIG_IDF_TARGET_ESP32S3"], False)
 check(["-DFEEL_SEVEN_SERVO_LIVE=1", "-UFEEL_BOARD_CLASSIC"], False)
 print("PASS firmware board config: 37 compile-only default/range/single/seven/production isolation checks (no physical outputs)")
+
+# The removed wire slot must never contain an attachable GPIO.
+result = subprocess.run(base, input='#include "board_config.hpp"\nstatic_assert(kServoPins[0] == 255, "reserved slot");\nstatic_assert(kServoPins[1] == 33 && kServoPins[2] == 25 && kServoPins[3] == 26 && kServoPins[4] == 27 && kServoPins[5] == 14 && kServoPins[6] == 13, "active map");\n', capture_output=True, text=True, timeout=15)
+assert result.returncode == 0, result.stderr

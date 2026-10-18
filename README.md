@@ -1,8 +1,7 @@
-> **FS0307 120° revision:** current CAD and firmware use 0/40/80/120° band positions.
-> See [design and validation](docs/FS0307-120-DESIGN.md). Old 175° shafts/calibration
-> are superseded. Default seven-servo PWM is disabled pending measured limits.
-> The [midpoint demo](docs/SINGLE-SERVO-IPHONE.md) has user-reported motion.
-> The opt-in [single-servo live profile](docs/SINGLE-SERVO-LIVE.md) uses nominal120° production mapping on GPIO32.
+> **Current hardware: six columns, GPIO32 unused.** Left to right:
+> GPIO33,25,26,27,14,13. See [layout and wiring](docs/SIX-COLUMN-LAYOUT.md).
+> Current angle settings are preserved; they are commanded values, not measured
+> travel. Default PWM remains off; the opt-in live profile is `esp32-six-live`.
 
 # FEEL
 
@@ -10,8 +9,8 @@
 Lantern with its [camera-first interface](docs/V1-CAMERA-UI.md), Beacon, and V1 validation tools.
 Use `main` for all current V1 work. V2 and V3 remain separate development branches.
 
-A prototype that translates indoor depth and target direction into a **7-column ×
-4-pin tactile puck**, using a LiDAR iPhone, BLE, an ESP32 and seven servos.
+A prototype that translates indoor depth and target direction into a **6-column ×
+4-pin tactile puck**, using a LiDAR iPhone, BLE, an ESP32 and six servos.
 
 **Greenfield recreation from HANDOFF-v7.md.** No original iOS, firmware or CAD
 source was available. Historical “as built” statements in that document are not
@@ -25,7 +24,7 @@ verification of this repository. The earlier preparation work is preserved on
 | `feel/v2-spatial-memory` | Remember / Recall / Return, created only after V1 validation |
 | `feel/v3-advanced` | Optional advanced work, only after V1 and V2 |
 
-For the final seven-servo configuration, start with [SEVEN-SERVO-PRODUCTION.md](docs/SEVEN-SERVO-PRODUCTION.md).
+For the current six-column configuration, start with [SIX-COLUMN-LAYOUT.md](docs/SIX-COLUMN-LAYOUT.md).
 
 To test the current app and single-servo setup, follow [TEST-V1.md](docs/TEST-V1.md).
 
@@ -35,12 +34,14 @@ See [release status](docs/RELEASE-STATUS.md) for actual checks and blockers.
 
 ## How it fits together
 
+Older figures may depict the seven-position shell; the leftmost position is now unused.
+
 ![FEEL at a glance](docs/diagrams/feel-system.svg)
 
 More figures: [sensing to pins](docs/diagrams/sensing-to-pins.svg), [one Where-is request](docs/diagrams/where-is-path.svg),
 [the evaluation loop](docs/diagrams/chalk-eval-loop.svg) and [memory and venue knowledge](docs/diagrams/chalk-context.svg).
 The Chalk integration (gateway, evaluations, features) is documented in [chalk/README.md](chalk/README.md).
-**One-servo motion has been observed; full travel, seven-servo mechanics and sensing accuracy remain unverified.**
+**One-servo motion has been observed; full travel, six-servo mechanics and sensing accuracy remain unverified.**
 
 ## Run software checks
 

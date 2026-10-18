@@ -5,7 +5,10 @@
 #include <cstdint>
 
 namespace feel {
+// Seven wire slots retained for compatibility; slot zero has no hardware.
 constexpr std::size_t kColumns = 7;
+constexpr std::size_t kFirstActiveColumn = 1;
+constexpr std::size_t kActiveColumns = 6;
 constexpr std::size_t kPacketBytes = 9;
 constexpr uint8_t kNoHighlight = 255;
 constexpr uint32_t kWatchdogMs = 500;

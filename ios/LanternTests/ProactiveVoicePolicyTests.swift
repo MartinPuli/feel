@@ -7,7 +7,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
 
     func testObstacleNoticeNamesTheSideWithMoreRoom() throws {
         var policy = ProactiveVoicePolicy()
-        let wall: [Double?] = [3, 3, 0.8, 0.8, 0.8, 3, 0.8]
+        let wall: [Double?] = [nil, 3, 3, 0.8, 0.8, 3, 0.8]
         var finder = OpenSideFinder()
         let open = finder.update(distances: wall, now: 0)
         XCTAssertNil(policy.propose(target: nil, finder: .none, distances: wall, openSide: open, now: 0))
@@ -61,7 +61,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
 
     func testCloseObstacleHasPriorityThenTargetMayFollowAfterGap() throws {
         var policy = ProactiveVoicePolicy()
-        let close = sectors(0.7, column: 0)
+        let close = sectors(0.7, column: 1)
         _ = policy.propose(target: target(at: 0), finder: .person, distances: close, now: 0)
         let obstacle = try XCTUnwrap(policy.propose(target: target(at: 0.8), finder: .person, distances: close, now: 0.8))
         XCTAssertEqual(obstacle.kind, .obstacle)
@@ -163,7 +163,7 @@ final class ProactiveVoicePolicyTests: XCTestCase {
         let obstacle = try XCTUnwrap(policy.propose(target: nil, finder: .none, distances: sectors(0.8), now: 0.8))
         XCTAssertTrue(obstacle.isSupported(target: nil, finder: .none, distances: sectors(0.75), now: 1))
         XCTAssertFalse(obstacle.isSupported(target: nil, finder: .none, distances: sectors(0.3), now: 1))
-        XCTAssertFalse(obstacle.isSupported(target: nil, finder: .none, distances: sectors(0.8, column: 0), now: 1))
+        XCTAssertFalse(obstacle.isSupported(target: nil, finder: .none, distances: sectors(0.8, column: 1), now: 1))
         XCTAssertFalse(obstacle.isSupported(target: nil, finder: .none, distances: empty, now: 1))
         policy.reset()
         _ = policy.propose(target: target(at: 2), finder: .door, distances: empty, now: 2)

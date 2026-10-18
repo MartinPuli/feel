@@ -1,3 +1,8 @@
+> Current layout — October 17: six active columns. GPIO32 / wire slot0 is unused.
+> Left to right: GPIO33,25,26,27,14,13 (wire slots1–6). The nine-byte packet
+> remains unchanged; the app reserves b0=0 and divides the whole ±45° field into
+> six sectors. Existing angle settings are unchanged. See [six-column guide](SIX-COLUMN-LAYOUT.md).
+
 > October 16 update: the user explicitly selected the FS0307 nominal **120°** design.
 > Current CAD/firmware/protocol supersede historical 175° / 650–2500 µs instructions.
 > Assume 120° for design; do not describe it as a physical measurement. Default seven-servo PWM stays off; the opt-in GPIO32 midpoint demo has user-reported motion.

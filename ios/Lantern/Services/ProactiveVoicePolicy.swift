@@ -166,11 +166,11 @@ struct ProactiveVoicePolicy {
     private static func nearestObstacle(_ distances: [Double?]) -> Observation? {
         guard distances.count == 7 else { return nil }
         let nearest = distances.enumerated().compactMap { column, distance -> (Int, Double)? in
-            guard let distance, distance.isFinite, distance > 0, distance <= 1.6 else { return nil }
+            guard PuckLayout.activeColumns.contains(column), let distance, distance.isFinite, distance > 0, distance <= 1.6 else { return nil }
             return (column, distance)
         }.min { lhs, rhs in lhs.1 == rhs.1 ? lhs.0 < rhs.0 : lhs.1 < rhs.1 }
         guard let (column, distance) = nearest else { return nil }
-        let bearing = -45 + (Double(column) + 0.5) * 90 / 7
+        let bearing = PuckLayout.bearing(ofColumn: column)
         return Observation(distance: distance, side: side(for: bearing))
     }
 }

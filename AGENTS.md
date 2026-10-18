@@ -1,3 +1,9 @@
+> October 17 latest directive: six physical columns; GPIO32 is unused. Preserve
+> the current angle settings. Active wire slots1–6 map to GPIO33,25,26,27,14,13.
+> All application versions must use the six-column layout; retain the nine-byte
+> wire ABI with b0 reserved. See docs/SIX-COLUMN-LAYOUT.md. This supersedes the
+> historical seven-column and 120° summaries below for this task.
+
 > October 16 update: the user explicitly selected the FS0307 nominal **120°** design.
 > Current CAD/firmware/protocol supersede historical 175° / 650–2500 µs instructions.
 > Assume 120° for design; do not describe it as a physical measurement. Default seven-servo PWM stays off; the opt-in GPIO32 midpoint demo has user-reported motion.
