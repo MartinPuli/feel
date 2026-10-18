@@ -37,7 +37,7 @@ final class DepthInputComponentTests: XCTestCase {
 
 final class ObstacleProjectionComponentTests: XCTestCase {
     private let pose = CameraPose(position: Vector3(0, 1, 0))
-    // Hand-selected bearings lie inside sectors 1, 3, and 5, away from edges.
+    // Main uses six sectors in wire slots 1...6; zero degrees selects slot 4.
     private func sample(_ bearing: Double, _ distance: Double, confidence: UInt8 = 2) -> DepthSample {
         let radians = bearing * .pi / 180
         return DepthSample(cameraPoint: Vector3(sin(radians) * distance, 0,
@@ -48,7 +48,7 @@ final class ObstacleProjectionComponentTests: XCTestCase {
         let inputs = [sample(0, 3), sample(0, 0.75), sample(0, 2)]
         for samples in [inputs, Array(inputs.reversed())] {
             let ranges = DepthProjector.sectors(samples: samples, pose: pose, floorY: 0)
-            XCTAssertEqual(try XCTUnwrap(ranges[3]), 0.75, accuracy: 1e-10)
+            XCTAssertEqual(try XCTUnwrap(ranges[4]), 0.75, accuracy: 1e-10)
             XCTAssertEqual(ranges.compactMap { $0 }.count, 1)
         }
     }
@@ -56,15 +56,15 @@ final class ObstacleProjectionComponentTests: XCTestCase {
     func testSeparatedObstaclesLeaveCentralSectorUnknown() throws {
         let ranges = DepthProjector.sectors(samples: [sample(-25, 1), sample(25, 3)],
                                            pose: pose, floorY: 0)
-        XCTAssertEqual(try XCTUnwrap(ranges[1]), 1, accuracy: 1e-10)
+        XCTAssertEqual(try XCTUnwrap(ranges[2]), 1, accuracy: 1e-10)
         XCTAssertEqual(try XCTUnwrap(ranges[5]), 3, accuracy: 1e-10)
-        for column in [0, 2, 3, 4, 6] { XCTAssertNil(ranges[column]) }
+        for column in [0, 1, 3, 4, 6] { XCTAssertNil(ranges[column]) }
     }
 
     func testLowConfidenceNearSampleCannotHideValidFarObstacle() throws {
         let ranges = DepthProjector.sectors(samples: [sample(0, 0.5, confidence: 0), sample(0, 3)],
                                            pose: pose, floorY: 0)
-        XCTAssertEqual(try XCTUnwrap(ranges[3]), 3, accuracy: 1e-10)
+        XCTAssertEqual(try XCTUnwrap(ranges[4]), 3, accuracy: 1e-10)
     }
 
     func testHeightUsesFloorRelativeWorldCoordinates() {
@@ -76,7 +76,7 @@ final class ObstacleProjectionComponentTests: XCTestCase {
             XCTAssertTrue(ranges.allSatisfy { $0 == nil })
             let accepted = DepthProjector.sectors(samples: [sample(0, 1)],
                 pose: CameraPose(position: Vector3(0, 1 + shift, 0)), floorY: shift)
-            XCTAssertEqual(accepted[3], 1)
+            XCTAssertEqual(accepted[4], 1)
         }
     }
 }
@@ -120,7 +120,8 @@ final class EncoderComponentRegressionTests: XCTestCase {
         }
         // Tests occupancy only: these ranges do not classify objects as chairs or walls.
         XCTAssertEqual(bands([nil, nil, 1.2, 1.2, 1.2, nil, nil]), [0, 0, 2, 2, 2, 0, 0])
-        XCTAssertEqual(bands(Array(repeating: 1.2, count: 7)), [2, 2, 2, 2, 2, 2, 2])
+        // The absent GPIO32 actuator reserves slot zero even for a full-width obstacle.
+        XCTAssertEqual(bands(Array(repeating: 1.2, count: 7)), [0, 2, 2, 2, 2, 2, 2])
     }
 }
 
