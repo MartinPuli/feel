@@ -2,7 +2,7 @@
 
 ### 🏆 HackHarvard 2026: Overall 1st Place · Best Hardware Track · Best Use Of Chalk (2nd)
 
-**An on-palm radar. Keep your ears. Feel the room.**
+**A radar that shows the room on the palm of your hand.**
 
 FEEL is a HackHarvard 2026 prototype that turns an iPhone's depth readings into touch.
 A handheld puck has six servo-driven columns with four pins each; each column can raise
