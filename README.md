@@ -1,8 +1,8 @@
 # FEEL: A Second Sense, Powered by AI
 
-**Keep your ears. Feel the room.**
+### 🏆 HackHarvard 2026: Overall 1st Place · Best Hardware Track · Best Use Of Chalk (2nd)
 
-🏆 HackHarvard Overall 1st Place, Best Hardware Track, and Best Use Of Chalk (2nd) - an on-palm radar
+**An on-palm radar. Keep your ears. Feel the room.**
 
 FEEL is a HackHarvard 2026 prototype that turns an iPhone's depth readings into touch.
 A handheld puck has six servo-driven columns with four pins each; each column can raise
