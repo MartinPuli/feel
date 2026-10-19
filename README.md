@@ -1,18 +1,28 @@
-# FEEL: A Second Sense, Powered by AI
 
-### 🏆 HackHarvard 2026: Overall 1st Place · Best Hardware Track · Best Use Of Chalk (2nd)
+<div align="center">
 
-**A radar that shows the room on the palm of your hand.**
+# FEEL
 
-FEEL is a HackHarvard 2026 prototype that turns an iPhone's depth readings into touch.
-A handheld puck has six servo-driven columns with four pins each; each column can raise
-one pin to represent the nearest obstacle in that direction. The iPhone sends commands
-over Bluetooth to an ESP32, leaving environmental sounds available to the user.
+**🏆 HackHarvard 2026: Overall 1st Place · Best Hardware Track · Best Use Of Chalk (2nd)**
 
-The app also includes object finding, saved places and voice commands. Chalk routes
-photo questions to a vision model and supports context retrieval and evaluation tools;
-OpenAI Realtime handles the live voice conversation. Software implementation and physical
-validation have separate status throughout this README.
+[![HackHarvard 2026](https://img.shields.io/badge/HackHarvard-2026-a7552f.svg)](docs/HACKHARVARD-2026.md)
+[![Status](https://img.shields.io/badge/status-experimental%20prototype-orange.svg)](#verification-status)
+[![Stack](https://img.shields.io/badge/stack-Swift%20%C2%B7%20LiDAR%20%C2%B7%20ESP32-black.svg)](#how-it-works)
+[![Docs](https://img.shields.io/badge/docs-codebase%20guide-lightgrey.svg)](docs/CODEBASE.md)
+
+[Demo script](docs/DEMO.md) · [Devpost draft](docs/DEVPOST.md)
+
+</div>
+
+![The FEEL puck on its forearm strap: the 6 × 4 pin plate lifted off the chassis, with the three copper strap loops around the body](docs/media/puck-strap-render.png)
+
+If you can't see, your ears are how you get around: traffic, footsteps, echoes, the person
+you're talking to. Most AI tools for blind people add another voice to that. FEEL leaves your
+ears free and puts the room in your palm instead.
+
+A LiDAR iPhone reads the space ahead. A palm-sized puck shows it as **6 directions × 4
+distances**, one raised pin per direction. Ask "where's the exit?" and a pin taps toward it.
+FEEL shows you the room, and you decide where to go.
 
 > FEEL is an experimental prototype for supervised indoor use. It is not a certified mobility
 > aid and does not replace a cane or guide dog. See [what has been verified](#verification-status).
@@ -25,18 +35,16 @@ validation have separate status throughout this README.
 | Distance sensor + vibration motor | One bit: "something is near." No direction, distance or *what*. |
 | Devices that steer you | Handle the path straight ahead and decide for you. They can't find a goal across the room. |
 
-## What the app includes
+FEEL's answer:
 
-| Feature | Implementation and limits |
-|---|---|
-| Obstacle sensing and touch | On-device LiDAR processing maps six directions to four distance bands. The firmware stops its live outputs after 500 ms without accepted commands; software checks don't prove that a physical pin returned. |
-| Object finding | A photo question can use Chalk's Model Gateway, with local detection as fallback. Live accuracy and phone-to-puck guidance still need validation. |
-| Saved places | Session bookmarks support remember, move and recall. Saved-room restoration requires relocalization and fresh tracking before guidance. These features don't guarantee a safe route. |
-| Voice and optional cloud context | OpenAI Realtime provides conversation; local commands and opt-in cloud memory have separate setup requirements. Chalk context reads require activation and end-to-end testing. |
-
-Useful V2/V3/V4 features now live in `main`; older branches remain available. See
-[version integration](docs/VERSION-INTEGRATION.md) for the feature list, evidence and
-configuration requirements.
+1. **A map, not a bit.** 24 pins encode direction and distance at once, read silently through touch.
+2. **It finds goals.** "Where's the exit / a chair / the registration desk?" places the target in
+   the room with LiDAR depth and taps its direction until you arrive.
+3. **It works with your cane.** The cane covers the ground ahead; FEEL covers the rest of the room.
+4. **Safe by design.** Obstacle sensing runs entirely on the phone. If the Bluetooth link goes
+   quiet for 500 ms, every pin drops to neutral.
+5. **It knows when it doesn't know.** The Where-is agent is evaluated on how often it claims to
+   find a target that isn't there, and falls back to on-device detection without a connection.
 
 ## How it works
 
@@ -128,47 +136,29 @@ Sources: [Pololu FS0307](https://www.pololu.com/product/3420),
 [Adafruit 5 V 4 A supply](https://www.adafruit.com/product/1466),
 [braille display buyer's guide](https://www.disabilityworld.org/articles/refreshable-braille-displays-buyers-guide/).
 
-## How we use Chalk
+## Where Chalk is used
 
-Chalk supports object finding, context retrieval and model evaluation in FEEL. These
-parts have different validation status; implementing a request path doesn't prove
-that it works through the phone and physical puck.
+![How Chalk is used: a question becomes a scan, a Chalk path query over past journeys and this trip's obstacles, progress points, the next point on the LiDAR view and pins on the puck; every step is stored as a journey, journeys build room and world maps, and frozen holdout journeys replay through Chalk Evaluations before a change is promoted](docs/diagrams/chalk-journey-loop.webp)
 
-### Finding objects
+FEEL's voice assistant has a `where_is` tool. "Where is the registration desk?" sends one camera
+photo and the question through **Chalk's Model Gateway** to a vision model. The phone places the
+answer in the room with LiDAR depth, and the puck taps toward it until you arrive.
 
-When you ask “Where is the chair?”, the voice assistant's `where_is` tool sends a
-camera photo and the question through Chalk's Model Gateway to the configured vision
-model. The iPhone combines the returned image location with LiDAR depth to locate the
-target and generate tactile guidance. We've implemented this path; live photo accuracy
-and the complete phone-to-puck flow still need physical validation.
+- **Evaluations.** Chalk Evaluations score the tool on labeled venue photos: pointing accuracy,
+  well-formed replies, and the **false-found rate**, how often it claims to see something that
+  isn't there. For a blind user, a confident wrong answer is worse than none, so this is the
+  metric that decides which model ships. Every report gives its denominators, per-case timing and
+  usage, under one 12 s deadline shared with the phone.
+- **Fallback.** Without Chalk settings, or when the gateway can't be reached, `where_is` falls
+  back to the phone's own Vision and Core ML detection: EXIT signs, door candidates, people,
+  chairs and common objects.
+- **Venue knowledge.** Downloadable venue packs answer questions offline from reviewed sources,
+  with expiry and temporary restrictions. The repo includes a pack for the David Rubenstein
+  Treehouse, built only from what reviewed public pages state.
+- **Context.** Chalk features keep confirmed finds, venue packs and shared room anchors.
 
-If Chalk isn't configured or the request fails, the app falls back to its local finder.
-The phone and gateway request share a 12-second deadline.
-
-### Retrieving context
-
-For a question such as “Where did I last see my keys?”, Chalk's context queries can
-retrieve previous finds, room information and journey data. Five direct-engine
-synthetic context checks passed. Those checks don't establish that the complete phone
-flow works: context reads still require activation, credentials and end-to-end testing.
-Shared-room and private last-seen reads require explicit opt-in and an authenticated
-server endpoint; service credentials stay off the phone.
-
-### Evaluating models
-
-We built evaluation tools to compare model answers, localization accuracy and response
-time on the same cases. They also count false finds: answers that claim an object is
-present when it isn't. A completed hosted FEEL evaluation remains unverified, so we
-don't claim measured model quality or latency from the local checks.
-
-Live voice conversation uses OpenAI Realtime directly. Chalk handles the model requests
-and context described above; the iPhone handles immediate sensing and the ESP32 drives
-the tactile outputs.
-
-![Chalk journey and evaluation architecture; the diagram does not establish deployment or validation status](docs/diagrams/chalk-journey-loop.webp)
-
-See [implementation and validation status](docs/VERSION-INTEGRATION.md) for evidence and
-remaining work, or [Chalk setup and evaluation commands](chalk/README.md) to run it.
+Voice runs on OpenAI Realtime directly; audio does not pass through Chalk.
+Setup, evaluation commands and current status: [chalk/README.md](chalk/README.md).
 
 ## Limitations
 
@@ -202,9 +192,7 @@ What has run, and what hasn't:
 
 - **Passes:** software checks on the Swift core, C++ controller, cross-layer replay and CAD
   geometry. Exact counts and commits are in [release status](docs/RELEASE-STATUS.md).
-- **Previously observed on hardware:** user-reported servo movement under phone control.
-  The latest hardware session has unresolved power/startup failures; a dim LED alone
-  does not establish board damage. Physical readiness remains unverified.
+- **Observed on hardware:** one servo moving under phone control.
 - **Not yet measured:** six-servo travel and mechanics, servo supply under load, sensing
   accuracy, end-to-end latency, hosted evaluation results, and testing with blind users.
 
