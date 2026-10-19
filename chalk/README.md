@@ -8,6 +8,58 @@ See [implementation status, architecture diagrams and evaluation plan](../docs/C
 
 ## Chalk in FEEL at a glance
 
+```mermaid
+flowchart TB
+  subgraph app ["FEEL app"]
+    voice["RealtimeVoiceSession: where_is tool"]
+    svc["WhereIsService.swift + ChalkGateway.swift"]
+    core["FeelCore/WhereIs.swift: prompt + parser"]
+    place["WhereIsPlacement: LiDAR depth → held target → puck tap"]
+    local["LocalWhereIs: on-device fallback"]
+  end
+
+  subgraph py ["chalk/ Python"]
+    gateway["feel_chalk/gateway.py"]
+    parser["feel_chalk/where_is.py"]
+    images["feel_chalk/images.py: EXIF, ≤ 1024 px, JPEG 60"]
+    evalrun["feel_chalk/where_is_eval.py + eval_report.py"]
+    ctx["feel_chalk/context.py + feel_context/"]
+  end
+
+  subgraph contract ["protocol/"]
+    prompt["where-is-prompt.txt"]
+    cases["where-is-cases.json"]
+  end
+
+  subgraph chalk ["Chalk"]
+    gw["Model Gateway: restricted key, allowlist, trace content logging off"]
+    models["openai/gpt-6.1-sol · openai/gpt-6-luna"]
+    evals["Evaluations: three scorers, one report shape"]
+    feats["Features and named queries: ObjectHistory, Venue.pack, RoomMemory"]
+  end
+
+  data["chalk/data/ labeled venue photos, gitignored"]
+
+  voice --> svc
+  svc -->|"one photo + question, 12 s deadline"| gw
+  gw --> models
+  models -->|"JSON reply"| svc
+  svc --> core --> place
+  svc -.->|"config, transport or malformed reply"| local
+  local --> place
+  prompt --> core
+  cases --> core
+  prompt --> parser
+  cases --> parser
+  data --> images --> evalrun
+  evalrun --> gateway --> gw
+  evalrun -->|"--local or hosted"| evals
+  evals --> models
+  parser --> evalrun
+  ctx -->|"token exchange, queries"| feats
+  place -->|"confirmed find"| feats
+```
+
 ![What Chalk does for the app](../docs/diagrams/chalk-overview.svg)
 
 ![FEEL at a glance](../docs/diagrams/feel-system.svg)

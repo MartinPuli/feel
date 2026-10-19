@@ -1,6 +1,8 @@
 
 <div align="center">
 
+<img src="docs/media/feel-logo.png" width="320" alt="FEEL logo: an open hand holding a rising waveform, next to the FEEL wordmark">
+
 # FEEL
 
 **🏆 HackHarvard 2026: Overall 1st Place · Best Hardware Track · Best Use Of Chalk (2nd)**
@@ -15,6 +17,20 @@
 </div>
 
 ![The FEEL puck on its forearm strap: the 6 × 4 pin plate lifted off the chassis, with the three copper strap loops around the body](docs/media/puck-strap-render.png)
+
+## Contents
+
+- [Why another approach](#why-another-approach)
+- [How it works](#how-it-works)
+- [Hardware](#hardware)
+  - [Link and safety](#link-and-safety)
+- [Cost](#cost)
+- [Asking where something is](#asking-where-something-is)
+- [Limitations](#limitations)
+- [Verification status](#verification-status)
+- [Run it](#run-it)
+- [Repository](#repository)
+- [Provenance](#provenance)
 
 If you can't see, your ears are how you get around: traffic, footsteps, echoes, the person
 you're talking to. Most AI tools for blind people add another voice to that. FEEL leaves your
@@ -48,7 +64,34 @@ FEEL's answer:
 
 ## How it works
 
-![FEEL at a glance](docs/diagrams/feel-system.svg)
+```mermaid
+flowchart TB
+  subgraph cloud ["Cloud, only when asked"]
+    direction LR
+    voice["OpenAI Realtime<br/>voice"]
+    chalk["Chalk Model Gateway<br/>vision model"]
+  end
+
+  subgraph phone ["iPhone with LiDAR"]
+    direction LR
+    sense["Sense<br/>ARKit depth → 6 sectors"]
+    find["Find<br/>on-device detectors or Where-is"]
+    encode["Encode<br/>9-byte packet, 10 Hz"]
+  end
+
+  subgraph puck ["Pin Puck"]
+    direction LR
+    esp["ESP32<br/>500 ms watchdog"]
+    pins["6 servos → 6 cams → 24 pins"]
+  end
+
+  voice -->|"where is ...?"| find
+  chalk <-->|"one photo, one box"| find
+  sense --> encode
+  find --> encode
+  encode -->|"BLE"| esp
+  esp --> pins
+```
 
 1. **Sense.** ARKit scene depth on the iPhone keeps points 0.6–2.1 m above the calibrated floor,
    splits the camera's ±45° field into six 15° sectors, and takes the nearest range in each.
@@ -68,6 +111,9 @@ FEEL's answer:
 A column that stays down means *no pin request*, not *clear space*. The phone announces lost
 tracking, stale depth and disconnection separately.
 
+Obstacle sensing never leaves the phone. Only a Where-is photo goes to Chalk, and only after
+the user asks where something is.
+
 More figures: [sensing to pins](docs/diagrams/sensing-to-pins.svg),
 [one Where-is request](docs/diagrams/where-is-path.svg),
 [the evaluation loop](docs/diagrams/chalk-eval-loop.svg) and
@@ -76,10 +122,6 @@ More figures: [sensing to pins](docs/diagrams/sensing-to-pins.svg),
 ## Hardware
 
 ![Exploded view of the Pin Puck: the 6 × 4 pin plate on top, the guide plate with 24 pins below it, six cam shafts with one lobe per row, the servos at the side, and the ESP32 board in the chassis](docs/diagrams/puck-exploded.webp)
-
-<p align="center">
-  <img src="docs/media/puck-explode.gif" width="440" alt="The puck assembly exploding layer by layer in the 3D viewer: face plate, pins, foam, guide plate, cam shafts, servos and chassis">
-</p>
 
 Full clip with the layer toggles and the forearm pack: [puck-assembly.mp4](docs/media/puck-assembly.mp4) (24 s, 0.5 MB).
 
@@ -136,28 +178,26 @@ Sources: [Pololu FS0307](https://www.pololu.com/product/3420),
 [Adafruit 5 V 4 A supply](https://www.adafruit.com/product/1466),
 [braille display buyer's guide](https://www.disabilityworld.org/articles/refreshable-braille-displays-buyers-guide/).
 
-## Where Chalk is used
+## Asking where something is
 
-![How Chalk is used: a question becomes a scan, a Chalk path query over past journeys and this trip's obstacles, progress points, the next point on the LiDAR view and pins on the puck; every step is stored as a journey, journeys build room and world maps, and frozen holdout journeys replay through Chalk Evaluations before a change is promoted](docs/diagrams/chalk-journey-loop.webp)
-
-FEEL's voice assistant has a `where_is` tool. "Where is the registration desk?" sends one camera
-photo and the question through **Chalk's Model Gateway** to a vision model. The phone places the
+The voice assistant has a `where_is` tool. "Where is the registration desk?" sends one camera
+photo and the question to a vision model, through Chalk's Model Gateway. The phone places the
 answer in the room with LiDAR depth, and the puck taps toward it until you arrive.
 
-- **Evaluations.** Chalk Evaluations score the tool on labeled venue photos: pointing accuracy,
-  well-formed replies, and the **false-found rate**, how often it claims to see something that
-  isn't there. For a blind user, a confident wrong answer is worse than none, so this is the
-  metric that decides which model ships. Every report gives its denominators, per-case timing and
-  usage, under one 12 s deadline shared with the phone.
-- **Fallback.** Without Chalk settings, or when the gateway can't be reached, `where_is` falls
+- **Evaluation.** The tool is scored on labeled venue photos: pointing accuracy, well-formed
+  replies, and the **false-found rate**, how often it claims to see something that isn't there.
+  For a blind user, a confident wrong answer is worse than none, so this is the metric that
+  decides which model ships. Every report gives its denominators, per-case timing and usage,
+  under one 12 s deadline shared with the phone.
+- **Fallback.** Without gateway settings, or when the gateway can't be reached, `where_is` falls
   back to the phone's own Vision and Core ML detection: EXIT signs, door candidates, people,
   chairs and common objects.
 - **Venue knowledge.** Downloadable venue packs answer questions offline from reviewed sources,
   with expiry and temporary restrictions. The repo includes a pack for the David Rubenstein
   Treehouse, built only from what reviewed public pages state.
-- **Context.** Chalk features keep confirmed finds, venue packs and shared room anchors.
+- **Memory.** Confirmed finds, venue packs and shared room anchors persist between sessions.
 
-Voice runs on OpenAI Realtime directly; audio does not pass through Chalk.
+Voice runs on OpenAI Realtime directly; audio never goes through the gateway.
 Setup, evaluation commands and current status: [chalk/README.md](chalk/README.md).
 
 ## Limitations

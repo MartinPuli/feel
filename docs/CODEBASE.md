@@ -10,6 +10,42 @@ The mechanical and firmware design uses the FS0307 nominal 120° map: band cente
 
 ## How a live frame becomes a pin
 
+```mermaid
+flowchart TB
+  subgraph phone ["Lantern app, main queue"]
+    model["LanternModel: 10 Hz tick, RunMode, generation counter"]
+    ar["ARPerception: ARKit session with scene depth"]
+    proj["DepthProjector: 7 sectors from −45° to +45°, 0.60–2.10 m above the floor"]
+    band["TactileGeometry.band: 0.9 / 1.6 / 2.5 / 4.0 m → bands 1–4, else 0"]
+    finder["ObjectDetector or held where-is target"]
+    enc["TactileEncoder: distance rows + highlight column"]
+    rhythm["TapRhythm: presence tap, target taps"]
+    ble["BluetoothPuck: newest-only queue"]
+  end
+
+  subgraph fw ["ESP32 firmware"]
+    queue["BLE write callback → queue"]
+    ctrl["feel::Controller in loop: validate, sequence check, 500 ms watchdog"]
+    pwm["Pulse 900 + 10·deg µs, clamped 900–2100; GPIO low by default"]
+  end
+
+  servos["FS0307 servos → cam shafts → pins"]
+
+  model --> ar
+  ar -->|"pose, intrinsics, confidence-filtered depth"| proj
+  ar -->|"frame"| finder
+  proj -->|"nearest range per sector"| band
+  band --> enc
+  finder -->|"highlight column"| enc
+  enc --> rhythm
+  rhythm -->|"9-byte packet [seq, b0…b6, highlight]"| ble
+  ble -->|"BLE write"| queue
+  queue --> ctrl
+  ctrl -->|"commanded angles"| pwm
+  pwm --> servos
+  ctrl -.->|"15-byte status notify"| ble
+```
+
 1. `LanternModel` starts live sensing after the camera permission check. `ARPerception` runs an ARKit session with scene depth.
 2. Each frame keeps pose, intrinsics, a confidence-filtered depth grid, and any finder result from the same instant. Depth older than 250 ms, lost tracking, or a missing floor calibration becomes an all-zero packet.
 3. `DepthProjector` keeps samples whose world height is 0.60 m to 2.10 m above the calibrated floor. It stores the nearest horizontal range in each of seven sectors from −45° to +45°. Camera +x is right, +y is up, and −z is forward. An exact sector boundary goes to the sector on its right. Bearings outside that field are dropped.
