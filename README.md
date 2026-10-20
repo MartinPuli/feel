@@ -16,7 +16,9 @@
 
 </div>
 
-![The FEEL puck on its forearm strap: the 6 × 4 pin plate lifted off the chassis, with the three copper strap loops around the body](docs/media/puck-strap-render.png)
+<p align="center">
+  <img src="docs/media/puck-strap-render.png" width="300" alt="The FEEL puck on its forearm strap: the 6 × 4 pin plate lifted off the chassis, with the three copper strap loops around the body">
+</p>
 
 ## Contents
 
