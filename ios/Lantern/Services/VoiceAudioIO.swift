@@ -108,7 +108,7 @@ final class DeviceVoiceAudio: VoiceAudioIO {
         stop()
         let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetoothHFP])
+            try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth])
             try session.setActive(true)
             ownsAudioSession = true
             let newEngine = AVAudioEngine()

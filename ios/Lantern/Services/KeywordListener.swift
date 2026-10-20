@@ -67,7 +67,7 @@ final class KeywordListener {
         }
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP])
+            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .mixWithOthers, .allowBluetooth])
             try session.setActive(true)
             let engine = AVAudioEngine()
             let input = engine.inputNode

@@ -17,8 +17,17 @@
 </div>
 
 <p align="center">
-  <img src="docs/media/puck-strap-render.png" width="300" alt="The FEEL puck on its forearm strap: the 6 × 4 pin plate lifted off the chassis, with the three copper strap loops around the body">
+  <img src="docs/media/puck-strap-render.png" width="560" alt="The FEEL puck on its forearm strap: the 6 × 4 pin plate lifted off the chassis, with the three copper strap loops around the body">
 </p>
+
+<div align="center">
+
+| <img src="https://api.iconify.design/lucide/zap.svg?color=%238b949e&width=22" width="22" alt="Latency"> | <img src="https://api.iconify.design/lucide/wrench.svg?color=%238b949e&width=22" width="22" alt="Cost"> | <img src="https://api.iconify.design/lucide/battery-charging.svg?color=%238b949e&width=22" width="22" alt="Battery"> | <img src="https://api.iconify.design/lucide/unlock.svg?color=%238b949e&width=22" width="22" alt="Open source"> |
+|:---:|:---:|:---:|:---:|
+| **100 ms refresh** | **about $70** | **about 6 hours** | **open source** |
+| pins update ten times a second, nothing round-trips a server | servos, ESP32, prints and strap; cheaper sourcing than the listed prices | one 20,000 mAh bank runs the puck and keeps the phone topped up, 13 h+ for the puck alone | CAD, firmware, app and build guide in this repo |
+
+</div>
 
 ## Contents
 
@@ -81,18 +90,40 @@ flowchart TB
     encode["Encode<br/>9-byte packet, 10 Hz"]
   end
 
+  subgraph memory ["Memory, anchored to a printed room tag"]
+    direction LR
+    room["Room memory<br/>confirmed finds + floor map"]
+    journeys["Journeys<br/>every walk recorded"]
+    route["Route planner<br/>progress points every 6 m"]
+  end
+
   subgraph puck ["Pin Puck"]
     direction LR
     esp["ESP32<br/>500 ms watchdog"]
     pins["6 servos → 6 cams → 24 pins"]
   end
 
+  subgraph vision ["Projected: shared world map"]
+    direction LR
+    world["Rooms and journeys merged<br/>across visits and users"]
+    promote["Paths scored on holdout journeys<br/>before they ship"]
+  end
+
   voice -->|"where is ...?"| find
   chalk <-->|"one photo, one box"| find
   sense --> encode
   find --> encode
+  find <-->|"found it / last time it was here"| room
+  room --> route
+  journeys --> route
+  route -->|"next point"| encode
   encode -->|"BLE"| esp
   esp --> pins
+  journeys -.->|"opt-in upload"| world
+  world --> promote
+  promote -.->|"planned path"| route
+
+  style vision stroke-dasharray: 6 4
 ```
 
 1. **Sense.** ARKit scene depth on the iPhone keeps points 0.6–2.1 m above the calibrated floor,
@@ -115,6 +146,17 @@ tracking, stale depth and disconnection separately.
 
 Obstacle sensing never leaves the phone. Only a Where-is photo goes to Chalk, and only after
 the user asks where something is.
+
+**Memory** is what makes a second visit steadier than the first. A printed room tag gives
+ARKit a fixed frame, so finds the user confirms, the blocked floor cells seen on each walk, and
+every walk itself are stored against that frame instead of a fresh world origin. On the next
+"where is the exit", the pins point from memory while the photo path is skipped, and the route
+planner leads one progress point at a time. The pins always show live depth; a route is a
+suggested direction, never a clear path.
+
+The **projected** box is the product direction: journeys and room maps uploaded with
+consent, merged across visits and users into a shared world map, with every planned path
+scored on held-out journeys before it is promoted. See [the roadmap](docs/FEEL-CHALK-ROADMAP.md).
 
 More figures: [sensing to pins](docs/diagrams/sensing-to-pins.svg),
 [one Where-is request](docs/diagrams/where-is-path.svg),
