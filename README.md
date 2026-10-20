@@ -17,15 +17,14 @@
 </div>
 
 <p align="center">
-  <img src="docs/media/puck-strap-render.png" width="560" alt="The FEEL puck on its forearm strap: the 6 × 4 pin plate lifted off the chassis, with the three copper strap loops around the body">
+  <img src="docs/media/20-pinpuck-loop.gif" width="560" alt="The FEEL puck with its 6 × 4 pins rising and falling as the display updates">
 </p>
 
 <div align="center">
 
 | <img src="https://api.iconify.design/lucide/zap.svg?color=%238b949e&width=22" width="22" alt="Latency"> | <img src="https://api.iconify.design/lucide/wrench.svg?color=%238b949e&width=22" width="22" alt="Cost"> | <img src="https://api.iconify.design/lucide/battery-charging.svg?color=%238b949e&width=22" width="22" alt="Battery"> | <img src="https://api.iconify.design/lucide/unlock.svg?color=%238b949e&width=22" width="22" alt="Open source"> |
 |:---:|:---:|:---:|:---:|
-| **100 ms refresh** | **about $70** | **about 6 hours** | **open source** |
-| pins update ten times a second, nothing round-trips a server | servos, ESP32, prints and strap; cheaper sourcing than the listed prices | one 20,000 mAh bank runs the puck and keeps the phone topped up, 13 h+ for the puck alone | CAD, firmware, app and build guide in this repo |
+| **100 ms refresh** | **about $70** | **up to 48 hours** | **open source** |
 
 </div>
 

@@ -1,8 +1,16 @@
 # Servo power: wall supply vs battery bank
 
-*Oct 17 2026. Nothing below has been measured on our hardware. The numbers are datasheet figures and arithmetic. Fill in the test table at the end before trusting either option for a demo.*
+*Oct 17 2026, updated Oct 20. Apart from the one run recorded under [What has been observed](#what-has-been-observed), nothing below has been measured on our hardware. The numbers are datasheet figures and arithmetic. Fill in the test table at the end before trusting either option for a demo.*
 
 **Short answer:** use the **wall supply** for bring-up, calibration and the seated judging demo. Use a **battery bank** only for the walking demo, and only after it passes the four tests below. Bring both to the demo; the wall supply is the fallback.
+
+## What has been observed
+
+One run at HackHarvard 2026, on a 20,000 mAh bank powering the puck and keeping the LiDAR phone topped up, over several hours of use. The bank's charge indicator read **99 %** at the end. Bank model, port, cable and the exact hours were not written down: ______.
+
+What that supports: the README's **"up to 48 hours"** figure. A 20,000 mAh bank is ≈ 74 Wh, ≈ 12 Ah at 5 V after conversion losses, so 48 h means an average draw of about 0.25 A for puck plus phone top-up. A 1 % drop after several hours is consistent with that and probably well under it.
+
+What it does not support: a measured runtime. Bank indicators are coarse (many hold 100 % for a long time and then fall quickly), the current draw was not measured (test 5 is still open), and the phone's own battery state during the run was not recorded. Treat 48 h as a conservative extrapolation until test 4 is run to a meaningful discharge.
 
 ## What needs power
 
@@ -35,7 +43,7 @@ Three facts drive the comparison:
 | **During a surge** | Usually a brief dip | Overcurrent protection may **cut the output completely** until replugged or a button is pressed | Same risk, with more headroom |
 | **At low load** | Never turns off | Many banks **turn themselves off** after tens of seconds below about 50–100 mA. Idle servos may draw that little | Same, unless the bank has a low-current or always-on mode |
 | **Mobility** | Tethered to an outlet; a trip hazard while walking | Untethered | Untethered |
-| **Runtime** | Unlimited | Not the limit: a 10,000 mAh bank is ≈ 37 Wh, ≈ 6 Ah at 5 V, so roughly 3 h even at a constant 2 A | Same |
+| **Runtime** | Unlimited | Not the limit: a 10,000 mAh bank is ≈ 37 Wh, ≈ 6 Ah at 5 V, so roughly 3 h even at a constant 2 A. Real draw is far lower; see the observed run above | Same |
 | **Where it goes** | Table or outlet | Pocket, armband or belt. The pack tray has **no battery bay** (it holds only the breadboard and adapter). About 200 g | Same |
 | **What we have** | Everything | Need the USB-A to barrel cable and a bank | Need a USB-C to barrel cable with a 5 V trigger, and a bank with USB-C output |
 | **If it fails** | Servo jitter or droop | Pins silently stop responding. The puck has no current or position sensing (`docs/KNOWN-ISSUES.md`), so neither the firmware nor the app can tell | Same as B |
