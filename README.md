@@ -162,7 +162,7 @@ More figures: [sensing to pins](docs/diagrams/sensing-to-pins.svg),
 
 ## Hardware
 
-![Exploded view of the Pin Puck: the 6 × 4 pin plate on top, the guide plate with 24 pins below it, six cam shafts with one lobe per row, the servos at the side, and the ESP32 board in the chassis](docs/diagrams/puck-exploded.webp)
+<img src="docs/diagrams/puck-exploded.webp" width="568" alt="Exploded view of the Pin Puck: the 6 × 4 pin plate on top, the guide plate with 24 pins below it, six cam shafts with one lobe per row, the servos at the side, and the ESP32 board in the chassis">
 
 Full clip with the layer toggles and the forearm pack: [puck-assembly.mp4](docs/media/puck-assembly.mp4) (24 s, 0.5 MB).
 
