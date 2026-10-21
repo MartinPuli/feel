@@ -1,8 +1,6 @@
 
 <div align="center">
 
-<img src="docs/media/feel-logo.png" width="320" alt="FEEL logo: an open hand holding a rising waveform, next to the FEEL wordmark">
-
 # FEEL
 
 **🏆 HackHarvard 2026: Overall 1st Place · Best Hardware Track · Best Use Of Chalk (2nd)**
@@ -15,7 +13,7 @@
 </div>
 
 <p align="center">
-  <img src="docs/media/20-pinpuck-loop.gif" width="728" alt="The FEEL puck with its 6 × 4 pins rising and falling as the display updates">
+  <img src="docs/media/pinpuck-loop-v2.gif" width="728" alt="The FEEL puck with its 6 × 4 pins rising and falling as the display updates">
 </p>
 
 <div align="center">
