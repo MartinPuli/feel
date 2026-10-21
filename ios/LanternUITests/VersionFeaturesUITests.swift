@@ -17,17 +17,37 @@ final class VersionFeaturesUITests: XCTestCase {
         return app
     }
 
+    /// Scrolls `element` into the assistant sheet's viewport with measured, momentum-free drags.
+    /// Each drag starts in the sheet's left padding, where no control can swallow the press, and
+    /// moves by the remaining distance, so it converges instead of bouncing: a full-height
+    /// `swipeUp`/`swipeDown` overshoots a 44 pt row in landscape, and Xcode 16's `isHittable`
+    /// then raises "Activation point invalid" for a half-clipped row instead of returning false.
+    /// XCTest's own scroll-on-tap is not enough either; it fails to compute a hit point for a
+    /// button a viewport above the fold. Only frames are read here, never `isHittable`.
     private func reveal(_ element: XCUIElement, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertTrue(element.waitForExistence(timeout: 5), file: file, line: line)
+        // Disclosure content exists before its expansion animation gives it a frame.
+        let laidOut = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in !element.frame.isEmpty }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [laidOut], timeout: 5), .completed,
+                       "\(element.identifier) never got a frame: \(element.label)", file: file, line: line)
         let scroll = app.scrollViews["cameraSettingsScroll"]
-        for _ in 0..<18 where !element.isHittable {
-            if !element.frame.isEmpty && element.frame.maxY <= scroll.frame.minY + 15 {
-                scroll.swipeDown(velocity: .slow)
-            } else {
-                scroll.swipeUp(velocity: .slow)
-            }
+        func inView() -> Bool {
+            let frame = element.frame
+            return !frame.isEmpty && scroll.frame.insetBy(dx: 0, dy: 12).contains(CGPoint(x: frame.midX, y: frame.midY))
         }
-        XCTAssertTrue(element.isHittable, "Could not reach \(element.identifier): \(element.label)", file: file, line: line)
+        // Frames in the test log are the evidence needed to diagnose a CI-only scrolling failure.
+        let name = element.identifier.isEmpty ? element.label : element.identifier
+        for _ in 0..<16 where !inView() {
+            let viewport = scroll.frame
+            XCTContext.runActivity(named: "reveal \(name): element=\(element.frame) viewport=\(viewport)") { _ in }
+            let shift = element.frame.midY - viewport.midY  // > 0: target is below, content must move up
+            let travel = min(abs(shift), viewport.height * 0.8)
+            // 8 pt inside the sheet's 20 pt horizontal padding: the press lands on the scroll view itself.
+            let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 8 / viewport.width, dy: shift > 0 ? 0.9 : 0.1))
+            let end = start.withOffset(CGVector(dx: 0, dy: shift > 0 ? -travel : travel))
+            start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
+        }
+        XCTAssertTrue(inView(), "Could not reach \(element.identifier): \(element.label)", file: file, line: line)
     }
 
     private func tap(_ label: String, in app: XCUIApplication) {

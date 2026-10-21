@@ -7,17 +7,15 @@
 
 **🏆 HackHarvard 2026: Overall 1st Place · Best Hardware Track · Best Use Of Chalk (2nd)**
 
-[![HackHarvard 2026](https://img.shields.io/badge/HackHarvard-2026-a7552f.svg)](docs/HACKHARVARD-2026.md)
+[![HackHarvard 2026](https://img.shields.io/badge/HackHarvard-2026-a7552f.svg)](https://www.linkedin.com/company/hackharvard/posts/?feedView=all)
 [![Status](https://img.shields.io/badge/status-experimental%20prototype-orange.svg)](#verification-status)
 [![Stack](https://img.shields.io/badge/stack-Swift%20%C2%B7%20LiDAR%20%C2%B7%20ESP32-black.svg)](#how-it-works)
 [![Docs](https://img.shields.io/badge/docs-codebase%20guide-lightgrey.svg)](docs/CODEBASE.md)
 
-[Demo script](docs/DEMO.md) · [Devpost draft](docs/DEVPOST.md)
-
 </div>
 
 <p align="center">
-  <img src="docs/media/20-pinpuck-loop.gif" width="560" alt="The FEEL puck with its 6 × 4 pins rising and falling as the display updates">
+  <img src="docs/media/20-pinpuck-loop.gif" width="728" alt="The FEEL puck with its 6 × 4 pins rising and falling as the display updates">
 </p>
 
 <div align="center">
