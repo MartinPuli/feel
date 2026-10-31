@@ -9,37 +9,37 @@ struct ChalkCommandsPanel: View {
 
     var body: some View {
         DisclosureGroup("Cloud place commands") {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Interpret requests about saved places. Local Stop and local commands remain available.").font(.caption)
+            VStack(alignment: .leading, spacing: FeelSpacing.section) {
+                Text("Interpret requests about saved places. Local Stop and local commands remain available.").font(FeelTypography.caption)
                 Toggle("Share requests with Chalk", isOn: $coordinator.sharingEnabled)
                     .accessibilityIdentifier("chalkCommandSharing")
                 Text("Sends your text and saved place names through the FEEL service to Chalk and its model provider.")
-                    .font(.caption)
+                    .font(FeelTypography.caption)
                 Toggle("Save requests for feedback and evaluation", isOn: $coordinator.retentionEnabled)
-                Text("Optional retention on the FEEL service. Provider retention is configured separately.").font(.caption)
+                Text("Optional retention on the FEEL service. Provider retention is configured separately.").font(FeelTypography.caption)
                 DisclosureGroup("Service setup") {
                     TextField("HTTPS service root", text: $coordinator.endpoint)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
-                        .keyboardType(.URL).textFieldStyle(.roundedBorder)
+                        .keyboardType(.URL).feelField()
                     SecureField("FEEL app access token", text: $token)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled()
-                    HStack {
+                        .textInputAutocapitalization(.never).autocorrectionDisabled().feelField()
+                    HStack(spacing: FeelSpacing.compact) {
                         Button("Save access token") { if coordinator.saveToken(token) { token = "" } }
                             .disabled(token.isEmpty)
                         if coordinator.hasToken { Button("Remove token") { _ = coordinator.saveToken(""); token = "" } }
                     }
-                    Text("Use a dedicated app token, never a Chalk provider key.").font(.caption)
+                    Text("Use a dedicated app token, never a Chalk provider key.").font(FeelTypography.caption)
                 }
                 TextField("For example: take me back to the entrance", text: $utterance)
-                    .textFieldStyle(.roundedBorder).accessibilityIdentifier("chalkCommandText")
-                HStack {
+                    .feelField().accessibilityIdentifier("chalkCommandText")
+                HStack(spacing: FeelSpacing.compact) {
                     Button("Send request") { coordinator.submit(utterance) }
                         .disabled(utterance.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || coordinator.isBusy)
                     if coordinator.isBusy { Button("Cancel request") { coordinator.cancel() } }
                 }
-                Text(coordinator.status).font(.caption).accessibilityIdentifier("chalkCommandStatus")
+                Text(coordinator.status).font(FeelTypography.caption).accessibilityIdentifier("chalkCommandStatus")
                 if coordinator.canGiveFeedback {
-                    HStack {
+                    HStack(spacing: FeelSpacing.compact) {
                         Button("That was correct") { coordinator.submitFeedback(correct: true) }
                         Button("That was wrong") { coordinator.submitFeedback(correct: false) }
                     }.disabled(coordinator.isBusy)
@@ -61,7 +61,8 @@ struct ChalkCommandsPanel: View {
                     } message: {
                         Text("Deletes FEEL command traces and corrections for sessions recorded by this device. It does not delete saved places or provider logs.")
                     }
-            }.padding(.vertical, 8)
+            }.padding(.vertical, FeelSpacing.compact)
+                .buttonStyle(FeelSecondaryButtonStyle())
         }
     }
 }

@@ -24,8 +24,8 @@ struct SignInView: View {
         // The phone is held in landscape, so two columns keep the button on screen without scrolling.
         // The scroll view only matters for very large text sizes.
         ScrollView {
-            HStack(alignment: .top, spacing: 32) {
-                VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: FeelSpacing.page) {
+                VStack(alignment: .leading, spacing: FeelSpacing.page) {
                     Text(mode == .signIn ? "Sign in to FEEL" : "Create a FEEL account")
                         .font(FeelTypography.title2)
                         .accessibilityAddTraits(.isHeader)
@@ -41,7 +41,7 @@ struct SignInView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: FeelSpacing.section) {
                     field("Email") {
                         TextField("Email", text: $email)
                             .textContentType(.username)
@@ -54,7 +54,7 @@ struct SignInView: View {
                             .accessibilityIdentifier("signInEmail")
                     }
                     field("Password") {
-                        HStack {
+                        HStack(spacing: FeelSpacing.compact) {
                             Group {
                                 if showPassword { TextField("Password", text: $password) }
                                 else { SecureField("Password", text: $password) }
@@ -82,11 +82,11 @@ struct SignInView: View {
                     }
 
                     Button(action: submit) {
-                        HStack(spacing: 10) {
+                        HStack(spacing: FeelSpacing.compact) {
                             if auth.state == .signingIn { ProgressView().accessibilityHidden(true) }
                             Text(buttonTitle)
                         }
-                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(FeelPrimaryButtonStyle())
                     .disabled(!canSubmit)
@@ -95,8 +95,8 @@ struct SignInView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxWidth: 820)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
+            .padding(.horizontal, FeelSpacing.page)
+            .padding(.vertical, FeelSpacing.page)
             .frame(maxWidth: .infinity)
         }
         .scrollDismissesKeyboard(.interactively)
@@ -144,20 +144,16 @@ struct SignInView: View {
     private func banner(_ message: String, systemImage: String) -> some View {
         Label(message, systemImage: systemImage)
             .foregroundStyle(FeelTheme.ink)
-            .padding(12)
+            .padding(FeelSpacing.section)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(FeelTheme.inset, in: RoundedRectangle(cornerRadius: 12))
             .accessibilityFocused($messageFocused)
     }
 
     private func field<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: FeelSpacing.tight) {
             Text(title).font(FeelTypography.label).accessibilityHidden(true)
-            content()
-                .padding(.horizontal, 12)
-                .frame(minHeight: 48)
-                .background(FeelTheme.surface, in: RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(FeelTheme.border, lineWidth: 1))
+            content().feelField()
         }
     }
 }

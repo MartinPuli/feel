@@ -12,7 +12,7 @@ settings:
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ''
     ENABLE_USER_SCRIPT_SANDBOXING: YES
-    CURRENT_PROJECT_VERSION: '17'
+    CURRENT_PROJECT_VERSION: '21'
     MARKETING_VERSION: '1.0.0'
 packages:
   FeelCore:
@@ -54,7 +54,7 @@ targets:
         NSLocalNetworkUsageDescription: FEEL finds a teammate's Beacon phone and exchanges Nearby Interaction tokens after both people agree.
         NSNearbyInteractionUsageDescription: FEEL measures the relative direction and distance of your chosen teammate's phone.
         NSBonjourServices: ['_feel-beacon._tcp', '_feel-beacon._udp']
-        UIAppFonts: [Geist-Regular.otf, Geist-Medium.otf, Geist-SemiBold.otf, Geist-Bold.otf, GeistMono-Regular.otf]
+        UIAppFonts: [Geist-Regular.otf, Geist-Medium.otf, Geist-SemiBold.otf, Geist-Bold.otf, GeistMono-Regular.otf, GeistSerif-Regular.ttf]
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationLandscapeRight]
         UIRequiresFullScreen: true
@@ -93,7 +93,7 @@ targets:
         NSLocalNetworkUsageDescription: Beacon accepts your chosen teammate's connection and exchanges Nearby Interaction tokens.
         NSNearbyInteractionUsageDescription: Beacon lets a teammate measure the relative direction and distance to this phone while both apps are open.
         NSBonjourServices: ['_feel-beacon._tcp', '_feel-beacon._udp']
-        UIAppFonts: [Geist-Regular.otf, Geist-Medium.otf, Geist-SemiBold.otf, Geist-Bold.otf, GeistMono-Regular.otf]
+        UIAppFonts: [Geist-Regular.otf, Geist-Medium.otf, Geist-SemiBold.otf, Geist-Bold.otf, GeistMono-Regular.otf, GeistSerif-Regular.ttf]
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         ITSAppUsesNonExemptEncryption: false

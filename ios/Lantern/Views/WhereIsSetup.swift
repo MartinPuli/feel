@@ -18,7 +18,7 @@ struct WhereIsSetup: View {
 
     var body: some View {
         DisclosureGroup(isExpanded: $expanded) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: FeelSpacing.section) {
                 field("Gateway address", text: $host, identifier: "chalkHost", focus: .host, keyboard: .URL)
                 field("Environment ID", text: $environment, identifier: "chalkEnvironment", focus: .environment)
                 SecureField(configured ? "Gateway key (saved)" : "Gateway key", text: $key)
@@ -44,11 +44,11 @@ struct WhereIsSetup: View {
                     Button("Forget Where-is setup", role: .destructive) {
                         model.forgetChalkConfiguration(); key = ""; environment = ""; setupError = ""
                     }
-                    .frame(minHeight: 44).font(FeelTypography.label)
+                    .frame(minHeight: FeelSpacing.minimumTouch).font(FeelTypography.label)
                     .accessibilityIdentifier("forgetChalkSetup")
                 }
             }
-            .padding(.top, 12)
+            .padding(.top, FeelSpacing.section)
         } label: {
             Text(configured ? "Where-is: Chalk ready" : "Where-is: on-device only")
                 .font(FeelTypography.label)

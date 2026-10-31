@@ -62,6 +62,8 @@ final class LanternModel:ObservableObject {
     let voice: RealtimeVoiceSession
     let venueInfo: VenueInfo
     let places = SessionPlaces()
+    let spatialMap = SpatialMapModel()
+    var supportsSpatialMapping: Bool { ARWorldTrackingConfiguration.supportsSceneReconstruction(.meshWithClassification) && ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) }
     let savedMaps = SavedWorldMaps()
     private var restoredMapSession = false
     var canFindTeammates: Bool { mode == .live && !restoredMapSession && !savedMaps.isRestoring }
@@ -277,8 +279,9 @@ final class LanternModel:ObservableObject {
             // Size limit or a write error ends recording on its own.
             if let status, status.hasPrefix("Recording stopped") || status.hasPrefix("Recording failed") { self.recordingDepth=false }
         }
+        perception.onSpatialMap = { [weak self] update in guard let self, self.mode == .live else { return }; self.spatialMap.apply(update) }
         perception.onFrame={ [weak self] frame in guard let self,self.mode == .live,frame.epoch==self.startGeneration,frame.finderEpoch==self.finderEpoch else { return }; self.frame=frame; self.calibrated=frame.floorY != nil; if !frame.tracking && self.chalkCommands.isBusy { self.chalkCommands.cancel(reason: "Tracking lost.") }; self.places.observe(pose: frame.pose, worldEpoch: frame.worldEpoch, timestamp: frame.timestamp, tracking: frame.tracking) }
-        perception.onInvalidated={ [weak self] epoch in guard let self,epoch==self.startGeneration else { return }; self.frame=nil; self.calibrated=false; self.places.invalidate(); self.chalkCommands.cancel(reason: "Tracking reset."); self.roomMemory.forgetTag(); self.clearHeldTarget(spokenLine: "Lost tracking. Say it again."); self.resetDirections(); self.pointing.reset(); self.pointingHighlight=nil; self.tick() }
+        perception.onInvalidated={ [weak self] epoch in guard let self,epoch==self.startGeneration else { return }; self.spatialMap.invalidate(); self.frame=nil; self.calibrated=false; self.places.invalidate(); self.chalkCommands.cancel(reason: "Tracking reset."); self.cancelDescription(); self.roomMemory.forgetTag(); self.clearHeldTarget(spokenLine: "Lost tracking. Say it again."); self.resetDirections(); self.pointing.reset(); self.pointingHighlight=nil; self.tick() }
         perception.onTag={ [weak self] epoch,sighting in guard let self,self.mode == .live,epoch==self.startGeneration else { return }; self.sawTag(sighting) }
         // A map is a visit in the tag's own frame: it stays valid however the session that produced it ended.
         perception.onRoomMap={ [weak self] tagId,map in self?.roomMemory.keepStructure(map,tagId:tagId) }
@@ -329,7 +332,7 @@ final class LanternModel:ObservableObject {
     }
     func startLocalCommand() { localVoice.start(localeIdentifier: localCommandLanguage == .en ? "en-US" : "es-AR") }
     func resumeCloudAssistant() { localVoice.cancel(); voice.resumeAssistant() }
-    func startLive(restoredMap: ARWorldMap? = nil, mapID: String? = nil) {
+    func startLive(restoredMap: ARWorldMap? = nil, mapID: String? = nil, captureMesh: Bool = false) {
         guard !isStarting, mode != .live || restoredMap != nil else { return }
         stop(stopVoice: false, preservingMapRestore: restoredMap != nil);
         restoredMapSession = restoredMap != nil; isStarting=true; status="Requesting camera access"
@@ -338,7 +341,8 @@ final class LanternModel:ObservableObject {
             guard self.startGeneration==generation else { return }
             self.isStarting=false
             self.mode = .live
-            guard self.perception.start(epoch:generation, restoredMap: restoredMap, mapID: mapID) else { self.mode = .stopped; self.status="Live sensing requires a LiDAR device. Simulation is available."; return }
+            if captureMesh { self.spatialMap.prepare(sessionEpoch: generation) }
+            guard self.perception.start(epoch:generation, restoredMap: restoredMap, mapID: mapID, captureMesh: captureMesh) else { self.spatialMap.stop(); self.mode = .stopped; self.status="Live sensing requires a supported iPhone or iPad with LiDAR."; return }
             self.perception.setFinder(self.finder,epoch:self.finderEpoch); self.status="Starting live perception"; self.beginTimer()
             if self.arrowsEnabled { self.listener.prepare() }
         }
@@ -352,6 +356,11 @@ final class LanternModel:ObservableObject {
         default: isStarting=false; status="Camera permission denied. Enable it in Settings to use Live."
         }
     }
+    func startSpatialMap() {
+        guard supportsSpatialMapping else { return }
+        stop(); startLive(captureMesh: true)
+    }
+    func simulateSpatialMap() { stop(); spatialMap.showDemo() }
     func startSimulation() {
         stop(stopVoice: false); mode = .simulation; simulatedAt=ProcessInfo.processInfo.systemUptime
         status="SIMULATION: synthetic scene, no simulated BLE movement"; calibrated=false; beginTimer()
@@ -410,7 +419,9 @@ final class LanternModel:ObservableObject {
     /// Leaving grid walk ends any running trial.
     func stopGridWalk() { if trialStart != nil { endTrial("ended") } }
     func stop(stopVoice: Bool = false, preservingMapRestore: Bool = false) {
+        spatialMap.stop()
         cancelLastSeen(); lastSeenNotice = nil; chalkQuery?.cancelAll()
+        cancelDescription()
         if !preservingMapRestore { savedMaps.cancel() }
         restoredMapSession=false
         chalkCommands.cancel(reason: "Stopped.")
@@ -438,6 +449,9 @@ final class LanternModel:ObservableObject {
         self.timer=timer; RunLoop.main.add(timer,forMode:.common); tick()
     }
     func performVoiceCommand(_ command: VoiceCommand) -> [String: Any] {
+        guard !command.requiresDiagnostics || voice.diagnosticsAllowed else {
+            return ["error": VoiceCommand.diagnosticsUnavailable]
+        }
         cancelLastSeen(); syncContextScope()
         if chalkCommands.isBusy { chalkCommands.cancel(reason: "A new command replaced the request.") }
         voiceNotice = nil
@@ -557,7 +571,7 @@ final class LanternModel:ObservableObject {
             guard let configuration = chalkConfiguration else {
                 return ["error": "The camera description needs the Chalk gateway setup, which is missing on this phone."]
             }
-            describeRetry?.cancel(); describeRetry = nil; describeNotice = nil; startDescribeAhead(configuration)
+            startDescribeAhead(configuration)
             return ["status": "Taking a new photo now; the description is spoken within a few seconds. Say only Looking.", "pending": true]
         case .venueInfo(let question): return venueInfo.answer(question)
         case .find(let target):
@@ -683,10 +697,12 @@ final class LanternModel:ObservableObject {
         guard configuration.isValid else { throw KeychainStoreError.invalid }
         try chalkStore.save(configuration)
         cancelWhereIs()
+        cancelDescription()
         chalkConfiguration = configuration; whereIsService = nil   // a lookup in flight must not answer through the old settings
     }
     func forgetChalkConfiguration() {
         cancelWhereIs()
+        cancelDescription()
         chalkStore.clear(); chalkConfiguration = nil; whereIsService = nil
     }
     /// Sends the bundled sample photo through the real request path (gateway, parser, placement)
@@ -771,36 +787,52 @@ final class LanternModel:ObservableObject {
         journeyLog.targetChanged(now: now)
     }
     private var describeTask: URLSessionTask?
+    private var describeRequest = 0
     /// The last camera description, for get_status, and the retry that speaks it once the assistant is free.
     @Published private(set) var describeNotice: String?
+    @Published private(set) var descriptionPending = false
     private var describeRetry: DispatchWorkItem?
-    private func deliverDescription(_ text: String, attempts: Int = 24) {
-        describeRetry?.cancel()
-        describeNotice = text
-        guard !voice.announce(text, automatic: false), attempts > 0 else { return }
-        let retry = DispatchWorkItem { [weak self] in self?.deliverDescription(text, attempts: attempts - 1) }
+    private func cancelDescription() {
+        describeRequest += 1
+        describeTask?.cancel(); describeTask = nil
+        describeRetry?.cancel(); describeRetry = nil
+        describeNotice = nil
+        descriptionPending = false
+        voice.invalidateSceneSpeech()
+    }
+    private func deliverDescription(_ text: String, generation: Int, request: Int, attempts: Int = 24) {
+        guard startGeneration == generation, describeRequest == request else { return }
+        descriptionPending = false
+        describeRetry?.cancel(); describeRetry = nil
+        if describeNotice != text { describeNotice = text }
+        guard !voice.announce(text, automatic: false, sceneBound: true), attempts > 0 else { return }
+        let retry = DispatchWorkItem { [weak self] in
+            self?.deliverDescription(text, generation: generation, request: request, attempts: attempts - 1)
+        }
         describeRetry = retry
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: retry)
     }
-    /// One photo through the gateway, spoken as one sentence. A stopped camera or a newer ask drops the answer.
-    private func startDescribeAhead(_ configuration: ChalkConfiguration) {
-        describeTask?.cancel(); describeTask = nil
-        let generation = startGeneration
+    /// Called after the command validates live sensing and configuration. Tests supply synthetic captures here.
+    /// A stopped/reset session or a newer ask drops the photo, answer and any queued speech retry.
+    func startDescribeAhead(_ configuration: ChalkConfiguration) {
+        cancelDescription()
+        descriptionPending = true
+        let generation = startGeneration, request = describeRequest
         let gateway = gatewayFactory(configuration)
         snapshotProvider { [weak self] snapshot in
-            guard let self, self.startGeneration == generation else { return }
+            guard let self, self.startGeneration == generation, self.describeRequest == request else { return }
             guard let snapshot, let body = try? VoicePhrasing.describeBody(model: configuration.model, jpegBase64: snapshot.jpegBase64) else {
-                self.deliverDescription("I couldn't take a photo just now."); return
+                self.deliverDescription("I couldn't take a photo just now.", generation: generation, request: request); return
             }
             self.describeTask = gateway.complete(body: body, timeout: WhereIs.deadline) { [weak self] result in
                 DispatchQueue.main.async {
-                    guard let self, self.startGeneration == generation else { return }
+                    guard let self, self.startGeneration == generation, self.describeRequest == request else { return }
                     self.describeTask = nil
                     switch result {
                     case .success(let text):
-                        self.deliverDescription(VoicePhrasing.oneSentence(text) ?? "I couldn't make out what's ahead.")
+                        self.deliverDescription(VoicePhrasing.oneSentence(text) ?? "I couldn't make out what's ahead.", generation: generation, request: request)
                     case .failure:
-                        self.deliverDescription("I couldn't reach the camera service just now.")
+                        self.deliverDescription("I couldn't reach the camera service just now.", generation: generation, request: request)
                     }
                 }
             }
@@ -1401,6 +1433,7 @@ final class LanternModel:ObservableObject {
     private func tick() {
         syncContextScope()
         let now=ProcessInfo.processInfo.systemUptime; sequence &+= 1
+        places.refreshAvailability()
         retryUnspokenLine(now: now)
         savedMaps.checkDeadline()
         if savedMaps.isRestoring {

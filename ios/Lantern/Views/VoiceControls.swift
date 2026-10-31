@@ -36,7 +36,7 @@ struct VoiceSetup: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: FeelSpacing.page) {
             Text(voice.label).font(FeelTypography.headline)
             if !voice.errorMessage.isEmpty {
                 Text(voice.errorMessage).font(FeelTypography.footnote)
@@ -51,7 +51,7 @@ struct VoiceSetup: View {
                     .accessibilityIdentifier("voiceAudioUnavailable")
             }
             if voice.isActive {
-                HStack(spacing: 10) {
+                HStack(spacing: FeelSpacing.compact) {
                     TextField("Type a request", text: $typedRequest)
                         .feelField().submitLabel(.send)
                         .onSubmit { sendTyped() }
@@ -94,7 +94,7 @@ struct VoiceSetup: View {
                     close()
                 }.buttonStyle(FeelPrimaryButtonStyle()).accessibilityIdentifier("startVoice")
                 Button("Connection settings") { showSetup = true }
-                    .frame(minHeight: 44).font(FeelTypography.label)
+                    .frame(minHeight: FeelSpacing.minimumTouch).font(FeelTypography.label)
             } else {
                 TextField("Voice service address (https://…/session)", text: $endpoint)
                     .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
@@ -118,7 +118,7 @@ struct VoiceSetup: View {
                 if voice.isConfigured {
                     Button("Forget voice connection", role: .destructive) {
                         voice.forgetConfiguration(); endpoint = ""; accessToken = ""
-                    }.frame(minHeight: 44)
+                    }.frame(minHeight: FeelSpacing.minimumTouch)
                 }
             }
             Text("Microphone audio goes to OpenAI while FEEL is open.")

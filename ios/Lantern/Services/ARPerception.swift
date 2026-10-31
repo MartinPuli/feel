@@ -40,6 +40,9 @@ struct PerceptionFrame {
 final class ARPerception: NSObject, ARSessionDelegate {
     let session=ARSession()
     var onFrame: ((PerceptionFrame)->Void)?
+    var onSpatialMap: ((SpatialMapUpdate)->Void)?
+    private let spatialCapture = ARSpatialMapCapture()
+    private var captureSpatialMesh = false
     /// Saved maps use separate observations so the live perception packet contract stays unchanged.
     var onSavedMapObservation: ((SavedMapObservation)->Void)?
     var onSavedMapWorldStarted: ((Int,Int,String?)->Void)?
@@ -131,10 +134,10 @@ final class ARPerception: NSObject, ARSessionDelegate {
             DispatchQueue.main.async { self.onModelStatus?(status,available) }
         }
     }
-    @discardableResult func start(epoch:Int,restoredMap:ARWorldMap?=nil,mapID:String?=nil) -> Bool {
+    @discardableResult func start(epoch:Int,restoredMap:ARWorldMap?=nil,mapID:String?=nil,captureMesh:Bool=false) -> Bool {
         guard (restoredMap == nil) == (mapID == nil) else { publishStatus("Saved map identity is missing"); return false }
         guard ARWorldTrackingConfiguration.isSupported,ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) else { publishStatus("Live sensing requires a LiDAR iPhone or iPad. Use Simulation for software replay."); return false }
-        queue.async { self.isRunning=true; self.runSession(epoch:epoch,restoredMap:restoredMap,mapID:mapID) }
+        queue.async { self.captureSpatialMesh=captureMesh; self.isRunning=true; self.runSession(epoch:epoch,restoredMap:restoredMap,mapID:mapID) }
         return true
     }
     /// Called only on the AR delegate queue, including interruption recovery.
@@ -144,6 +147,14 @@ final class ARPerception: NSObject, ARSessionDelegate {
         floorY=nil; cameraHeight=nil; gridFloorY=nil; automaticFloor.reset(); lastTarget=nil; generation += 1; lastProcessed = -.infinity
         publishRoomMap(); grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil
         let config=ARWorldTrackingConfiguration(); config.frameSemantics=[.sceneDepth]
+        let meshSupported = ARWorldTrackingConfiguration.supportsSceneReconstruction(.meshWithClassification)
+        spatialCapture.begin(sessionEpoch: epoch, worldEpoch: worldEpoch, enabled: captureSpatialMesh, supported: meshSupported)
+        if captureSpatialMesh && meshSupported {
+            config.sceneReconstruction = .meshWithClassification
+            if ARWorldTrackingConfiguration.supportsFrameSemantics([.sceneDepth, .personSegmentationWithDepth]) {
+                config.frameSemantics.insert(.personSegmentationWithDepth)
+            }
+        }
         config.initialWorldMap=restoredMap
         config.worldAlignment = .gravity; config.planeDetection=[.horizontal]
         // Room tags: the printed FEEL tag gives room memory its frame (RoomMemory.swift).
@@ -154,7 +165,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
         publishStatus(ARPlaneAnchor.isClassificationSupported ? "Looking for floor — move slowly with the floor in view" : "Automatic floor detection unavailable — calibrate measured camera height")
     }
     func stop() {
-        queue.async { self.publishSavedWorldEnded(); self.loadedMapID=nil; self.isRunning=false; self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.cameraHeight=nil; self.gridFloorY=nil; self.automaticFloor.reset(); self.publishRoomMap(); self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.publishStatus("Stopped") }
+        queue.async { self.spatialCapture.stop(); self.publishSavedWorldEnded(); self.loadedMapID=nil; self.isRunning=false; self.session.pause(); self.generation += 1; self.lastTarget=nil; self.floorY=nil; self.cameraHeight=nil; self.gridFloorY=nil; self.automaticFloor.reset(); self.publishRoomMap(); self.grid.reset(); self.lastHint=nil; self.candidates=[]; self.lockPosition=nil; self.routeGoal=nil; self.publishStatus("Stopped") }
     }
     /// Captures map bytes and a unique origin marker for this exact active world. No camera photo is stored.
     func captureWorldMap(worldEpoch expectedWorld:Int,completion:@escaping (Result<CapturedWorldMap,Error>)->Void) {
@@ -292,6 +303,13 @@ final class ARPerception: NSObject, ARSessionDelegate {
     private func publish(_ frame: PerceptionFrame) { DispatchQueue.main.async { self.onFrame?(frame) } }
     func session(_ session: ARSession,didUpdate frame: ARFrame) {
         guard isRunning,!isInterrupted else { return }
+        if frame.timestamp >= earliestFrame {
+            let tracking: Bool
+            if case .normal = frame.camera.trackingState { tracking = true } else { tracking = false }
+            if let observation = spatialCapture.observation(pose: Self.pose(frame.camera.transform), timestamp: frame.timestamp, tracking: tracking, anchors: frame.anchors) {
+                DispatchQueue.main.async { self.onSpatialMap?(observation) }
+            }
+        }
         // Camera video for replay runs at its own rate, before the 10 Hz processing gate.
         if frame.timestamp>=earliestFrame,recorder.isActive { recorder.appendVideo(frame.capturedImage,timestamp:frame.timestamp) }
         guard frame.timestamp>=earliestFrame,frame.timestamp-lastProcessed>=0.095 else { return }; lastProcessed=frame.timestamp
@@ -427,8 +445,21 @@ final class ARPerception: NSObject, ARSessionDelegate {
             }
         }
     }
-    func session(_ session: ARSession,didAdd anchors: [ARAnchor]) { publishTags(anchors) }
-    func session(_ session: ARSession,didUpdate anchors: [ARAnchor]) { publishTags(anchors) }
+    func session(_ session: ARSession,didAdd anchors: [ARAnchor]) { publishTags(anchors); captureSpatialAnchors(anchors) }
+    func session(_ session: ARSession,didUpdate anchors: [ARAnchor]) { publishTags(anchors); captureSpatialAnchors(anchors) }
+    func session(_ session: ARSession, didRemove anchors: [ARAnchor]) {
+        guard isRunning, !isInterrupted, let frame=session.currentFrame, frame.timestamp>=earliestFrame else { return }
+        let present = Set(frame.anchors.map(\.identifier))
+        spatialCapture.remove(anchors.filter { !present.contains($0.identifier) })
+    }
+    private func captureSpatialAnchors(_ anchors: [ARAnchor]) {
+        guard isRunning, !isInterrupted, let frame=session.currentFrame, frame.timestamp>=earliestFrame,
+              case .normal=frame.camera.trackingState else { return }
+        // A queued callback from the old run cannot borrow the new frame's world epoch.
+        // Copy the current frame's anchors only when their IDs are still present there.
+        let updated = Set(anchors.map(\.identifier))
+        spatialCapture.upsert(frame.anchors.filter { updated.contains($0.identifier) })
+    }
     /// A tracked tag becomes a sighting at most twice a second: its anchor transform is the room frame in this world.
     private func publishTags(_ anchors: [ARAnchor]) {
         let now=ProcessInfo.processInfo.systemUptime
@@ -453,6 +484,7 @@ final class ARPerception: NSObject, ARSessionDelegate {
     }
     func sessionShouldAttemptRelocalization(_ session: ARSession) -> Bool { false }
     private func invalidate() {
+        spatialCapture.stop()
         publishSavedWorldEnded(); loadedMapID=nil
         publishRoomMap()
         lastTarget=nil; floorY=nil; automaticFloor.reset(); grid.reset(); lastHint=nil; candidates=[]; lockPosition=nil; routeGoal=nil; generation += 1

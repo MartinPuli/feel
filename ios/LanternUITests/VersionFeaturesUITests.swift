@@ -9,51 +9,76 @@ final class VersionFeaturesUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += ["--uitesting", "-directionArrowsEnabled", "YES"]
         app.launch()
-        XCTAssertTrue(app.buttons["controlsToggle"].waitForExistence(timeout: 10))
-        app.buttons["controlsToggle"].tap()
+        XCTAssertTrue(app.buttons["cameraMenu"].waitForExistence(timeout: 10))
+        app.buttons["cameraMenu"].tap()
+        XCTAssertTrue(app.buttons["task_surroundings"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["startCamera"].waitForExistence(timeout: 5))
-        app.buttons["voiceControl"].tap()
-        XCTAssertTrue(app.scrollViews["cameraSettingsScroll"].waitForExistence(timeout: 5))
         return app
     }
 
-    /// Scrolls `element` into the assistant sheet's viewport with measured, momentum-free drags.
-    /// Each drag starts in the sheet's left padding, where no control can swallow the press, and
-    /// moves by the remaining distance, so it converges instead of bouncing: a full-height
-    /// `swipeUp`/`swipeDown` overshoots a 44 pt row in landscape, and Xcode 16's `isHittable`
-    /// then raises "Activation point invalid" for a half-clipped row instead of returning false.
-    /// XCTest's own scroll-on-tap is not enough either; it fails to compute a hit point for a
-    /// button a viewport above the fold. Only frames are read here, never `isHittable`.
-    private func reveal(_ element: XCUIElement, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+    /// Uses the actual main or modal viewport and excludes the keyboard. Bounded, momentum-free
+    /// drags avoid overshooting short rows; querying isHittable can throw for clipped elements.
+    private func reveal(_ element: XCUIElement, in app: XCUIApplication,
+                        scrollID: String = "cameraSettingsScroll",
+                        file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertTrue(element.waitForExistence(timeout: 5), file: file, line: line)
-        // Disclosure content exists before its expansion animation gives it a frame.
         let laidOut = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in !element.frame.isEmpty }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [laidOut], timeout: 5), .completed,
                        "\(element.identifier) never got a frame: \(element.label)", file: file, line: line)
-        let scroll = app.scrollViews["cameraSettingsScroll"]
+        let scroll = app.scrollViews[scrollID]
+        XCTAssertTrue(scroll.waitForExistence(timeout: 5), file: file, line: line)
+        func visibleViewport() -> CGRect {
+            var viewport = scroll.frame.intersection(app.frame).insetBy(dx: 0, dy: 12)
+            let keyboard = app.keyboards.firstMatch
+            if keyboard.exists {
+                viewport.size.height = max(0, min(viewport.maxY, keyboard.frame.minY) - viewport.minY)
+            }
+            return viewport
+        }
         func inView() -> Bool {
             let frame = element.frame
-            return !frame.isEmpty && scroll.frame.insetBy(dx: 0, dy: 12).contains(CGPoint(x: frame.midX, y: frame.midY))
+            return !frame.isEmpty && visibleViewport().contains(CGPoint(x: frame.midX, y: frame.midY))
         }
-        // Frames in the test log are the evidence needed to diagnose a CI-only scrolling failure.
         let name = element.identifier.isEmpty ? element.label : element.identifier
         for _ in 0..<16 where !inView() {
-            let viewport = scroll.frame
+            let viewport = visibleViewport()
+            XCTAssertGreaterThan(viewport.height, 40, "No scrollable viewport for \(name)", file: file, line: line)
             XCTContext.runActivity(named: "reveal \(name): element=\(element.frame) viewport=\(viewport)") { _ in }
-            let shift = element.frame.midY - viewport.midY  // > 0: target is below, content must move up
-            let travel = min(abs(shift), viewport.height * 0.8)
-            // 8 pt inside the sheet's 20 pt horizontal padding: the press lands on the scroll view itself.
-            let start = scroll.coordinate(withNormalizedOffset: CGVector(dx: 8 / viewport.width, dy: shift > 0 ? 0.9 : 0.1))
+            let shift = element.frame.midY - viewport.midY
+            let travel = min(abs(shift), (viewport.height - 20) * 0.8)
+            let startY = shift > 0 ? viewport.maxY - 10 : viewport.minY + 10
+            // Main-scroll bounds include the landscape safe-area margin. Its full-width
+            // fields/actions start inside that margin plus 16pt padding, so derive the
+            // gutter from the target instead of dragging at the physical screen edge.
+            // Modal bounds already exclude that margin. Avoid starting on a text field,
+            // which can consume the gesture without scrolling (cloud-consent regression).
+            let dragX = scrollID == "cameraReadingScroll"
+                ? max(scroll.frame.minX + 8, min(element.frame.minX - 8, scroll.frame.maxX - 8))
+                : scroll.frame.minX + 8
+            let start = scroll.coordinate(withNormalizedOffset: CGVector(
+                dx: (dragX - scroll.frame.minX) / scroll.frame.width,
+                dy: (startY - scroll.frame.minY) / scroll.frame.height))
             let end = start.withOffset(CGVector(dx: 0, dy: shift > 0 ? -travel : travel))
             start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
         }
         XCTAssertTrue(inView(), "Could not reach \(element.identifier): \(element.label)", file: file, line: line)
     }
 
-    private func tap(_ label: String, in app: XCUIApplication) {
+    private func tap(_ label: String, in app: XCUIApplication, scrollID: String = "cameraSettingsScroll") {
         let button = app.buttons[label]
-        reveal(button, in: app)
+        reveal(button, in: app, scrollID: scrollID)
         button.tap()
+    }
+
+    private func openAdvanced(_ app: XCUIApplication) {
+        app.buttons["cameraSettings"].tap()
+        tap("advancedTools", in: app)
+        XCTAssertTrue(app.staticTexts["whereIsStatus"].waitForExistence(timeout: 5))
+    }
+
+    private func closePanel(_ app: XCUIApplication) {
+        app.buttons["closeCameraPanel"].tap()
+        XCTAssertTrue(app.buttons["task_surroundings"].waitForExistence(timeout: 5))
     }
 
     private func capture(_ name: String) {
@@ -66,7 +91,30 @@ final class VersionFeaturesUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [matches], timeout: 5), .completed)
     }
 
+    private func expectValue(_ element: XCUIElement, contains text: String) {
+        let matches = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value CONTAINS %@", text), object: element)
+        XCTAssertEqual(XCTWaiter.wait(for: [matches], timeout: 5), .completed)
+    }
+
+    private func expectMode(_ mode: String, in app: XCUIApplication) {
+        app.buttons["task_surroundings"].tap()
+        let status = app.buttons["sensingStatus"]
+        XCTAssertTrue(status.waitForExistence(timeout: 5))
+        let matches = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value BEGINSWITH %@", mode + ". "), object: status)
+        XCTAssertEqual(XCTWaiter.wait(for: [matches], timeout: 5), .completed)
+    }
+
+    private func inspectStatus(_ app: XCUIApplication, assertions: () -> Void) {
+        app.buttons["task_surroundings"].tap()
+        app.buttons["sensingStatus"].tap()
+        XCTAssertTrue(app.staticTexts["guidanceTitle"].waitForExistence(timeout: 5))
+        assertions()
+        closePanel(app)
+    }
+
+    /// Called inside the status panel; this remains the production packet's accessible value.
     private func assertNeutral(_ app: XCUIApplication) {
+        XCTAssertTrue(app.otherElements["Virtual puck"].waitForExistence(timeout: 5))
         let value = app.otherElements["Virtual puck"].value as? String ?? ""
         XCTAssertTrue(value.contains("No target highlight"), value)
         for column in 1...6 { XCTAssertTrue(value.contains("Column \(column), band 0"), value) }
@@ -75,63 +123,78 @@ final class VersionFeaturesUITests: XCTestCase {
 
     func testMemorySimulationRememberMoveRecallTrackingLossAndStop() {
         let app = launch()
+        openAdvanced(app)
         tap("Simulate saved places", in: app)
         tap("Start memory simulation", in: app)
-        tap("Saved places", in: app)
+        closePanel(app)
+        app.buttons["task_places"].tap()
         let name = app.textFields["placeName"]
-        reveal(name, in: app); name.tap(); name.typeText("Entrance\n")
-        tap("rememberPlace", in: app)
-        expectLabel(app.staticTexts["placeStatus"], contains: "Remembered Entrance")
+        if !name.exists { tap("rememberPlaceForm", in: app, scrollID: "cameraReadingScroll") }
+        reveal(name, in: app, scrollID: "cameraReadingScroll"); name.tap(); name.typeText("Entrance\n")
+        tap("rememberPlace", in: app, scrollID: "cameraReadingScroll")
+        expectValue(app.buttons["placeStatus"], contains: "Remembered Entrance")
+        openAdvanced(app)
+        tap("Simulate saved places", in: app)
         tap("Move back 1 meter", in: app)
-        tap("Recall Entrance", in: app)
-        expectLabel(app.staticTexts["placeStatus"], contains: "Pointing toward")
+        closePanel(app)
+        tap("Recall Entrance", in: app, scrollID: "cameraReadingScroll")
+        expectValue(app.buttons["placeStatus"], contains: "Pointing toward")
         capture("memory-recall-controls")
-        app.buttons["closeCameraPanel"].tap()
-        XCTAssertEqual(app.staticTexts["sessionMode"].label, "SIMULATION")
-        XCTAssertTrue(app.staticTexts["simulationNotice"].label.contains("No simulated movement sent to hardware"))
-        let puck = app.otherElements["Virtual puck"]
-        let pointing = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value CONTAINS 'Target column'"), object: puck)
-        XCTAssertEqual(XCTWaiter.wait(for: [pointing], timeout: 5), .completed)
-        XCTAssertTrue((puck.value as? String ?? "").contains("Column 4, band 2"))
-        capture("memory-recall-simulation")
+        expectMode("SIMULATION", in: app)
+        inspectStatus(app) {
+            XCTAssertTrue(app.staticTexts["simulationNotice"].label.contains("No simulated movement sent to hardware"))
+            let puck = app.otherElements["Virtual puck"]
+            let pointing = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value CONTAINS 'Target column'"), object: puck)
+            XCTAssertEqual(XCTWaiter.wait(for: [pointing], timeout: 5), .completed)
+            XCTAssertTrue((puck.value as? String ?? "").contains("Column 4, band 2"))
+            capture("memory-recall-simulation")
+        }
 
-        app.buttons["voiceControl"].tap()
+        openAdvanced(app)
         tap("Simulate saved places", in: app)
         tap("Lose tracking", in: app)
-        app.buttons["closeCameraPanel"].tap()
-        expectLabel(app.staticTexts["guidanceTitle"], contains: "Tracking lost")
-        assertNeutral(app)
-        capture("memory-simulation-tracking-lost")
+        closePanel(app)
+        inspectStatus(app) {
+            expectLabel(app.staticTexts["guidanceTitle"], contains: "Tracking lost")
+            assertNeutral(app)
+            capture("memory-simulation-tracking-lost")
+        }
         app.buttons["stopSession"].tap()
         XCTAssertTrue(app.buttons["startCamera"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.staticTexts["sessionMode"].label, "STOPPED")
-        assertNeutral(app)
-        app.buttons["voiceControl"].tap()
-        tap("Saved places", in: app)
+        expectMode("STOPPED", in: app)
+        inspectStatus(app) { assertNeutral(app) }
+        app.buttons["task_places"].tap()
         XCTAssertFalse(app.buttons["Recall Entrance"].exists, "Stopping ends the synthetic world and its saved places")
     }
 
     func testTypedLocalMuteChangesSpokenRepliesWithoutMicrophoneSetup() {
         let app = launch()
+        app.buttons["voiceControl"].tap()
         let spoken = app.switches["spokenReplies"]
         reveal(spoken, in: app)
         XCTAssertEqual(spoken.value as? String, "1")
+        closePanel(app)
+        app.buttons["task_find"].tap()
+        tap("openLocalCommands", in: app, scrollID: "cameraReadingScroll")
         tap("Commands without internet", in: app)
         let command = app.textFields["localCommandText"]
         reveal(command, in: app); command.tap(); command.typeText("mute\n")
         tap("Run local command", in: app)
         expectLabel(app.staticTexts["localCommandResult"], contains: "Spoken replies muted")
         capture("offline-typed-mute")
+        closePanel(app)
+        app.buttons["voiceControl"].tap()
         reveal(spoken, in: app)
         XCTAssertEqual(spoken.value as? String, "0", "The command must mutate the actual voice setting")
         app.buttons["closeCameraPanel"].tap()
         XCTAssertEqual(app.buttons["voiceControl"].value as? String, "Microphone off")
-        XCTAssertEqual(app.staticTexts["sessionMode"].label, "STOPPED")
+        expectMode("STOPPED", in: app)
     }
     /// Requires the simulator test app's fresh consent preferences. This test never
     /// forces a consent value through launch arguments or switches uploads on.
     func testCloudMemoryUploadAndSharingDefaultOff() {
         let app = launch()
+        openAdvanced(app)
         tap("Cloud memory", in: app)
         let uploads = app.switches["memoryUploadConsent"]
         reveal(uploads, in: app)

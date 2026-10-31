@@ -30,6 +30,17 @@ enum VoiceCommand: Equatable {
     case setDirectionArrows(Bool), startDirections, stopDirections, simulateDirectionSign
     case startRecording(Bool), stopRecording, setRecordingVideo(Bool)
 
+    var requiresDiagnostics: Bool {
+        switch self {
+        case .startSimulation, .startMemorySimulation, .moveMemorySimulation,
+             .turnMemorySimulation, .setMemorySimulationTracking, .simulateDirectionSign:
+            return true
+        default: return false
+        }
+    }
+
+    static let diagnosticsUnavailable = "Synthetic scenes are only available in an explicit diagnostics launch. No action was taken."
+
     static func decode(name: String, arguments: String) throws -> VoiceCommand {
         guard arguments.utf8.count <= 2048,
               let data = arguments.data(using: .utf8),
@@ -155,8 +166,13 @@ enum VoiceCommand: Equatable {
     struct InvalidCommand: Error {}
 
     static var tools: [[String: Any]] {
-        func tool(_ name: String, _ description: String, properties: [String: Any] = [:]) -> [String: Any] {
-            ["type": "function", "name": name, "description": description,
+        tools(diagnosticsAllowed: FeelLaunchOptions.diagnosticsEnabled(arguments: ProcessInfo.processInfo.arguments))
+    }
+
+    static func tools(diagnosticsAllowed: Bool) -> [[String: Any]] {
+        func tool(_ name: String, _ description: String, properties: [String: Any] = [:], diagnosticsOnly: Bool = false) -> [String: Any]? {
+            guard !diagnosticsOnly || diagnosticsAllowed else { return nil }
+            return ["type": "function", "name": name, "description": description,
              "parameters": ["type": "object", "properties": properties,
                             "required": properties.keys.sorted(), "additionalProperties": false]]
         }
@@ -168,7 +184,7 @@ enum VoiceCommand: Equatable {
             tool("set_direction_arrows", "Enable or disable tactile direction arrows when requested. Enabling does not start guidance or prove a safe route.", properties: ["enabled": ["type": "boolean"]]),
             tool("start_directions", "Start tactile arrows toward the currently selected target when requested, without requiring a hand sign. Select the requested target first if needed. Requires live sensing and arrows enabled. Report the returned pending or unavailable state; never promise safe passage."),
             tool("stop_directions", "Stop tactile direction arrows while leaving camera obstacle sensing running. For an unqualified stop, use stop instead."),
-            tool("simulate_direction_sign", "Play a synthetic direction cue only in an already running simulation. Identify it as simulation; no hardware movement."),
+            tool("simulate_direction_sign", "Play a synthetic direction cue only in an already running simulation. Identify it as simulation; no hardware movement.", diagnosticsOnly: true),
             tool("start_recording", "Start a local depth recording only when requested. Ask whether to include camera video if unspecified; include_video must reflect the user's explicit choice for this recording. No microphone audio is recorded. Files stay on the phone. Report pending startup honestly.", properties: ["include_video": ["type": "boolean"]]),
             tool("stop_recording", "Stop the current local recording when requested, leaving camera sensing active."),
             tool("set_recording_video", "Choose whether the next local recording includes camera video. Requires the user's explicit choice; cannot change an active recording. Does not start recording.", properties: ["enabled": ["type": "boolean"]]),
@@ -179,10 +195,10 @@ enum VoiceCommand: Equatable {
             tool("save_world_map", "Save this mapped room and its session places on the phone, only when the user asks."),
             tool("restore_world_map", "Load the saved room and wait for visual relocalization. The user must be in that room. No guidance starts automatically."),
             tool("delete_world_map", "Delete the saved room when the user explicitly asks to forget it."),
-            tool("start_memory_simulation", "Start a clearly labeled memory simulation with no hardware movement."),
-            tool("move_memory_simulation", "Move only the synthetic phone in an active memory simulation. Positive meters move forward, negative backward. Never instruct a physical walk.", properties: ["meters": ["type": "number", "minimum": -5, "maximum": 5]]),
-            tool("turn_memory_simulation", "Rotate only the synthetic phone in an active memory simulation. Positive degrees turn left, negative right.", properties: ["degrees": ["type": "number", "minimum": -360, "maximum": 360]]),
-            tool("set_memory_simulation_tracking", "Simulate tracking loss or recovery in an active memory simulation.", properties: ["enabled": ["type": "boolean"]]),
+            tool("start_memory_simulation", "Start a clearly labeled memory simulation with no hardware movement.", diagnosticsOnly: true),
+            tool("move_memory_simulation", "Move only the synthetic phone in an active memory simulation. Positive meters move forward, negative backward. Never instruct a physical walk.", properties: ["meters": ["type": "number", "minimum": -5, "maximum": 5]], diagnosticsOnly: true),
+            tool("turn_memory_simulation", "Rotate only the synthetic phone in an active memory simulation. Positive degrees turn left, negative right.", properties: ["degrees": ["type": "number", "minimum": -360, "maximum": 360]], diagnosticsOnly: true),
+            tool("set_memory_simulation_tracking", "Simulate tracking loss or recovery in an active memory simulation.", properties: ["enabled": ["type": "boolean"]], diagnosticsOnly: true),
             tool("export_journeys", "When requested, export recorded journeys locally to Files on this iPhone. Does not upload or share them."),
             tool("set_tactile_profile", "Choose the requested tactile highlight frequency; obstacle bands remain unchanged.", properties: ["profile": ["type": "string", "enum": ["standard", "reduced", "automatic"]]]),
             tool("remember_place", "Remember the user's current position in this camera session with the supplied name.", properties: ["name": ["type": "string"]]),
@@ -203,7 +219,7 @@ enum VoiceCommand: Equatable {
             tool("venue_info", "Answer a question about this venue, such as an entrance, restroom or accessibility notice, from the reviewed venue pack downloaded on the phone. Works without internet. Read the returned answer as given, including its source date; never add details or call a path clear.", properties: ["question": ["type": "string", "minLength": 1, "maxLength": 200]]),
             tool("calibrate_floor", "Manual override for automatic floor calibration. Use only after the user supplies a measured lens height in meters and confirms the phone is mounted upright with rear camera forward and top edge to their left. Never guess height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
             tool("set_camera_height", "Set the measured camera lens height without calibrating. Ask the user for their measurement in meters; never infer it from their body height.", properties: ["measured_height_meters": ["type": "number", "minimum": 0.6, "maximum": 2.1]]),
-            tool("start_simulation", "Start the synthetic demo only when requested. Always identify it as simulation, never live sensing."),
+            tool("start_simulation", "Start the synthetic demo only when requested. Always identify it as simulation, never live sensing.", diagnosticsOnly: true),
             tool("scan_pucks", "Begin Bluetooth discovery when the user asks to connect. Wait briefly, then list_pucks. Do not select a device yourself."),
             tool("list_pucks", "List currently discovered puck IDs and names. Ask the user which one to connect, even if there is only one."),
             tool("connect_puck", "Connect ONLY the device explicitly selected by the user from list_pucks. Use the exact returned ID.", properties: ["device_id": ["type": "string"]]),
@@ -219,7 +235,7 @@ enum VoiceCommand: Equatable {
             tool("forget_voice_connection", "Remove saved voice setup ONLY after explaining that the assistant will stop and need setup again, and the user explicitly confirms. Say that explanation before calling; the connection ends immediately. Never request or read credentials aloud.", properties: ["confirmed": ["type": "boolean", "enum": [true]]]),
             tool("set_controls_expanded", "Show or hide the camera's lower drawer containing tactile dots and camera controls.", properties: ["expanded": ["type": "boolean"]]),
             tool("choose_target", "Only after you asked 'I see N ... Which one?': call with the option number the user picked, matching their words (left, right, ahead, nearer, farther, or a number) to the options you listed. If unclear, ask once more.", properties: ["option": ["type": "integer", "minimum": 1, "maximum": 4]])
-        ]
+        ].compactMap { $0 }
     }
 
     static let instructions = """

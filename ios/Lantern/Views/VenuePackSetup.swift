@@ -10,7 +10,7 @@ struct VenuePackSetup: View {
 
     var body: some View {
         DisclosureGroup(isExpanded: $expanded) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: FeelSpacing.section) {
                 TextField("Venue pack address (https://…)", text: $address)
                     .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
                     .focused($focused).submitLabel(.done).onSubmit { focused = false }
@@ -26,11 +26,11 @@ struct VenuePackSetup: View {
                 }
                 if venue.pack != nil {
                     Button("Remove venue pack", role: .destructive) { venue.remove() }
-                        .frame(minHeight: 44).font(FeelTypography.label)
+                        .frame(minHeight: FeelSpacing.minimumTouch).font(FeelTypography.label)
                         .accessibilityIdentifier("removeVenuePack")
                 }
             }
-            .padding(.top, 12)
+            .padding(.top, FeelSpacing.section)
         } label: {
             Text(venue.pack.map { "Venue: \($0.venueName)" } ?? "Venue: none downloaded")
                 .font(FeelTypography.label)

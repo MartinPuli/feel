@@ -6,8 +6,8 @@ import FeelCore
 /// BLE device or paid service is started by these model-level integration checks.
 @MainActor
 final class VersionFeatureIntegrationTests: XCTestCase {
-    private func fixture() -> (LanternModel, StubChatGateway, ScriptedVoiceTransport) {
-        let (voice, transport) = VoiceTestDoubles.activeSession()
+    private func fixture(diagnosticsAllowed: Bool = false) -> (LanternModel, StubChatGateway, ScriptedVoiceTransport) {
+        let (voice, transport) = VoiceTestDoubles.activeSession(diagnosticsAllowed: diagnosticsAllowed)
         let gateway = StubChatGateway(), store = MemoryChalkStore()
         store.stored = ChalkConfiguration(apiHost: ChalkConfiguration.defaultHost,
                                          routerApiKey: String(repeating: "k", count: 16), environmentId: "test", model: "test")
@@ -139,7 +139,7 @@ final class VersionFeatureIntegrationTests: XCTestCase {
         XCTAssertEqual(gateway.calls, 0)
     }
     func testVoiceMemorySimulationMovesRecallsAndNeutralizesOnTrackingLoss() throws {
-        let (model, gateway, _) = fixture()
+        let (model, gateway, _) = fixture(diagnosticsAllowed: true)
         defer { model.stop(stopVoice: true) }
         XCTAssertNotNil(model.performVoiceCommand(.moveMemorySimulation(1))["error"])
         XCTAssertNil(model.performVoiceCommand(.startMemorySimulation)["error"])

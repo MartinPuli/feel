@@ -1,0 +1,11 @@
+Copyright 2026 The Geist Project Authors (https://github.com/vercel/geist-font.git)
+
+GeistSerif-Regular.ttf is bundled unmodified from the official Vercel Geist
+v1.9.0 release. The copyright above is preserved from the font's name table.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+The full license is included in OFL.txt alongside this notice and embedded
+licensing information is retained in the font file.
+
+Official release: https://github.com/vercel/geist-font/releases/tag/v1.9.0
+License information: https://openfontlicense.org

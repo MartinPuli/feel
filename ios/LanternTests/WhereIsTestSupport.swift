@@ -58,11 +58,12 @@ func acknowledgeOpeningGreeting(_ sent: [[String: Any]], emit: ([String: Any]) -
 
 enum VoiceTestDoubles {
     /// A session that has connected and received its configuration, so announce() can speak.
-    static func activeSession() -> (RealtimeVoiceSession, ScriptedVoiceTransport) {
+    static func activeSession(diagnosticsAllowed: Bool = false) -> (RealtimeVoiceSession, ScriptedVoiceTransport) {
         let token = ScriptedVoiceToken(), transport = ScriptedVoiceTransport()
         let configuration = VoiceConfiguration(endpoint: "https://voice.example/session", accessToken: String(repeating: "a", count: 32))
         let voice = RealtimeVoiceSession(tokenClient: token, audio: SilentVoiceAudio(), transportFactory: { transport },
-                                         configuration: configuration, speaksLocally: false, requestPermission: { $0(true) })
+                                         configuration: configuration, speaksLocally: false, diagnosticsAllowed: diagnosticsAllowed,
+                                         requestPermission: { $0(true) })
         voice.start(); token.complete(.success("ephemeral"))
         transport.emit(["type": "session.created"]); transport.emit(["type": "session.updated"])
         acknowledgeOpeningGreeting(transport.sent, emit: transport.emit)

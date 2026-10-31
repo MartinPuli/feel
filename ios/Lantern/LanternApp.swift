@@ -17,6 +17,7 @@ struct LanternApp:App {
                     SignInView(auth: auth)
                 }
             }
+                .font(FeelTypography.body)
                 .onChange(of: scenePhase) { phase in
                     if phase == .background { model.stop(); model.voice.enterBackground() }
                     if phase == .active && auth.canUseApp && !uiTesting {

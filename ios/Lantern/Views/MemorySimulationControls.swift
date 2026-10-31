@@ -4,22 +4,23 @@ struct MemorySimulationControls: View {
     @ObservedObject var model: LanternModel
     var body: some View {
         DisclosureGroup("Simulate saved places") {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("SIMULATION. No commands are sent to the puck.").font(.caption)
+            VStack(alignment: .leading, spacing: FeelSpacing.section) {
+                Text("SIMULATION. No commands are sent to the puck.").font(FeelTypography.caption)
                 Button("Start memory simulation") { model.startMemorySimulation() }
                 if model.memorySimulation {
-                    Text("Use Saved places to remember, then move and recall.").font(.caption)
-                    HStack {
+                    Text("Use Saved places to remember, then move and recall.").font(FeelTypography.caption)
+                    HStack(spacing: FeelSpacing.compact) {
                         Button("Move forward 1 meter") { model.moveMemorySimulation(1) }
                         Button("Move back 1 meter") { model.moveMemorySimulation(-1) }
                     }
-                    HStack {
+                    HStack(spacing: FeelSpacing.compact) {
                         Button("Turn left 90 degrees") { model.turnMemorySimulation(90) }
                         Button("Turn right 90 degrees") { model.turnMemorySimulation(-90) }
                     }
                     Button(model.simulatedMemoryTracking ? "Lose tracking" : "Recover tracking") { model.toggleMemorySimulationTracking() }
                 }
-            }.padding(.vertical, 8)
+            }.padding(.vertical, FeelSpacing.compact)
+                .buttonStyle(FeelSecondaryButtonStyle())
         }
     }
 }

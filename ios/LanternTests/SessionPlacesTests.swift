@@ -38,6 +38,29 @@ final class SessionPlacesTests: XCTestCase {
         XCTAssertNotNil(places.remember("Stale")["error"])
         XCTAssertEqual(places.encode(sequence: 1, distances: [Double?](repeating: 2, count: 7), calibrated: true, at: clock)?.packet, .neutral(sequence: 1))
     }
+    func testAvailabilityPublishesTrackingLossExpiryAndRecoveryWithoutActiveRecall() {
+        let places = SessionPlaces(now: { self.clock })
+        var availability: [Bool] = []
+        let subscription = places.$contextAvailable.sink { availability.append($0) }
+        defer { subscription.cancel() }
+        places.observe(pose: pose(0), worldEpoch: 1, timestamp: clock, tracking: true)
+        XCTAssertTrue(places.contextAvailable)
+        XCTAssertFalse(places.active)
+        clock += 1
+        XCTAssertNil(places.encode(sequence: 0, distances: [], calibrated: true, at: clock))
+        XCTAssertFalse(places.contextAvailable, "An idle bookmark screen must notice pose expiry")
+        places.observe(pose: pose(0), worldEpoch: 1, timestamp: clock, tracking: true)
+        places.observe(pose: pose(0), worldEpoch: 1, timestamp: clock, tracking: false)
+        XCTAssertFalse(places.contextAvailable)
+        places.observe(pose: pose(0), worldEpoch: 1, timestamp: clock, tracking: true)
+        clock += 1
+        places.refreshAvailability()
+        XCTAssertFalse(places.contextAvailable, "Missing frames must expire the UI without an encoder call")
+        places.observe(pose: pose(0), worldEpoch: 1, timestamp: clock, tracking: true)
+        places.invalidate()
+        XCTAssertFalse(places.contextAvailable)
+        XCTAssertEqual(availability, [false, true, false, true, false, true, false, true, false])
+    }
     func testRenameDeleteAndStoppedSessionDoNotLeaveAnActiveTarget() throws {
         let places = SessionPlaces(now: { self.clock })
         places.observe(pose: pose(0), worldEpoch: 1, timestamp: clock, tracking: true)

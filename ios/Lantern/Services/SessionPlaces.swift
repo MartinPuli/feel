@@ -8,6 +8,8 @@ final class SessionPlaces: ObservableObject {
     @Published private(set) var memory = SpatialMemoryManager()
     @Published private(set) var message = "Start the camera to remember a place."
     @Published private(set) var guidance: MemoryGuidance?
+    /// UI availability is refreshed by observations and the sensing tick, even without active recall.
+    @Published private(set) var contextAvailable = false
     private var worldEpoch: Int?
     private var sample: MemoryPose?
     private let now: () -> Double
@@ -24,8 +26,9 @@ final class SessionPlaces: ObservableObject {
         }
         guard let session = memory.session else { return }
         sample = MemoryPose(session: session, pose: pose, timestamp: timestamp, tracking: tracking)
+        refreshAvailability()
     }
-    func invalidate() { sample = nil; guidance = nil }
+    func invalidate() { sample = nil; guidance = nil; refreshAvailability() }
     func restore(_ archive: PersistentMemoryArchive, worldEpoch: Int) throws {
         end()
         try memory.begin(session: UUID().uuidString)
@@ -33,7 +36,7 @@ final class SessionPlaces: ObservableObject {
         try memory.restore(archive: archive, session: memory.session!)
         message = "Saved places restored. Choose Recall when ready."
     }
-    func end() { memory.end(); sample = nil; worldEpoch = nil; guidance = nil }
+    func end() { memory.end(); sample = nil; worldEpoch = nil; guidance = nil; refreshAvailability() }
     func stop() { memory.stopGuidance(); guidance = nil; message = "Place guidance stopped." }
 
     @discardableResult func remember(_ name: String) -> [String: Any] {
@@ -69,6 +72,7 @@ final class SessionPlaces: ObservableObject {
          "note": "Places belong to this camera session. A direction is not a clear route."]
     }
     func encode(sequence: UInt8, distances: [Double?], calibrated: Bool, at time: Double) -> EncoderOutput? {
+        refreshAvailability()
         guard active else { return nil }
         guard let sample else {
             guidance = nil
@@ -87,6 +91,10 @@ final class SessionPlaces: ObservableObject {
         if [.trackingLost, .stalePose, .invalidPose, .sessionMismatch, .sessionUnavailable].contains(state) {
             throw SpatialMemoryError.invalidContext(state)
         }
+    }
+    func refreshAvailability() {
+        let available = hasFreshContext
+        if contextAvailable != available { contextAvailable = available }
     }
     private func action(_ body: () throws -> String) -> [String: Any] {
         do { message = try body(); return ["status": message] }

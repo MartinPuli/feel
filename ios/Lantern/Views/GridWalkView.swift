@@ -1,10 +1,9 @@
 import SwiftUI
 import FeelCore
 
-/// Full-screen grid with no camera image, for walking a space by the pin grid alone (no puck needed).
-/// Hold the phone landscape-left, upright at chest height, camera facing forward, and look only at
-/// the screen while a spotter walks beside you. Trials record depth (and camera video if enabled)
-/// so each walk can be replayed on /replay with its bump and arrival marks.
+/// Visual diagnostic for a sighted facilitator, not an accessible replacement for the puck.
+/// The phone keeps the documented landscape-left mounting convention. Explicit trials record
+/// depth (and camera video if enabled) for replay with contact and arrival marks.
 struct GridWalkView: View {
     @ObservedObject var model: LanternModel
     @Environment(\.dismiss) private var dismiss
@@ -36,11 +35,11 @@ struct GridWalkView: View {
 
     private func grid(size: CGSize) -> some View {
         let bands = model.packet.bands, highlight = model.packet.effectiveHighlight
-        let pin = min((size.width - 264 - 6 * 14 - 48) / 7, (size.height - 70) / 4 - 14)
+        let pin = max(1, min((size.width - 264 - 5 * 14 - 48) / 6, (size.height - 70) / 4 - 14))
         return VStack(spacing: 14) {
             ForEach((1...4).reversed(), id: \.self) { band in
                 HStack(spacing: 14) {
-                    ForEach(0..<7, id: \.self) { column in
+                    ForEach(PuckLayout.activeColumns, id: \.self) { column in
                         let up = bands.indices.contains(column) && Int(bands[column]) == band
                         let tapping = up && (Int(highlight) == column || model.targetColumns?.contains(column) == true)
                         Circle()
@@ -52,7 +51,7 @@ struct GridWalkView: View {
                 }
             }
             HStack(spacing: 14) {
-                ForEach(["L3", "L2", "L1", "C", "R1", "R2", "R3"], id: \.self) { label in
+                ForEach(["L3", "L2", "L1", "R1", "R2", "R3"], id: \.self) { label in
                     Text(label).font(FeelTypography.caption).foregroundStyle(.white.opacity(0.45)).frame(width: pin)
                 }
             }
@@ -60,7 +59,7 @@ struct GridWalkView: View {
         .animation(reduceMotion ? nil : .easeOut(duration: 0.06), value: model.packet.bands)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Pin grid")
-        .accessibilityValue(bands.enumerated().map { "column \($0.offset + 1) \($0.element == 0 ? "down" : "band \($0.element)")" }.joined(separator: ", "))
+        .accessibilityValue(PuckLayout.activeColumns.map { "Column \($0), \(bands[$0] == 0 ? "down" : "band \(bands[$0])")" }.joined(separator: ". "))
     }
 
     private var noGuidance: some View {
@@ -94,13 +93,20 @@ struct GridWalkView: View {
             Button { model.stopGridWalk(); dismiss() } label: { Image(systemName: "xmark").frame(width: 52, height: 52) }
                 .background(Color.white.opacity(0.1), in: Circle())
                 .accessibilityLabel("Close grid walk")
-            Spacer()
-            if model.trialStart != nil {
-                railButton("Bump", systemImage: "exclamationmark.triangle.fill", tint: Color(red: 1, green: 0.42, blue: 0.17)) { model.markTrial("bump") }
-                    .accessibilityHint("Marks a contact with an obstacle at this moment.")
-                railButton("Unsure", systemImage: "questionmark", tint: .white.opacity(0.18)) { model.markTrial("hesitated") }
+            ScrollView {
+                if model.trialStart != nil {
+                    VStack(spacing: 12) {
+                        railButton("Bump", systemImage: "exclamationmark.triangle.fill", tint: Color(red: 1, green: 0.42, blue: 0.17)) { model.markTrial("bump") }
+                            .accessibilityHint("Marks a contact with an obstacle at this moment.")
+                        railButton("Unsure", systemImage: "questionmark", tint: .white.opacity(0.18)) { model.markTrial("hesitated") }
+                    }
+                }
             }
-            Spacer()
+            if model.mode != .stopped || model.isStarting {
+                Button("Stop sensing", role: .destructive) { model.stop(); dismiss() }
+                    .buttonStyle(FeelStopButtonStyle())
+                    .accessibilityIdentifier("gridStop")
+            }
         }
         .padding(.vertical, 18)
     }

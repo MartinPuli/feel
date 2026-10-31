@@ -2,60 +2,161 @@ import SwiftUI
 import ARKit
 import FeelCore
 
+/// Test scenes require an explicit developer/test launch; saved preferences cannot enable them.
+enum FeelLaunchOptions {
+    static func diagnosticsEnabled(arguments: [String]) -> Bool {
+        !arguments.contains("--hide-diagnostics") &&
+            (arguments.contains("--uitesting") || arguments.contains("--diagnostics"))
+    }
+    static func opensGridDemo(arguments: [String], savedPreference: Bool) -> Bool {
+        diagnosticsEnabled(arguments: arguments) && savedPreference
+    }
+}
+
+/// Task navigation stays independent from the live sensing session.
 struct LanternView: View {
     @ObservedObject var model: LanternModel
     @ObservedObject private var voice: RealtimeVoiceSession
+    @ObservedObject private var puck: BluetoothPuck
     private let signedInEmail: String?
     private let onSignOut: (() -> Void)?
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var selectedTask: FeelTask = .surroundings
+    @State private var presentedPanel: CameraPanel?
+    @State private var attemptedInitialStart = false
+    @State private var gridWalk = false
+    @State private var findQuery = ""
+    @State private var placeName = ""
+    @State private var commandsOpenedFromFind = false
+    @State private var scanOpenedFromHome = false
+    @State private var descriptionResult = ""
+    @State private var keyboardVisible = false
+    @State private var controlsOpen = false
+    @AccessibilityFocusState private var focusedControl: FocusTarget?
+    @AccessibilityFocusState private var localCommandsFocused: Bool
+    private var showsDiagnostics: Bool { FeelLaunchOptions.diagnosticsEnabled(arguments: ProcessInfo.processInfo.arguments) }
+
     init(model: LanternModel, signedInEmail: String? = nil, onSignOut: (() -> Void)? = nil) {
         self.model = model
         self.voice = model.voice
+        self.puck = model.puck
         self.signedInEmail = signedInEmail
         self.onSignOut = onSignOut
     }
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @State private var presentedPanel: CameraPanel?
-    @State private var attemptedInitialStart = false
-    @State private var controlsExpanded = false
-    @State private var gridWalk = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @AccessibilityFocusState private var modalFocused: Bool
 
+    private enum FocusTarget: Hashable { case voice, connection, settings, status, preview, scan, close, menu, menuClose }
     private enum CameraPanel: String, Identifiable {
-        case settings, connection, voice
+        case settings, connection, voice, commands, advanced, spatialMap, status, preview
         var id: String { rawValue }
+        var title: String {
+            switch self {
+            case .settings: return "Settings"
+            case .connection: return "Connect puck"
+            case .voice: return "Voice controls"
+            case .commands: return "Local commands"
+            case .advanced: return "Advanced tools"
+            case .spatialMap: return "3D scan"
+            case .status: return "Status"
+            case .preview: return "Camera"
+            }
+        }
     }
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                cameraSurface
+                FeelTheme.canvas.ignoresSafeArea()
+                if model.mode == .live {
+                    CameraPreview(session: model.perception.session)
+                        .ignoresSafeArea()
+                        .accessibilityHidden(true)
+                        .allowsHitTesting(false)
+                }
                 if presentedPanel == nil {
+                    if !controlsOpen {
+                        cameraHome
+                    } else {
                     VStack(spacing: 0) {
-                        header
-                        if !controlsExpanded { compactAttention }
-                        Spacer(minLength: 8)
-                        controlDrawer(availableHeight: geometry.size.height)
+                        if !keyboardVisible {
+                            header
+                            taskNavigation
+                        }
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                taskContent(width: geometry.size.width)
+                                    .frame(maxWidth: 1040, alignment: .leading)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.horizontal, FeelSpacing.page).padding(.vertical, FeelSpacing.compact)
+                            }
+                            .scrollDismissesKeyboard(.interactively)
+                            .accessibilityIdentifier("cameraReadingScroll")
+                            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
+                                let field = selectedTask == .find ? "findQuery" : selectedTask == .places ? "placeName" : nil
+                                guard let field else { return }
+                                // UIKit may retain the scroll offset from before the header collapsed.
+                                DispatchQueue.main.async { proxy.scrollTo(field, anchor: .top) }
+                            }
+                        }
+                        sessionBar(panel: false).accessibilitySortPriority(2)
+                    }
+                    .background(FeelTheme.canvas)
+                    .accessibilityAction(.escape) { controlsOpen = false }
                     }
                 }
-
                 if let panel = presentedPanel {
-                    Color.black.opacity(0.6).ignoresSafeArea()
-                        .onTapGesture { closePanel() }
-                        .accessibilityHidden(true)
                     floatingPanel(panel, availableSize: geometry.size)
                         .transition(.opacity)
-                        .zIndex(1)
                 }
             }
         }
-        .background(Color.black.ignoresSafeArea())
-        .preferredColorScheme(.dark)
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: presentedPanel)
         .font(FeelTypography.body)
+        .foregroundStyle(FeelTheme.ink)
         .tint(FeelTheme.accent)
+        .preferredColorScheme(.dark)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: presentedPanel)
         .fullScreenCover(isPresented: $gridWalk) { GridWalkView(model: model) }
-        .onChange(of: presentedPanel) { panel in modalFocused = panel != nil }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            keyboardVisible = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardVisible = false
+        }
+        .onReceive(puck.$isConnected.removeDuplicates().dropFirst()) { connected in
+            // Keep this observer alive while settings, results or the keyboard hide the header.
+            guard !connected, UIAccessibility.isVoiceOverRunning else { return }
+            UIAccessibility.post(notification: .announcement,
+                                 argument: "Puck disconnected. Tactile feedback is unavailable.")
+        }
+        .onChange(of: presentedPanel) { panel in
+            if panel != nil { focusedControl = .close }
+        }
+        .onChange(of: controlsOpen) { open in
+            Task { @MainActor in
+                await Task.yield()
+                focusedControl = open ? .menuClose : .menu
+            }
+        }
+        .onChange(of: model.mode) { mode in
+            if mode != .live { descriptionResult = "" }
+        }
+        .onChange(of: model.describeNotice) { notice in
+            guard model.mode == .live, let notice else { return }
+            UIAccessibility.post(notification: .announcement, argument: notice)
+        }
+        .onChange(of: model.guidanceState) { state in
+            guard UIAccessibility.isVoiceOverRunning else { return }
+            switch state {
+            case .trackingLost, .staleDepth, .invalidFrame, .uncalibrated:
+                UIAccessibility.post(notification: .announcement, argument: sensingSummary)
+            default: break
+            }
+        }
+        .onChange(of: model.status) { status in
+            // Startup failures leave the camera stopped; never announce the live status stream.
+            guard UIAccessibility.isVoiceOverRunning, model.mode == .stopped, !model.isStarting else { return }
+            UIAccessibility.post(notification: .announcement, argument: status)
+        }
         .onChange(of: model.voicePanel) { panel in
             guard let panel else { return }
             switch panel {
@@ -68,17 +169,17 @@ struct LanternView: View {
         }
         .onChange(of: model.voiceControlsExpanded) { expanded in
             guard let expanded else { return }
-            setControlsExpanded(expanded); model.voiceControlsExpanded = nil
-        }
-        .onChange(of: model.status) { _ in
-            // Denied permission and unsupported hardware must not disappear in a closed drawer.
-            if model.mode == .stopped && !model.isStarting { setControlsExpanded(true) }
+            controlsOpen = expanded
+            selectedTask = .surroundings
+            model.voiceControlsExpanded = nil
         }
         .task {
             guard !attemptedInitialStart else { return }
             attemptedInitialStart = true
-            // `-feelGridWalkDemo YES` opens grid walk on the synthetic scene (simulator screenshots, demo videos).
-            if UserDefaults.standard.bool(forKey: "feelGridWalkDemo") { model.startSimulation(); gridWalk = true; return }
+            if FeelLaunchOptions.opensGridDemo(arguments: ProcessInfo.processInfo.arguments,
+                                               savedPreference: UserDefaults.standard.bool(forKey: "feelGridWalkDemo")) {
+                model.startSimulation(); gridWalk = true; return
+            }
             if !ProcessInfo.processInfo.arguments.contains("--uitesting") {
                 model.startLive()
                 model.voice.enterForeground()
@@ -86,272 +187,375 @@ struct LanternView: View {
         }
     }
 
-    private var cameraSurface: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            if model.mode == .live {
-                CameraPreview(session: model.perception.session)
-                    .ignoresSafeArea().accessibilityHidden(true)
-            }
-        }
-    }
-
-    private func setControlsExpanded(_ expanded: Bool) {
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.22)) {
-            controlsExpanded = expanded
-        }
-    }
-
-    private func closePanel() { presentedPanel = nil }
-
-    private func controlDrawer(availableHeight: CGFloat) -> some View {
-        VStack(spacing: 0) {
-            ZStack {
-                Button { setControlsExpanded(!controlsExpanded) } label: {
-                    Image(systemName: "chevron.up")
-                        .font(.system(size: 17, weight: .bold))
-                        .rotationEffect(.degrees(controlsExpanded ? 180 : 0))
-                        .frame(width: 76, height: 48)
-                        .foregroundStyle(FeelTheme.ink)
-                        .feelBlock(shadow: 4)
-                }
-                .accessibilityLabel(controlsExpanded ? "Hide controls" : "Show controls")
-                .accessibilityValue(controlsExpanded ? "Expanded" : "Collapsed")
-                .accessibilityIdentifier("controlsToggle")
-                .simultaneousGesture(DragGesture(minimumDistance: 20).onEnded { value in
-                    if abs(value.translation.height) > 35 {
-                        setControlsExpanded(value.translation.height < 0)
+    /// The readout uses the same post-processing packet as the BLE sender. It is
+    /// a schematic, not a camera-registered map or confirmation of servo motion.
+    private var cameraHome: some View {
+        VStack(spacing: FeelSpacing.compact) {
+            HStack(spacing: FeelSpacing.section) {
+                if model.mode == .stopped && !model.isStarting {
+                    Button { model.startLive() } label: {
+                        Image(systemName: "camera.fill").frame(width: 48, height: 48)
                     }
-                })
-                if !controlsExpanded && (model.mode != .stopped || model.isStarting) {
-                    HStack {
-                        Spacer()
-                        Button(role: .destructive) { model.stop() } label: {
-                            Image(systemName: "stop.fill").frame(width: 48, height: 48)
-                                .foregroundStyle(FeelTheme.ink)
-                                .feelBlock(Circle(), shadow: 4)
-                        }
-                        .accessibilityLabel("Stop")
-                        .accessibilityIdentifier("stopSession")
-                        .accessibilityHint("Stops sensing even with controls hidden.")
-                    }
-                }
-            }
-            .padding(.horizontal, 16).padding(.vertical, 8)
-
-            if controlsExpanded {
-                if dynamicTypeSize.isAccessibilitySize {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
-                            PuckView(packet: model.packet, targetColumns: model.targetColumns)
-                            guidance
-                        }.padding(.horizontal, 20)
-                    }
-                    .frame(height: max(110, availableHeight - 285))
-                    .accessibilityIdentifier("cameraReadingScroll")
-                    sessionAction.padding(16)
+                    .accessibilityLabel("Start camera")
+                    .accessibilityIdentifier("startCamera")
                 } else {
-                    HStack(spacing: 20) {
-                        PuckView(packet: model.packet, targetColumns: model.targetColumns, compact: true).frame(width: 200)
-                        guidance.frame(maxWidth: .infinity, alignment: .leading)
-                        sessionAction.frame(width: 164)
+                    Button { model.stop(); descriptionResult = "" } label: {
+                        Image(systemName: "stop.fill").frame(width: 48, height: 48)
                     }
-                    .padding(.horizontal, 20).padding(.bottom, 20)
+                    .accessibilityLabel("Stop sensing")
+                    .accessibilityIdentifier("stopSession")
+                    .accessibilityHint("Stops the camera and tactile guidance. Voice is controlled separately.")
                 }
+                Spacer(minLength: 12)
+                Button {
+                    if voice.isActive { voice.pauseAssistant() }
+                    else if voice.isConfigured { voice.resumeAssistant() }
+                    else { presentedPanel = .voice }
+                } label: {
+                    Image(systemName: voice.isActive ? "mic.slash" : "waveform").frame(width: 48, height: 48)
+                }
+                .accessibilityLabel(voice.isActive ? "Pause voice" : "Talk to FEEL")
+                .accessibilityValue(voice.isActive ? voice.label : "Microphone off")
+                .accessibilityIdentifier("talkToFeel")
+                .accessibilityFocused($focusedControl, equals: .voice)
+                Button { controlsOpen = true } label: {
+                    Image(systemName: "line.3.horizontal").frame(width: 48, height: 48)
+                }
+                .accessibilityLabel("Menu")
+                .accessibilityIdentifier("cameraMenu")
+                .accessibilityFocused($focusedControl, equals: .menu)
             }
-        }
-        .frame(maxWidth: 800)
-        .background {
-            if controlsExpanded {
-                RoundedRectangle(cornerRadius: 24, style: .continuous).fill(FeelTheme.surface)
-                    .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(FeelTheme.divider, lineWidth: 1))
+            .buttonStyle(CameraOverlayButtonStyle())
+            .accessibilitySortPriority(2)
+            Spacer(minLength: 0)
+            Button { presentedPanel = .status } label: {
+                VStack(spacing: FeelSpacing.compact) {
+                    Text(sensingLabel).font(FeelTypography.caption)
+                    if !dynamicTypeSize.isAccessibilitySize {
+                        PuckView(packet: model.packet, targetColumns: model.targetColumns, compact: true)
+                            .accessibilityHidden(true)
+                    }
+                    Text(model.mode == .simulation ? "Test signal · no movement sent" : puck.isConnected ? "Requested pins" : "Preview · puck disconnected")
+                        .font(FeelTypography.caption)
+                }
+                .padding(FeelSpacing.section)
+                .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : 240)
+                .background(FeelTheme.canvas, in: RoundedRectangle(cornerRadius: 16))
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(sensingLabel), sensing status")
+            .accessibilityValue(sensingSummary)
+            .accessibilityHint("Opens sensing status and tactile signal details. Neutral does not mean a clear path.")
+            .accessibilityIdentifier("sensingStatus")
+            .accessibilityFocused($focusedControl, equals: .status)
         }
-        .foregroundStyle(controlsExpanded ? FeelTheme.ink : Color.white)
-        .padding(.horizontal, 16).padding(.bottom, 18)
+        .padding(FeelSpacing.section)
     }
 
-    @ViewBuilder private var compactAttention: some View {
-        if model.mode == .live {
-            HStack {
-                if !model.calibrated {
-                    Button(model.automaticFloorCalibrationSupported ? "Finding floor…" : "Floor setup") { presentedPanel = .settings }
-                        .font(FeelTypography.label).frame(minHeight: 44)
-                        .padding(.horizontal, 16).foregroundStyle(FeelTheme.ink).feelBlock(shadow: 4)
-                } else if model.guidanceState != .live {
-                    Button("Check sensing") { setControlsExpanded(true) }
-                        .font(FeelTypography.label).frame(minHeight: 44)
-                        .padding(.horizontal, 16).foregroundStyle(FeelTheme.ink).feelBlock(shadow: 4)
-                        .accessibilityValue(model.status)
-                }
-                Spacer()
-            }.padding(.horizontal, 20)
+    private var header: some View {
+        HStack(spacing: FeelSpacing.compact) {
+            Button {
+                controlsOpen = false
+            } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Return to camera")
+                .accessibilityIdentifier("closeCameraMenu")
+                .accessibilityFocused($focusedControl, equals: .menuClose)
+            Text("feel").font(FeelTypography.brand).accessibilityHidden(true)
+            Spacer(minLength: 8)
+            Button { presentedPanel = .voice } label: {
+                Label("Voice", systemImage: voice.isActive ? "mic.fill" : "mic.slash")
+                    .labelStyle(.iconOnly)
+                    .font(FeelTypography.label).frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Voice controls")
+            .accessibilityValue(voice.isActive ? voice.label : "Microphone off")
+            .accessibilityIdentifier("voiceControl")
+            .accessibilityFocused($focusedControl, equals: .voice)
+            CameraConnectionButton(puck: model.puck) { presentedPanel = .connection }
+                .accessibilityFocused($focusedControl, equals: .connection)
+            Button { presentedPanel = .settings } label: {
+                Image(systemName: "slider.horizontal.3").frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Settings")
+            .accessibilityIdentifier("cameraSettings")
+            .accessibilityFocused($focusedControl, equals: .settings)
         }
+        .padding(.horizontal, FeelSpacing.page).padding(.vertical, FeelSpacing.tight)
+    }
+
+    private var taskNavigation: some View {
+        HStack(spacing: FeelSpacing.compact) {
+            ForEach(FeelTask.allCases) { task in
+                Button { selectedTask = task } label: {
+                    Group {
+                        if dynamicTypeSize.isAccessibilitySize { Text(task == .surroundings ? "Around me" : task.title) }
+                        else { Label(task.title, systemImage: task.symbol) }
+                    }
+                        .font(FeelTypography.label)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .foregroundStyle(selectedTask == task ? FeelTheme.onAccent : FeelTheme.ink)
+                        .background(selectedTask == task ? FeelTheme.accent : FeelTheme.surface,
+                                    in: RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(task.title)
+                .accessibilityAddTraits(selectedTask == task ? [.isSelected] : [])
+                .accessibilityIdentifier(task.identifier)
+            }
+        }
+        .padding(.horizontal, FeelSpacing.page).padding(.vertical, FeelSpacing.tight)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Main navigation")
+    }
+
+    @ViewBuilder private func taskContent(width: CGFloat) -> some View {
+        switch selectedTask {
+        case .surroundings:
+            surroundings(wide: width >= 700 && !dynamicTypeSize.isAccessibilitySize)
+        case .find:
+            FeelFindScreen(model: model, query: $findQuery, commandsFocused: $localCommandsFocused,
+                           wide: width >= 700 && !dynamicTypeSize.isAccessibilitySize) {
+                commandsOpenedFromFind = true
+                presentedPanel = .commands
+            }
+        case .places:
+            VStack(alignment: .leading, spacing: FeelSpacing.section) {
+                SessionPlacesPanel(places: model.places, command: model.performVoiceCommand, name: $placeName, inline: true)
+                SavedWorldMapsPanel(maps: model.savedMaps, command: model.performVoiceCommand)
+            }
+        }
+    }
+
+    private func surroundings(wide: Bool) -> some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: FeelSpacing.section), count: wide ? 2 : 1), spacing: FeelSpacing.section) {
+            Button { presentedPanel = .status } label: {
+                Label(sensingLabel, systemImage: "waveform.path")
+            }
+            .buttonStyle(FeelSecondaryButtonStyle())
+            .accessibilityIdentifier("sensingStatus")
+            .accessibilityLabel("\(sensingLabel), sensing status")
+            .accessibilityValue(sensingSummary)
+            .accessibilityHint("Opens camera and device status. Frontal sensing does not establish a clear path.")
+            .accessibilityFocused($focusedControl, equals: .status)
+            describeButton
+            Button { scanOpenedFromHome = true; presentedPanel = .spatialMap } label: { Label("3D scan", systemImage: "viewfinder") }
+                .buttonStyle(FeelSecondaryButtonStyle()).accessibilityIdentifier("homeSpatialMap")
+                .accessibilityHint("Opens real camera and LiDAR scan controls.")
+                .accessibilityFocused($focusedControl, equals: .scan)
+            Button { controlsOpen = false } label: { Label("Camera", systemImage: "camera") }
+                .buttonStyle(FeelSecondaryButtonStyle()).accessibilityIdentifier("cameraPreview")
+                .accessibilityHint("Returns to the full-screen camera and device signal.")
+                .accessibilityFocused($focusedControl, equals: .preview)
+            if model.mode == .live && !model.calibrated {
+                Button("Floor setup") { presentedPanel = .settings }
+                    .buttonStyle(FeelSecondaryButtonStyle()).accessibilityValue("Finding floor. Pins neutral.")
+            }
+            if model.mode == .simulation {
+                Button("Simulate V sign") { model.simulateSign() }
+                    .buttonStyle(FeelSecondaryButtonStyle()).accessibilityIdentifier("simulateSign")
+            }
+        }
+    }
+
+    private var sensingLabel: String {
+        switch model.guidanceState {
+        case .stopped: return model.isStarting ? "Starting camera" : "Camera off"
+        case .live: return "Sensing"
+        case .simulation: return "SIMULATION"
+        case .trackingLost: return "Tracking lost"
+        case .staleDepth: return "Waiting for depth"
+        case .invalidFrame: return "Depth unavailable"
+        case .uncalibrated: return "Finding floor"
+        }
+    }
+
+    private var sensingSummary: String {
+        let cue = model.guidanceCue.map { "Guiding: \($0.spoken)." } ?? ""
+        let neutral = model.guidanceState == .live || model.guidanceState == .simulation ? "" : "Pins neutral."
+        return "\(model.mode.rawValue). \(sensingLabel). \(neutral) \(cue) \(model.status). \(puck.status)"
+    }
+
+    private var describeButton: some View {
+        Button {
+            let result = model.performVoiceCommand(.describeAhead)
+            descriptionResult = result["error"] as? String ?? ""
+            UIAccessibility.post(notification: .announcement, argument: descriptionResult.isEmpty ? "Looking." : descriptionResult)
+        } label: { Label("Describe", systemImage: "text.viewfinder") }
+        .buttonStyle(FeelSecondaryButtonStyle())
+        .disabled(!model.whereIsAvailable)
+        .accessibilityIdentifier("describeAhead")
+        .accessibilityLabel("Describe ahead")
+        .accessibilityValue(model.describeNotice ?? (model.descriptionPending ? "Looking" : descriptionResult))
+        .accessibilityHint(model.whereIsAvailable ? "Requests a spoken description of the current scene." : "Requires the live camera and fresh tracking.")
+    }
+
+    private var tactileReadout: some View {
+        VStack(alignment: .leading, spacing: FeelSpacing.section) {
+            PuckView(packet: model.packet, targetColumns: model.targetColumns, compact: true)
+            Text("Six directions · four distance bands")
+                .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
+        }
+        .padding(FeelSpacing.section)
+        .background(FeelTheme.surface, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func sessionBar(panel: Bool) -> some View {
+        HStack(spacing: FeelSpacing.section) {
+            if model.mode == .stopped && !model.isStarting {
+                Button { model.startLive() } label: { Label("Start camera", systemImage: "camera.fill") }
+                    .buttonStyle(FeelPrimaryButtonStyle())
+                    .accessibilityIdentifier("startCamera")
+            } else {
+                Button(role: .destructive) {
+                    model.stop()
+                    descriptionResult = ""
+                    if panel { closePanel() }
+                } label: { Label(dynamicTypeSize.isAccessibilitySize ? "Stop" : "Stop sensing", systemImage: "stop.fill") }
+                    .buttonStyle(FeelStopButtonStyle())
+                    .accessibilityLabel("Stop sensing")
+                    .accessibilityIdentifier(panel ? "panelStop" : "stopSession")
+                    .accessibilityHint("Stops the camera and tactile guidance. Use Pause voice to stop the microphone.")
+            }
+            Button {
+                if voice.isActive { voice.pauseAssistant() }
+                else if voice.isConfigured { voice.resumeAssistant() }
+                else { presentedPanel = .voice }
+            } label: {
+                Label(voice.isActive ? "Pause voice" : dynamicTypeSize.isAccessibilitySize ? "Talk" : "Talk to FEEL", systemImage: voice.isActive ? "mic.slash" : "waveform")
+            }
+            .buttonStyle(FeelSecondaryButtonStyle())
+            .accessibilityLabel(voice.isActive ? "Pause voice" : "Talk to FEEL")
+            .accessibilityIdentifier("talkToFeel")
+            .accessibilityValue(voice.isActive ? voice.label : "Microphone off")
+            .accessibilityHint(voice.isConfigured ? "Controls the microphone and spoken responses." : "Opens voice setup. The microphone stays off until you enable it.")
+        }
+        .padding(.horizontal, FeelSpacing.page).padding(.vertical, FeelSpacing.compact)
+        .background(FeelTheme.surface)
     }
 
     private func floatingPanel(_ panel: CameraPanel, availableSize: CGSize) -> some View {
         VStack(spacing: 0) {
-            HStack {
-                Text(panel == .connection ? "Connect puck" : panel == .voice ? "Assistant" : "Settings")
-                    .font(FeelTypography.title3).accessibilityAddTraits(.isHeader)
-                Spacer(minLength: 12)
-                Button { closePanel() } label: {
-                    Image(systemName: "xmark").font(.system(size: 15, weight: .bold))
-                        .frame(width: 44, height: 44)
-                        .feelBlock(Circle(), shadow: 3)
+            HStack(spacing: FeelSpacing.section) {
+                Text(panel.title).font(FeelTypography.title3).accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 8)
+                Button(action: closePanel) {
+                    Image(systemName: "xmark").frame(width: 44, height: 44)
                 }
+                .buttonStyle(.plain)
                 .accessibilityLabel("Close panel")
                 .accessibilityIdentifier("closeCameraPanel")
-                .accessibilityFocused($modalFocused)
-            }.padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 8)
+                .accessibilityFocused($focusedControl, equals: .close)
+            }.padding(.horizontal, FeelSpacing.page).padding(.top, FeelSpacing.tight)
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    if panel == .connection {
-                        PuckConnectionPanel(puck: model.puck)
-                    } else if panel == .voice {
+                VStack(alignment: .leading, spacing: FeelSpacing.section) {
+                    switch panel {
+                    case .connection: PuckConnectionPanel(puck: model.puck)
+                    case .voice:
                         VoiceSetup(voice: voice) { closePanel() }
+                        Button("Commands without internet") {
+                            commandsOpenedFromFind = false
+                            presentedPanel = .commands
+                        }
+                            .buttonStyle(FeelSecondaryButtonStyle())
+                    case .commands:
+                        LocalCommandsPanel(model: model, control: model.localVoice)
+                    case .settings: settings
+                    case .spatialMap:
+                        SpatialMapPanel(map: model.spatialMap, model: model,
+                                        showsDiagnostics: showsDiagnostics,
+                                        wide: availableSize.width >= 650 && !dynamicTypeSize.isAccessibilitySize)
+                    case .status:
+                        CameraGuidance(model: model, puck: model.puck)
+                        if let notice = model.describeNotice { Text(notice).font(FeelTypography.body) }
+                        tactileReadout
+                        Text("Frontal sensing only. Keep using your usual mobility aid. Neutral pins and missing map surfaces do not mean the path is clear.")
+                            .font(FeelTypography.body)
+                    case .preview:
+                        if model.mode == .live {
+                            CameraPreview(session: model.perception.session)
+                                .frame(height: 180).accessibilityHidden(true)
+                        } else { Text("Camera off").font(FeelTypography.body) }
+                    case .advanced:
                         WhereIsSetup(model: model)
                         VenuePackSetup(venue: model.venueInfo)
-                        LocalCommandsPanel(model: model, control: model.localVoice)
-                        SessionPlacesPanel(places: model.places, command: model.performVoiceCommand)
-                        SavedWorldMapsPanel(maps: model.savedMaps, command: model.performVoiceCommand)
-                        MemorySimulationControls(model: model)
+                        if showsDiagnostics { MemorySimulationControls(model: model) }
                         ChalkCommandsPanel(coordinator: model.chalkCommands)
                         CloudMemoryPanel(model: model)
-                    } else {
-                        settings
-                    }
-                }.padding(.horizontal, 20).padding(.bottom, 20)
-            }
-            .accessibilityIdentifier("cameraSettingsScroll")
-            // The Assistant panel has its own pause control; the footer's copy would duplicate it.
-            if model.mode != .stopped || model.isStarting || (voice.isActive && panel != .voice) {
-                HStack {
-                    if model.mode != .stopped || model.isStarting {
-                        Button("Stop camera", role: .destructive) {
-                            model.stop(); closePanel()
+                        DisclosureGroup("Packet details") {
+                            Text(model.packet.hex).font(FeelTypography.mono).textSelection(.enabled)
                         }
-                        .buttonStyle(CameraPillButtonStyle(primary: false))
-                        .accessibilityHint("Stops sensing and tactile output. The assistant keeps listening.")
-                        .accessibilityIdentifier("panelStop")
                     }
-                    if voice.isActive && panel != .voice {
-                        Button("Pause assistant") { voice.pauseAssistant(); closePanel() }
-                            .buttonStyle(CameraPillButtonStyle(primary: false))
-                            .accessibilityHint("Stops the microphone and spoken responses.")
-                    }
-                }.padding(16)
+                }.padding(.horizontal, FeelSpacing.page).padding(.vertical, FeelSpacing.compact)
             }
+            .scrollDismissesKeyboard(.interactively)
+            .accessibilityIdentifier("cameraSettingsScroll")
+            if model.mode != .stopped || model.isStarting || voice.isActive { sessionBar(panel: true) }
         }
-        .frame(width: min(540, availableSize.width - 40), height: availableSize.height - 32)
-        .foregroundStyle(FeelTheme.ink)
-        .background(FeelTheme.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(FeelTheme.divider, lineWidth: 1))
+        .frame(width: min(dynamicTypeSize.isAccessibilitySize ? 800 : 720, availableSize.width - 24),
+               height: max(160, availableSize.height - 16))
+        .background(FeelTheme.surface, in: RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .contain)
         .accessibilityAddTraits(.isModal)
         .accessibilityIdentifier("cameraFloatingPanel")
-        .accessibilityAction(.escape) { closePanel() }
+        .accessibilityAction(.escape, closePanel)
     }
 
-    private var header: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 10) {
-                if model.mode == .simulation {
-                    Text("SIMULATION").font(FeelTypography.label).foregroundStyle(.black)
-                        .padding(.horizontal, 10).frame(minHeight: 48)
-                        .feelBlock(fill: FeelTheme.notice, shadow: 4)
-                        .accessibilityIdentifier("sessionMode")
-                }
-            }
-            Spacer(minLength: 0)
-            VoiceControl(voice: voice) { presentedPanel = .voice }
-            Button { gridWalk = true } label: {
-                Image(systemName: "square.grid.3x3.fill").frame(width: 48, height: 48)
-            }
-            .background(FeelTheme.inset, in: Circle())
-            .accessibilityLabel("Grid walk")
-            .accessibilityHint("Full-screen pin grid without the camera image, for walking by the grid alone.")
-            .accessibilityIdentifier("gridWalk")
-            CameraConnectionButton(puck: model.puck) { presentedPanel = .connection }
-            Button { presentedPanel = .settings } label: {
-                Image(systemName: "slider.horizontal.3").font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(FeelTheme.ink).frame(width: 48, height: 48)
-                    .feelBlock(Circle(), shadow: 4)
-            }
-            .accessibilityLabel("Settings")
-            .accessibilityIdentifier("cameraSettings")
-        }
-        .padding(.horizontal, 20).padding(.vertical, 8)
-    }
-
-    private var guidance: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if model.mode == .stopped {
-                Text("STOPPED").font(FeelTypography.caption)
-                    .foregroundStyle(FeelTheme.secondary).accessibilityIdentifier("sessionMode")
-            }
-            CameraGuidance(model: model, puck: model.puck)
-            if model.mode == .live && !model.calibrated {
-                Button(model.automaticFloorCalibrationSupported ? "Finding floor…" : "Floor setup") { presentedPanel = .settings }
-                    .buttonStyle(FeelSecondaryButtonStyle())
-                    .accessibilityHint("Move slowly with the floor visible for automatic calibration. Open floor setup for the manual alternative.")
-            }
-        }
-    }
-
-    @ViewBuilder private var sessionAction: some View {
-        if model.mode == .stopped && !model.isStarting {
-            Button { model.startLive() } label: {
-                if dynamicTypeSize.isAccessibilitySize {
-                    Label("Start camera", systemImage: "camera.fill")
-                } else {
-                    VStack(spacing: 6) {
-                        Image(systemName: "camera.fill").font(.system(size: 21, weight: .medium))
-                        Text("Start camera").font(FeelTypography.label)
-                    }.padding(.vertical, 6)
-                }
-            }
-                .buttonStyle(CameraPillButtonStyle())
-                .accessibilityIdentifier("startCamera")
-        } else {
-            Button(role: .destructive) { model.stop() } label: { Label("Stop", systemImage: "stop.fill") }
-                .buttonStyle(CameraPillButtonStyle(primary: false))
-                .accessibilityIdentifier("stopSession")
-                .accessibilityHint("Stops the camera and sends neutral pins if connected.")
+    private func closePanel() {
+        let returnToCommands = presentedPanel == .commands && commandsOpenedFromFind
+        let focus: FocusTarget = presentedPanel == .connection ? .connection
+            : presentedPanel == .voice || presentedPanel == .commands ? .voice
+            : presentedPanel == .status ? .status : presentedPanel == .preview ? .preview
+            : presentedPanel == .spatialMap && scanOpenedFromHome ? .scan : .settings
+        presentedPanel = nil
+        Task { @MainActor in
+            await Task.yield()
+            if returnToCommands { localCommandsFocused = true }
+            else { focusedControl = controlsOpen || focus == .status || focus == .voice ? focus : .menu }
         }
     }
 
     private var settings: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            if model.mode == .live {
-                LiveSetup(model: model)
-            } else {
-                Text("Start the camera to calibrate the floor automatically.")
-                    .foregroundStyle(FeelTheme.secondary)
+        VStack(alignment: .leading, spacing: FeelSpacing.section) {
+            Button { scanOpenedFromHome = false; presentedPanel = .spatialMap } label: {
+                Label("Live 3D scan", systemImage: "viewfinder")
+            }.buttonStyle(FeelPrimaryButtonStyle()).accessibilityIdentifier("openSpatialMap")
+            Button("Advanced tools") { presentedPanel = .advanced }
+                .buttonStyle(FeelSecondaryButtonStyle()).accessibilityIdentifier("advancedTools")
+            if showsDiagnostics {
+                Button("Simulation") {
+                    model.startSimulation(); selectedTask = .surroundings; closePanel()
+                }.buttonStyle(FeelSecondaryButtonStyle()).disabled(model.mode == .simulation)
+                Button("Pin grid") { closePanel(); gridWalk = true }
+                    .buttonStyle(FeelSecondaryButtonStyle()).accessibilityIdentifier("gridWalk")
+                    .accessibilityHint("Opens the six-column visual diagnostic. It is not an accessible substitute for tactile feedback.")
             }
-            DirectionArrowSettings(model: model)
-            Button("Simulation") {
-                model.startSimulation()
-                controlsExpanded = true
-                presentedPanel = nil
-            }
-            .buttonStyle(FeelSecondaryButtonStyle())
-            .disabled(model.mode == .simulation)
-            DisclosureGroup("Details") {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(model.packet.hex).font(FeelTypography.mono).textSelection(.enabled)
-                }.font(FeelTypography.footnote).padding(.top, 12)
+            DisclosureGroup("Tactile guidance") { DirectionArrowSettings(model: model) }
+            if model.mode == .live { LiveSetup(model: model) }
+            else {
+                Text("Floor setup becomes available when the camera starts.")
+                    .font(FeelTypography.footnote).foregroundStyle(FeelTheme.secondary)
             }
             if let onSignOut {
                 if let signedInEmail, !signedInEmail.isEmpty {
-                    Text("Signed in as \(signedInEmail)").foregroundStyle(FeelTheme.secondary)
+                    Text("Signed in as \(signedInEmail)").font(FeelTypography.footnote)
                 }
                 Button("Sign out", role: .destructive) { presentedPanel = nil; onSignOut() }
-                    .buttonStyle(FeelSecondaryButtonStyle())
-                    .accessibilityHint("Stops the camera and assistant and returns to the sign-in screen.")
-                    .accessibilityIdentifier("signOut")
+                    .buttonStyle(FeelSecondaryButtonStyle()).accessibilityIdentifier("signOut")
+                    .accessibilityHint("Stops sensing and voice and returns to sign in.")
             }
         }
+    }
+}
+
+private struct CameraOverlayButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(FeelTheme.ink)
+            .background(FeelTheme.canvas, in: Circle())
+            .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
 
@@ -375,10 +579,10 @@ private struct CameraConnectionButton: View {
     var body: some View {
         Button(action: open) {
             Label(puck.status.hasPrefix("Write error:") ? "Connection error" : puck.isConnected ? "Connected" : "Connect puck", systemImage: "link")
-                .labelStyle(CompactConnectionLabelStyle(compact: dynamicTypeSize.isAccessibilitySize))
+                .labelStyle(.iconOnly)
                 .font(FeelTypography.label).foregroundStyle(puck.isConnected ? .black : FeelTheme.ink)
-                .padding(.horizontal, 12).frame(minHeight: 48)
-                .feelBlock(fill: puck.isConnected ? FeelTheme.pin : FeelTheme.paper, shadow: 4)
+                .frame(width: 44, height: 44)
+                .background(puck.isConnected ? FeelTheme.pin : FeelTheme.surface, in: RoundedRectangle(cornerRadius: 10))
         }
         .accessibilityLabel(puck.isConnected ? "Connected puck" : "Connect puck")
         .accessibilityIdentifier("connectPuck")
@@ -403,7 +607,7 @@ private struct CameraGuidance: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: FeelSpacing.compact) {
             Text(title).font(FeelTypography.title2).accessibilityIdentifier("guidanceTitle")
             if model.mode == .simulation {
                 Text("No simulated movement sent to hardware.")
@@ -432,17 +636,17 @@ struct PuckView: View {
     /// Several target columns tap together; nil falls back to the packet's single highlight.
     var targetColumns: ClosedRange<Int>? = nil
     var compact = false
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: PuckLayout.physicalColumnCount)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: FeelSpacing.section), count: PuckLayout.physicalColumnCount)
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: FeelSpacing.compact) {
             HStack {
                 Text("Puck").font(FeelTypography.caption)
                 Spacer()
                 Text("Far").font(FeelTypography.caption).foregroundStyle(FeelTheme.secondary)
             }
             ForEach((1...4).reversed(), id: \.self) { band in
-                LazyVGrid(columns: columns, spacing: 10) {
+                LazyVGrid(columns: columns, spacing: FeelSpacing.section) {
                     ForEach(PuckLayout.activeColumns, id: \.self) { column in
                         let active = packet.bands[column] == UInt8(band)
                         let target = active && ((targetColumns.map { $0.count > 1 && $0.contains(column) } ?? false) || packet.effectiveHighlight == UInt8(column))
@@ -466,12 +670,13 @@ struct PuckView: View {
         .padding(compact ? 0 : 16)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Virtual puck")
-        .accessibilityValue(PuckLayout.activeColumns.map { "Column \($0), band \(packet.bands[$0])" }.joined(separator: ". ") + targetSummary)
+        .accessibilityValue(Self.signalSummary(packet: packet, targetColumns: targetColumns))
     }
 
-    private var targetSummary: String {
-        if let span = targetColumns, span.count > 1 { return ". Target columns \(span.lowerBound) to \(span.upperBound)" }
-        return PuckLayout.activeColumns.contains(Int(packet.effectiveHighlight)) ? ". Target column \(Int(packet.effectiveHighlight))" : ". No target highlight"
+    static func signalSummary(packet: FeelPacket, targetColumns: ClosedRange<Int>?) -> String {
+        let pins = PuckLayout.activeColumns.map { "Column \($0), band \(packet.bands[$0])" }.joined(separator: ". ")
+        if let span = targetColumns, span.count > 1 { return pins + ". Target columns \(span.lowerBound) to \(span.upperBound)" }
+        return pins + (PuckLayout.activeColumns.contains(Int(packet.effectiveHighlight)) ? ". Target column \(Int(packet.effectiveHighlight))" : ". No target highlight")
     }
 }
 
@@ -555,6 +760,7 @@ struct CameraPreview: UIViewRepresentable {
         let view = ARSCNView()
         view.session = session
         view.automaticallyUpdatesLighting = false
+        view.accessibilityIgnoresInvertColors = true
         return view
     }
     func updateUIView(_ uiView: ARSCNView, context: Context) {}
@@ -563,7 +769,7 @@ struct CameraPreview: UIViewRepresentable {
 struct PuckConnectionPanel: View {
     @ObservedObject var puck: BluetoothPuck
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: FeelSpacing.section) {
             Label(puck.isConnected ? "Puck connected" : "No puck connected", systemImage: puck.isConnected ? "checkmark.circle" : "link")
                 .font(FeelTypography.label)
                 .accessibilityIdentifier("puckConnectionStatus")
@@ -586,7 +792,7 @@ struct PeerPanel: View {
     @ObservedObject var model: LanternModel
     @ObservedObject var peer: NearbyPeerService
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: FeelSpacing.section) {
             Text(peer.status).font(FeelTypography.subheadline)
             Button("Find Beacon phones") { _ = model.performVoiceCommand(.scanTeammates) }
                 .buttonStyle(FeelSecondaryButtonStyle()).disabled(peer.running || !model.canFindTeammates)

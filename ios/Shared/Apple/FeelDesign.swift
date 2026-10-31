@@ -30,16 +30,29 @@ enum FeelTheme {
 }
 
 enum FeelTypography {
-    static let largeTitle = Font.custom("Geist-Bold", size: 34, relativeTo: .largeTitle)
-    static let title2 = Font.custom("Geist-Bold", size: 24, relativeTo: .title2)
-    static let title3 = Font.custom("Geist-Bold", size: 20, relativeTo: .title3)
-    static let headline = Font.custom("Geist-Bold", size: 17, relativeTo: .headline)
-    static let body = Font.custom("Geist-Regular", size: 17, relativeTo: .body)
-    static let subheadline = Font.custom("Geist-Regular", size: 15, relativeTo: .subheadline)
-    static let label = Font.custom("Geist-SemiBold", size: 15, relativeTo: .subheadline)
-    static let footnote = Font.custom("Geist-Regular", size: 13, relativeTo: .footnote)
-    static let caption = Font.custom("Geist-Medium", size: 12, relativeTo: .caption)
-    static let mono = Font.custom("GeistMono-Regular", size: 15, relativeTo: .body)
+    /// One bundled face throughout FEEL; relative text styles preserve Dynamic Type.
+    static let fontName = "GeistSerif-Regular"
+    static let brand = Font.custom(fontName, size: 24, relativeTo: .title2)
+    static let largeTitle = Font.custom(fontName, size: 28, relativeTo: .largeTitle)
+    static let title2 = Font.custom(fontName, size: 22, relativeTo: .title2)
+    static let title3 = Font.custom(fontName, size: 18, relativeTo: .title3)
+    static let headline = Font.custom(fontName, size: 16, relativeTo: .headline)
+    static let body = Font.custom(fontName, size: 16, relativeTo: .body)
+    static let subheadline = Font.custom(fontName, size: 15, relativeTo: .subheadline)
+    static let label = Font.custom(fontName, size: 15, relativeTo: .subheadline)
+    static let footnote = Font.custom(fontName, size: 13, relativeTo: .footnote)
+    static let caption = Font.custom(fontName, size: 12, relativeTo: .caption)
+    // Keep the existing call-site token while matching the selected family for readouts.
+    static let mono = Font.custom(fontName, size: 15, relativeTo: .body)
+}
+
+/// A four-point grid shared by fields, actions and panel sections.
+enum FeelSpacing {
+    static let tight: CGFloat = 4
+    static let compact: CGFloat = 8
+    static let section: CGFloat = 12
+    static let page: CGFloat = 16
+    static let minimumTouch: CGFloat = 44
 }
 
 /// Solid surfaces remain legible over a bright camera feed without transparency.
@@ -69,8 +82,9 @@ struct FeelFieldStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(FeelTypography.body)
-            .padding(.horizontal, 12)
-            .frame(minHeight: 48)
+            .padding(.horizontal, FeelSpacing.section)
+            .padding(.vertical, FeelSpacing.compact)
+            .frame(minHeight: FeelSpacing.minimumTouch)
             .background(FeelTheme.inset, in: RoundedRectangle(cornerRadius: 10))
             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(FeelTheme.border, lineWidth: 1))
     }
@@ -90,10 +104,11 @@ private struct FeelButtonBody: View {
     var body: some View {
         label
             .font(FeelTypography.headline)
-            .frame(maxWidth: .infinity, minHeight: 50)
-            .padding(.horizontal, 16).padding(.vertical, 4)
+            .padding(.horizontal, FeelSpacing.section).padding(.vertical, FeelSpacing.compact)
+            // Size the padded label first: compact by default, taller when Dynamic Type needs it.
+            .frame(minWidth: FeelSpacing.minimumTouch, maxWidth: .infinity, minHeight: FeelSpacing.minimumTouch)
             .foregroundStyle(enabled ? foreground : FeelTheme.secondary)
-            .background(pressed && enabled ? FeelTheme.inset : fill, in: RoundedRectangle(cornerRadius: 12))
+            .background(fill, in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(FeelTheme.border, lineWidth: 1))
             .opacity(enabled ? (pressed ? 0.78 : 1) : 0.6)
     }
@@ -102,7 +117,7 @@ private struct FeelButtonBody: View {
 struct FeelPrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
     func makeBody(configuration: Configuration) -> some View {
-        FeelButtonBody(label: AnyView(configuration.label), fill: FeelTheme.inset, foreground: FeelTheme.ink, enabled: isEnabled, pressed: configuration.isPressed)
+        FeelButtonBody(label: AnyView(configuration.label), fill: FeelTheme.accent, foreground: FeelTheme.onAccent, enabled: isEnabled, pressed: configuration.isPressed)
     }
 }
 
@@ -116,7 +131,7 @@ struct FeelSecondaryButtonStyle: ButtonStyle {
 struct FeelStopButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
     func makeBody(configuration: Configuration) -> some View {
-        FeelButtonBody(label: AnyView(configuration.label), fill: FeelTheme.inset, foreground: FeelTheme.ink, enabled: isEnabled, pressed: configuration.isPressed)
+        FeelButtonBody(label: AnyView(configuration.label), fill: FeelTheme.pin, foreground: .black, enabled: isEnabled, pressed: configuration.isPressed)
     }
 }
 
@@ -127,12 +142,12 @@ struct FeelSection<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: FeelSpacing.section) {
             Text(title).font(FeelTypography.title3).accessibilityAddTraits(.isHeader)
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 20)
+        .padding(.vertical, FeelSpacing.section)
         .overlay(alignment: .top) { Rectangle().fill(FeelTheme.divider).frame(height: 1) }
     }
 }

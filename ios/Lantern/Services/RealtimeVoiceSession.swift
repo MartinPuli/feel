@@ -83,6 +83,7 @@ final class RealtimeVoiceSession: ObservableObject {
     private var userSpeaking = false
     var onCommand: ((VoiceCommand) -> [String: Any])?
     var onEnded: (() -> Void)?
+    let diagnosticsAllowed: Bool
     private let userSession: () -> AuthSessionTokens?
     private let productionBuild: Bool
     private var voiceIdentity: VoiceUserAuthentication.Identity?
@@ -148,12 +149,14 @@ final class RealtimeVoiceSession: ObservableObject {
          configuration: VoiceConfiguration? = nil, speaksLocally: Bool = true, silentPlaybackFallback: Bool? = nil,
          bundleInfo: [String: Any] = Bundle.main.infoDictionary ?? [:],
          userSession: @escaping () -> AuthSessionTokens? = { AuthModel.sessionStore.load() },
+         diagnosticsAllowed: Bool = FeelLaunchOptions.diagnosticsEnabled(arguments: ProcessInfo.processInfo.arguments),
          requestPermission: @escaping (@escaping (Bool) -> Void) -> Void = { completion in
              AVAudioSession.sharedInstance().requestRecordPermission { allowed in
                  DispatchQueue.main.async { completion(allowed) }
              }
          }) {
         self.tokenClient = tokenClient; self.audio = audio; self.transportFactory = transportFactory
+        self.diagnosticsAllowed = diagnosticsAllowed
         self.productionBuild = VoiceConfigurationStore.hasAuthoritativeAuthMode(bundleInfo)
         self.userSession = userSession
         self.configuration = productionBuild ? VoiceConfigurationStore.configuration(fromInfo: bundleInfo) : (configuration ?? store.loadForLaunch())
@@ -568,7 +571,7 @@ final class RealtimeVoiceSession: ObservableObject {
             guard !configured else { return }; configured = true
             enqueue(["type": "session.update", "session": [
                 "type": "realtime", "instructions": VoiceCommand.instructions,
-                "output_modalities": ["audio"], "max_output_tokens": 160, "tools": VoiceCommand.tools,
+                "output_modalities": ["audio"], "max_output_tokens": 160, "tools": VoiceCommand.tools(diagnosticsAllowed: diagnosticsAllowed),
                 "audio": ["input": ["format": ["type": "audio/pcm", "rate": 24000],
                                     "turn_detection": ["type": "server_vad", "create_response": true, "interrupt_response": true]],
                           "output": ["voice": "cedar", "speed": 1.2, "format": ["type": "audio/pcm", "rate": 24000]]]]])
@@ -700,7 +703,11 @@ final class RealtimeVoiceSession: ObservableObject {
             let result: [String: Any]
             do {
                 let command = try VoiceCommand.decode(name: name, arguments: arguments)
-                result = onCommand?(command) ?? ["error": "App controls are unavailable"]
+                if command.requiresDiagnostics && !diagnosticsAllowed {
+                    result = ["error": VoiceCommand.diagnosticsUnavailable]
+                } else {
+                    result = onCommand?(command) ?? ["error": "App controls are unavailable"]
+                }
                 if result["scene_observation"] as? Bool == true { bindSceneSpeech() }
             } catch { result = ["error": "Unsupported command or invalid arguments. No action was taken."] }
             // Stop can synchronously end the session while executing a command.
