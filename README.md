@@ -30,7 +30,6 @@
 - [How it works](#how-it-works)
 - [Hardware](#hardware)
   - [Link and safety](#link-and-safety)
-- [Cost](#cost)
 - [Asking where something is](#asking-where-something-is)
 - [Limitations](#limitations)
 - [Verification status](#verification-status)
@@ -193,29 +192,6 @@ been measured. [The travel test](docs/SERVO-TRAVEL-TEST.md) decides which cam sh
   measured pulse limits.
 - **Known limit:** the puck has no position, force or current sensing, so it can't detect a
   jammed pin. See [known issues](docs/KNOWN-ISSUES.md).
-
-## Cost
-
-About **$95 in parts**, not counting the iPhone.
-
-| Part | Qty | Unit | Total | Basis |
-|---|---|---|---|---|
-| FEETECH FS0307 servo | 6 | $9.35 | $56.10 | Pololu list price, 5+ units |
-| ESP32-WROOM USB-C dev board | 1 | ~$8 | ~$8 | Typical retail range $5–12 |
-| 5 V / 4 A switching supply | 1 | $14.95 | $14.95 | Adafruit list price |
-| Barrel-to-screw-terminal adapter | 1 | ~$2 | ~$2 | Estimate |
-| 1000 µF capacitor, 22 AWG wire, perfboard, headers | — | — | ~$3 | Estimate |
-| PLA filament, 8 printed parts | ≤ 210 g | $20/kg | ≤ $5 | Upper bound: every part solid, from CAD volumes |
-| Strap, foam, M3 screws | — | — | ~$5 | Estimate |
-| **Total** | | | **≈ $94** | |
-
-Prices checked October 17, 2026, before shipping and tax. Not included: the LiDAR iPhone, a
-spare servo, a battery bank for walking use ([power options](docs/BATTERY.md)), and printer time.
-For context, commercial refreshable braille displays, the closest pin-based devices, start
-around $1,500, though they display text rather than space.
-Sources: [Pololu FS0307](https://www.pololu.com/product/3420),
-[Adafruit 5 V 4 A supply](https://www.adafruit.com/product/1466),
-[braille display buyer's guide](https://www.disabilityworld.org/articles/refreshable-braille-displays-buyers-guide/).
 
 ## Asking where something is
 
